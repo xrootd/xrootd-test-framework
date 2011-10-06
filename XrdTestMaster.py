@@ -9,13 +9,17 @@
 #-------------------------------------------------------------------------------
 from Daemon import Runnable, Daemon, DaemonException, Runnable, Daemon, \
     DaemonException
+from cherrypy.lib.sessions import close
 from optparse import OptionParser
 import ConfigParser
+import cherrypy
 import datetime
 import logging
 import os
 import sys
 import time
+from string import join
+from Cheetah.Template import Template
 #-------------------------------------------------------------------------------
 # Globals definitions
 #-------------------------------------------------------------------------------
@@ -27,6 +31,23 @@ logger.debug("Running script: " + __file__)
 defaultConfFile = '/etc/XrdTest/XrdTestMaster.conf'
 defaultPidFile = '/var/run/XrdTestMaster.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
+webpageDir = '/home/ltrzaska/dev/pydev-workspace/xrd-test/src/webpage/'
+#------------------------------------------------------------------------------
+class WebInterface:
+    '''
+    Provides web interface for the manager.
+    '''
+    def index(self):
+        global webpageDir
+        tplFile = webpageDir + 'main.tmpl'
+        logger.info(tplFile)
+        tplVars = { 'title' : 'Xrd Test Master - Web Iface',
+                    'message' : 'Welcome and begin the tests!'}
+
+        tpl = Template (file=tplFile, searchList=[tplVars])
+        return tpl.respond()
+
+    index.exposed = True
 #-------------------------------------------------------------------------------
 class XrdTestMaster(Runnable):
     '''
@@ -37,8 +58,9 @@ class XrdTestMaster(Runnable):
         '''
         Main jobs of programme. Has to be implemented.
         '''
+        cherrypy.quickstart(WebInterface()) #@UndefinedVariable
         while True:
-            time.sleep(3)
+            time.sleep(30)
             logger.info("Hello everybody!")
 #-------------------------------------------------------------------------------
 class XrdTestMasterException(Exception):
@@ -66,10 +88,14 @@ def readConfig(optsConfFile=None):
     if optsConfFile and os.path.exists(optsConfFile):
         confFile = optsConfFile
 
+    logger.info("Reading config file % s", confFile)
+
     config = ConfigParser.ConfigParser()
     if os.path.exists(confFile):
         try:
-            config.readfp(confFile)
+            fp = file(confFile, 'r')
+            config.readfp(fp)
+            fp.close()
         except IOError, e:
             logger.exception()
     else:
@@ -86,8 +112,6 @@ def main():
     parse.add_option("-b", "--background", dest="backgroundMode", \
                      type="string", action="store", \
                       help="run runnable as a daemon")
-    parse.add_option("-d", "--debug", dest="debugMode", action="store_true", \
-                     help="provide the debug information to the output")
 
     (options, args) = parse.parse_args()
 
@@ -104,6 +128,8 @@ def main():
         except (RuntimeError, ValueError, IOError), e:
             logger.exception()
             sys.exit(1)
+
+    testMaster = XrdTestMaster()
     #--------------------------------------------------------------------------
     # run the daemon
     #--------------------------------------------------------------------------
@@ -113,14 +139,10 @@ def main():
         pidFile = defaultPidFile
         logFile = defaultLogFile
         if isConfigFileRead:
-            pidFile = config.read('daemon', 'pid_file_path')
-            logFile = config.read('daemon', 'log_file_path')
+            pidFile = config.get('daemon', 'pid_file_path')
+            logFile = config.get('daemon', 'log_file_path')
 
-        testMaster = XrdTestMaster()
-
-        dm = Daemon("XrdTestMaster.py", "/var/run/XrdTestMaster.pid", \
-                    "/var/log/XrdTestMaster.log")
-
+        dm = Daemon("XrdTestMaster.py", pidFile, logFile)
         try:
             if options.backgroundMode == 'start':
                 dm.start(testMaster)
@@ -136,11 +158,14 @@ def main():
         except (DaemonException, RuntimeError, ValueError, IOError), e:
             logger.exception('')
             sys.exit(1)
-
+    #--------------------------------------------------------------------------
+    # run test master in standard mode. Used for debugging
+    #--------------------------------------------------------------------------
+    if not options.backgroundMode:
+        testMaster.run()
 #-------------------------------------------------------------------------------
 # Start place
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
     main()
-
 

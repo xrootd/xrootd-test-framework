@@ -7,10 +7,12 @@
 #-------------------------------------------------------------------------------
 # Imports
 #-------------------------------------------------------------------------------
+from Cheetah.Template import Template
 from Daemon import Runnable, Daemon, DaemonException, Runnable, Daemon, \
     DaemonException
 from cherrypy.lib.sessions import close
 from optparse import OptionParser
+from string import join
 import ConfigParser
 import cherrypy
 import datetime
@@ -18,8 +20,7 @@ import logging
 import os
 import sys
 import time
-from string import join
-from Cheetah.Template import Template
+from ClusterManager import ClusterManagerException
 #-------------------------------------------------------------------------------
 # Globals definitions
 #-------------------------------------------------------------------------------
@@ -32,6 +33,7 @@ defaultConfFile = '/etc/XrdTest/XrdTestMaster.conf'
 defaultPidFile = '/var/run/XrdTestMaster.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
 webpageDir = '/home/ltrzaska/dev/pydev-workspace/xrd-test/src/webpage/'
+defaultClusterDefPath = '/etc/XrdTest'
 #------------------------------------------------------------------------------
 class WebInterface:
     '''
@@ -53,6 +55,36 @@ class XrdTestMaster(Runnable):
     '''
     Runnable class, doing XrdTestMaster jobs.
     '''
+    #---------------------------------------------------------------------------
+    def loadClustersDefs(self, path):
+        '''
+        Loads cluster definitions from .py files stored in path directory
+        @param path: path for .py files, storing cluster definitions
+        '''
+        clusters = []
+        if os.path.exists(path):
+            for f in os.listdir(path):
+                fp = path + os.sep + f
+                (modPath, modFile) = os.path.split(fp)
+                modPath = os.path.abspath(modPath)
+                (modName, ext) = os.path.splitext(modFile)
+    
+                module = None
+                if os.path.isfile(fp) and ext == '.py':
+                    try:
+                        if not modPath in sys.path:
+                            sys.path.insert(0, modPath)
+                            
+                        module = __import__(modName)
+    
+                        if not callable(module.getCluster):
+                            raise ClusterManagerException("Method getCluster " +
+                                                          "can't be found in " +
+                                                          "module: " + 
+                                                          str(module))
+                        clusters.append(module.getCluster())
+                    except ImportError, AttributeError:
+                        logger.exception('')
     #---------------------------------------------------------------------------
     def run(self):
         '''
@@ -82,6 +114,10 @@ class XrdTestMasterException(Exception):
         return repr(self.desc)
 #-------------------------------------------------------------------------------
 def readConfig(optsConfFile=None):
+    '''
+    Reads configuration from given file or from default if None given.
+    @param optsConfFile: file with configuration
+    '''
     global defaultConfFile
     confFile = defaultConfFile
 

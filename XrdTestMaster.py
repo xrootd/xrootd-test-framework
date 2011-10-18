@@ -8,6 +8,7 @@
 # Imports
 #-------------------------------------------------------------------------------
 from Cheetah.Template import Template
+from ClusterManager import ClusterManagerException
 from Daemon import Runnable, Daemon, DaemonException, Runnable, Daemon, \
     DaemonException
 from cherrypy.lib.sessions import close
@@ -20,7 +21,6 @@ import logging
 import os
 import sys
 import time
-from ClusterManager import ClusterManagerException
 #-------------------------------------------------------------------------------
 # Globals definitions
 #-------------------------------------------------------------------------------
@@ -29,11 +29,14 @@ logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] ' + \
 logger = logging.getLogger(__name__)
 logger.debug("Running script: " + __file__)
 
+cherrypy.config.update({'server.socket_host': '0.0.0.0',
+                      'server.socket_port': 8080})
+
 defaultConfFile = '/etc/XrdTest/XrdTestMaster.conf'
 defaultPidFile = '/var/run/XrdTestMaster.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
-webpageDir = '/home/ltrzaska/dev/pydev-workspace/xrd-test/src/webpage/'
-defaultClusterDefPath = '/etc/XrdTest'
+webpageDir = os.path.dirname(os.path.abspath(__file__)) + os.sep + 'webpage'
+defaultClustersDefinitionsPath = '/etc/XrdTest'
 #------------------------------------------------------------------------------
 class WebInterface:
     '''
@@ -41,7 +44,7 @@ class WebInterface:
     '''
     def index(self):
         global webpageDir
-        tplFile = webpageDir + 'main.tmpl'
+        tplFile = webpageDir + os.sep + 'main.tmpl'
         logger.info(tplFile)
         tplVars = { 'title' : 'Xrd Test Master - Web Iface',
                     'message' : 'Welcome and begin the tests!'}
@@ -56,11 +59,16 @@ class XrdTestMaster(Runnable):
     Runnable class, doing XrdTestMaster jobs.
     '''
     #---------------------------------------------------------------------------
-    def loadClustersDefs(self, path):
+    def loadClustersDefs(self, path=None):
         '''
         Loads cluster definitions from .py files stored in path directory
         @param path: path for .py files, storing cluster definitions
         '''
+
+        if not path:
+            global defaultClustersDefinitionsPath
+            path = defaultClustersDefinitionsPath
+
         clusters = []
         if os.path.exists(path):
             for f in os.listdir(path):
@@ -68,28 +76,33 @@ class XrdTestMaster(Runnable):
                 (modPath, modFile) = os.path.split(fp)
                 modPath = os.path.abspath(modPath)
                 (modName, ext) = os.path.splitext(modFile)
-    
-                module = None
+
                 if os.path.isfile(fp) and ext == '.py':
+                    mod = None
+                    cl = None
                     try:
                         if not modPath in sys.path:
                             sys.path.insert(0, modPath)
-                            
-                        module = __import__(modName)
-    
-                        if not callable(module.getCluster):
-                            raise ClusterManagerException("Method getCluster " +
-                                                          "can't be found in " +
-                                                          "module: " + 
-                                                          str(module))
-                        clusters.append(module.getCluster())
-                    except ImportError, AttributeError:
+
+                        mod = __import__(modName, {}, {}, ['getCluster'])
+                        cl = mod.getCluster()
+                        #after load, check if cluster definition is correct
+                        cl.validate()
+                        clusters.append(cl)
+                    except AttributeError:
+                            logger.exception('')
+                            raise ClusterManagerException("Method getCluster " + \
+                                  "can't be found in " + \
+                                  "file: " + str(modFile))
+                    except ImportError:
                         logger.exception('')
     #---------------------------------------------------------------------------
     def run(self):
         '''
         Main jobs of programme. Has to be implemented.
         '''
+
+
         cherrypy.quickstart(WebInterface()) #@UndefinedVariable
         while True:
             time.sleep(30)

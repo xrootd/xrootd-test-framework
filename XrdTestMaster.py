@@ -8,7 +8,7 @@
 # Imports
 #-------------------------------------------------------------------------------
 from Cheetah.Template import Template
-from ClusterManager import ClusterManagerException
+from ClusterManager import ClusterManagerException, loadClustersDefs
 from Daemon import Runnable, Daemon, DaemonException, Runnable, Daemon, \
     DaemonException
 from cherrypy.lib.sessions import close
@@ -22,21 +22,30 @@ import os
 import sys
 import time
 #-------------------------------------------------------------------------------
-# Globals definitions
+# Globals and configurations
 #-------------------------------------------------------------------------------
 logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] ' + \
-                    '%(message)s', level=logging.INFO)
+                    '%(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger.debug("Running script: " + __file__)
 
-cherrypy.config.update({'server.socket_host': '0.0.0.0',
-                      'server.socket_port': 8080})
+currentDir = os.path.dirname(os.path.abspath(__file__))
 
 defaultConfFile = '/etc/XrdTest/XrdTestMaster.conf'
 defaultPidFile = '/var/run/XrdTestMaster.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
-webpageDir = os.path.dirname(os.path.abspath(__file__)) + os.sep + 'webpage'
+webpageDir = currentDir + os.sep + 'webpage'
 defaultClustersDefinitionsPath = '/etc/XrdTest'
+
+cherrypyConfig = {'/webpage/js': {
+                     'tools.staticdir.on': True,
+                     'tools.staticdir.dir' : webpageDir + "/js",
+                     },
+                  '/webpage/css': {
+                     'tools.staticdir.on': True,
+                     'tools.staticdir.dir' : webpageDir + "/css",
+                     }
+                }
 #------------------------------------------------------------------------------
 class WebInterface:
     '''
@@ -46,8 +55,13 @@ class WebInterface:
         global webpageDir
         tplFile = webpageDir + os.sep + 'main.tmpl'
         logger.info(tplFile)
+
+        global currentDir
+        clustersList = loadClustersDefs(currentDir + "/clusters")
+
         tplVars = { 'title' : 'Xrd Test Master - Web Iface',
-                    'message' : 'Welcome and begin the tests!'}
+                    'message' : 'Welcome and begin the tests!',
+                    'clusters' : clustersList}
 
         tpl = Template (file=tplFile, searchList=[tplVars])
         return tpl.respond()
@@ -59,51 +73,15 @@ class XrdTestMaster(Runnable):
     Runnable class, doing XrdTestMaster jobs.
     '''
     #---------------------------------------------------------------------------
-    def loadClustersDefs(self, path=None):
-        '''
-        Loads cluster definitions from .py files stored in path directory
-        @param path: path for .py files, storing cluster definitions
-        '''
-
-        if not path:
-            global defaultClustersDefinitionsPath
-            path = defaultClustersDefinitionsPath
-
-        clusters = []
-        if os.path.exists(path):
-            for f in os.listdir(path):
-                fp = path + os.sep + f
-                (modPath, modFile) = os.path.split(fp)
-                modPath = os.path.abspath(modPath)
-                (modName, ext) = os.path.splitext(modFile)
-
-                if os.path.isfile(fp) and ext == '.py':
-                    mod = None
-                    cl = None
-                    try:
-                        if not modPath in sys.path:
-                            sys.path.insert(0, modPath)
-
-                        mod = __import__(modName, {}, {}, ['getCluster'])
-                        cl = mod.getCluster()
-                        #after load, check if cluster definition is correct
-                        cl.validate()
-                        clusters.append(cl)
-                    except AttributeError:
-                            logger.exception('')
-                            raise ClusterManagerException("Method getCluster " + \
-                                  "can't be found in " + \
-                                  "file: " + str(modFile))
-                    except ImportError:
-                        logger.exception('')
-    #---------------------------------------------------------------------------
     def run(self):
         '''
         Main jobs of programme. Has to be implemented.
         '''
-
-
-        cherrypy.quickstart(WebInterface()) #@UndefinedVariable
+        global cherrypy, currentDir, cherrypyConfig
+        cherrypy.tree.mount(WebInterface(), "/", cherrypyConfig)
+        cherrypy.config.update({'server.socket_host': '0.0.0.0',
+                            'server.socket_port': 8080,})
+        cherrypy.server.start()
         while True:
             time.sleep(30)
             logger.info("Hello everybody!")

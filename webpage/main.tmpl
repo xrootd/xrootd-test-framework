@@ -1,9 +1,63 @@
 <html>
-  <head><title>$title</title></head>
-    <body>
-        <table>
-              <tr><td>The message is: <b>$message</b>.</td></tr>
-                    <tr><td><i>Powered by cherrypy and cheetah.</td></tr>
-        </table>
+<head>
+<title>$title</title>
+<script type="text/javascript" src="webpage/js/jquery-1.6.2.min.js"></script>
+<script type="text/javascript" src="webpage/js/jquery-ui-1.8.16.custom.min.js"></script>
+<link rel="stylesheet" type="text/css" href="webpage/css/jquery.css">
+<script>
+\$(document).ready(function() {
+        
+    });
+</script>
+<style type="text/css">
+body {font-size:12px;}
+table, td {text-align:left;}
+table.desctab {margin-bottom:20px;}
+desctab th {text-align:left; font-weight:bold;}
+</style>
+</head>
+<body>
+<script>
+    \$(function() {
+        \$( "#accordion" ).accordion({
+            collapsible: true
+        });
+    });
+    </script>
+<p>XRootD Testing Framework</p>
+<h1>Clusters definitions</h1>
+<div class="clusters-list">
+<div id="accordion">
+    #if $clusters and len($clusters) > 0
+        #set $cli=1
+        #for $cluster in $clusters
+    	<h3><a href="#">${cluster.name}</a></h3>
+    	<div>
+            <table class="desctab">
+                <tr><th colspan="2">NETWORK</th></tr>
+                <tr><td><b>Name:</b></td><td>${cluster.network.name}</td></tr>
+            </table>
+            <table class="desctab" cellpadding="2" width="80%">
+                <tr><th colspan="2">MACHINES</th></tr>
+                #if $cluster.hosts and len($cluster.hosts)>0
+                    #set $hoi=1
+                    #for $host in $cluster.hosts
+                        <tr style="background-color:#d0d0d0;"><td><b>Name:</b></td><td>${host.name}</td>
+                        <td style="text-align:left;"><div style="cursor:pointer;color:#4E92A0;" onClick="\$('#host${cli}a${hoi}').toggle()">show/hide description</div></td></tr>
+                        
+                        #from cgi import escape
+                        <tr><td colspan="3">
+                            <div style="display:block;"><div style="display:none;" id="host${cli}a${hoi}"><%= escape(host.xmlDesc) %></div></div>
+                        </td></tr>
+                        #set $hoi += 1
+                    #end for
+                    #set $cli += 1
+                #end if
+            </table>
+    	</div>
+    	#end for
+    #end if
+</div>
+</div>
 </body>
 </html>

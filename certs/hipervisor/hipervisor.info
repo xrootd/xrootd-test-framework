@@ -1,0 +1,3 @@
+organization = CERN XrdTest
+cn = CERNXrdClient
+cert_signing_key

@@ -23,6 +23,11 @@ desctab th {text-align:left; font-weight:bold;}
             collapsible: true
         });
     });
+    \$(function() {
+        \$( "#accordion2" ).accordion({
+            collapsible: true
+        });
+    });
     </script>
 <p>XRootD Testing Framework</p>
 <h1>Clusters definitions</h1>
@@ -44,7 +49,6 @@ desctab th {text-align:left; font-weight:bold;}
                     #for $host in $cluster.hosts
                         <tr style="background-color:#d0d0d0;"><td><b>Name:</b></td><td>${host.name}</td>
                         <td style="text-align:left;"><div style="cursor:pointer;color:#4E92A0;" onClick="\$('#host${cli}a${hoi}').toggle()">show/hide description</div></td></tr>
-                        
                         #from cgi import escape
                         <tr><td colspan="3">
                             <div style="display:block;"><div style="display:none;" id="host${cli}a${hoi}"><%= escape(host.xmlDesc) %></div></div>
@@ -54,10 +58,19 @@ desctab th {text-align:left; font-weight:bold;}
                     #set $cli += 1
                 #end if
             </table>
-    	</div>
-    	#end for
+        </div>
+        #end for
     #end if
 </div>
+</div>
+<h1>Connected hipervisors</h1>
+<div id="accordion2">
+    #if $hipervisors and len($hipervisors) > 0
+        #for $hipervisor in $hipervisors.iteritems()
+        <h3><a>${hipervisor[0][0]} port ${hipervisor[0][1]}</a></h3>
+        <div></div>
+        #end for
+    #end if
 </div>
 </body>
 </html>

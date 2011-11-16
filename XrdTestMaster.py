@@ -20,6 +20,7 @@ import ConfigParser
 import Queue
 import SocketServer
 import cherrypy
+import copy
 import datetime
 import hashlib
 import logging
@@ -30,7 +31,6 @@ import ssl
 import sys
 import threading
 import time
-import copy
 #-------------------------------------------------------------------------------
 # Globals and configurations
 #-------------------------------------------------------------------------------
@@ -41,24 +41,9 @@ LOGGER.debug("Running script: " + __file__)
 
 currentDir = os.path.dirname(os.path.abspath(__file__))
 #Default daemon configuration
-defaultConfFile = '/etc/XrdTest/XrdTestMaster.conf'
+defaultConfFile = './XrdTestMaster.conf'
 defaultPidFile = '/var/run/XrdTestMaster.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
-webpageDir = currentDir + os.sep + 'webpage'
-defaultClustersDefinitionsPath = '/etc/XrdTest'
-cherrypyConfig = {'/webpage/js': {
-                     'tools.staticdir.on': True,
-                     'tools.staticdir.dir' : webpageDir + "/js",
-                     },
-                  '/webpage/css': {
-                     'tools.staticdir.on': True,
-                     'tools.staticdir.dir' : webpageDir + "/css",
-                     }
-                }
-
-ACCESS_PASSWORD = hashlib.sha224("tajne123").hexdigest()
-SERVER_IP, SERVER_PORT = "127.0.0.1", 20000
-
 #-------------------------------------------------------------------------------
 class InMsg(object):
     '''
@@ -167,18 +152,18 @@ class XrdTestMasterException(Exception):
 class WebInterface:
     #reference to testMaster
     testMaster = None
+    config = None
     #---------------------------------------------------------------------------
-    def __init__(self, test_master_ref):
+    def __init__(self, config, test_master_ref):
         self.testMaster = test_master_ref
+        self.config = config
     '''
     Provides web interface for the manager.
     '''
     def index(self):
-        global webpageDir
-        tplFile = webpageDir + os.sep + 'main.tmpl'
+        tplFile = self.config.get('webserver', 'webpage_dir') \
+                    + os.sep + 'main.tmpl'
         LOGGER.info(tplFile)
-
-        global currentDir
 
         tplVars = { 'title' : 'Xrd Test Master - Web Iface',
                     'message' : 'Welcome and begin the tests!',
@@ -211,9 +196,11 @@ class XrdTestMaster(Runnable):
     clustersList = []
     # Cluster statuses
     clustersStats = {}
+    #global configuration for master
+    config = None
     #---------------------------------------------------------------------------
-    def __init__(self):
-        pass
+    def __init__(self, config):
+        self.config = config
     #---------------------------------------------------------------------------
     def handleClusterStart(self, clusterName):
         clusterFound = False
@@ -274,7 +261,8 @@ class XrdTestMaster(Runnable):
         '''
         global cherrypy, currentDir, cherrypyConfig
 
-        server = ThreadedTCPServer((SERVER_IP, SERVER_PORT),
+        server = ThreadedTCPServer((self.config.get('server', 'ip'), \
+                                    self.config.getint('server', 'port')),
                            ThreadedTCPRequestHandler)
         server.testMaster = self
         server.hypervisors = self.hypervisors
@@ -287,9 +275,23 @@ class XrdTestMaster(Runnable):
         server_thread = threading.Thread(target=server.serve_forever)
         server_thread.start()
 
-        cherrypy.tree.mount(WebInterface(self), "/", cherrypyConfig)
+        cherrypyCfg = {'/webpage/js': {
+                     'tools.staticdir.on': True,
+                     'tools.staticdir.dir' : \
+                     self.config.get('webserver', 'webpage_dir') \
+                     + "/js",
+                     },
+                  '/webpage/css': {
+                     'tools.staticdir.on': True,
+                     'tools.staticdir.dir' : \
+                     self.config.get('webserver', 'webpage_dir') \
+                     + "/css",
+                     }
+                }
+
+        cherrypy.tree.mount(WebInterface(self, self.config), "/", cherrypyCfg)
         cherrypy.config.update({'server.socket_host': '0.0.0.0',
-                            'server.socket_port': 8080, })
+                            'server.socket_port': 8080,})
         cherrypy.server.start()
 
         self.clustersList = loadClustersDefs(currentDir + "/clusters")
@@ -328,20 +330,21 @@ def main():
     #---------------------------------------------------------------------------
     # read the config file
     #---------------------------------------------------------------------------
-    if options.configFile:
-        global defaultConfFile
-        LOGGER.info("Loading config file: %s" % options.configFile)
-        try:
-            confFile = options.configFile
-            if not os.path.exists(confFile):
-                confFile = defaultConfFile
-            config = readConfig(confFile)
-            isConfigFileRead = True
-        except (RuntimeError, ValueError, IOError), e:
-            LOGGER.exception(e)
-            sys.exit(1)
+    global defaultConfFile
+    LOGGER.info("Loading config file: %s" % options.configFile)
+    try:
+        confFile = ''
+        if options.configFile:
+            confFile = options.confFile
+        if not os.path.exists(confFile):
+            confFile = defaultConfFile
+        config = readConfig(confFile)
+        isConfigFileRead = True
+    except (RuntimeError, ValueError, IOError), e:
+        LOGGER.exception(e)
+        sys.exit(1)
 
-    testMaster = XrdTestMaster()
+    testMaster = XrdTestMaster(config)
     #---------------------------------------------------------------------------
     # run the daemon
     #---------------------------------------------------------------------------
@@ -380,4 +383,3 @@ def main():
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
     main()
-

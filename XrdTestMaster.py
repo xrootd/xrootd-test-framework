@@ -8,7 +8,7 @@
 # Imports
 #-------------------------------------------------------------------------------
 from Cheetah.Template import Template
-from ClusterManager import ClusterManagerException, loadClustersDefs
+from ClusterManager import ClusterManagerException, loadClustersDefs, Status
 from Daemon import Runnable, Daemon, DaemonException, Runnable, Daemon, \
     DaemonException, readConfig
 from SocketUtils import FixedSockStream, SocketDisconnected, XrdMessage, \
@@ -31,6 +31,7 @@ import ssl
 import sys
 import threading
 import time
+from TestUtils import loadTestSuitsDefs, loadTestCasesDefs
 #-------------------------------------------------------------------------------
 # Globals and configurations
 #-------------------------------------------------------------------------------
@@ -45,7 +46,7 @@ defaultConfFile = './XrdTestMaster.conf'
 defaultPidFile = '/var/run/XrdTestMaster.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
 #-------------------------------------------------------------------------------
-class InMsg(object):
+class MasterEvent(object):
     '''
     The message incoming to XrdTestMaster. May be either the event e.g.
     hypervisor connection or normal message containing data.
@@ -53,22 +54,29 @@ class InMsg(object):
     PRIO_NORMAL = 9
     PRIO_IMPORTANT = 1
 
-    MSG_DATA = 1
-    MSG_HYPERV_CONNECTED = 2
-    MSG_HYPERV_DISCONNECTED = 3
+    M_UNKNOWN = 1
+    M_CLIENT_CONNECTED = 2
+    M_CLIENT_DISCONNECTED = 4
+    M_HYPERV_MSG = 8
+    M_SLAVE_MSG = 16
 
-    type = MSG_DATA
+    type = M_UNKNOWN
     data = ''
-
-    def __init__(self, msg_type, msg_data):
-        self.type = msg_type
-        self.data = msg_data
+    sender = None
+    #---------------------------------------------------------------------------
+    def __init__(self, e_type, e_data, msg_sender = None):
+        self.type = e_type
+        self.data = e_data
+        self.sender = msg_sender
 
 #-------------------------------------------------------------------------------
 class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
     """
     Client's request handler.
     """
+    C_SLAVE = "slave"
+    C_HYPERV = "hypervisor"
+    clientType = ""
     #---------------------------------------------------------------------------
     def setup(self):
         '''
@@ -77,51 +85,65 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         self.stopEvent = threading.Event()
         self.stopEvent.clear()
         self.sockStream = None
+        self.clientType=ThreadedTCPRequestHandler.C_SLAVE
     #---------------------------------------------------------------------------
-    def authHipervisor(self):
+    def authClient(self):
         '''
         Check if hypervisor is authentic
         '''
         msg = self.sockStream.recv()
-        LOGGER.info("Received from: " + str(self.client_address) + \
-                     " msg: " + str(msg))
-
-        if msg == ACCESS_PASSWORD:
+        if msg == self.server.config.get('server', 'connection_passwd'):
             self.sockStream.send('PASSWD_OK')
         else:
             self.sockStream.send('PASSWD_WRONG')
             LOGGER.info("Incoming hypervisor connection rejected. " + \
                         "It didn't provide correct password")
+            return
+        return True
     #---------------------------------------------------------------------------
     def handle(self):
         '''
         Handle new incoming connection and keep it to receive messages.
         '''
-        global LOGGER, ACCESS_PASSWORD, currentDir
+        global LOGGER
 
         self.sockStream = ssl.wrap_socket(self.request, server_side=True,
                                           certfile=\
-                                         currentDir + '/certs/master/mastercert.pem',
+                                self.server.config.get('security', 'certfile'),
                                           keyfile=\
-                                         currentDir + '/certs/master/masterkey.pem',
+                                self.server.config.get('security', 'keyfile'),
                                           ssl_version=ssl.PROTOCOL_TLSv1)
         self.sockStream = FixedSockStream(self.sockStream)
 
-        self.authHipervisor()
-        inMsg = InMsg(InMsg.MSG_HYPERV_CONNECTED,
-                      (self.client_address, self.sockStream))
-        self.server.hypervRecvQueue.put((InMsg.PRIO_IMPORTANT, inMsg))
+        self.authClient()
+        (clientType, clientHostname) = self.sockStream.recv()
+
+        LOGGER.info(clientType + " starting connection...")
+
+        self.clientType = ThreadedTCPRequestHandler.C_SLAVE
+        if clientType == ThreadedTCPRequestHandler.C_HYPERV:
+            self.clientType = ThreadedTCPRequestHandler.C_HYPERV
+
+        evt = MasterEvent(MasterEvent.M_CLIENT_CONNECTED, (self.clientType,
+                            self.client_address, self.sockStream,\
+                            clientHostname))
+
+        self.server.recvQueue.put((MasterEvent.PRIO_IMPORTANT, evt))
 
         while not self.stopEvent.isSet():
             try:
                 msg = self.sockStream.recv()
-                inMsg = InMsg(InMsg.MSG_DATA, (self.client_address, msg))
-                self.server.testMaster.hypervRecvQueue\
-                .put((InMsg.PRIO_NORMAL, inMsg))
+                evtType = MasterEvent.M_SLAVE_MSG
+                if self.clientType == self.C_HYPERV:
+                    evtType = MasterEvent.M_HYPERV_MSG
+
+                LOGGER.info("Received message, enqueuing evt: " + str(evtType))
+                evt = MasterEvent(evtType, msg, self.client_address)
+                self.server.recvQueue.put((MasterEvent.PRIO_NORMAL, evt))
             except SocketDisconnected, e:
-                inMsg = InMsg(InMsg.MSG_HYPERV_DISCONNECTED, \
-                              self.client_address)
-                self.server.hypervRecvQueue.put((InMsg.PRIO_IMPORTANT, inMsg))
+                evt = MasterEvent(MasterEvent.M_CLIENT_DISCONNECTED,\
+                                  (self.clientType, self.client_address))
+                self.server.recvQueue.put((MasterEvent.PRIO_IMPORTANT, evt))
                 break
 
         LOGGER.info("SERVER: Closing %s" % (threading.currentThread()))
@@ -167,9 +189,11 @@ class WebInterface:
 
         tplVars = { 'title' : 'Xrd Test Master - Web Iface',
                     'message' : 'Welcome and begin the tests!',
-                    'clusters' : self.testMaster.clustersList,
-                    'clustersStats' : self.testMaster.clustersStats,
-                    'hypervisors': self.testMaster.hypervisors }
+                    'clusters' : self.testMaster.clusters,
+                    'hypervisors': self.testMaster.hypervisors,
+                    'slaves': self.testMaster.slaves,
+                    'hostname': socket.gethostname(), 
+                    'HTTPport' : '8080'}
 
         tpl = Template (file=tplFile, searchList=[tplVars])
         return tpl.respond()
@@ -190,67 +214,87 @@ class XrdTestMaster(Runnable):
     # e.g. list: { client_address : 
     #              (socket_obj, bin_flag conn_status), }
     hypervisors = {}
+    # The list of connected slaves
+    # e.g. list: { client_address : 
+    #              (socket_obj, bin_flag conn_status), }
+    slaves = {}
     # Locking queue with messages from hypervisors
-    hypervRecvQueue = PriorityBlockingQueue()
-    # Cluster definitions loaded from a file
-    clustersList = []
-    # Cluster statuses
-    clustersStats = {}
+    recvQueue = PriorityBlockingQueue()
+    # Cluster definitions loaded from a file, name as a key
+    clusters = {}
     #global configuration for master
     config = None
+
+    C_SLAVE = 'slave'
+    C_HYPERV = 'hypervisor'
+
     #---------------------------------------------------------------------------
     def __init__(self, config):
         self.config = config
     #---------------------------------------------------------------------------
     def handleClusterStart(self, clusterName):
         clusterFound = False
-        for clu in self.clustersList:
-            if clu.name == clusterName:
+        if self.clusters.has_key(clusterName):
+            if self.clusters[clusterName].name == clusterName:
                 clusterFound = True
                 #choose one Hipervisor arbitrarily
                 if len(self.hypervisors):
-                    msg = XrdMessage(XrdMessage.MSG_START_CLUSTER)
-                    msg.clusterDef = clu
+                    msg = XrdMessage(XrdMessage.M_START_CLUSTER)
+                    msg.clusterDef = self.clusters[clusterName]
 
                     addr = None
                     for (k, v) in self.hypervisors.iteritems():
                         addr = k
                         break
                     self.sendMsg(addr, msg)
+                    self.clusters[clusterName].status = \
+                        Status("Cluster def sent to hypervisor: " + \
+                               str(addr))
+                    LOGGER.debug("Cluster def sent to hypervisor " + \
+                                 str(addr))
                 else:
-                    LOGGER.error("No hipervisor to run the cluster on")
+                    LOGGER.error("No hypervisor to run the cluster on")
+                    self.clusters[clusterName].status = \
+                    Status(Status.S_IDLE_NO_PLACE)
         if not clusterFound:
             LOGGER.error("No cluster with name " + str(clusterName) + " found")
     #---------------------------------------------------------------------------
-    def handleHipervDisconnected(self, client_addr):
-        #self.hypervisors
+    def handleClientDisconnected(self, client_type, client_addr):
+        clients = self.slaves
+        if client_type == self.C_HYPERV:
+            clients = self.hypervisors
+
         try:
-            if self.hypervisors[client_addr][0]:
-                self.hypervisors[client_addr][0].close()
+            if clients[client_addr][0]:
+                clients[client_addr][0].close()
         except socket.error, e:
             LOGGER.exception(e)
-            pass
-        del self.hypervisors[client_addr]
-        LOGGER.info("Disconnected: " + str(client_addr))
-        LOGGER.info("Supervisors list: " + str(self.hypervisors))
+
+        del clients[client_addr]
+        LOGGER.info("Disconnected " + str(client_type) + ":" + str(client_addr))
     #---------------------------------------------------------------------------
-    def handleHipervConnected(self, client_addr, sock_obj):
-        LOGGER.error("Client addr: " + str(client_addr))
-        self.hypervisors[client_addr] = (sock_obj, 1)
-        LOGGER.info("Supervisors list: " + str(self.hypervisors))
+    def handleClientConnected(self, client_type, client_addr, sock_obj,\
+                               client_hostname):
+        clients = self.slaves
+        if client_type == self.C_HYPERV:
+            clients = self.hypervisors
+
+        LOGGER.info("Client addr: " + str(client_addr))
+        clients[client_addr] = (sock_obj, client_hostname)
+        LOGGER.info(str(client_type) + "s: " + str(clients))
     #---------------------------------------------------------------------------
-    def sendMsg(self, receiverAddr, msg):
+    def sendMsg(self, receiver_addr, msg):
         '''
         Send message to one of the hypervisors by addr
         @param receiverAddr: addr of hipervisor (IP, port) tuple
         @param msg: message to be sent
         '''
-        if self.hypervisors.has_key(receiverAddr):
+        if self.hypervisors.has_key(receiver_addr):
             try:
                 LOGGER.debug('Sending: ' + str(msg.name) + ' to ' \
-                             + str(receiverAddr))
-                if self.hypervisors[receiverAddr][0]:
-                    self.hypervisors[receiverAddr][0].send(msg)
+                             + str(receiver_addr))
+                if self.hypervisors[receiver_addr][0]:
+                    self.hypervisors[receiver_addr][0].send(msg)
             except SocketDisconnected, e:
                 LOGGER.info("Connection to XrdTestHipervisor closed.")
         return
@@ -265,8 +309,8 @@ class XrdTestMaster(Runnable):
                                     self.config.getint('server', 'port')),
                            ThreadedTCPRequestHandler)
         server.testMaster = self
-        server.hypervisors = self.hypervisors
-        server.hypervRecvQueue = self.hypervRecvQueue
+        server.config = self.config
+        server.recvQueue = self.recvQueue
 
         ip, port = server.server_address
         LOGGER.info("TCP Hipervisor server running " + str(ip) + " " + \
@@ -289,28 +333,51 @@ class XrdTestMaster(Runnable):
                      }
                 }
 
-        cherrypy.tree.mount(WebInterface(self, self.config), "/", cherrypyCfg)
+        cherrypy.tree.mount(WebInterface(self.config, self), "/", cherrypyCfg)
         cherrypy.config.update({'server.socket_host': '0.0.0.0',
-                            'server.socket_port': 8080,})
+                            'server.socket_port': 8080, })
         cherrypy.server.start()
 
-        self.clustersList = loadClustersDefs(currentDir + "/clusters")
+        clusters = loadClustersDefs(currentDir + "/clusters")
+        for clu in clusters:
+            self.clusters[clu.name] = clu
+            clu.status = Status(Status.S_IDLE)
+            if len(clu.hosts):
+                for h in clu.hosts:
+                    h.status = Status(Status.S_IDLE)
+
+        testSuits = loadTestSuitsDefs(currentDir + "/testSuits")
+
+        testCases = loadTestCasesDefs(currentDir + "/testCases")
 
         while True:
-            inMsg = self.hypervRecvQueue.get()
-            LOGGER.error(str(inMsg))
-            if inMsg.type == InMsg.MSG_DATA:
-                addrMsg = inMsg.data
-                if addrMsg:
-                    msg = addrMsg[1]
-                    LOGGER.debug("Received from " + str(addrMsg[0]) \
-                                 + " msg: " + msg.name)
-            elif inMsg.type == InMsg.MSG_HYPERV_CONNECTED:
-                self.handleHipervConnected(inMsg.data[0], inMsg.data[1],)
-            elif inMsg.type == InMsg.MSG_HYPERV_DISCONNECTED:
-                self.handleHipervDisconnected(inMsg.data)
+            evt = self.recvQueue.get()
+            if evt.type == MasterEvent.M_UNKNOWN:
+                msg = evt.data
+                LOGGER.debug("Received from " + str(msg.sender) \
+                             + " msg: " + msg.name)
+            elif evt.type == MasterEvent.M_CLIENT_CONNECTED:
+                self.handleClientConnected(evt.data[0], evt.data[1], \
+                                           evt.data[2], evt.data[3])
+            elif evt.type == MasterEvent.M_CLIENT_DISCONNECTED:
+                self.handleClientDisconnected(evt.data[0], evt.data[1])
+            elif evt.type == MasterEvent.M_HYPERV_MSG:
+                msg = evt.data
+                if msg.name == XrdMessage.M_CLUSTER_STATUS:
+                    LOGGER.error(msg.name)
+                    if self.clusters.has_key(msg.clusterName):
+                        self.clusters[msg.clusterName].status = \
+                        Status(msg.status)
+                        LOGGER.info("Cluster status received [" + \
+                                                     msg.clusterName + "] " + \
+                                                     str(msg.status))
+                    else:
+                        raise XrdTestMasterException("Unknown cluster " + \
+                                                     "status recvd: " + \
+                                                     msg.clusterName)
             else:
-                raise XrdTestMasterException("Unknown incoming msg type")
+                raise XrdTestMasterException("Unknown incoming evt type " + \
+                                             str(evt.type))
 #-------------------------------------------------------------------------------
 def main():
     '''

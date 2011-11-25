@@ -1,3 +1,4 @@
+from ClusterManager import Status, ClusterManagerException
 from Daemon import Daemon, readConfig, DaemonException, Runnable
 from SocketUtils import FixedSockStream, XrdMessage, SocketDisconnected
 from optparse import OptionParser
@@ -12,6 +13,7 @@ import ssl
 import sys
 import threading
 import time
+from ClusterManager import ClusterManager
 
 logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] ' + \
                     '%(message)s', level=logging.DEBUG)
@@ -20,19 +22,15 @@ LOGGER.debug("Running script: " + __file__)
 currentDir = os.path.dirname(os.path.abspath(__file__))
 
 #Default daemon configuration
-defaultConfFile = '/etc/XrdTest/XrdTestHipervisor.conf'
-defaultPidFile = '/var/run/XrdTestHipervisor.pid'
-defaultLogFile = '/var/log/XrdTest/XrdTestHipervisor.log'
+defaultConfFile = './XrdTestSlave.conf'
+defaultPidFile = '/var/run/XrdTestSlave.pid'
+defaultLogFile = '/var/log/XrdTest/XrdTestSlave.log'
 
-#@todo: w configu zapisna jest lokalizacja qemu emulator
-ACCESS_PASSWORD = hashlib.sha224("tajne123").hexdigest()
-SERVER_IP, SERVER_PORT = '127.0.0.1', 20000
-
+#-------------------------------------------------------------------------------
 class TCPReceiveThread(object):
     #---------------------------------------------------------------------------
     def __init__(self, sock, recvQueue):
         '''
-        
         @param sock:
         @param recvQueue:
         '''
@@ -54,27 +52,63 @@ class TCPReceiveThread(object):
                 LOGGER.info("Connection to XrdTestMaster closed.")
                 break
 #-------------------------------------------------------------------------------
-class ExecutorThread(object):
+class XrdTestSlave(Runnable):
     '''
-    Thread retrieving incoming command from recvQueue, executing the job and 
-    sending response to the master.
+    Test Slave main executable class.
     '''
+    sockStream = None
+    recvQueue = Queue.Queue()
+    config = None
     #---------------------------------------------------------------------------
-    def __init__(self, sock, recvQueue):
-        self.sockStream = sock
+    def __init__(self, config):
+        self.sockStream = None
+        #Blocking queue of commands received from XrdTestMaster
+        self.recvQueue = Queue.Queue()
+        self.config = config
         self.stopEvent = threading.Event()
-        self.stopEvent.clear()
-        self.recvQueue = recvQueue
     #---------------------------------------------------------------------------
-    def close(self):
-        self.stopEvent.set()
-    #---------------------------------------------------------------------------
-    def handleStartCluster(self, msg):
-        global hipervConfig
-        cluster = msg.clusterDef
+    def connectMaster(self, masterIp, masterPort):
+        global currentDir
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.sockStream = ssl.wrap_socket(sock, server_side=False,
+                                        certfile=\
+                                        self.config.get('security', 'certfile'),
+                                        keyfile=\
+                                        self.config.get('security', 'keyfile'),
+                                        ssl_version=ssl.PROTOCOL_TLSv1)
+            #self.sockStream = sock
+            self.sockStream.connect((masterIp, masterPort))
+        except socket.error, e:
+            LOGGER.info("Connection with master could not be established.")
+            LOGGER.exception(e)
+            return None
+        else:
+            LOGGER.debug("Connected to master.")
+        try:
+            self.sockStream = FixedSockStream(self.sockStream)
 
+            #authenticate in master
+            self.sockStream.send(\
+                self.config.get('test_master', 'connection_passwd'))
+            msg = self.sockStream.recv()
+            LOGGER.info('Received msg: ' + msg)
+            if msg == "PASSWD_OK":
+                LOGGER.info("Connected and authenticated to XrdTestMaster " + \
+                            "successfully. Waiting for commands " + \
+                            "from the master.")
+            else: 
+                LOGGER.info("Password authentication in master failed.")
+                return None
+        except socket.error, e:
+            LOGGER.exception(e)
+            return None
+
+        self.sockStream.send(("slave", socket.gethostname()))
+
+        return self.sockStream
     #---------------------------------------------------------------------------
-    def run(self):
+    def recvLoop(self):
         global LOGGER
         while not self.stopEvent.isSet():
             try:
@@ -83,11 +117,17 @@ class ExecutorThread(object):
                 msg = addrMsg
                 LOGGER.info("Received msg: " + str(msg.name))
 
-                resp = XrdMessage(XrdMessage.MSG_UNKNOWN)
-                if msg.name is XrdMessage.MSG_HELLO:
-                    resp = XrdMessage(XrdMessage.MSG_HELLO)
-                elif msg.name is XrdMessage.MSG_START_CLUSTER:
-                    self.handleStartCluster(msg)
+                resp = XrdMessage(XrdMessage.M_UNKNOWN)
+                if msg.name is XrdMessage.M_HELLO:
+                    resp = XrdMessage(XrdMessage.M_HELLO)
+                elif msg.name == XrdMessage.M_START_CLUSTER:
+                    res = self.handleStartCluster(msg)
+                    resp.name = XrdMessage.M_CLUSTER_STATUS
+                    resp.clusterName = msg.clusterDef.name
+                    if res:
+                        resp.status = "Running."
+                    else:
+                        resp.status = "Not started. Error."
                 else:
                     LOGGER.info("Received unknown message: " + str(msg.name))
 
@@ -96,54 +136,18 @@ class ExecutorThread(object):
             except SocketDisconnected, e:
                 LOGGER.info("Connection to XrdTestMaster closed.")
                 break
-#-------------------------------------------------------------------------------
-class XrdTestHipervisor(Runnable):
-    #---------------------------------------------------------------------------
-    def __init__(self):
-        self.sockStream = None
-        #Blocking queue of commands received from XrdTestMaster
-        self.recvQueue = Queue.Queue()
-    #---------------------------------------------------------------------------
-    def connectMaster(self, masterIp, masterPort):
-        global currentDir, ACCESS_PASSWORD
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            self.sockStream = ssl.wrap_socket(sock, server_side=False,
-                                         certfile=\
-                                         currentDir + '/certs/hipervisor/hipervisorcert.pem',
-                                         keyfile=\
-                                         currentDir + '/certs/hipervisor/hipervisorkey.pem',
-                                         ssl_version=ssl.PROTOCOL_TLSv1)
-            #self.sockStream = sock
-            self.sockStream.connect((masterIp, masterPort))
-            self.sockStream = FixedSockStream(self.sockStream)
-
-            #authenticate in master
-            self.sockStream.send(ACCESS_PASSWORD)
-            msg = self.sockStream.recv()
-            LOGGER.info('Received msg: ' + msg)
-            if msg == "PASSWD_OK":
-                LOGGER.info("Connected to XrdTestMaster successfull." + \
-                            " Waiting for commands from the master.")
-
-            return self.sockStream
-        except socket.error, e:
-            LOGGER.exception(e)
-        else:
-            LOGGER.info("No exceptions occured")
-
-        return self.sockStream
     #---------------------------------------------------------------------------
     def run(self):
-        self.connectMaster(SERVER_IP, SERVER_PORT)
+        sock = self.connectMaster(self.config.get('test_master', 'ip'),
+                           self.config.getint('test_master', 'port'))
+        if not sock:
+            return
 
         tcpReceiveTh = TCPReceiveThread(self.sockStream, self.recvQueue)
         thTcpReceive = threading.Thread(target=tcpReceiveTh.run)
         thTcpReceive.start()
 
-        executorTh = ExecutorThread(self.sockStream, self.recvQueue)
-        thExecutor = threading.Thread(target=executorTh.run)
-        thExecutor.start()
+        self.recvLoop()
 
 #-------------------------------------------------------------------------------
 def main():
@@ -161,22 +165,24 @@ def main():
 
     isConfigFileRead = False
     config = ConfigParser.ConfigParser()
-    #--------------------------------------------------------------------------
+    #---------------------------------------------------------------------------
     # read the config file
-    #--------------------------------------------------------------------------
-    if options.configFile:
-        global defaultConfFile
-        LOGGER.info("Loading config file: %s" % options.configFile)
-        try:
+    #---------------------------------------------------------------------------
+    global defaultConfFile
+    LOGGER.info("Loading config file: %s" % options.configFile)
+    try:
+        confFile = ''
+        if options.configFile:
             confFile = options.configFile
-            if not os.path.exists(confFile):
-                confFile = defaultConfFile
-            config = readConfig(confFile)
-            isConfigFileRead = True
-        except (RuntimeError, ValueError, IOError), e:
-            LOGGER.exception()
-            sys.exit(1)
-    testHipervisor = XrdTestHipervisor()
+        if not os.path.exists(confFile):
+            confFile = defaultConfFile
+        config = readConfig(confFile)
+        isConfigFileRead = True
+    except (RuntimeError, ValueError, IOError), e:
+        LOGGER.exception()
+        sys.exit(1)
+
+    testSlave = XrdTestSlave(config)
     #--------------------------------------------------------------------------
     # run the daemon
     #--------------------------------------------------------------------------
@@ -189,10 +195,10 @@ def main():
             pidFile = config.get('daemon', 'pid_file_path')
             logFile = config.get('daemon', 'log_file_path')
 
-        dm = Daemon("XrdTestHipervisor.py", pidFile, logFile)
+        dm = Daemon("XrdTestSlave.py", pidFile, logFile)
         try:
             if options.backgroundMode == 'start':
-                dm.start(testHipervisor)
+                dm.start(testSlave)
             elif options.backgroundMode == 'stop':
                 dm.stop()
             elif options.backgroundMode == 'check':
@@ -209,7 +215,7 @@ def main():
     # run test master in standard mode. Used for debugging
     #--------------------------------------------------------------------------
     if not options.backgroundMode:
-        testHipervisor.run()
+        testSlave.run()
 #-------------------------------------------------------------------------------
 # Start place
 #-------------------------------------------------------------------------------

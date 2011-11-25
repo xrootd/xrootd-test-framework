@@ -1,3 +1,4 @@
+from ClusterManager import Status, ClusterManagerException
 from Daemon import Daemon, readConfig, DaemonException, Runnable
 from SocketUtils import FixedSockStream, XrdMessage, SocketDisconnected
 from optparse import OptionParser
@@ -12,6 +13,7 @@ import ssl
 import sys
 import threading
 import time
+from ClusterManager import ClusterManager
 
 logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] ' + \
                     '%(message)s', level=logging.DEBUG)
@@ -21,8 +23,8 @@ currentDir = os.path.dirname(os.path.abspath(__file__))
 
 #Default daemon configuration
 defaultConfFile = './XrdTestHypervisor.conf'
-defaultPidFile = '/var/run/XrdTestHipervisor.pid'
-defaultLogFile = '/var/log/XrdTest/XrdTestHipervisor.log'
+defaultPidFile = '/var/run/XrdTestHypervisor.pid'
+defaultLogFile = '/var/log/XrdTest/XrdTestHypervisor.log'
 
 #-------------------------------------------------------------------------------
 class TCPReceiveThread(object):
@@ -50,29 +52,9 @@ class TCPReceiveThread(object):
                 LOGGER.info("Connection to XrdTestMaster closed.")
                 break
 #-------------------------------------------------------------------------------
-class ExecutorThread(object):
+class XrdTestHypervisor(Runnable):
     '''
-    Thread retrieving incoming command from recvQueue, executing the job and 
-    sending response to the master.
-    '''
-    #---------------------------------------------------------------------------
-    def __init__(self, config, sock, recvQueue):
-        self.sockStream = sock
-        self.stopEvent = threading.Event()
-        self.stopEvent.clear()
-        self.recvQueue = recvQueue
-        self.config = config
-    #---------------------------------------------------------------------------
-    def close(self):
-        self.stopEvent.set()
-    #---------------------------------------------------------------------------
-    def handleStartCluster(self, msg):
-        cluster = msg.clusterDef
-
-#-------------------------------------------------------------------------------
-class XrdTestHipervisor(Runnable):
-    '''
-    Test Hipervisor main executable class.
+    Test Hypervisor main executable class.
     '''
     sockStream = None
     recvQueue = Queue.Queue()
@@ -102,26 +84,80 @@ class XrdTestHipervisor(Runnable):
             LOGGER.exception(e)
             return None
         else:
-            LOGGER.info("No exceptions occured")
+            LOGGER.debug("Connected to master.")
         try:
+            #wrap sockStream into fixed socket implementation
             self.sockStream = FixedSockStream(self.sockStream)
 
             #authenticate in master
             self.sockStream.send(\
-                self.config.get('test_master', 'connection_passwd'))
+                        self.config.get('test_master', 'connection_passwd'))
             msg = self.sockStream.recv()
             LOGGER.info('Received msg: ' + msg)
+            
             if msg == "PASSWD_OK":
-                LOGGER.info("Connected to XrdTestMaster successfull." + \
-                            " Waiting for commands from the master.")
+                LOGGER.info("Connected and authenticated to XrdTestMaster " + \
+                            "successfully. Waiting for commands " + \
+                            "from the master.")
+            else:
+                LOGGER.info("Password authentication in master failed.")
+                return None
+
+            self.sockStream.send(("hypervisor", socket.gethostname()))
 
             return self.sockStream
         except socket.error, e:
             LOGGER.exception(e)
+            return None
         else:
-            LOGGER.info("No exceptions occured")
+            LOGGER.debug("Connected to master")
 
         return self.sockStream
+    #---------------------------------------------------------------------------
+    def handleStartCluster(self, msg):
+
+        resp = XrdMessage(XrdMessage.M_CLUSTER_STATUS)
+        resp.clusterName = msg.clusterDef.name
+
+        cluster = msg.clusterDef
+        cluster.setEmulatorPath(self.config.get('virtual_machines', 
+                                                'emulator_path'))
+        res, msg = cluster.validateDynamic()
+        if res:
+            try:
+                LOGGER.info("Cluster definition semantically correct. " + \
+                            "Starting cluster.")
+                cm = ClusterManager()
+                cm.connect("qemu:///system")
+
+                if cluster.network:
+                    act = cm.networkIsActive(cluster.network)
+                    if act:
+                        LOGGER.info("Network " + cluster.network.name + \
+                                    " isActive()")
+                    else:
+                        cm.createNetwork(cluster.network)
+
+                for h in cluster.hosts:
+                    act = cm.hostIsActive(h)
+                    if act:
+                        LOGGER.info("Host " + h.name + " isActive(): " \
+                                    + str(act))
+                    else:
+                        cm.addHost(h)
+
+                cm.disconnect()
+            except ClusterManagerException, e:
+                LOGGER.exception(e)
+                resp.status = "Error occured"
+
+            resp.status = "Running"
+        else:
+            LOGGER.info("Cluster definition semantically incorrect. " + \
+                        " Cannot start the cluster due to: " + str(msg))
+            resp.status = "Not started. Error."
+
+        return resp
     #---------------------------------------------------------------------------
     def recvLoop(self):
         global LOGGER
@@ -132,11 +168,11 @@ class XrdTestHipervisor(Runnable):
                 msg = addrMsg
                 LOGGER.info("Received msg: " + str(msg.name))
 
-                resp = XrdMessage(XrdMessage.MSG_UNKNOWN)
-                if msg.name is XrdMessage.MSG_HELLO:
-                    resp = XrdMessage(XrdMessage.MSG_HELLO)
-                elif msg.name is XrdMessage.MSG_START_CLUSTER:
-                    self.handleStartCluster(msg)
+                resp = XrdMessage(XrdMessage.M_UNKNOWN)
+                if msg.name is XrdMessage.M_HELLO:
+                    resp = XrdMessage(XrdMessage.M_HELLO)
+                elif msg.name == XrdMessage.M_START_CLUSTER:
+                    resp = self.handleStartCluster(msg)
                 else:
                     LOGGER.info("Received unknown message: " + str(msg.name))
 
@@ -147,7 +183,7 @@ class XrdTestHipervisor(Runnable):
                 break
     #---------------------------------------------------------------------------
     def run(self):
-        sock = self.connectMaster(self.config.get('test_master', 'ip'), 
+        sock = self.connectMaster(self.config.get('test_master', 'ip'),
                            self.config.getint('test_master', 'port'))
         if not sock:
             return
@@ -191,7 +227,7 @@ def main():
         LOGGER.exception()
         sys.exit(1)
 
-    testHipervisor = XrdTestHipervisor(config)
+    testHypervisor = XrdTestHypervisor(config)
     #--------------------------------------------------------------------------
     # run the daemon
     #--------------------------------------------------------------------------
@@ -204,10 +240,10 @@ def main():
             pidFile = config.get('daemon', 'pid_file_path')
             logFile = config.get('daemon', 'log_file_path')
 
-        dm = Daemon("XrdTestHipervisor.py", pidFile, logFile)
+        dm = Daemon("XrdTestHypervisor.py", pidFile, logFile)
         try:
             if options.backgroundMode == 'start':
-                dm.start(testHipervisor)
+                dm.start(testHypervisor)
             elif options.backgroundMode == 'stop':
                 dm.stop()
             elif options.backgroundMode == 'check':
@@ -224,9 +260,10 @@ def main():
     # run test master in standard mode. Used for debugging
     #--------------------------------------------------------------------------
     if not options.backgroundMode:
-        testHipervisor.run()
+        testHypervisor.run()
 #-------------------------------------------------------------------------------
 # Start place
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
     main()
+

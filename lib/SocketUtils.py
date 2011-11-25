@@ -1,3 +1,4 @@
+from ClusterManager import Status
 from heapq import heappush, heappop
 from string import zfill
 from threading import Condition
@@ -5,12 +6,11 @@ import logging
 import pickle
 import socket
 import threading
-
+#------------------------------------------------------------------------------ 
 logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] ' + \
                     '%(message)s', level=logging.DEBUG)
 LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
-
 #-------------------------------------------------------------------------------
 class PriorityBlockingQueue(object):
     '''
@@ -20,7 +20,7 @@ class PriorityBlockingQueue(object):
     '''
     h = []
     sectLock = Condition()
-#-------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------
     def __init__(self):
         pass
     #---------------------------------------------------------------------------
@@ -41,7 +41,6 @@ class PriorityBlockingQueue(object):
         Retrieves tuple element (priority, data) 
         with the lowest priority from the queue.
         '''
-
         self.sectLock.acquire()
 
         while len(self.h) <= 0:
@@ -60,12 +59,14 @@ class PriorityBlockingQueue(object):
 #-------------------------------------------------------------------------------
 class XrdMessage(object):
     '''
-    Message passed between Xrd Testing Framework nodes.
+    Network message passed between Xrd Testing Framework nodes.
     '''
-    MSG_HELLO = 'hello'
-    MSG_START_CLUSTER = 'start_cluster'
-    MSG_UNKNOWN = 'unknown'
-
+    M_HELLO = 'hello'
+    M_START_CLUSTER = 'start_cluster'
+    M_CLUSTER_STATUS = 'cluster_status'
+    M_UNKNOWN = 'unknown'
+    
+    name = M_UNKNOWN
     #---------------------------------------------------------------------------
     def __init__(self, name):
         '''

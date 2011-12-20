@@ -1,5 +1,6 @@
 <html>
 <head>
+<meta http-equiv="refresh" content="url=http://${hostname}:${HTTPport}">
 <title>$title</title>
 <script type="text/javascript" src="webpage/js/jquery-1.6.2.min.js"></script>
 <script type="text/javascript" src="webpage/js/jquery-ui-1.8.16.custom.min.js"></script>
@@ -11,48 +12,83 @@
 </script>
 <style type="text/css">
 body {font-size:12px;}
-table, td {text-align:left;}
-table.desctab {margin-bottom:20px;}
-desctab th {text-align:left; font-weight:bold;}
+
+table.desctab_big th {text-align:center; font-weight:bold; padding:4px; 
+            background-color:#d0d0d0;}
+table.desctab_big td {border-bottom:1px solid #a0a0a0;text-align:center; padding:2px;}
+
+table.desctab th {text-align:center; font-weight:bold; padding:4px; 
+            background-color:#e0e0e0;}
+table.desctab td {text-align:center; font-weight:normal; 
+                  padding:4px;border-right:1px solid #d0d0d0;}
+
+p.sect_title {font-weight:bold; font-size:14px; }
 </style>
 </head>
 <body>
-<script>
-    \$(function() {
-        \$( "#accordion" ).accordion({
-            collapsible: true
-        });
-    });
-    \$(function() {
-        \$( "#accordion2" ).accordion({
-            collapsible: true
-        });
-    });
-    </script>
 <p>XRootD Testing Framework</p>
 <h1>Clusters definitions</h1>
 <div class="clusters-list">
 <div id="accordion">
     #if $clusters and len($clusters) > 0
         #set $cli=1
-        #for $cluster in $clusters
-    	<h3><a href="#">${cluster.name}</a></h3>
+        #for $cluster in $clusters.itervalues()
+    	<h3><a href="#">${cluster.name} 
+    	<span style="color:#666666;font-weight:normal;">${cluster.state}</span></a></h3>
     	<div>
-            <table class="desctab">
-                <tr><th colspan="2">NETWORK</th></tr>
-                <tr><td><b>Name:</b></td><td>${cluster.network.name}</td></tr>
+	    <p>ACTIONS AVAILABLE</p>
+        <p>&rsaquo;&nbsp; <a href="./startCluster?clusterName=${cluster.name}">Send to hypervisor and start</a></p>
+    	<p class="sect_title">LAST STATE</p>
+    	<table class="desctab_big" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                    <th><b>State</b></th>
+                </tr>
+                <tr>
+                    <td aligne="left">${cluster.state}</td>
+                </tr>
             </table>
-            <table class="desctab" cellpadding="2" width="80%">
-                <tr><th colspan="2">MACHINES</th></tr>
+    	<p class="sect_title">NETWORK</p>
+            <table class="desctab_big" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                    <th><b>Name</b></th><th><b>Bridgename</b></th>
+                    <th>IP</th><th>Netmask</th><th>DHCP range</th>
+                </tr>
+                <tr>
+                    <td>${cluster.network.name}</td><td>${cluster.network.bridgeName}</td>
+                    <td>${cluster.network.ip}</td><td>${cluster.network.netmask}</td>
+                    <td>(${cluster.network.DHCPRange[0]}, ${cluster.network.DHCPRange[1]})</td>
+                </tr>
+            </table>
+            <p class="sect_title">VIRTUAL MACHINES</p>
+            <table class="desctab_big"  cellspacing="0" cellpadding="0" width="80%">
+                <tr><th><b>name</b></th><th>state</th><th></th></tr>
                 #if $cluster.hosts and len($cluster.hosts)>0
                     #set $hoi=1
                     #for $host in $cluster.hosts
-                        <tr style="background-color:#d0d0d0;"><td><b>Name:</b></td><td>${host.name}</td>
-                        <td style="text-align:left;"><div style="cursor:pointer;color:#4E92A0;" onClick="\$('#host${cli}a${hoi}').toggle()">show/hide description</div></td></tr>
-                        #from cgi import escape
-                        <tr><td colspan="3">
-                            <div style="display:block;"><div style="display:none;" id="host${cli}a${hoi}"><%= escape(host.xmlDesc) %></div></div>
+                        <tr>
+                        <td>${host.name}</td>
+                        <td></td>
+                        <td style="text-align:left;">
+                        <div style="cursor:pointer;display:block;clear:both;
+                        color:#4E92A0;" onClick="\$('#host${cli}a${hoi}').toggle()">show/hide description</div>
                         </td></tr>
+                        <tr><td colspan="3">
+                        #from cgi import escape
+                            <div style="display:none;float:left;" id="host${cli}a${hoi}">
+                            <table class="desctab" cellspacing="0" cellpadding="4">
+                            <tr>
+                            <th>name</th><th>mac address</th><th>ramsize</th>
+                            <th>diskimage</th><th>arch</th><th>uuid</th>
+                            </tr>
+                            <tr><td><%= escape(host.name) %></td>
+                            <td><%= escape(host.macAddress) %></td>
+                            <td><%= escape(host.ramSize) %></td>
+                            <td><%= escape(host.diskImage) %></td>
+                            <td><%= escape(host.arch) %></td><td>uuid</td>
+                            </tr>
+                            </table>
+                            </div>
+                          </td></tr>
                         #set $hoi += 1
                     #end for
                     #set $cli += 1
@@ -63,14 +99,106 @@ desctab th {text-align:left; font-weight:bold;}
     #end if
 </div>
 </div>
-<h1>Connected hipervisors</h1>
+<h1>Connected hypervisors</h1>
 <div id="accordion2">
-    #if $hipervisors and len($hipervisors) > 0
-        #for $hipervisor in $hipervisors.iteritems()
-        <h3><a>${hipervisor[0][0]} port ${hipervisor[0][1]}</a></h3>
+    #if $hypervisors and len($hypervisors) > 0
+        #for $hypervisor in $hypervisors.iteritems()
+        <h3><a>${hypervisor[1].hostname} <span style="font-weight:normal;color:#666666;">[${hypervisor[0][0]}:${hypervisor[0][1]}]</span></a></h3>
         <div></div>
         #end for
     #end if
 </div>
+<h1>Connected slaves</h1>
+<div id="accordion3">
+    #if $slaves and len($slaves) > 0
+        #for $slave in $slaves.iteritems()
+        <h3><a>${slave[1].hostname} <span style="font-weight:normal;color:#666666;">[${slave[0][0]}:${slave[0][1]}]</span></a></h3>
+        <div>
+        Messages sent to slave:<br />
+        Messages received from slave:
+        </div>
+        #end for
+    #end if
+</div>
+<h1>Test suits</h1>
+<div id="accordion4">
+    #if $testSuits and len($testSuits) > 0
+        #for $ts in $testSuits.iteritems()
+            <h3><a>${ts[1].name}</a></h3>
+            <div>
+            <p>ACTIONS AVAILABLE</p>
+            <p>&rsaquo;&nbsp; <a href="./initSuite?testSuiteName=${ts[1].name}">Initialize ${ts[1].name}</a></p>
+            <p class="sect_title">SETTINGS</p>
+            <table class="desctab_big" cellspacing="0" cellpadding="0" width="80%">
+            <tr><th>Scheduler expression</th></tr>
+            <tr><td>${ts[1].schedule}</td></tr>
+            </table>
+            <p class="sect_title">REQUIRED MACHINES</p>
+
+            <table class="desctab_big" cellspacing="0" cellpadding="0" width="80%">
+            <tr><th>Name</th><th>State</th><th></th></tr>
+        #if $testSuits and len($testSuits) > 0
+            #for $machine in $ts[1].machines
+                <tr><td>$machine</td><td>${testMaster.slaveState($machine)}</td><td>&nbsp;</td></tr>
+            #end for
+        #end if
+            </table>
+            <p class="sect_title">TestCases</p>
+            <table class="desctab_big" cellspacing="0" cellpadding="0" width="80%">
+            <tr><th>Name</th><th>Status</th><th></th></tr>
+            #if $ts[1].tests and len($ts[1].tests) > 0
+            #for $testname in $ts[1].tests
+                <tr><td><a href="./runTest?testSuiteName=${ts[1].name}&testName=$testname">$testname</a></td><td>n/a</td><td>&nbsp;</td></tr>
+            #end for
+            #end if
+            </table>
+            <p class="sect_title">SESSIONS</p>
+        #if $suitSessions.has_key(ts[1].name)
+            <table class="desctab_big" cellspacing="0" cellpadding="0" width="80%">
+            <tr><th>Name</th><th>State</th><th></th></tr>
+            <tr><td>${suitSessions[$ts[1].name].state}</td><td></td><td>&nbsp;</td></tr>
+            </table>
+        #end if
+            </div>
+        #end for
+    #end if
+</div>
+    <h1>LOG MESSAGES</h1>
+<div id="accordion5">
+    #if $userMsg and len($userMsg) > 0
+        <h3><a>Messages</a></h3>
+        <div>
+        #set $iM = 1
+        #for $msg in $userMsg
+            <p>$iM. ${msg.getMessage()}</p>
+            #set $iM += 1
+        #end for
+        </div>
+    #end if
+</div>
+<script>
+    \$(function() {
+        \$( "#accordion" ).accordion({
+            collapsible: true,
+            active: false
+        });
+        \$( "#accordion2" ).accordion({
+            collapsible: true,
+            active: false
+        });
+        \$( "#accordion3" ).accordion({
+            collapsible: true,
+            active: false
+        });
+        \$( "#accordion4" ).accordion({
+            collapsible: true,
+            active: false
+        });
+        \$( "#accordion5" ).accordion({
+            collapsible: true,
+            active: false
+        });
+    });
+</script>
 </body>
 </html>

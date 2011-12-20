@@ -1,19 +1,20 @@
-from ClusterManager import Status, ClusterManagerException
+from ClusterManager import ClusterManager, ClusterManagerException
 from Daemon import Daemon, readConfig, DaemonException, Runnable
-from SocketUtils import FixedSockStream, XrdMessage, SocketDisconnected
+from SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
+from TestUtils import TestSuite
+from Utils import State
 from optparse import OptionParser
+from string import join, replace
+from subprocess import Popen
 import ConfigParser
 import Queue
-import copy
-import hashlib
 import logging
 import os
 import socket
 import ssl
+import subprocess
 import sys
 import threading
-import time
-from ClusterManager import ClusterManager
 
 logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] ' + \
                     '%(message)s', level=logging.DEBUG)
@@ -48,8 +49,9 @@ class TCPReceiveThread(object):
                 msg = self.sockStream.recv()
                 LOGGER.debug("Received raw: " + str(msg))
                 self.recvQueue.put(msg)
-            except SocketDisconnected, e:
+            except SocketDisconnectedError, e:
                 LOGGER.info("Connection to XrdTestMaster closed.")
+                sys.exit(1)
                 break
 #-------------------------------------------------------------------------------
 class XrdTestSlave(Runnable):
@@ -67,6 +69,47 @@ class XrdTestSlave(Runnable):
         self.config = config
         self.stopEvent = threading.Event()
     #---------------------------------------------------------------------------
+    def executeSh(self, cmd):
+        '''
+        @param cmd:
+        '''
+        global LOGGER
+
+        command = ""
+
+        #reading a file contents
+        if cmd[0:2] == "#!":
+            LOGGER.info("Direct shell script to be executed.")
+            command = cmd
+        else:
+            import urllib
+            f = urllib.urlopen(cmd)
+            lines = f.readlines()
+            f.close()
+            command = join(lines, "\n")
+
+            if "http:" in cmd:
+                LOGGER.info("Loaded script from url: " + cmd)
+            else:
+                LOGGER.info("Running script from file: " + cmd)
+
+        command = command.replace("@slavename@", socket.gethostname())
+        LOGGER.info("Shell script to run: " + command)
+
+        res = None
+        try:
+            process = Popen(command, shell="None", \
+                        stdout=subprocess.PIPE, \
+                        stderr=subprocess.PIPE)
+
+            stdout, stderr = process.communicate()
+            res = (stdout, stderr, str(process.returncode))
+        except ValueError, e:
+            LOGGER.exception("Execution of shell script failed:" + str(e))
+        except OSError, e:
+            LOGGER.exception("Execution of shell script failed:" + str(e))
+        return res
+    #---------------------------------------------------------------------------
     def connectMaster(self, masterIp, masterPort):
         global currentDir
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -80,8 +123,11 @@ class XrdTestSlave(Runnable):
             #self.sockStream = sock
             self.sockStream.connect((masterIp, masterPort))
         except socket.error, e:
-            LOGGER.info("Connection with master could not be established.")
-            LOGGER.exception(e)
+            if e[0] == 111:
+                LOGGER.info("Connection from master refused.")
+            else:
+                LOGGER.info("Connection with master could not be established.")
+                LOGGER.exception(e)
             return None
         else:
             LOGGER.debug("Connected to master.")
@@ -97,7 +143,7 @@ class XrdTestSlave(Runnable):
                 LOGGER.info("Connected and authenticated to XrdTestMaster " + \
                             "successfully. Waiting for commands " + \
                             "from the master.")
-            else: 
+            else:
                 LOGGER.info("Password authentication in master failed.")
                 return None
         except socket.error, e:
@@ -108,33 +154,73 @@ class XrdTestSlave(Runnable):
 
         return self.sockStream
     #---------------------------------------------------------------------------
+    def handleRunTestCase(self, msg):
+        testDef = msg.testDef
+        msg = XrdMessage(XrdMessage.M_TESTCASE_STAGE_RESULT)
+
+        msg.testStage = 'testInitialize'
+        msg.testCase = testDef['case'].name
+        msg.result = self.executeSh(testDef['case'].initialize)
+        self.sockStream.send(msg)
+
+        msg.testStage = "testRun"
+        msg.testCase = testDef['case'].name
+        msg.result = self.executeSh(testDef['case'].run)
+        self.sockStream.send(msg)
+
+        msg.testStage = "testFinalize"
+        msg.testCase = testDef['case'].name
+        msg.result = self.executeSh(testDef['case'].finalize)
+        self.sockStream.send(msg)
+
+        return True
+    #---------------------------------------------------------------------------
+    def handleTestSuiteInit(self, msg):
+        cmd = msg.cmd
+        suiteName = msg.testSuiteName
+
+        msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
+        msg.state = State(TestSuite.S_SLAVE_INITIALIZED)
+        msg.testSuiteName = suiteName
+        msg.result = self.executeSh(cmd)
+
+        return msg
+    #---------------------------------------------------------------------------
+    def handleTestSuiteFinalized(self, msg):
+        cmd = msg.cmd
+        suiteName = msg.testSuiteName
+
+        msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
+        msg.state = State(TestSuite.S_SLAVE_FINALIZED)
+        msg.testSuiteName = suiteName
+        msg.result = self.executeSh(cmd)
+
+        return msg
+    #---------------------------------------------------------------------------
     def recvLoop(self):
         global LOGGER
         while not self.stopEvent.isSet():
             try:
                 #receive msg from master
-                addrMsg = self.recvQueue.get()
-                msg = addrMsg
+                msg = self.recvQueue.get()
                 LOGGER.info("Received msg: " + str(msg.name))
 
                 resp = XrdMessage(XrdMessage.M_UNKNOWN)
                 if msg.name is XrdMessage.M_HELLO:
                     resp = XrdMessage(XrdMessage.M_HELLO)
-                elif msg.name == XrdMessage.M_START_CLUSTER:
-                    res = self.handleStartCluster(msg)
-                    resp.name = XrdMessage.M_CLUSTER_STATUS
-                    resp.clusterName = msg.clusterDef.name
-                    if res:
-                        resp.status = "Running."
-                    else:
-                        resp.status = "Not started. Error."
+                elif msg.name == XrdMessage.M_TESTSUITE_INIT:
+                    resp = self.handleTestSuiteInit(msg)
+                elif msg.name == XrdMessage.M_TESTSUITE_FINALIZE:
+                    resp = self.handleTestSuiteFinalize(msg)
+                elif msg.name == XrdMessage.M_TESTCASE_RUN:
+                    resp = self.handleRunTestCase(msg)
                 else:
                     LOGGER.info("Received unknown message: " + str(msg.name))
-
                 self.sockStream.send(resp)
                 LOGGER.debug("Sent msg: " + str(resp))
-            except SocketDisconnected, e:
+            except SocketDisconnectedError:
                 LOGGER.info("Connection to XrdTestMaster closed.")
+                sys.exit()
                 break
     #---------------------------------------------------------------------------
     def run(self):
@@ -221,3 +307,4 @@ def main():
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
     main()
+

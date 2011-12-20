@@ -9,7 +9,6 @@
 #-------------------------------------------------------------------------------
 # Imports
 #-------------------------------------------------------------------------------
-from mako.exceptions import RuntimeException
 from optparse import OptionParser
 import ConfigParser
 import datetime
@@ -18,18 +17,13 @@ import os
 import signal
 import sys
 import time
-
-print __file__
-
 #-------------------------------------------------------------------------------
 # Globals definitions
 #-------------------------------------------------------------------------------
 logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] %(message)s',
                      level=logging.INFO)
-logger = logging.getLogger(__name__)
-logger.debug("Running script: " + __file__)
-
-
+LOGGER = logging.getLogger(__name__)
+LOGGER.debug("Running script: " + __file__)
 #-------------------------------------------------------------------------------
 class DaemonException(Exception):
     '''
@@ -48,6 +42,25 @@ class DaemonException(Exception):
         Returns textual representation of an error
         '''
         return repr(self.desc)
+#-------------------------------------------------------------------------------
+def readConfig(confFile):
+    '''
+    Reads configuration from given file or from default if None given.
+    @param optsConfFile: file with configuration
+    '''
+    LOGGER.info("Reading config file % s", str(confFile))
+
+    config = ConfigParser.ConfigParser()
+    if os.path.exists(confFile):
+        try:
+            fp = file(confFile, 'r')
+            config.readfp(fp)
+            fp.close()
+        except IOError, e:
+            LOGGER.exception()
+    else:
+        raise DaemonException("Config file could not be read")
+    return config
 #-------------------------------------------------------------------------------
 class Runnable(object):
     '''
@@ -112,7 +125,7 @@ class Daemon:
         @param pid: pid of process to be checked
         @return: pid (if process runs), None (otherwise)
         '''
-        global logger
+        global LOGGER
 
         if pid is None:
             #Try to retrieve pid from pid file given in runnable configuration
@@ -122,7 +135,7 @@ class Daemon:
                     line = f.readline()
                     pid = int(line)
                 except IOError, ValueError:
-                    raise RuntimeException("Cannot read pid from a pidfile")
+                    raise RuntimeError("Cannot read pid from a pidfile")
             else:
                 #no pid file exists - assume the process doesn't work
                 return False
@@ -141,7 +154,7 @@ class Daemon:
                     if self.progName in line:
                         isRunning = True
                 except IOError, ValueError:
-                    raise RuntimeException("Cannot read " + path)
+                    raise RuntimeError("Cannot read " + path)
         if isRunning:
             return pid
         else:
@@ -152,7 +165,7 @@ class Daemon:
     # Reloads the daemon by sending SIGHUM
     #---------------------------------------------------------------------------
     def reload(self, pid=None):
-        global logger
+        global LOGGER
         pid = self.check(pid)
         if not pid:
             raise RuntimeError("Can not realod - daemon not running.")
@@ -162,7 +175,7 @@ class Daemon:
             except OSError, e:
                 raise RuntimeError('Unable to reload: ' + str(pid)
                                    + ', because: ' + str(e))
-            logger.info("Sighup sent to pid: " + str(pid))
+            LOGGER.info("Sighup sent to pid: " + str(pid))
 
     #---------------------------------------------------------------------------
     def start(self, runnable):
@@ -170,10 +183,10 @@ class Daemon:
         Starts the daemon as a separate process.
         @param runnable: instance of runnable object (inherits Runnable).
         '''
-        global logger
+        global LOGGER
         #@todo: if iscallable runnable czy moge zawolac metode
         if not callable(runnable.run):
-            raise RuntimeException("Not a runnable object given to " +
+            raise RuntimeError("Not a runnable object given to " +
                                    "start the daemon")
         #-----------------------------------------------------------------------
         # Check if the process is already running
@@ -207,7 +220,7 @@ class Daemon:
                 if pid > 0:
                     #write a pid to a file and leave the method
                     pidFile.write(str(pid) + " ")
-                    logger.info('A daemon with pidfile ' + self.pidFile +
+                    LOGGER.info('A daemon with pidfile ' + self.pidFile +
                                 ' launched successfully, pid:' + str(pid))
                     self.isDaemon = False
                     pidFile.close()
@@ -220,9 +233,8 @@ class Daemon:
             raise RuntimeError('Fork for runnable with pidfile ' +
                                self.pidFile + ' failed: ' + str(e))
         #-----------------------------------------------------------------------
-        # Redirect the standard output of the daemon
+        # Redirect the standard input and output of the daemon
         #-----------------------------------------------------------------------
-
         try:
             devNull = file(os.devnull, 'r')
             os.close(sys.stdin.fileno())
@@ -233,7 +245,7 @@ class Daemon:
             raise DaemonException('Cannot redirect output to the log file: ' +
                                   str(e))
 
-        logger.info('Running process with pidfile: ' + self.pidFile +
+        LOGGER.info('Running process with pidfile: ' + self.pidFile +
                     ' [' + str(os.getpid()) + ']')
         sys.stdout.flush()
         #run the daemon tasks
@@ -243,13 +255,13 @@ class Daemon:
         '''
         Stop the deamon
         '''
-        global logger
+        global LOGGER
         #-----------------------------------------------------------------------
         # Check if the daemon is running
         #-----------------------------------------------------------------------
         pid = self.check(pid)
         if not pid:
-            logger.info("The process already stopped")
+            LOGGER.info("The process already stopped")
 
         try:
             os.kill(pid, signal.SIGTERM)
@@ -267,5 +279,5 @@ class Daemon:
             try:
                 os.remove(self.pidFile)
             except:
-                logger.error("Cannot delete pidfile")
+                LOGGER.error("Cannot delete pidfile")
 

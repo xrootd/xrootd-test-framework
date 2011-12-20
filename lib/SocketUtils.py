@@ -1,4 +1,3 @@
-from ClusterManager import Status
 from heapq import heappush, heappop
 from string import zfill
 from threading import Condition
@@ -61,21 +60,34 @@ class XrdMessage(object):
     '''
     Network message passed between Xrd Testing Framework nodes.
     '''
+    #---------------------------------------------------------------------------
+    # Constants for XrdMessage name values 
     M_HELLO = 'hello'
     M_START_CLUSTER = 'start_cluster'
-    M_CLUSTER_STATUS = 'cluster_status'
-    M_UNKNOWN = 'unknown'
-    
-    name = M_UNKNOWN
+    M_CLUSTER_STATE = 'cluster_state'
+    #--------------------------------------------------------------------------
+    M_TESTSUITE_INIT = 'init_test_suite'
+    M_TESTSUITE_FINALIZE = 'finalize_test_suite'
+    M_TESTSUITE_STATE = "test_suite_state"
     #---------------------------------------------------------------------------
-    def __init__(self, name):
+    M_TESTCASE_RUN = 'test_case_def'
+    M_TESTSUITE_STATE = 'test_case_state'
+    M_TESTCASE_STAGE_RESULT = 'test_case_stage_result'
+
+    M_UNKNOWN = 'unknown'
+
+    name = M_UNKNOWN
+    sender = None
+    #---------------------------------------------------------------------------
+    def __init__(self, name, msg_sender = None):
         '''
         Constructor
         @param name: string, name of the message
         '''
         self.name = name
+        self.sender = msg_sender
 #-------------------------------------------------------------------------------
-class SocketDisconnected(Exception):
+class SocketDisconnectedError(Exception):
     desc = ""
     #---------------------------------------------------------------------------
     def __init__(self, desc):
@@ -110,11 +122,11 @@ class FixedSockStream(object):
             while totalsent < toSendLen:
                 if sent == 0:
                     #socket disconnected
-                    raise SocketDisconnected("Socket connection ended")
+                    raise SocketDisconnectedError("Socket connection ended")
                 totalsent = totalsent + sent
         except socket.error, e:
             LOGGER.exception(e)
-            raise SocketDisconnected("Socket connection ended")
+            raise SocketDisconnectedError("Socket connection ended")
     #---------------------------------------------------------------------------
     def recvBounded(self, toRecvLen):
         try:
@@ -123,11 +135,11 @@ class FixedSockStream(object):
                 chunk = self.sock.recv(toRecvLen - len(msg))
                 if chunk == '':
                     #socket disconnected
-                    raise SocketDisconnected("Socket connection ended")
+                    raise SocketDisconnectedError("Socket connection ended")
                 msg = msg + chunk
         except socket.error, e:
             LOGGER.exception(e)
-            raise SocketDisconnected("Socket connection ended")
+            raise SocketDisconnectedError("Socket connection ended")
         return msg
     #---------------------------------------------------------------------------
     def send(self, obj, sendRaw=False):
@@ -157,3 +169,4 @@ class FixedSockStream(object):
     #---------------------------------------------------------------------------
     def close(self):
         self.sock.close()
+

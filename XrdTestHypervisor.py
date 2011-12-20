@@ -1,6 +1,6 @@
-from ClusterManager import Status, ClusterManagerException
+from ClusterManager import ClusterManager, ClusterManagerException, Cluster
 from Daemon import Daemon, readConfig, DaemonException, Runnable
-from SocketUtils import FixedSockStream, XrdMessage, SocketDisconnected
+from SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
 from optparse import OptionParser
 import ConfigParser
 import Queue
@@ -12,8 +12,7 @@ import socket
 import ssl
 import sys
 import threading
-import time
-from ClusterManager import ClusterManager
+from Utils import State
 
 logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] ' + \
                     '%(message)s', level=logging.DEBUG)
@@ -48,7 +47,7 @@ class TCPReceiveThread(object):
                 msg = self.sockStream.recv()
                 LOGGER.debug("Received raw: " + str(msg))
                 self.recvQueue.put(msg)
-            except SocketDisconnected, e:
+            except SocketDisconnectedError, e:
                 LOGGER.info("Connection to XrdTestMaster closed.")
                 break
 #-------------------------------------------------------------------------------
@@ -80,8 +79,11 @@ class XrdTestHypervisor(Runnable):
             #self.sockStream = sock
             self.sockStream.connect((masterIp, masterPort))
         except socket.error, e:
-            LOGGER.info("Connection with master could not be established.")
-            LOGGER.exception(e)
+            if e[0] == 111:
+                LOGGER.info("Connection from master refused.")
+            else:
+                LOGGER.info("Connection with master could not be established.")
+                LOGGER.exception(e)
             return None
         else:
             LOGGER.debug("Connected to master.")
@@ -116,7 +118,7 @@ class XrdTestHypervisor(Runnable):
     #---------------------------------------------------------------------------
     def handleStartCluster(self, msg):
 
-        resp = XrdMessage(XrdMessage.M_CLUSTER_STATUS)
+        resp = XrdMessage(XrdMessage.M_CLUSTER_STATE)
         resp.clusterName = msg.clusterDef.name
 
         cluster = msg.clusterDef
@@ -132,30 +134,30 @@ class XrdTestHypervisor(Runnable):
 
                 if cluster.network:
                     act = cm.networkIsActive(cluster.network)
-                    if act:
-                        LOGGER.info("Network " + cluster.network.name + \
-                                    " isActive()")
-                    else:
+                    LOGGER.info("Network " + cluster.network.name + \
+                                    " isActive(): " + str(act))
+                    if not act:
+                        LOGGER.info("Creating network.")
                         cm.createNetwork(cluster.network)
 
                 for h in cluster.hosts:
                     act = cm.hostIsActive(h)
-                    if act:
-                        LOGGER.info("Host " + h.name + " isActive(): " \
+                    LOGGER.info("Host " + h.name + " isActive(): " \
                                     + str(act))
-                    else:
+                    if not act:
+                        LOGGER.info("Adding host " + h.name)
                         cm.addHost(h)
 
                 cm.disconnect()
             except ClusterManagerException, e:
                 LOGGER.exception(e)
-                resp.status = "Error occured"
+                resp.state = State("Error occured")
 
-            resp.status = "Running"
+            resp.state = State(Cluster.S_ACTIVE)
         else:
             LOGGER.info("Cluster definition semantically incorrect. " + \
                         " Cannot start the cluster due to: " + str(msg))
-            resp.status = "Not started. Error."
+            resp.state = State(Cluster.S_ERROR)
 
         return resp
     #---------------------------------------------------------------------------
@@ -178,7 +180,7 @@ class XrdTestHypervisor(Runnable):
 
                 self.sockStream.send(resp)
                 LOGGER.debug("Sent msg: " + str(resp))
-            except SocketDisconnected, e:
+            except SocketDisconnectedError, e:
                 LOGGER.info("Connection to XrdTestMaster closed.")
                 break
     #---------------------------------------------------------------------------

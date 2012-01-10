@@ -1,4 +1,3 @@
-from ClusterManager import ClusterManager, ClusterManagerException
 from Daemon import Daemon, readConfig, DaemonException, Runnable
 from SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
 from TestUtils import TestSuite
@@ -155,24 +154,7 @@ class XrdTestSlave(Runnable):
         return self.sockStream
     #---------------------------------------------------------------------------
     def handleRunTestCase(self, msg):
-        testDef = msg.testDef
-        msg = XrdMessage(XrdMessage.M_TESTCASE_STAGE_RESULT)
-
-        msg.testStage = 'testInitialize'
-        msg.testCase = testDef['case'].name
-        msg.result = self.executeSh(testDef['case'].initialize)
-        self.sockStream.send(msg)
-
-        msg.testStage = "testRun"
-        msg.testCase = testDef['case'].name
-        msg.result = self.executeSh(testDef['case'].run)
-        self.sockStream.send(msg)
-
-        msg.testStage = "testFinalize"
-        msg.testCase = testDef['case'].name
-        msg.result = self.executeSh(testDef['case'].finalize)
-        self.sockStream.send(msg)
-
+        #@todo: the same as init
         return True
     #---------------------------------------------------------------------------
     def handleTestSuiteInit(self, msg):

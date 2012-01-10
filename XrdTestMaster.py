@@ -11,7 +11,7 @@
 from Cheetah.Template import Template
 from Daemon import Runnable, Daemon, DaemonException, readConfig
 from SocketUtils import FixedSockStream, XrdMessage, PriorityBlockingQueue, \
-    SocketDisconnectedError
+    SocketDisconnectedError, getMyIP
 from ClusterManager import Cluster, loadClustersDefs
 from TestUtils import loadTestSuitsDefs, TestSuite
 from Utils import Stateful, State
@@ -267,8 +267,8 @@ class Hypervisor(TCPClient):
 #-------------------------------------------------------------------------------
 class Slave(TCPClient):
     #---------------------------------------------------------------------------
-    S_SUITINIT_SENT = (10, "Sent test suite init to slave")
-    S_SUIT_INITIALIZED = (11, "Test suite init to slave")
+    S_SUITINIT_SENT = (10, "Test suite init sent to slave")
+    S_SUIT_INITIALIZED = (11, "Test suite initialized")
 
     S_TESTCASE_DEF_SENT = (21, "Sent test case definition to slave")
     #---------------------------------------------------------------------------
@@ -292,7 +292,7 @@ class TestSuiteSession(Stateful):
         self.slaves = []
     #---------------------------------------------------------------------------
     def addStageResult(self, state, result):
-        self.stagesResults.append(state, result)
+        self.stagesResults.append((state, result))
 #-------------------------------------------------------------------------------
 class XrdTestMaster(Runnable):
     '''
@@ -305,10 +305,10 @@ class XrdTestMaster(Runnable):
     # Priority queue (locking) with incoming events, i.a. incoming messages
     recvQueue = PriorityBlockingQueue()
     #---------------------------------------------------------------------------
-    # Connected hypervisors, keys: address tuple, values: TCPClients
+    # Connected hypervisors, keys: address tuple, values: Hypervisor
     hypervisors = {}
     #---------------------------------------------------------------------------
-    # Connected hypervisors, keys: address tuple, values: TCPClients
+    # Connected slaves, keys: address tuple, values: Slaves
     slaves = {}
     #---------------------------------------------------------------------------
     # Initialized and in progress test suits
@@ -350,7 +350,7 @@ class XrdTestMaster(Runnable):
 
                     LOGGER.info("Cluster start command sent to %s", hyperv)
                 else:
-                    LOGGER.error("No hypervisor to run the cluster on")
+                    LOGGER.warning("No hypervisor to run the cluster on")
                     self.clusters[clusterName].state = \
                     State(Cluster.S_UNKNOWN_NOHYPERV)
         if not clusterFound:
@@ -371,10 +371,10 @@ class XrdTestMaster(Runnable):
         for m in testSuite.machines:
             if self.slaveState(m) != State(Slave.S_CONNECTED_IDLE):
                 unreadyMachines.append(m)
-                LOGGER.error(m + " state " + str(self.slaveState(m)))
+                LOGGER.warning(m + " state " + str(self.slaveState(m)))
 
         if len(unreadyMachines):
-            LOGGER.error("Some required machines are not " + \
+            LOGGER.warning("Some required machines are not " + \
                          "ready for the test: %s" % str(unreadyMachines))
             return
 
@@ -384,6 +384,8 @@ class XrdTestMaster(Runnable):
         session = TestSuiteSession(testSuite.name)
         session.slaves = testSlaves
         session.state = State(TestSuite.S_WAIT_4_INIT)
+
+        self.testSuitsSessions[test_suite_name] = session
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_INIT)
         msg.testSuiteName = testSuite.name
@@ -395,6 +397,10 @@ class XrdTestMaster(Runnable):
             sl.state = State(Slave.S_SUITINIT_SENT)
     #---------------------------------------------------------------------------
     def finalizeTestSuite(self, test_suite_name):
+        '''
+        Sends finalizationi message to slaves and destroys TestSuiteSession.
+        @param test_suite_name:
+        '''
         suite = self.testSuitsSessions[test_suite_name]
         if suite.state == State(TestSuiteSession.S_FINALIZED):
             LOGGER.info("TestSuite already finalized")
@@ -406,7 +412,7 @@ class XrdTestMaster(Runnable):
         unreadyMachines = []
 
         if self.testsRunning.has_key(testName):
-            LOGGER.error("Test jest w trakcie wykonania.")
+            LOGGER.error("Test is currently running.")
             return False
 
         testSuite = self.testSuits[testSuiteName]
@@ -520,13 +526,15 @@ class XrdTestMaster(Runnable):
         server_thread = threading.Thread(target=server.serve_forever)
         server_thread.start()
 
+        myIp= getMyIP()
+        LOGGER.info("Master's IP set to %s" % myIp)
+
         clusters = loadClustersDefs(currentDir + "/clusters")
         for clu in clusters:
-            myIp = socket.gethostbyname(socket.gethostname())
             self.clusters[clu.name] = clu
             self.clusters[clu.name].state = State(Cluster.S_UNKNOWN)
             self.clusters[clu.name].network.xrdTestMasterIP = myIp
-            LOGGER.debug("Master's IP set to %s" % myIp)
+
 
         self.testSuits = loadTestSuitsDefs(currentDir + "/testSuits")
 
@@ -605,13 +613,14 @@ class XrdTestMaster(Runnable):
                             slave.state = Slave.S_SUIT_INITIALIZED
                             session = self.testSuitsSessions[msg.testSuiteName]
                             session.addStageResult(msg.state, msg.result)
-                            #update SauiteStatus if necessary all are inited  
-                            initedCount = [1 for sl in session.slaves if sl.status == \
-                                        State(Slave.S_SUIT_INITIALIZED)]
+                            #update SuiteStatus if all slaves are inited
+                            initedCount = [1 for sl in session.slaves if \
+                                           sl.state == \
+                                           State(Slave.S_SUIT_INITIALIZED)]
                             LOGGER.info("%s initialized in %s" % 
                                             (slave, session.testSuiteName))
                             if len(initedCount) == len(session.slaves):
-                                session.status = State(\
+                                session.state = State(\
                                                 TestSuite.S_ALL_INITIALIZED)
                                 LOGGER.info("All slaves initialized in %s" % 
                                             session.testSuiteName)

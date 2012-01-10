@@ -10,6 +10,16 @@ logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] ' + \
                     '%(message)s', level=logging.DEBUG)
 LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
+
+#-------------------------------------------------------------------------------
+def getMyIP():
+    #@todo: it's realy bad solution, do it differently
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("gmail.com",80))
+    myip = s.getsockname()[0]
+    s.close()
+    
+    return myip
 #-------------------------------------------------------------------------------
 class PriorityBlockingQueue(object):
     '''

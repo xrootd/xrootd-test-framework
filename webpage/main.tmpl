@@ -7,8 +7,7 @@
 <link rel="stylesheet" type="text/css" href="webpage/css/jquery.css">
 <script>
 \$(document).ready(function() {
-        
-    });
+});
 </script>
 <style type="text/css">
 body {font-size:12px;}
@@ -100,23 +99,20 @@ p.sect_title {font-weight:bold; font-size:14px; }
 </div>
 </div>
 <h1>Connected hypervisors</h1>
-<div id="accordion2">
+<div id="accordion2.">
     #if $hypervisors and len($hypervisors) > 0
         #for $hypervisor in $hypervisors.iteritems()
-        <h3><a>${hypervisor[1].hostname} <span style="font-weight:normal;color:#666666;">[${hypervisor[0][0]}:${hypervisor[0][1]}]</span></a></h3>
+        <h3>&rsaquo; <a>${hypervisor[1].hostname} <span style="font-weight:normal;color:#666666;">[${hypervisor[0][0]}:${hypervisor[0][1]}]</span></a></h3>
         <div></div>
         #end for
     #end if
 </div>
 <h1>Connected slaves</h1>
-<div id="accordion3">
+<div id="accordion3.">
     #if $slaves and len($slaves) > 0
         #for $slave in $slaves.iteritems()
-        <h3><a>${slave[1].hostname} <span style="font-weight:normal;color:#666666;">[${slave[0][0]}:${slave[0][1]}]</span></a></h3>
-        <div>
-        Messages sent to slave:<br />
-        Messages received from slave:
-        </div>
+        <h3>&rsaquo; <a>${slave[1].hostname} <span style="font-weight:normal;color:#666666;">[${slave[0][0]}:${slave[0][1]}]</span></a></h3>
+        <div></div>
         #end for
     #end if
 </div>
@@ -164,13 +160,20 @@ p.sect_title {font-weight:bold; font-size:14px; }
     #end if
 </div>
     <h1>LOG MESSAGES</h1>
-<div id="accordion5">
+<div id="accordion5" style="background-color:#fefefe;">
     #if $userMsg and len($userMsg) > 0
         <h3><a>Messages</a></h3>
-        <div>
+        <div style="background-color:#fefefe;">
         #set $iM = 1
         #for $msg in $userMsg
-            <p>$iM. ${msg.getMessage()}</p>
+            #set $color = "#587058"
+            #if $msg.levelno == logging.WARNING
+                #set $color = "#587498"
+            #end if
+            #if $msg.levelno == logging.ERROR
+                #set $color = "#E86850"
+            #end if
+            <p style="color:$color;">$iM. ${msg.getMessage()}</p>
             #set $iM += 1
         #end for
         </div>

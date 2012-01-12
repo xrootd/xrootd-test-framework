@@ -9,10 +9,10 @@
 # Imports
 #-------------------------------------------------------------------------------
 from Cheetah.Template import Template
+from ClusterManager import Cluster, loadClustersDefs
 from Daemon import Runnable, Daemon, DaemonException, readConfig
 from SocketUtils import FixedSockStream, XrdMessage, PriorityBlockingQueue, \
     SocketDisconnectedError, getMyIP
-from ClusterManager import Cluster, loadClustersDefs
 from TestUtils import loadTestSuitsDefs, TestSuite
 from Utils import Stateful, State
 from copy import copy
@@ -31,7 +31,8 @@ import time
 #-------------------------------------------------------------------------------
 # Globals and configurations
 #-------------------------------------------------------------------------------
-logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] ' + \
+logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
+                    '[%(filename)s %(lineno)d] ' + \
                     '%(message)s', level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
@@ -151,7 +152,10 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         self.stopEvent.clear()
         return
 #-------------------------------------------------------------------------------
-class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+class XrdTCPServer(SocketServer.TCPServer):
+    allow_reuse_address = True
+#-------------------------------------------------------------------------------
+class ThreadedTCPServer(SocketServer.ThreadingMixIn, XrdTCPServer):
     pass
 #-------------------------------------------------------------------------------
 class XrdTestMasterException(Exception):
@@ -197,7 +201,7 @@ class WebInterface:
                     'slaves': self.testMaster.slaves,
                     'hostname': socket.gethostname(),
                     'testSuits': self.testMaster.testSuits,
-                    'userMsg' : self.testMaster.userMsg,
+                    'userMsgs' : self.testMaster.userMsgs,
                     'testMaster': self.testMaster,
                     'HTTPport' : '8080'}
         tpl = Template(file=tplFile, searchList=[tplVars])
@@ -234,8 +238,8 @@ class WebInterface:
     initSuite.exposed = True
 #-------------------------------------------------------------------------------
 class TCPClient(Stateful):
-    S_CONNECTED_IDLE    = (1, "Connected")
-    S_NOT_CONNECTED     = (2, "Not connected")
+    S_CONNECTED_IDLE = (1, "Connected")
+    S_NOT_CONNECTED = (2, "Not connected")
     '''
     Represents any type of TCP client that connects to XrdTestMaster.
     '''
@@ -253,8 +257,8 @@ class TCPClient(Stateful):
     #---------------------------------------------------------------------------
     def send(self, msg):
         try:
-            LOGGER.debug('Sending: %s to %s[%s]' % (msg.name, self.hostname, \
-                                                    str(self.address)))
+            LOGGER.debug('Sending: %s to %s[%s]' % \
+                        (msg.name, self.hostname, str(self.address)))
             self.socket.send(msg)
         except SocketDisconnectedError, e:
             LOGGER.error("Socket to client %s[%s] closed during send." % \
@@ -287,11 +291,13 @@ class TestSuiteSession(Stateful):
     stagesResults = []
     #---------------------------------------------------------------------------
     def __init__(self, suite_name):
-        self.testSuiteName = suite_name
+        self.suiteName = suite_name
         self.stagesResults = []
         self.slaves = []
     #---------------------------------------------------------------------------
     def addStageResult(self, state, result):
+        LOGGER.info("Adding stage result %s: (code %s) %s" % \
+                    (state, result[2], result[0]))
         self.stagesResults.append((state, result))
 #-------------------------------------------------------------------------------
 class XrdTestMaster(Runnable):
@@ -325,7 +331,7 @@ class XrdTestMaster(Runnable):
     C_HYPERV = 'hypervisor'
     #---------------------------------------------------------------------------
     # messaging system
-    userMsg = []
+    userMsgs = []
     #---------------------------------------------------------------------------
     def __init__(self, config):
         self.config = config
@@ -340,7 +346,7 @@ class XrdTestMaster(Runnable):
                 if len(self.hypervisors):
                     msg = XrdMessage(XrdMessage.M_START_CLUSTER)
                     msg.clusterDef = self.clusters[clusterName]
-                    
+
                     #take first possible hypervisor
                     hyperv = [h for h in self.hypervisors.itervalues()][0]
                     hyperv.send(msg)
@@ -388,7 +394,7 @@ class XrdTestMaster(Runnable):
         self.testSuitsSessions[test_suite_name] = session
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_INIT)
-        msg.testSuiteName = testSuite.name
+        msg.suiteName = testSuite.name
         msg.cmd = testSuite.initialize
 
         for sl in testSlaves:
@@ -483,7 +489,7 @@ class XrdTestMaster(Runnable):
                                             State(TCPClient.S_CONNECTED_IDLE))
 
             clients_str = [str(c) for c in clients.itervalues()]
-            LOGGER.info(str(client_type) + \
+            LOGGER.info(str(client_type).title() + \
                         "s list (after handling incoming connection): " + \
                          ', '.join(clients_str))
     #---------------------------------------------------------------------------
@@ -501,8 +507,9 @@ class XrdTestMaster(Runnable):
         ''' 
         Main jobs of programme. Has to be implemented.
         '''
-        global cherrypy, currentDir, cherrypyConfig
-
+        global currentDir, cherrypyConfig
+        global cherrypy
+        
         server = None
         try:
             server = ThreadedTCPServer((self.config.get('server', 'ip'), \
@@ -510,7 +517,7 @@ class XrdTestMaster(Runnable):
                                ThreadedTCPRequestHandler)
         except socket.error, e:
             if e[0] == 98:
-                LOGGER.info("Can't start. Socket already in use.")
+                LOGGER.info("Can't start server. Address already in use.")
             else:
                 LOGGER.exception(e)
             sys.exit(1)
@@ -526,9 +533,9 @@ class XrdTestMaster(Runnable):
         server_thread = threading.Thread(target=server.serve_forever)
         server_thread.start()
 
-        myIp= getMyIP()
+        myIp = getMyIP()
         LOGGER.info("Master's IP set to %s" % myIp)
-
+        
         clusters = loadClustersDefs(currentDir + "/clusters")
         for clu in clusters:
             self.clusters[clu.name] = clu
@@ -550,14 +557,19 @@ class XrdTestMaster(Runnable):
                      self.config.get('webserver', 'webpage_dir') \
                      + "/css",
                      }
+                     
                 }
 
         cherrypy.tree.mount(WebInterface(self.config, self), "/", cherrypyCfg)
 
+        cherrypy.config.environments['development']['autoreload.on'] = False
         cherrypy.config.update({'server.socket_host': '0.0.0.0',
-                            'server.socket_port': 8080, })
-        cherrypy.server.start()
+                            'server.socket_port': 8080,
+                            #'server.environment': 'production'
+                            })
 
+        cherrypy.server.start()
+        
         while True:
             evt = self.recvQueue.get()
             if evt.type == MasterEvent.M_UNKNOWN:
@@ -590,7 +602,6 @@ class XrdTestMaster(Runnable):
             elif evt.type == MasterEvent.M_SLAVE_MSG:
                 msg = evt.data
                 if msg.name == XrdMessage.M_TESTCASE_STAGE_RESULT:
-                    LOGGER.error(msg.name)
                     if self.testsRunning.has_key(msg.testCase):
                         LOGGER.info("STAGE RESULT at " + \
                                     self.slaves[evt.sender].hostname + \
@@ -607,23 +618,26 @@ class XrdTestMaster(Runnable):
                     if msg.state == State(TestSuite.S_SLAVE_INITIALIZED):
                         slave = self.slaves[msg.sender]
                         if slave.state != State(Slave.S_SUITINIT_SENT):
+                            #previous state of slave is not correct, should be
+                            #suitinit sent
                             XrdTestMasterException("Initialized msg not " + \
                                                    "expected from %s" % slave)
                         else:
-                            slave.state = Slave.S_SUIT_INITIALIZED
-                            session = self.testSuitsSessions[msg.testSuiteName]
+                            slave.state = State(Slave.S_SUIT_INITIALIZED)
+                            session = self.testSuitsSessions[msg.suiteName]
+                            print str(msg.result)
                             session.addStageResult(msg.state, msg.result)
                             #update SuiteStatus if all slaves are inited
                             initedCount = [1 for sl in session.slaves if \
                                            sl.state == \
                                            State(Slave.S_SUIT_INITIALIZED)]
-                            LOGGER.info("%s initialized in %s" % 
-                                            (slave, session.testSuiteName))
+                            LOGGER.info("%s initialized in %s" %
+                                            (slave, session.suiteName))
                             if len(initedCount) == len(session.slaves):
                                 session.state = State(\
                                                 TestSuite.S_ALL_INITIALIZED)
-                                LOGGER.info("All slaves initialized in %s" % 
-                                            session.testSuiteName)
+                                LOGGER.info("All slaves initialized in %s" %
+                                            session.suiteName)
                     elif msg.state == State(TestSuite.S_SLAVE_FINALIZED):
                         self.slaves[msg.sender].state = msg.state
             else:
@@ -636,7 +650,7 @@ class UserInfoHandler(logging.Handler):
             logging.Handler.__init__(self)
             self.testMaster = xrdTestMaster
     def emit(self, record):
-        self.testMaster.userMsg.append(record)
+        self.testMaster.userMsgs.append(record)
 #-------------------------------------------------------------------------------
 def main():
     '''
@@ -693,10 +707,11 @@ def main():
                 dm.stop()
             elif options.backgroundMode == 'check':
                 res = dm.check()
-                print 'Result of runnable check: %s' % str(res)
+                LOGGER.info('Result of runnable check: %s' % str(res))
             elif options.backgroundMode == 'reload':
                 dm.reload()
-                print 'You can either start, stop, check or reload the deamon'
+                LOGGER.info('You can either start, stop, check or ' + \
+                            + 'reload the deamon')
                 sys.exit(3)
         except (DaemonException, RuntimeError, ValueError, IOError), e:
             LOGGER.exception('')
@@ -711,3 +726,4 @@ def main():
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
     main()
+

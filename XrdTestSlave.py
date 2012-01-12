@@ -1,24 +1,39 @@
-from Daemon import Daemon, readConfig, DaemonException, Runnable
-from SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
-from TestUtils import TestSuite
-from Utils import State
-from optparse import OptionParser
-from string import join, replace
-from subprocess import Popen
-import ConfigParser
-import Queue
+#!/usr/bin/env python
+#-------------------------------------------------------------------------------
+# Author:  Lukasz Trzaska <ltrzaska@cern.ch>
+# Date:    
+# File:    XrdTestHypervisor
+# Desc:    Xroot Testing Framework Hypervisor component.
+#-------------------------------------------------------------------------------
+# Logging settings
+#-------------------------------------------------------------------------------
 import logging
-import os
-import socket
-import ssl
-import subprocess
 import sys
-import threading
 
 logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] ' + \
                     '%(message)s', level=logging.DEBUG)
 LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
+#------------------------------------------------------------------------------ 
+try:
+    from Daemon import Daemon, readConfig, DaemonException, Runnable
+    from SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
+    from TestUtils import TestSuite
+    from Utils import State
+    from optparse import OptionParser
+    from string import join, replace
+    from subprocess import Popen
+    import ConfigParser
+    import Queue
+    import os
+    import socket
+    import ssl
+    import subprocess
+    import threading
+except ImportError, e:
+    LOGGER.error(str(e))
+    sys.exit(1)
+
 currentDir = os.path.dirname(os.path.abspath(__file__))
 
 #Default daemon configuration
@@ -154,27 +169,32 @@ class XrdTestSlave(Runnable):
         return self.sockStream
     #---------------------------------------------------------------------------
     def handleRunTestCase(self, msg):
-        #@todo: the same as init
+        cmd = msg.cmd
+        suiteName = msg.suiteName
+        case = msg.testCase
+
+        #@todo: do it
+
         return True
     #---------------------------------------------------------------------------
     def handleTestSuiteInit(self, msg):
         cmd = msg.cmd
-        suiteName = msg.testSuiteName
+        suiteName = msg.suiteName
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
         msg.state = State(TestSuite.S_SLAVE_INITIALIZED)
-        msg.testSuiteName = suiteName
+        msg.suiteName = suiteName
         msg.result = self.executeSh(cmd)
 
         return msg
     #---------------------------------------------------------------------------
     def handleTestSuiteFinalized(self, msg):
         cmd = msg.cmd
-        suiteName = msg.testSuiteName
+        suiteName = msg.suiteName
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
         msg.state = State(TestSuite.S_SLAVE_FINALIZED)
-        msg.testSuiteName = suiteName
+        msg.suiteName = suiteName
         msg.result = self.executeSh(cmd)
 
         return msg

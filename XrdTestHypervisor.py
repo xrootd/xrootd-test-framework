@@ -1,25 +1,39 @@
-from ClusterManager import ClusterManager, ClusterManagerException, Cluster
-from Daemon import Daemon, readConfig, DaemonException, Runnable
-from SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
-from optparse import OptionParser
-import ConfigParser
-import Queue
-import copy
-import hashlib
+#!/usr/bin/env python
+#-------------------------------------------------------------------------------
+# Author:  Lukasz Trzaska <ltrzaska@cern.ch>
+# Date:    
+# File:    XrdTestHypervisor
+# Desc:    Xroot Testing Framework Hypervisor component.
+#-------------------------------------------------------------------------------
+# Logging settings
+#-------------------------------------------------------------------------------
 import logging
-import os
-import socket
-import ssl
 import sys
-import threading
-from Utils import State
 
 logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] ' + \
                     '%(message)s', level=logging.DEBUG)
 LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
-currentDir = os.path.dirname(os.path.abspath(__file__))
+#------------------------------------------------------------------------------ 
+try:
+    from ClusterManager import ClusterManager, ClusterManagerException, Cluster
+    from Daemon import Daemon, readConfig, DaemonException, Runnable
+    from SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
+    from optparse import OptionParser
+    import ConfigParser
+    import Queue
+    import copy
+    import hashlib
+    import os
+    import socket
+    import ssl
+    import threading
+    from Utils import State
+except ImportError, e:
+    LOGGER.error(str(e))
+    sys.exit(1)
 
+currentDir = os.path.dirname(os.path.abspath(__file__))
 #Default daemon configuration
 defaultConfFile = './XrdTestHypervisor.conf'
 defaultPidFile = '/var/run/XrdTestHypervisor.pid'
@@ -96,7 +110,7 @@ class XrdTestHypervisor(Runnable):
                         self.config.get('test_master', 'connection_passwd'))
             msg = self.sockStream.recv()
             LOGGER.info('Received msg: ' + msg)
-            
+
             if msg == "PASSWD_OK":
                 LOGGER.info("Connected and authenticated to XrdTestMaster " + \
                             "successfully. Waiting for commands " + \
@@ -122,8 +136,10 @@ class XrdTestHypervisor(Runnable):
         resp.clusterName = msg.clusterDef.name
 
         cluster = msg.clusterDef
-        cluster.setEmulatorPath(self.config.get('virtual_machines', 
+        cluster.setEmulatorPath(self.config.get('virtual_machines',
                                                 'emulator_path'))
+
+        cluster.network.xrdTestMasterIP = self.config.get('test_master', 'ip')
         res, msg = cluster.validateDynamic()
         if res:
             try:

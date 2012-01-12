@@ -6,36 +6,47 @@
 # Desc:    Xroot Testing Framework manager. Saves all information into logs and
 #          displays most important through web interface.
 #-------------------------------------------------------------------------------
-# Imports
+# Logging settings
 #-------------------------------------------------------------------------------
-from Cheetah.Template import Template
-from ClusterManager import Cluster, loadClustersDefs
-from Daemon import Runnable, Daemon, DaemonException, readConfig
-from SocketUtils import FixedSockStream, XrdMessage, PriorityBlockingQueue, \
-    SocketDisconnectedError, getMyIP
-from TestUtils import loadTestSuitsDefs, TestSuite
-from Utils import Stateful, State
-from copy import copy
-from optparse import OptionParser
-import ConfigParser
-import SocketServer
-import cherrypy
 import logging
-import os
-import socket
-import ssl
 import sys
-import threading
-import time
-
-#-------------------------------------------------------------------------------
-# Globals and configurations
-#-------------------------------------------------------------------------------
+import Cheetah
+from cherrypy import _cperror
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
                     '%(message)s', level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
+#-------------------------------------------------------------------------------
+# Imports
+#-------------------------------------------------------------------------------
+try:
+    from Cheetah.Template import Template
+    from ClusterManager import Cluster, loadClustersDefs
+    from Daemon import Runnable, Daemon, DaemonException, readConfig
+    from SocketUtils import FixedSockStream, XrdMessage, PriorityBlockingQueue, \
+        SocketDisconnectedError, getMyIP
+    from TestUtils import loadTestSuitsDefs, TestSuite
+    from Utils import Stateful, State
+    from copy import copy
+    from optparse import OptionParser
+    import ConfigParser
+    import SocketServer
+    import cherrypy
+    import os
+    import signal
+    import socket
+    import ssl
+    import threading
+    import time
+except ImportError, e:
+    LOGGER.error(str(e))
+    sys.exit(1)
+
+#-------------------------------------------------------------------------------
+# Globals and configurations
+#-------------------------------------------------------------------------------
+
 
 currentDir = os.path.dirname(os.path.abspath(__file__))
 #Default daemon configuration
@@ -175,6 +186,13 @@ class XrdTestMasterException(Exception):
         Returns textual representation of an error
         '''
         return repr(self.desc)
+#------------------------------------------------------------------------------ 
+def handleCherrypyError():
+        cherrypy.response.status = 500
+        cherrypy.response.body = \
+                        ["An error occured. Check log for details."]
+        LOGGER.error("Cherrypy error: " + \
+                     str(_cperror.format_exc(None)))
 #-------------------------------------------------------------------------------
 class WebInterface:
     #reference to testMaster
@@ -204,16 +222,28 @@ class WebInterface:
                     'userMsgs' : self.testMaster.userMsgs,
                     'testMaster': self.testMaster,
                     'HTTPport' : '8080'}
-        tpl = Template(file=tplFile, searchList=[tplVars])
-        return tpl.respond()
+        tpl = None
+        try:
+            tpl = Template(file=tplFile, searchList=[tplVars])
+        except Exception, e:
+            LOGGER.error(str(e))
+            return "An error occured. Check log for details."
+        else:
+            return tpl.respond()
     #---------------------------------------------------------------------------
     def indexRedirect(self):
         tplFile = self.config.get('webserver', 'webpage_dir') \
                     + os.sep + 'index_redirect.tmpl'
         tplVars = { 'hostname': socket.gethostname(),
                     'HTTPport' : '8080' }
-        tpl = Template(file=tplFile, searchList=[tplVars])
-        return tpl.respond()
+        tpl = None
+        try:
+            tpl = Template(file=tplFile, searchList=[tplVars])
+        except Exception, e:
+            LOGGER.error(str(e))
+            return "Error occured. Check the log for details."
+        else:
+            return tpl.respond()
     #---------------------------------------------------------------------------
     def startCluster(self, clusterName):
         LOGGER.info("startCluster pressed: " + str(clusterName))
@@ -236,6 +266,8 @@ class WebInterface:
     startCluster.exposed = True
     runTest.exposed = True
     initSuite.exposed = True
+
+    _cp_config = {'request.error_response': handleCherrypyError}
 #-------------------------------------------------------------------------------
 class TCPClient(Stateful):
     S_CONNECTED_IDLE = (1, "Connected")
@@ -509,7 +541,7 @@ class XrdTestMaster(Runnable):
         '''
         global currentDir, cherrypyConfig
         global cherrypy
-        
+
         server = None
         try:
             server = ThreadedTCPServer((self.config.get('server', 'ip'), \
@@ -533,15 +565,10 @@ class XrdTestMaster(Runnable):
         server_thread = threading.Thread(target=server.serve_forever)
         server_thread.start()
 
-        myIp = getMyIP()
-        LOGGER.info("Master's IP set to %s" % myIp)
-        
         clusters = loadClustersDefs(currentDir + "/clusters")
         for clu in clusters:
             self.clusters[clu.name] = clu
             self.clusters[clu.name].state = State(Cluster.S_UNKNOWN)
-            self.clusters[clu.name].network.xrdTestMasterIP = myIp
-
 
         self.testSuits = loadTestSuitsDefs(currentDir + "/testSuits")
 
@@ -557,19 +584,23 @@ class XrdTestMaster(Runnable):
                      self.config.get('webserver', 'webpage_dir') \
                      + "/css",
                      }
-                     
                 }
 
         cherrypy.tree.mount(WebInterface(self.config, self), "/", cherrypyCfg)
-
-        #cherrypy.config.environments['development']['autoreload.on'] = False
         cherrypy.config.update({'server.socket_host': '0.0.0.0',
-                            'server.socket_port': 8080,
+                            'server.socket_port': \
+                            self.config.getint('webserver', 'port'),
                             'server.environment': 'production'
                             })
 
-        cherrypy.server.start()
-        
+        try:
+            cherrypy.server.start()
+        except cherrypy._cperror.Error, e:
+            LOGGER.error(str(e))
+            if server:
+                server.shutdown()
+            sys.exit(1)
+
         while True:
             evt = self.recvQueue.get()
             if evt.type == MasterEvent.M_UNKNOWN:
@@ -651,6 +682,13 @@ class UserInfoHandler(logging.Handler):
             self.testMaster = xrdTestMaster
     def emit(self, record):
         self.testMaster.userMsgs.append(record)
+
+def sigtermHandler(signum, frame):
+    print 'Signal handler called with signal', signum
+
+# Set the signal handler and a 5-second alarm
+signal.signal(signal.SIGTERM, sigtermHandler)
+
 #-------------------------------------------------------------------------------
 def main():
     '''
@@ -725,5 +763,9 @@ def main():
 # Start place
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
-    main()
-
+    try:
+        main()
+    except OSError, e:
+        LOGGER.error(str(e))
+        sys.exit(1)
+   

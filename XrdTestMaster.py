@@ -562,10 +562,10 @@ class XrdTestMaster(Runnable):
 
         cherrypy.tree.mount(WebInterface(self.config, self), "/", cherrypyCfg)
 
-        cherrypy.config.environments['development']['autoreload.on'] = False
+        #cherrypy.config.environments['development']['autoreload.on'] = False
         cherrypy.config.update({'server.socket_host': '0.0.0.0',
                             'server.socket_port': 8080,
-                            #'server.environment': 'production'
+                            'server.environment': 'production'
                             })
 
         cherrypy.server.start()

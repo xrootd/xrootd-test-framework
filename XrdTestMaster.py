@@ -12,6 +12,8 @@ import logging
 import sys
 import Cheetah
 from cherrypy import _cperror
+from multiprocessing import process
+import Queue
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
                     '%(message)s', level=logging.INFO)
@@ -25,7 +27,7 @@ try:
     from ClusterManager import Cluster, loadClustersDefs
     from Daemon import Runnable, Daemon, DaemonException, readConfig
     from SocketUtils import FixedSockStream, XrdMessage, PriorityBlockingQueue, \
-        SocketDisconnectedError, getMyIP
+        SocketDisconnectedError
     from TestUtils import loadTestSuitsDefs, TestSuite
     from Utils import Stateful, State
     from copy import copy
@@ -42,17 +44,16 @@ try:
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
-
 #-------------------------------------------------------------------------------
 # Globals and configurations
 #-------------------------------------------------------------------------------
-
-
 currentDir = os.path.dirname(os.path.abspath(__file__))
 #Default daemon configuration
 defaultConfFile = './XrdTestMaster.conf'
 defaultPidFile = '/var/run/XrdTestMaster.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
+
+tcpServer = None
 #-------------------------------------------------------------------------------
 class MasterEvent(object):
     '''
@@ -192,7 +193,7 @@ def handleCherrypyError():
         cherrypy.response.body = \
                         ["An error occured. Check log for details."]
         LOGGER.error("Cherrypy error: " + \
-                     str(_cperror.format_exc(None)))
+                     str(_cperror.format_exc(None))) #@UndefinedVariable
 #-------------------------------------------------------------------------------
 class WebInterface:
     #reference to testMaster
@@ -362,7 +363,7 @@ class XrdTestMaster(Runnable):
     C_SLAVE = 'slave'
     C_HYPERV = 'hypervisor'
     #---------------------------------------------------------------------------
-    # messaging system
+    # message logging system
     userMsgs = []
     #---------------------------------------------------------------------------
     def __init__(self, config):
@@ -539,8 +540,9 @@ class XrdTestMaster(Runnable):
         ''' 
         Main jobs of programme. Has to be implemented.
         '''
+
         global currentDir, cherrypyConfig
-        global cherrypy
+        global cherrypy, tcpServer
 
         server = None
         try:
@@ -554,6 +556,7 @@ class XrdTestMaster(Runnable):
                 LOGGER.exception(e)
             sys.exit(1)
 
+        tcpServer = server
         server.testMaster = self
         server.config = self.config
         server.recvQueue = self.recvQueue
@@ -563,6 +566,7 @@ class XrdTestMaster(Runnable):
                     str(port))
 
         server_thread = threading.Thread(target=server.serve_forever)
+        server_thread.daemon = True
         server_thread.start()
 
         clusters = loadClustersDefs(currentDir + "/clusters")
@@ -592,7 +596,7 @@ class XrdTestMaster(Runnable):
                             self.config.getint('webserver', 'port'),
                             'server.environment': 'production'
                             })
-
+        #-----------------------------------------------------------------------
         try:
             cherrypy.server.start()
         except cherrypy._cperror.Error, e:
@@ -601,8 +605,13 @@ class XrdTestMaster(Runnable):
                 server.shutdown()
             sys.exit(1)
 
+        sys.setcheckinterval(0.1)
+
         while True:
+            pass
+
             evt = self.recvQueue.get()
+            
             if evt.type == MasterEvent.M_UNKNOWN:
                 msg = evt.data
                 LOGGER.debug("Received from " + str(msg.sender) \
@@ -656,7 +665,7 @@ class XrdTestMaster(Runnable):
                         else:
                             slave.state = State(Slave.S_SUIT_INITIALIZED)
                             session = self.testSuitsSessions[msg.suiteName]
-                            print str(msg.result)
+                            
                             session.addStageResult(msg.state, msg.result)
                             #update SuiteStatus if all slaves are inited
                             initedCount = [1 for sl in session.slaves if \
@@ -683,12 +692,28 @@ class UserInfoHandler(logging.Handler):
     def emit(self, record):
         self.testMaster.userMsgs.append(record)
 
+#-------------------------------------------------------------------------------
 def sigtermHandler(signum, frame):
-    print 'Signal handler called with signal', signum
+    global cherrypy, tcpServer
 
-# Set the signal handler and a 5-second alarm
+    LOGGER.error("Received SIGTERM. Closing jobs.")
+    cherrypy.server.stop()
+    tcpServer.shutdown()
+
+    LOGGER.error("Received SIGTERM. Closing jobs done.")
+    sys.exit(0)
+#-------------------------------------------------------------------------------
+def sigintHandler(signum, frame):
+    global cherrypy, tcpServer
+
+    LOGGER.error("Received SIGINT. Closing jobs.")
+    cherrypy.server.stop()
+    tcpServer.shutdown()
+    LOGGER.error("Received SIGINT. Closing jobs done.")
+    sys.exit(0)
+
 signal.signal(signal.SIGTERM, sigtermHandler)
-
+signal.signal(signal.SIGINT, sigintHandler)
 #-------------------------------------------------------------------------------
 def main():
     '''
@@ -738,6 +763,7 @@ def main():
             logFile = config.get('daemon', 'log_file_path')
 
         dm = Daemon("XrdTestMaster.py", pidFile, logFile)
+
         try:
             if options.backgroundMode == 'start':
                 dm.start(testMaster)
@@ -768,4 +794,3 @@ if __name__ == '__main__':
     except OSError, e:
         LOGGER.error(str(e))
         sys.exit(1)
-   

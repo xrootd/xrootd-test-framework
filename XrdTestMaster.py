@@ -8,12 +8,11 @@
 #-------------------------------------------------------------------------------
 # Logging settings
 #-------------------------------------------------------------------------------
-import logging
-import sys
-import Cheetah
 from cherrypy import _cperror
 from multiprocessing import process
-import Queue
+import Cheetah
+import logging
+import sys
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
                     '%(message)s', level=logging.INFO)
@@ -54,12 +53,14 @@ defaultPidFile = '/var/run/XrdTestMaster.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
 
 tcpServer = None
+xrdTestMaster = None
 #-------------------------------------------------------------------------------
 class MasterEvent(object):
     '''
     The message incoming to XrdTestMaster. May be either the event e.g.
     hypervisor connection or normal message containing data.
     '''
+
     PRIO_NORMAL = 9
     PRIO_IMPORTANT = 1
 
@@ -68,6 +69,8 @@ class MasterEvent(object):
     M_CLIENT_DISCONNECTED = 4
     M_HYPERV_MSG = 8
     M_SLAVE_MSG = 16
+
+    M_SIGTERM = 128
 
     type = M_UNKNOWN
     data = ''
@@ -222,7 +225,7 @@ class WebInterface:
                     'testSuits': self.testMaster.testSuits,
                     'userMsgs' : self.testMaster.userMsgs,
                     'testMaster': self.testMaster,
-                    'HTTPport' : '8080'}
+                    'HTTPport' : self.config.getint('server', 'port')}
         tpl = None
         try:
             tpl = Template(file=tplFile, searchList=[tplVars])
@@ -236,7 +239,7 @@ class WebInterface:
         tplFile = self.config.get('webserver', 'webpage_dir') \
                     + os.sep + 'index_redirect.tmpl'
         tplVars = { 'hostname': socket.gethostname(),
-                    'HTTPport' : '8080' }
+                    'HTTPport': self.config.getint('server', 'port')}
         tpl = None
         try:
             tpl = Template(file=tplFile, searchList=[tplVars])
@@ -261,6 +264,12 @@ class WebInterface:
         LOGGER.info("Init suite pressed - test suite [%s] " % \
                                 (testSuiteName))
         self.testMaster.initializeTestSuite(testSuiteName)
+        return self.indexRedirect()
+    #---------------------------------------------------------------------------
+    def runTestSuite(self, testSuiteName, testName):
+        LOGGER.info("RunTest pressed - test: %s [suite: %s] " % \
+                                (testName, testSuiteName))
+        self.testMaster.runTestSuite(testSuiteName)
         return self.indexRedirect()
 
     index.exposed = True
@@ -380,7 +389,7 @@ class XrdTestMaster(Runnable):
                     msg = XrdMessage(XrdMessage.M_START_CLUSTER)
                     msg.clusterDef = self.clusters[clusterName]
 
-                    #take first possible hypervisor
+                    #take first possible hypervisor and send him cluster def
                     hyperv = [h for h in self.hypervisors.itervalues()][0]
                     hyperv.send(msg)
 
@@ -435,6 +444,34 @@ class XrdTestMaster(Runnable):
             sl.send(msg)
             sl.state = State(Slave.S_SUITINIT_SENT)
     #---------------------------------------------------------------------------
+    def runTestSuite(self, test_suite_name, test_name):
+        '''
+        Sends runTest message to slaves.
+        @param test_suite_name:
+        @param test_name:
+        '''
+        # Checks if we already initialized suite
+        if not self.testSuitsSessions.has_key(test_suite_name):
+            LOGGER.warning("TestSuite has not been initialized.")
+            return
+
+        tss = self.testSuitsSessions['test_suite_name']
+        if not tss.state == State(TestSuiteSession.S_ALL_INITIALIZED):
+            LOGGER.warning("TestSuite not yet initialized.")
+            return
+
+        msg = XrdMessage(XrdMessage.M_TESTSUITE_INIT)
+        msg.suiteName = tss.suiteName
+        msg.cmd = self.testSuits
+        msg.case = self.testSuits[test_suite_name].testCases[test_name]
+
+        for sl in tss.slaves:
+            LOGGER.info("Sending Test Case to %s" % sl)
+            sl.send(msg)
+            sl.state = State(Slave.S_TESTCASE_DEF_SENT)
+        
+        tss.state = State(TestSuite.S_WAIT_4_RUN)
+    #---------------------------------------------------------------------------
     def finalizeTestSuite(self, test_suite_name):
         '''
         Sends finalizationi message to slaves and destroys TestSuiteSession.
@@ -446,42 +483,6 @@ class XrdTestMaster(Runnable):
         else:
             pass
             #@todo: finalization job
-    #---------------------------------------------------------------------------
-    def runTest(self, testSuiteName, testName):
-        unreadyMachines = []
-
-        if self.testsRunning.has_key(testName):
-            LOGGER.error("Test is currently running.")
-            return False
-
-        testSuite = self.testSuits[testSuiteName]
-        testCase = testSuite.testCases[testName]
-
-        for m in testCase.machines:
-            if self.slaveState(m).id != State(Slave.S_SUIT_INITIALIZED):
-                unreadyMachines.append(m)
-                LOGGER.error(m + " state " + str(self.slaveState(m)))
-
-        if len(unreadyMachines):
-            LOGGER.error("Some required machines are not " + \
-                         "ready for the test: %s" % str(unreadyMachines))
-        else:
-            LOGGER.debug("Before sending test case defs to slaves")
-            msg = XrdMessage(XrdMessage.M_TESTCASE_RUN)
-            msg.testDef = testCase
-
-            testSlaves = [v for v \
-                          in self.slaves.itervalues() \
-                          if v.hostname in testCase.machines]
-
-            for sl in testSlaves:
-                LOGGER.info("Sending test case def to %s" % (sl))
-                sl.sendMsg(msg)
-
-                sl.state = State(Slave.TESTCASE_DEF_SENT)
-
-                LOGGER.debug("TestSuite def sent to slave [%s] " % str(sl))
-        return True
     #---------------------------------------------------------------------------
     def handleClientDisconnected(self, client_type, client_addr):
         clients = self.slaves
@@ -526,96 +527,21 @@ class XrdTestMaster(Runnable):
                         "s list (after handling incoming connection): " + \
                          ', '.join(clients_str))
     #---------------------------------------------------------------------------
-    def slaveState(self, slave_name):
-        key = [k for k, v in self.slaves.iteritems() \
-               if slave_name == v.hostname]
-        ret = State(TCPClient.S_NOT_CONNECTED)
-        if len(key):
-            key = key[0]
-        if key:
-            ret = self.slaves[key].state
-        return ret
-    #---------------------------------------------------------------------------
-    def run(self):
-        ''' 
-        Main jobs of programme. Has to be implemented.
+    def procMessages(self):
         '''
-
-        global currentDir, cherrypyConfig
-        global cherrypy, tcpServer
-
-        server = None
-        try:
-            server = ThreadedTCPServer((self.config.get('server', 'ip'), \
-                                        self.config.getint('server', 'port')),
-                               ThreadedTCPRequestHandler)
-        except socket.error, e:
-            if e[0] == 98:
-                LOGGER.info("Can't start server. Address already in use.")
-            else:
-                LOGGER.exception(e)
-            sys.exit(1)
-
-        tcpServer = server
-        server.testMaster = self
-        server.config = self.config
-        server.recvQueue = self.recvQueue
-
-        ip, port = server.server_address
-        LOGGER.info("TCP server running at " + str(ip) + ":" + \
-                    str(port))
-
-        server_thread = threading.Thread(target=server.serve_forever)
-        server_thread.daemon = True
-        server_thread.start()
-
-        clusters = loadClustersDefs(currentDir + "/clusters")
-        for clu in clusters:
-            self.clusters[clu.name] = clu
-            self.clusters[clu.name].state = State(Cluster.S_UNKNOWN)
-
-        self.testSuits = loadTestSuitsDefs(currentDir + "/testSuits")
-
-        cherrypyCfg = {'/webpage/js': {
-                     'tools.staticdir.on': True,
-                     'tools.staticdir.dir' : \
-                     self.config.get('webserver', 'webpage_dir') \
-                     + "/js",
-                     },
-                  '/webpage/css': {
-                     'tools.staticdir.on': True,
-                     'tools.staticdir.dir' : \
-                     self.config.get('webserver', 'webpage_dir') \
-                     + "/css",
-                     }
-                }
-
-        cherrypy.tree.mount(WebInterface(self.config, self), "/", cherrypyCfg)
-        cherrypy.config.update({'server.socket_host': '0.0.0.0',
-                            'server.socket_port': \
-                            self.config.getint('webserver', 'port'),
-                            'server.environment': 'production'
-                            })
-        #-----------------------------------------------------------------------
-        try:
-            cherrypy.server.start()
-        except cherrypy._cperror.Error, e:
-            LOGGER.error(str(e))
-            if server:
-                server.shutdown()
-            sys.exit(1)
-
-        sys.setcheckinterval(0.1)
-
+        Receives events and messages from clients and reacts. Actual place 
+        of program control.
+        '''
         while True:
-            pass
-
             evt = self.recvQueue.get()
-            
+
             if evt.type == MasterEvent.M_UNKNOWN:
                 msg = evt.data
                 LOGGER.debug("Received from " + str(msg.sender) \
                              + " msg: " + msg.name)
+            elif evt.type == MasterEvent.M_SIGTERM:
+                LOGGER.info("Process messages thread received SIGTERM. Ending.")
+                break
             #------------------------------------------------------------------- 
             elif evt.type == MasterEvent.M_CLIENT_CONNECTED:
                 self.handleClientConnected(evt.data[0], evt.data[1], \
@@ -665,7 +591,7 @@ class XrdTestMaster(Runnable):
                         else:
                             slave.state = State(Slave.S_SUIT_INITIALIZED)
                             session = self.testSuitsSessions[msg.suiteName]
-                            
+
                             session.addStageResult(msg.state, msg.result)
                             #update SuiteStatus if all slaves are inited
                             initedCount = [1 for sl in session.slaves if \
@@ -683,6 +609,86 @@ class XrdTestMaster(Runnable):
             else:
                 raise XrdTestMasterException("Unknown incoming evt type " + \
                                              str(evt.type))
+    #---------------------------------------------------------------------------
+    def slaveState(self, slave_name):
+        key = [k for k, v in self.slaves.iteritems() \
+               if slave_name == v.hostname]
+        ret = State(TCPClient.S_NOT_CONNECTED)
+        if len(key):
+            key = key[0]
+        if key:
+            ret = self.slaves[key].state
+        return ret
+    #---------------------------------------------------------------------------
+    def run(self):
+        ''' 
+        Starting jobs of the program.
+        '''
+        global currentDir, cherrypyConfig
+        global cherrypy, tcpServer
+
+        server = None
+        try:
+            server = ThreadedTCPServer((self.config.get('server', 'ip'), \
+                                        self.config.getint('server', 'port')),
+                               ThreadedTCPRequestHandler)
+        except socket.error, e:
+            if e[0] == 98:
+                LOGGER.info("Can't start server. Address already in use.")
+            else:
+                LOGGER.exception(e)
+            sys.exit(1)
+
+        tcpServer = server
+        server.testMaster = self
+        server.config = self.config
+        server.recvQueue = self.recvQueue
+
+        ip, port = server.server_address
+        LOGGER.info("TCP server running at " + str(ip) + ":" + \
+                    str(port))
+
+        server_thread = threading.Thread(target=server.serve_forever)
+        server_thread.daemon = True
+        server_thread.start()
+
+        clusters = loadClustersDefs(currentDir + "/clusters")
+        for clu in clusters:
+            self.clusters[clu.name] = clu
+            self.clusters[clu.name].state = State(Cluster.S_UNKNOWN)
+
+        self.testSuits = loadTestSuitsDefs(currentDir + "/testSuits")
+
+        cherrypyCfg = {'/webpage/js': {
+                     'tools.staticdir.on': True,
+                     'tools.staticdir.dir' : \
+                     self.config.get('webserver', 'webpage_dir') \
+                     + "/js",
+                     },
+                  '/webpage/css': {
+                     'tools.staticdir.on': True,
+                     'tools.staticdir.dir' : \
+                     self.config.get('webserver', 'webpage_dir') \
+                     + "/css",
+                     }
+                }
+        #-----------------------------------------------------------------------
+        cherrypy.tree.mount(WebInterface(self.config, self), "/", cherrypyCfg)
+        cherrypy.config.update({'server.socket_host': '0.0.0.0',
+                            'server.socket_port': \
+                            self.config.getint('webserver', 'port'),
+                            'server.environment': 'production'
+                            })
+        #-----------------------------------------------------------------------
+        try:
+            cherrypy.server.start()
+        except cherrypy._cperror.Error, e:
+            LOGGER.error(str(e))
+            if server:
+                server.shutdown()
+            sys.exit(1)
+        #-----------------------------------------------------------------------
+        self.procMessages()
 #-------------------------------------------------------------------------------
 class UserInfoHandler(logging.Handler):
     testMaster = None
@@ -693,26 +699,20 @@ class UserInfoHandler(logging.Handler):
         self.testMaster.userMsgs.append(record)
 
 #-------------------------------------------------------------------------------
-def sigtermHandler(signum, frame):
-    global cherrypy, tcpServer
-
-    LOGGER.error("Received SIGTERM. Closing jobs.")
-    cherrypy.server.stop()
-    tcpServer.shutdown()
-
-    LOGGER.error("Received SIGTERM. Closing jobs done.")
-    sys.exit(0)
-#-------------------------------------------------------------------------------
 def sigintHandler(signum, frame):
-    global cherrypy, tcpServer
+    #@todo: cannot handle sigint because of python issue signal vs. conditions
+    global cherrypy, tcpServer, xrdTestMaster
 
     LOGGER.error("Received SIGINT. Closing jobs.")
     cherrypy.server.stop()
+    evt = MasterEvent(MasterEvent.M_SIGTERM, None)
+    xrdTestMaster.recvQueue.put((MasterEvent.PRIO_IMPORTANT, evt))
+
     tcpServer.shutdown()
     LOGGER.error("Received SIGINT. Closing jobs done.")
     sys.exit(0)
 
-signal.signal(signal.SIGTERM, sigtermHandler)
+#signal.signal(signal.SIGTERM, sigtermHandler)
 signal.signal(signal.SIGINT, sigintHandler)
 #-------------------------------------------------------------------------------
 def main():
@@ -733,7 +733,7 @@ def main():
     #---------------------------------------------------------------------------
     # read the config file
     #---------------------------------------------------------------------------
-    global defaultConfFile
+    global xrdTestMaster, defaultConfFile
     LOGGER.info("Loading config file: %s" % options.configFile)
     try:
         confFile = ''
@@ -747,8 +747,8 @@ def main():
         LOGGER.exception(e)
         sys.exit(1)
 
-    testMaster = XrdTestMaster(config)
-    uih = UserInfoHandler(testMaster)
+    xrdTestMaster = XrdTestMaster(config)
+    uih = UserInfoHandler(xrdTestMaster)
     LOGGER.addHandler(uih)
     #---------------------------------------------------------------------------
     # run the daemon
@@ -766,7 +766,7 @@ def main():
 
         try:
             if options.backgroundMode == 'start':
-                dm.start(testMaster)
+                dm.start(xrdTestMaster)
             elif options.backgroundMode == 'stop':
                 dm.stop()
             elif options.backgroundMode == 'check':
@@ -784,7 +784,7 @@ def main():
     # run test master in standard mode. Used for debugging
     #---------------------------------------------------------------------------
     if not options.backgroundMode:
-        testMaster.run()
+        xrdTestMaster.run()
 #-------------------------------------------------------------------------------
 # Start place
 #-------------------------------------------------------------------------------

@@ -255,13 +255,19 @@ class WebInterface:
         return self.indexRedirect()
     #---------------------------------------------------------------------------
     def initSuite(self, testSuiteName):
-        LOGGER.info("Init suite pressed - test suite [%s] " % \
+        LOGGER.info("Initialize requested for test suite [%s] " % \
                                 (testSuiteName))
         self.testMaster.initializeTestSuite(testSuiteName)
         return self.indexRedirect()
+        #---------------------------------------------------------------------------
+    def finalizeSuite(self, testSuiteName):
+        LOGGER.info("Finalize requested for test suite [%s] " % \
+                                (testSuiteName))
+        self.testMaster.finalizeTestSuite(testSuiteName)
+        return self.indexRedirect()
     #---------------------------------------------------------------------------
     def runTestCase(self, testSuiteName, testName):
-        LOGGER.info("RunTestCase pressed - test: %s [suite: %s] " % \
+        LOGGER.info("RunTestCase requested for test %s in test suite: %s" % \
                                 (testName, testSuiteName))
         self.testMaster.runTestCase(testSuiteName, testName)
         return self.indexRedirect()
@@ -270,6 +276,7 @@ class WebInterface:
     startCluster.exposed = True
     runTestCase.exposed = True
     initSuite.exposed = True
+    finalizeSuite.exposed = True
 
     _cp_config = {'request.error_response': handleCherrypyError}
 #-------------------------------------------------------------------------------
@@ -446,12 +453,14 @@ class XrdTestMaster(Runnable):
         '''
         # Checks if we already initialized suite
         if not self.testSuitsSessions.has_key(test_suite_name):
-            LOGGER.warning("TestSuite has not been initialized.")
+            LOGGER.warning("Test Suite %s has not been initialized." % \
+                            test_suite_name)
             return
 
         tss = self.testSuitsSessions[test_suite_name]
         if not tss.state == State(TestSuite.S_ALL_INITIALIZED):
-            LOGGER.warning("TestSuite not yet initialized.")
+            LOGGER.warning("TestSuite %s has not been initialized." % \
+                            test_suite_name)
             return
 
         msg = XrdMessage(XrdMessage.M_TESTCASE_RUN)
@@ -460,7 +469,7 @@ class XrdTestMaster(Runnable):
         msg.case = self.testSuits[test_suite_name].testCases[test_name]
 
         for sl in tss.slaves:
-            LOGGER.info("Sending Test Case to %s" % sl)
+            LOGGER.info("Sending Test Case %s to %s" % (test_name, sl))
             sl.send(msg)
             sl.state = State(Slave.S_TESTCASE_DEF_SENT)
 
@@ -468,15 +477,42 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     def finalizeTestSuite(self, test_suite_name):
         '''
-        Sends finalizationi message to slaves and destroys TestSuiteSession.
+        Sends finalization message to slaves and destroys TestSuiteSession.
         @param test_suite_name:
         '''
-        suite = self.testSuitsSessions[test_suite_name]
-        if suite.state == State(TestSuiteSession.S_FINALIZED):
-            LOGGER.info("TestSuite already finalized")
-        else:
-            pass
-            #@todo: finalization job
+        testSuite = self.testSuits[test_suite_name]
+
+        # Checks if we already initialized suite
+        if not self.testSuitsSessions.has_key(test_suite_name):
+            LOGGER.warning("TestSuite has not been initialized.")
+            return
+
+        tss = self.testSuitsSessions[test_suite_name]
+        if not tss.state == State(TestSuite.S_ALL_INITIALIZED):
+            LOGGER.warning("TestSuite not yet initialized.")
+            return
+
+        unreadyMachines = []
+        for m in testSuite.machines:
+            if self.slaveState(m) != State(Slave.S_CONNECTED_IDLE):
+                unreadyMachines.append(m)
+                LOGGER.warning(m + " state " + str(self.slaveState(m)))
+
+        if len(unreadyMachines):
+            LOGGER.warning("Some required machines are not " + \
+                         " ready for the finalize: %s" % str(unreadyMachines))
+            return
+
+        msg = XrdMessage(XrdMessage.M_TESTSUITE_FINALIZE)
+        msg.suiteName = test_suite_name
+
+        for sl in tss.slaves:
+            LOGGER.debug("Sending Test Suite finalize to %s" % sl)
+            sl.send(msg)
+            sl.state = State(Slave.S_SUITFINALIZE_SENT)
+
+        tss.state = State(TestSuite.S_WAIT_4_FINALIZE)
+
     #---------------------------------------------------------------------------
     def handleClientDisconnected(self, client_type, client_addr):
         clients = self.slaves
@@ -569,7 +605,7 @@ class XrdTestMaster(Runnable):
                         self.testCaseRunning[msg.testCase][msg.testStage] = \
                                                         msg.result
 
-                        if msg.testStage == "suiteFinalize":
+                        if msg.testStage == "1":
                             del self.testsRunning[msg.testCase]
                     else:
                         raise XrdTestMasterException(("Unknown test case " + \
@@ -591,12 +627,13 @@ class XrdTestMaster(Runnable):
                             initedCount = [1 for sl in session.slaves if \
                                            sl.state == \
                                            State(Slave.S_SUIT_INITIALIZED)]
-                            LOGGER.info("%s initialized in %s" %
+                            LOGGER.info("%s initialized in test suite %s" %
                                             (slave, session.suiteName))
                             if len(initedCount) == len(session.slaves):
                                 session.state = State(\
                                                 TestSuite.S_ALL_INITIALIZED)
-                                LOGGER.info("All slaves initialized in %s" %
+                                LOGGER.info("All slaves initialized in " + \
+                                            " test suite %s" %
                                             session.suiteName)
                     elif msg.state == State(TestSuite.S_SLAVE_FINALIZED):
                         self.slaves[msg.sender].state = msg.state
@@ -607,7 +644,7 @@ class XrdTestMaster(Runnable):
                         if len(finalizedCount) == len(session.slaves):
                                 session.state = State(\
                                                 TestSuite.S_ALL_FINALIZED)
-                        LOGGER.info("%s finalized in suite: %s" % 
+                        LOGGER.info("%s finalized in test suite: %s" % 
                                     (slave, session.suiteName))
                     elif msg.state == State(TestSuite.S_TESTCASE_INITIALIZED):
                         session.addStageResult(msg.state, msg.result)
@@ -619,7 +656,14 @@ class XrdTestMaster(Runnable):
                                     (slave, msg.testName, session.suiteName))
                     elif msg.state == State(TestSuite.S_TESTCASE_FINALIZED):
                         session.addStageResult(msg.state, msg.result)
-                        LOGGER.info("%s finalized case %s in suite %s" % 
+                        slave.state = State(Slave.S_SUIT_INITIALIZED)
+                        tFinalizedCount = [1 for sl in session.slaves if \
+                                           sl.state == \
+                                           State(Slave.S_CONNECTED_IDLE)]
+                        if len(tFinalizedCount) == len(session.slaves):
+                            session.state = State(TestSuite.S_ALL_INITIALIZED)
+
+                        LOGGER.info("%s finalized test case %s in suite %s" % 
                                 (slave, msg.testName, session.suiteName))
             else:
                 raise XrdTestMasterException("Unknown incoming evt type " + \

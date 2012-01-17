@@ -263,7 +263,7 @@ class WebInterface:
     def runTestCase(self, testSuiteName, testName):
         LOGGER.info("RunTestCase pressed - test: %s [suite: %s] " % \
                                 (testName, testSuiteName))
-        self.testMaster.runTestCase(testSuiteName)
+        self.testMaster.runTestCase(testSuiteName, testName)
         return self.indexRedirect()
 
     index.exposed = True
@@ -332,7 +332,7 @@ class TestSuiteSession(Stateful):
         self.slaves = []
     #---------------------------------------------------------------------------
     def addStageResult(self, state, result):
-        LOGGER.info("Adding stage result %s: (code %s) %s" % \
+        LOGGER.info("New stage result %s: (code %s) %s" % \
                     (state, result[2], result[0]))
         self.stagesResults.append((state, result))
 #-------------------------------------------------------------------------------
@@ -449,8 +449,8 @@ class XrdTestMaster(Runnable):
             LOGGER.warning("TestSuite has not been initialized.")
             return
 
-        tss = self.testSuitsSessions['test_suite_name']
-        if not tss.state == State(TestSuiteSession.S_ALL_INITIALIZED):
+        tss = self.testSuitsSessions[test_suite_name]
+        if not tss.state == State(TestSuite.S_ALL_INITIALIZED):
             LOGGER.warning("TestSuite not yet initialized.")
             return
 
@@ -600,6 +600,27 @@ class XrdTestMaster(Runnable):
                                             session.suiteName)
                     elif msg.state == State(TestSuite.S_SLAVE_FINALIZED):
                         self.slaves[msg.sender].state = msg.state
+                        slave.state = State(Slave.S_CONNECTED_IDLE)
+                        finalizedCount = [1 for sl in session.slaves if \
+                                           sl.state == \
+                                           State(Slave.S_CONNECTED_IDLE)]
+                        if len(finalizedCount) == len(session.slaves):
+                                session.state = State(\
+                                                TestSuite.S_ALL_FINALIZED)
+                        LOGGER.info("%s finalized in suite: %s" % 
+                                    (slave, session.suiteName))
+                    elif msg.state == State(TestSuite.S_TESTCASE_INITIALIZED):
+                        session.addStageResult(msg.state, msg.result)
+                        LOGGER.info("%s initialized case %s in suite %s" % 
+                                    (slave, msg.testName, session.suiteName))
+                    elif msg.state == State(TestSuite.S_TESTCASE_RUNFINISHED):
+                        session.addStageResult(msg.state, msg.result)
+                        LOGGER.info("%s run finished for case %s in suite %s" % 
+                                    (slave, msg.testName, session.suiteName))
+                    elif msg.state == State(TestSuite.S_TESTCASE_FINALIZED):
+                        session.addStageResult(msg.state, msg.result)
+                        LOGGER.info("%s finalized case %s in suite %s" % 
+                                (slave, msg.testName, session.suiteName))
             else:
                 raise XrdTestMasterException("Unknown incoming evt type " + \
                                              str(evt.type))

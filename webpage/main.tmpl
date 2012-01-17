@@ -144,7 +144,7 @@ p.sect_title {font-weight:bold; font-size:14px; }
             <tr><th>Name</th><th>Status</th><th></th></tr>
             #if $ts[1].tests and len($ts[1].tests) > 0
             #for $testname in $ts[1].tests
-                <tr><td><a href="./runTest?testSuiteName=${ts[1].name}&testName=$testname">$testname</a></td><td>n/a</td><td>&nbsp;</td></tr>
+                <tr><td><a href="./runTestCase?testSuiteName=${ts[1].name}&testName=$testname">$testname</a></td><td>n/a</td><td>&nbsp;</td></tr>
             #end for
             #end if
             </table>

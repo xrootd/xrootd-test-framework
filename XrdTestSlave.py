@@ -11,8 +11,9 @@ import logging
 import sys
 import copy
 
-logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] ' + \
-                    '%(message)s', level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
+                    '[%(filename)s %(lineno)d] ' + \
+                    '%(message)s', level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
 #------------------------------------------------------------------------------ 
@@ -170,7 +171,6 @@ class XrdTestSlave(Runnable):
         return self.sockStream
     #---------------------------------------------------------------------------
     def handleRunTestCase(self, msg):
-        cmd = msg.cmd
         suiteName = msg.suiteName
         testName = msg.testName
         case = msg.case
@@ -180,17 +180,26 @@ class XrdTestSlave(Runnable):
         msg.suiteName = suiteName
         msg.testName = testName
 
-        msg.result = self.executeSh(msg.case.initialize)
+        msg.result = self.executeSh(case.initialize)
+        
+        LOGGER.info("Executed testCase.initialize() %s [%s] with result %s:" % \
+                    (testName, suiteName, msg.result))
         self.sockStream.send(msg)
         
-        msg2 = copy(msg)
-        msg2.result = self.executeSh(msg.case.run)
+        msg2 = copy.copy(msg)
+        msg2.result = self.executeSh(case.run)
         msg2.state = State(TestSuite.S_TESTCASE_RUNFINISHED)
         self.sockStream.send(msg2)
 
-        msg3 = copy(msg)
-        msg3.result = self.executeSh(msg.case.finalize)
+        LOGGER.info("Executed testCase.run() %s [%s] with result %s:" % \
+                    (testName, suiteName, msg2.result))
+
+        msg3 = copy.copy(msg)
+        msg3.result = self.executeSh(case.finalize)
         msg3.state = State(TestSuite.S_TESTCASE_FINALIZED)
+
+        LOGGER.info("Executed testCase.finalize() %s [%s] with result %s:" % \
+            (testName, suiteName, msg2.result))
 
         return msg3
     #---------------------------------------------------------------------------

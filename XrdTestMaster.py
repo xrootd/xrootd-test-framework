@@ -225,7 +225,7 @@ class WebInterface:
                     'testSuits': self.testMaster.testSuits,
                     'userMsgs' : self.testMaster.userMsgs,
                     'testMaster': self.testMaster,
-                    'HTTPport' : self.config.getint('server', 'port')}
+                    'HTTPport' : self.config.getint('webserver', 'port')}
         tpl = None
         try:
             tpl = Template(file=tplFile, searchList=[tplVars])
@@ -239,7 +239,7 @@ class WebInterface:
         tplFile = self.config.get('webserver', 'webpage_dir') \
                     + os.sep + 'index_redirect.tmpl'
         tplVars = { 'hostname': socket.gethostname(),
-                    'HTTPport': self.config.getint('server', 'port')}
+                    'HTTPport': self.config.getint('webserver', 'port')}
         tpl = None
         try:
             tpl = Template(file=tplFile, searchList=[tplVars])
@@ -254,27 +254,21 @@ class WebInterface:
         self.testMaster.handleClusterStart(clusterName)
         return self.indexRedirect()
     #---------------------------------------------------------------------------
-    def runTest(self, testSuiteName, testName):
-        LOGGER.info("Run test pressed - test case [%s] in test suite [%s] " % \
-                                (testName, testSuiteName))
-        self.testMaster.runTest(testSuiteName, testName)
-        return self.indexRedirect()
-    #---------------------------------------------------------------------------
     def initSuite(self, testSuiteName):
         LOGGER.info("Init suite pressed - test suite [%s] " % \
                                 (testSuiteName))
         self.testMaster.initializeTestSuite(testSuiteName)
         return self.indexRedirect()
     #---------------------------------------------------------------------------
-    def runTestSuite(self, testSuiteName, testName):
-        LOGGER.info("RunTest pressed - test: %s [suite: %s] " % \
+    def runTestCase(self, testSuiteName, testName):
+        LOGGER.info("RunTestCase pressed - test: %s [suite: %s] " % \
                                 (testName, testSuiteName))
-        self.testMaster.runTestSuite(testSuiteName)
+        self.testMaster.runTestCase(testSuiteName)
         return self.indexRedirect()
 
     index.exposed = True
     startCluster.exposed = True
-    runTest.exposed = True
+    runTestCase.exposed = True
     initSuite.exposed = True
 
     _cp_config = {'request.error_response': handleCherrypyError}
@@ -444,7 +438,7 @@ class XrdTestMaster(Runnable):
             sl.send(msg)
             sl.state = State(Slave.S_SUITINIT_SENT)
     #---------------------------------------------------------------------------
-    def runTestSuite(self, test_suite_name, test_name):
+    def runTestCase(self, test_suite_name, test_name):
         '''
         Sends runTest message to slaves.
         @param test_suite_name:
@@ -460,17 +454,17 @@ class XrdTestMaster(Runnable):
             LOGGER.warning("TestSuite not yet initialized.")
             return
 
-        msg = XrdMessage(XrdMessage.M_TESTSUITE_INIT)
-        msg.suiteName = tss.suiteName
-        msg.cmd = self.testSuits
+        msg = XrdMessage(XrdMessage.M_TESTCASE_RUN)
+        msg.suiteName = test_suite_name
+        msg.testName = test_name
         msg.case = self.testSuits[test_suite_name].testCases[test_name]
 
         for sl in tss.slaves:
             LOGGER.info("Sending Test Case to %s" % sl)
             sl.send(msg)
             sl.state = State(Slave.S_TESTCASE_DEF_SENT)
-        
-        tss.state = State(TestSuite.S_WAIT_4_RUN)
+
+        tss.state = State(TestSuite.S_TEST_SENT)
     #---------------------------------------------------------------------------
     def finalizeTestSuite(self, test_suite_name):
         '''

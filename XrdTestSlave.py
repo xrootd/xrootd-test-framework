@@ -9,6 +9,7 @@
 #-------------------------------------------------------------------------------
 import logging
 import sys
+import copy
 
 logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] ' + \
                     '%(message)s', level=logging.DEBUG)
@@ -171,11 +172,27 @@ class XrdTestSlave(Runnable):
     def handleRunTestCase(self, msg):
         cmd = msg.cmd
         suiteName = msg.suiteName
-        case = msg.testCase
+        testName = msg.testName
+        case = msg.case
 
-        #@todo: do it
+        msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
+        msg.state = State(TestSuite.S_TESTCASE_INITIALIZED)
+        msg.suiteName = suiteName
+        msg.testName = testName
 
-        return True
+        msg.result = self.executeSh(msg.case.initialize)
+        self.sockStream.send(msg)
+        
+        msg2 = copy(msg)
+        msg2.result = self.executeSh(msg.case.run)
+        msg2.state = State(TestSuite.S_TESTCASE_RUNFINISHED)
+        self.sockStream.send(msg2)
+
+        msg3 = copy(msg)
+        msg3.result = self.executeSh(msg.case.finalize)
+        msg3.state = State(TestSuite.S_TESTCASE_FINALIZED)
+
+        return msg3
     #---------------------------------------------------------------------------
     def handleTestSuiteInit(self, msg):
         cmd = msg.cmd
@@ -234,7 +251,7 @@ class XrdTestSlave(Runnable):
         tcpReceiveTh = TCPReceiveThread(self.sockStream, self.recvQueue)
         thTcpReceive = threading.Thread(target=tcpReceiveTh.run)
         thTcpReceive.start()
-
+	
         self.recvLoop()
 
 #-------------------------------------------------------------------------------

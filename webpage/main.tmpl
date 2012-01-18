@@ -162,6 +162,30 @@ p.sect_title {font-weight:bold; font-size:14px;}
     #end if
 </div>
 </div>
+#*
+<div style="display:block;width:48%;float:right;">
+    <h1>FINISHED TESTS</h1>
+    <div id="accordion5" style="background-color:#ffffff;background-image:none;">
+        #if $testCases and len($testCases) > 0
+            <h3><a>Test cases</a></h3>
+            <div style="background-color:#fefefe;">
+            #set $iM = 1
+            #for $testCase in $testCases
+                #set $color = "#222222"
+                #if $userMsg.levelno == logging.WARNING
+                    #set $color = "#587498"
+                #end if
+                #if $userMsg.levelno == logging.ERROR
+                    #set $color = "#E86850"
+                #end if
+                <p style="color:$color;">$iM. ${userMsg.getMessage()}</p>
+                #set $iM += 1
+            #end for
+            </div>
+        #end if
+    </div>
+</div>
+*#
 <div style="display:block;width:48%;float:right;">
     <h1>LOG MESSAGES</h1>
     <div id="accordion5" style="background-color:#ffffff;background-image:none;">

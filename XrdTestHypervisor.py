@@ -10,8 +10,9 @@
 import logging
 import sys
 
-logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] ' + \
-                    '%(message)s', level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
+                    '[%(filename)s %(lineno)d] ' + \
+                    '%(message)s', level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
 #------------------------------------------------------------------------------ 

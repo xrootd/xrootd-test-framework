@@ -13,6 +13,7 @@ from multiprocessing import process
 import Cheetah
 import logging
 import sys
+from curses.has_key import has_key
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
                     '%(message)s', level=logging.INFO)
@@ -325,7 +326,7 @@ class Slave(TCPClient):
 class TestSuiteSession(Stateful):
     #---------------------------------------------------------------------------
     testSuiteName = ""
-    testCases = []
+    testCases = {}
     #---------------------------------------------------------------------------
     # references to slaves who are necessary for the test suite
     slaves = []
@@ -335,8 +336,21 @@ class TestSuiteSession(Stateful):
     #---------------------------------------------------------------------------
     def __init__(self, suite_name):
         self.suiteName = suite_name
-        self.stagesResults = []
-        self.slaves = []
+    #---------------------------------------------------------------------------
+    def addTestCase(self, tc):
+        '''
+        @param tc: TestCase object
+        '''
+        if not has_key(self.testCases, tc):
+            self.testCases[tc.name] = []
+        self.testCases[tc.name].append(tc)
+        return len(self.testCases[tc.name])-1
+    #---------------------------------------------------------------------------
+    def getTestCase(self, tcName, idx):
+        '''
+        @param tc: TestCase object
+        '''
+        return self.testCases[tcName][idx]
     #---------------------------------------------------------------------------
     def addStageResult(self, state, result):
         LOGGER.info("New stage result %s: (code %s) %s" % \

@@ -13,8 +13,9 @@ import sys
 #-------------------------------------------------------------------------------
 # Global variables
 #-------------------------------------------------------------------------------
-logging.basicConfig(format='%(levelname)s line %(lineno)d: %(message)s', \
-                    level=logging.INFO)
+logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
+                    '[%(filename)s %(lineno)d] ' + \
+                    '%(message)s', level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
 #-------------------------------------------------------------------------------
@@ -22,8 +23,8 @@ class TestSuiteException(Exception):
     '''
     General Exception raised by module
     '''
-    ERR_UNKNOWN = 1
-    ERR_CRITICAL = 2
+    ERR_UNKNOWN     = 1
+    ERR_CRITICAL    = 2
     #---------------------------------------------------------------------------
     def __init__(self, desc, typeFlag=ERR_UNKNOWN):
         '''
@@ -41,6 +42,7 @@ class TestSuiteException(Exception):
         return repr(self.desc)
 #------------------------------------------------------------------------------ 
 class TestSuite:
+
     #---------------------------------------------------------------------------
     # Defining attributes
     name = ""       # name of test suite
@@ -59,12 +61,14 @@ class TestSuite:
                     # are completed
     tests = []      # a list of test cases names as defined below
 
-    testCases = {}  #filled automatically by a Python objects representing
+    #---------------------------------------------------------------------------
+    # Fields beneath are filled automatically by system
+    testCases = []  #filled automatically by a Python objects representing
                     #test cases
-#-------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------
     def validateStatic(self):
         '''
-        Method checks if definition is statically correct.
+        Method checks if definition (e.g given names) is statically correct.
         '''
         #@todo: finish it 
         for t in self.tests:
@@ -80,12 +84,16 @@ class TestSuite:
     S_WAIT_4_INIT       = (20, "wait for initialization confirm")
     S_SLAVE_INITIALIZED = (21, "slave initialized")
     S_ALL_INITIALIZED   = (22, "all machines initialized")
-
+    
     S_WAIT_4_FINALIZE   = (30, "wait for finalization confirm")
     S_SLAVE_FINALIZED   = (31, "slave initialized")
     S_ALL_FINALIZED     = (32, "all machines initialized")
 
-    S_TEST_RUNNING      = (40, "test is running")
+    S_TEST_SENT             = (40, "send test case to run")
+    S_TEST_RUNNING          = (41, "test is running")
+    S_TESTCASE_INITIALIZED  = (42, "test has initialized")
+    S_TESTCASE_RUNFINISHED  = (43, "test has run")
+    S_TESTCASE_FINALIZED    = (44, "test has finalized")
 #------------------------------------------------------------------------------ 
 class TestCase:
     name = ""       # name of the test case
@@ -102,9 +110,13 @@ class TestCase:
     #---------------------------------------------------------------------------
     def validateStatic(self):
         '''
-        Method checks if definition is statically correct.
+        Method checks if definition (e.g given names) is statically correct.
         '''
         return True
+    #---------------------------------------------------------------------------
+    # Fields beneath are filled automatically by system
+    resultsFromMachines = {}    # keeps results of all test stages
+                                # on those machines. Index is a machine
 
 #In all the scripts mentioned above the string @slavename@ should be replaced
 #with the actual machine name, so that the following statements are possible

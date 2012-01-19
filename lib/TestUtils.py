@@ -117,7 +117,7 @@ class TestCase:
     # Fields beneath are filled automatically by system
     resultsFromMachines = {}    # keeps results of all test stages
                                 # on those machines. Index is a machine
-
+    uid = ""
 #In all the scripts mentioned above the string @slavename@ should be replaced
 #with the actual machine name, so that the following statements are possible
 #int he scripts:

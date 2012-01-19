@@ -173,19 +173,21 @@ class XrdTestSlave(Runnable):
     def handleRunTestCase(self, msg):
         suiteName = msg.suiteName
         testName = msg.testName
+        testUid = msg.testUid
         case = msg.case
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
         msg.state = State(TestSuite.S_TESTCASE_INITIALIZED)
+        msg.testUid = testUid
         msg.suiteName = suiteName
         msg.testName = testName
 
         msg.result = self.executeSh(case.initialize)
-        
+
         LOGGER.info("Executed testCase.initialize() %s [%s] with result %s:" % \
                     (testName, suiteName, msg.result))
         self.sockStream.send(msg)
-        
+
         msg2 = copy.copy(msg)
         msg2.result = self.executeSh(case.run)
         msg2.state = State(TestSuite.S_TESTCASE_RUNFINISHED)

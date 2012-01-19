@@ -14,6 +14,7 @@ import Cheetah
 import logging
 import sys
 from curses.has_key import has_key
+import datetime
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
                     '%(message)s', level=logging.INFO)
@@ -315,8 +316,8 @@ class Hypervisor(TCPClient):
 #-------------------------------------------------------------------------------
 class Slave(TCPClient):
     #---------------------------------------------------------------------------
-    S_SUITINIT_SENT = (10, "Test suite init sent to slave")
-    S_SUIT_INITIALIZED = (11, "Test suite initialized")
+    S_SUITINIT_SENT     = (10, "Test suite init sent to slave")
+    S_SUIT_INITIALIZED  = (11, "Test suite initialized")
 
     S_TESTCASE_DEF_SENT = (21, "Sent test case definition to slave")
     #---------------------------------------------------------------------------
@@ -326,6 +327,8 @@ class Slave(TCPClient):
 class TestSuiteSession(Stateful):
     #---------------------------------------------------------------------------
     testSuiteName = ""
+    #---------------------------------------------------------------------------
+    # test cases loaded to run in this session
     testCases = {}
     #---------------------------------------------------------------------------
     # references to slaves who are necessary for the test suite
@@ -333,14 +336,20 @@ class TestSuiteSession(Stateful):
     #--------------------------------------------------------------------------
     # keeps the results of some stage. Values tuple (State, Result)
     stagesResults = []
+    # unique identifier
+    uid = ""
     #---------------------------------------------------------------------------
     def __init__(self, suite_name):
         self.suiteName = suite_name
+        d = datetime.datetime.now()
+        self.uid = suite_name + "_" + d.isoformat()
     #---------------------------------------------------------------------------
     def addTestCase(self, tc):
         '''
         @param tc: TestCase object
         '''
+        d = datetime.datetime.now()
+        tc.uid = tc.name + "_" + d.isoformat()
         if not has_key(self.testCases, tc):
             self.testCases[tc.name] = []
         self.testCases[tc.name].append(tc)
@@ -477,10 +486,15 @@ class XrdTestMaster(Runnable):
                             test_suite_name)
             return
 
+        # copy test case to test suite session context
+        tc = copy(self.testSuits[test_suite_name].testCases[test_name])
+        tss.addTestCase(tc)
+
         msg = XrdMessage(XrdMessage.M_TESTCASE_RUN)
         msg.suiteName = test_suite_name
         msg.testName = test_name
-        msg.case = self.testSuits[test_suite_name].testCases[test_name]
+        msg.testUid = tc.uid
+        msg.case = tc
 
         for sl in tss.slaves:
             LOGGER.info("Sending Test Case %s to %s" % (test_name, sl))

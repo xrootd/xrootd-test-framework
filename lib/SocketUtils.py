@@ -1,6 +1,6 @@
 from heapq import heappush, heappop
 from string import zfill
-from threading import Condition
+from threading import Condition, RLock, Lock
 import logging
 import pickle
 import socket
@@ -10,16 +10,6 @@ logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] ' + \
                     '%(message)s', level=logging.DEBUG)
 LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
-
-#-------------------------------------------------------------------------------
-def getMyIP():
-    #@todo: it's realy bad solution, do it differently
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(("gmail.com",80))
-    myip = s.getsockname()[0]
-    s.close()
-    
-    return myip
 #-------------------------------------------------------------------------------
 class PriorityBlockingQueue(object):
     '''
@@ -28,34 +18,35 @@ class PriorityBlockingQueue(object):
     Lowest valued entries are retrieved first.
     '''
     h = []
-    sectLock = Condition()
+    lock = None
+    criticalSection = None
     #---------------------------------------------------------------------------
     def __init__(self):
-        pass
+        self.lock = Lock()
+        self.criticalSection = Condition(self.lock)
     #---------------------------------------------------------------------------
     def put(self, elem):
         '''
         Puts element to the queue.
         @param elem: a tuple in the form: (priority_number[int], data).
         '''
-        self.sectLock.acquire()
+        self.criticalSection.acquire()
         heappush(self.h, elem)
         if len(self.h) == 1:
-            self.sectLock.notify()
+            self.criticalSection.notify()
 
-        self.sectLock.release()
+        self.criticalSection.release()
     #---------------------------------------------------------------------------
     def rawGet(self):
         '''
         Retrieves tuple element (priority, data) 
         with the lowest priority from the queue.
         '''
-        self.sectLock.acquire()
-
+        self.criticalSection.acquire()
         while len(self.h) <= 0:
-            self.sectLock.wait()
+            self.criticalSection.wait()
         elem = heappop(self.h)
-        self.sectLock.release()
+        self.criticalSection.release()
 
         return elem
     #---------------------------------------------------------------------------
@@ -80,7 +71,7 @@ class XrdMessage(object):
     M_TESTSUITE_FINALIZE = 'finalize_test_suite'
     M_TESTSUITE_STATE = "test_suite_state"
     #---------------------------------------------------------------------------
-    M_TESTCASE_RUN = 'test_case_def'
+    M_TESTCASE_RUN = 'test_case_run'
     M_TESTSUITE_STATE = 'test_case_state'
     M_TESTCASE_STAGE_RESULT = 'test_case_stage_result'
 

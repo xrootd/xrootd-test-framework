@@ -162,30 +162,34 @@ p.sect_title {font-weight:bold; font-size:14px;}
     #end if
 </div>
 </div>
+#set $testSessionsNum = 1
 #set $testCasesNum = 1
 <div style="display:block;width:48%;float:right;">
-    <h1>TEST CASES (loaded or finished)</h1>
-    <div id="accordion5" style="background-color:#ffffff;background-image:none;">
-        <h3><a>Test cases (in test suits)</a></h3>
-        #if $suitSessions and len($suitSessions) > 0
-        #for $suitSess in $suitSess.iteritems()
-            #if $suitSess.testCases and len($suitSess.testCases) > 0
-            #for $tC in $suitSess.testCases
-                <div id="accordion7${$testCasesNum}" style="background-color:#ffffff;background-image:none;">
-                    <h3><a>${tC.name}</a></h3>
-                    <div>&nbsp;</div>
-                </div>
-                $testCasesNum += 1
-            #end for
-            #end if
+    <h1>TEST CASES [loaded or finished; grouped by test suits]</h1>
+    #if $suitSessions and len($suitSessions) > 0
+    #for $suitSess in $suitSessions.itervalues()
+        <div id="accordion5${testSessionsNum}" style="background-color:#ffffff;background-image:none;">
+        <h3><a>${suitSess.suiteName} <span style="font-weight:normal;">[testsuite: ${suitSess.suiteName}]</span></a></h3>
+        <div>
+        #if $suitSess.cases and len($suitSess.cases) > 0
+        #for $tC in $suitSess.getAllCases()
+            <div id="accordion6${testCasesNum}" style="background-color:#ffffff;background-image:none;">
+                <h3><a>${tC.name} <span style="font-weight:normal;">[testsuite: ${suitSess.suiteName}]</span></a></h3>
+                <div>&nbsp;</div>
+            </div>
+            #set $testCasesNum += 1
         #end for
         #end if
-    </div>
+        </div>
+        </div>
+        #set $testSessionsNum += 1
+    #end for
+    #end if
 </div>
                     
 <div style="display:block;width:48%;float:right;">
     <h1>LOG MESSAGES</h1>
-    <div id="accordion5" style="background-color:#ffffff;background-image:none;">
+    <div id="accordion7" style="background-color:#ffffff;background-image:none;">
         #if $userMsgs and len($userMsgs) > 0
             <h3><a>Messages</a></h3>
             <div style="background-color:#fefefe;">
@@ -224,18 +228,24 @@ p.sect_title {font-weight:bold; font-size:14px;}
             collapsible: true,
             active: false
         });
-        \$( "#accordion5" ).accordion({
-            collapsible: true,
-            active: false
-        });
-
-        #for $i in range($testCasesNum):
+        #for $i in range($testSessionsNum):
             #set $j = $i + 1
-            \$( "#accordion7$j" ).accordion({
+            \$( "#accordion5$j" ).accordion({
             collapsible: true,
             active: false
         });
         #end for
+        #for $i in range($testCasesNum):
+            #set $j = $i + 1
+            \$( "#accordion6$j" ).accordion({
+            collapsible: true,
+            active: false
+        });
+        #end for
+        \$( "#accordion7" ).accordion({
+            collapsible: true,
+            active: false
+        });
     });
 </script>
 </body>

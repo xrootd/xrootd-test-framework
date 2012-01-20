@@ -326,10 +326,10 @@ class Slave(TCPClient):
 #-------------------------------------------------------------------------------
 class TestSuiteSession(Stateful):
     #---------------------------------------------------------------------------
-    testSuiteName = ""
+    suiteName = ""
     #---------------------------------------------------------------------------
     # test cases loaded to run in this session
-    testCases = {}
+    cases = {}
     #---------------------------------------------------------------------------
     # references to slaves who are necessary for the test suite
     slaves = []
@@ -344,22 +344,32 @@ class TestSuiteSession(Stateful):
         d = datetime.datetime.now()
         self.uid = suite_name + "_" + d.isoformat()
     #---------------------------------------------------------------------------
-    def addTestCase(self, tc):
+    def addCase(self, tc):
         '''
         @param tc: TestCase object
         '''
         d = datetime.datetime.now()
         tc.uid = tc.name + "_" + d.isoformat()
-        if not has_key(self.testCases, tc):
-            self.testCases[tc.name] = []
-        self.testCases[tc.name].append(tc)
-        return len(self.testCases[tc.name])-1
+        if not self.cases.has_key(tc):
+            self.cases[tc.name] = []
+        self.cases[tc.name].append(tc)
+        return len(self.cases[tc.name])-1
     #---------------------------------------------------------------------------
-    def getTestCase(self, tcName, idx):
+    def getCase(self, tcName, idx):
         '''
         @param tc: TestCase object
         '''
-        return self.testCases[tcName][idx]
+        return self.cases[tcName][idx]
+        #---------------------------------------------------------------------------
+    def getAllCases(self):
+        '''
+        @param tc: TestCase object
+        '''
+        res = []
+        for v in self.cases.itervalues():
+            res += v
+            
+        return res
     #---------------------------------------------------------------------------
     def addStageResult(self, state, result):
         LOGGER.info("New stage result %s: (code %s) %s" % \
@@ -488,7 +498,7 @@ class XrdTestMaster(Runnable):
 
         # copy test case to test suite session context
         tc = copy(self.testSuits[test_suite_name].testCases[test_name])
-        tss.addTestCase(tc)
+        tss.addCase(tc)
 
         msg = XrdMessage(XrdMessage.M_TESTCASE_RUN)
         msg.suiteName = test_suite_name

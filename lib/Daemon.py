@@ -280,4 +280,3 @@ class Daemon:
                 os.remove(self.pidFile)
             except:
                 LOGGER.error("Cannot delete pidfile")
-

@@ -289,13 +289,11 @@ class TCPClient(Stateful):
     '''
     Represents any type of TCP client that connects to XrdTestMaster.
     '''
-    socket = None
-    hostname = ""
-    address = (None, None)
     #---------------------------------------------------------------------------
     # states of a client
     #---------------------------------------------------------------------------
     def __init__(self, socket, hostname, address, state):
+        Stateful.__init__(self)
         self.socket = socket
         self.hostname = hostname
         self.state = state
@@ -311,7 +309,7 @@ class TCPClient(Stateful):
                          (self.hostname, str(self.address)))
 #-------------------------------------------------------------------------------
 class Hypervisor(TCPClient):
-     #--------------------------------------------------------------------------
+    #---------------------------------------------------------------------------
     def __str__(self):
         return "Hypervisor %s [%s]" % (self.hostname, self.address)
 #-------------------------------------------------------------------------------
@@ -327,20 +325,21 @@ class Slave(TCPClient):
 #-------------------------------------------------------------------------------
 class TestSuiteSession(Stateful):
     #---------------------------------------------------------------------------
-    suiteName = ""
-    #---------------------------------------------------------------------------
-    # test cases loaded to run in this session
-    cases = {}
-    #---------------------------------------------------------------------------
-    # references to slaves who are necessary for the test suite
-    slaves = []
-    #--------------------------------------------------------------------------
-    # keeps the results of some stage. Values tuple (State, Result)
-    stagesResults = []
-    # unique identifier
-    uid = ""
-    #---------------------------------------------------------------------------
     def __init__(self, suite_name):
+        Stateful.__init__(self)
+        #-----------------------------------------------------------------------
+        self.suiteName = ""
+        #-----------------------------------------------------------------------
+        # references to slaves who are necessary for the test suite
+        self.slaves = []
+        #-----------------------------------------------------------------------
+        # keeps the results of some stage. Values tuple (State, Result)
+        self.stagesResults = []
+        # unique identifier
+        self.uid = ""
+        #-----------------------------------------------------------------------
+        # test cases loaded to run in this session
+        self.cases = {}
         self.suiteName = suite_name
         d = datetime.datetime.now()
         self.uid = suite_name + "_" + d.isoformat()

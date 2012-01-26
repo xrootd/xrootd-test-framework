@@ -1,15 +1,16 @@
 #-------------------------------------------------------------------------------
+import logging
 import time
+logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
+                    '[%(filename)s %(lineno)d] ' + \
+                    '%(message)s', level=logging.INFO)
+LOGGER = logging.getLogger(__name__)
+
 #-------------------------------------------------------------------------------
 class State(object):
     '''
     Represents current state of some entity.
     '''
-    name = ''
-    id = None
-
-    time = None
-    preciseTime = None
     #---------------------------------------------------------------------------
     def __init__(self, status_tuple):
         '''
@@ -38,8 +39,10 @@ class Stateful(object):
     '''
     Represents stateful entity and remember its previous states.
     '''
-    states = []
-    #---------------------------------------------------------------------------
+    #----------------- ----------------------------------------------------------
+    def __init__(self):
+        self.states = []
+    #----------------- ----------------------------------------------------------
     def getState(self):
         if len(self.states):
             return self.states[-1]
@@ -48,4 +51,5 @@ class Stateful(object):
     #---------------------------------------------------------------------------
     def setState(self, state):
         return self.states.append(state)
+
     state = property(getState, setState)

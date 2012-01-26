@@ -242,6 +242,7 @@ class Cluster(Utils.Stateful):
     '''
     #-------------------------------------------------------------------------------
     def __init__(self):
+        Utils.Stateful.__init__(self)
         self.hosts = []
         self.name = None
         self.network = None

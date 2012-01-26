@@ -15,6 +15,7 @@ import logging
 import sys
 from curses.has_key import has_key
 import datetime
+from TestUtils import TestSuiteException
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
                     '%(message)s', level=logging.INFO)
@@ -343,13 +344,15 @@ class TestSuiteSession(Stateful):
         self.suiteName = suite_name
         d = datetime.datetime.now()
         self.uid = suite_name + "_" + d.isoformat()
+        self.uid  = self.uid.replace('-', '').replace(':', '').replace('.', '')
     #---------------------------------------------------------------------------
     def addCase(self, tc):
         '''
         @param tc: TestCase object
         '''
         d = datetime.datetime.now()
-        tc.uid = tc.name + "_" + d.isoformat()
+        d = d.isoformat().replace('-', '').replace(':', '').replace('.', '')
+        tc.uid = tc.name + "_" + d
         if not self.cases.has_key(tc):
             self.cases[tc.name] = []
         self.cases[tc.name].append(tc)
@@ -368,13 +371,19 @@ class TestSuiteSession(Stateful):
         res = []
         for v in self.cases.itervalues():
             res += v
-            
+
         return res
     #---------------------------------------------------------------------------
-    def addStageResult(self, state, result):
+    def addStageResult(self, state, result, tc_name = None, slave_name = None):
         LOGGER.info("New stage result %s: (code %s) %s" % \
                     (state, result[2], result[0]))
-        self.stagesResults.append((state, result))
+        
+        self.stagesResults.append((state, result, tc_name, slave_name))
+    #---------------------------------------------------------------------------
+    def getStages4TestCase(self, tc_name):
+        ret = [v for v in self.stagesResults \
+                                if v[2] and v[2] == tc_name]
+        return ret
 #-------------------------------------------------------------------------------
 class XrdTestMaster(Runnable):
     '''
@@ -595,6 +604,77 @@ class XrdTestMaster(Runnable):
                         "s list (after handling incoming connection): " + \
                          ', '.join(clients_str))
     #---------------------------------------------------------------------------
+    def procSlaveMsg(self, msg):
+        if msg.name == XrdMessage.M_TESTCASE_STAGE_RESULT:
+            if self.testsRunning.has_key(msg.testCase):
+                LOGGER.info("STAGE RESULT at " + self.slaves[msg.sender].hostname + " " + str(msg.result))
+                self.testCaseRunning[msg.testCase][msg.testStage] = msg.result
+                if msg.testStage == "1":
+                    del self.testsRunning[msg.testCase]
+            else:
+                raise XrdTestMasterException(
+                    ("Unknown test case " + " [%s]") % msg.testCase)
+        elif msg.name == XrdMessage.M_TESTSUITE_STATE:
+            slave = self.slaves[msg.sender]
+            if msg.state == State(TestSuite.S_SLAVE_INITIALIZED):
+                if slave.state != State(Slave.S_SUITINIT_SENT):
+                    #previous state of slave is not correct, should be
+                    #suitinit sent
+                    XrdTestMasterException("Initialized msg not " + \
+                                           "expected from %s" % slave)
+                else:
+                    slave.state = State(Slave.S_SUIT_INITIALIZED)
+                    session = self.testSuitsSessions[msg.suiteName]
+                    session.addStageResult(msg.state, msg.result)
+                    #update SuiteStatus if all slaves are inited
+                    initedCount = [1 for sl in session.slaves if sl.state == 
+                        State(Slave.S_SUIT_INITIALIZED)]
+                    LOGGER.info("%s initialized in test suite %s" % \
+                                (slave, session.suiteName))
+                    if len(initedCount) == len(session.slaves):
+                        session.state = State(
+                            TestSuite.S_ALL_INITIALIZED)
+                        LOGGER.info("All slaves initialized in " + \
+                                    " test suite %s" % session.suiteName)
+            elif msg.state == State(TestSuite.S_SLAVE_FINALIZED):
+                self.slaves[msg.sender].state = msg.state
+                slave.state = State(Slave.S_CONNECTED_IDLE)
+                finalizedCount = [1 for sl in session.slaves if 
+                    sl.state == State(Slave.S_CONNECTED_IDLE)]
+                if len(finalizedCount) == len(session.slaves):
+                    session.state = State(
+                        TestSuite.S_ALL_FINALIZED)
+                LOGGER.info("%s finalized in test suite: %s" % \
+                            (slave, session.suiteName))
+            elif msg.state == State(TestSuite.S_TESTCASE_INITIALIZED):
+                session = self.testSuitsSessions[msg.suiteName]
+                session.addStageResult(msg.state, msg.result, 
+                                       tc_name = msg.testName,
+                                       slave_name=slave)
+                LOGGER.info("%s initialized case %s in suite %s" % \
+                            (slave, msg.testName, session.suiteName))
+            elif msg.state == State(TestSuite.S_TESTCASE_RUNFINISHED):
+                session = self.testSuitsSessions[msg.suiteName]
+                session.addStageResult(msg.state, msg.result, 
+                                       slave_name=slave.hostname,
+                                       tc_name = msg.testName)
+                LOGGER.info("%s run finished for case %s in suite %s" % \
+                            (slave, msg.testName, session.suiteName))
+            elif msg.state == State(TestSuite.S_TESTCASE_FINALIZED):
+
+                session = self.testSuitsSessions[msg.suiteName]
+                session.addStageResult(msg.state, msg.result, \
+                                       slave_name=slave.hostname,
+                                       tc_name = msg.testName)
+                slave.state = State(Slave.S_SUIT_INITIALIZED)
+                tFinalizedCount = [1 for sl in session.slaves if \
+                    sl.state == State(Slave.S_CONNECTED_IDLE)]
+                if len(tFinalizedCount) == len(session.slaves):
+                    session.state = State(TestSuite.S_ALL_INITIALIZED)
+
+                LOGGER.info("%s finalized test case %s in suite %s" % \
+                            (slave, msg.testName, session.suiteName))
+    #---------------------------------------------------------------------------
     def procMessages(self):
         '''
         Receives events and messages from clients and reacts. Actual place 
@@ -607,9 +687,6 @@ class XrdTestMaster(Runnable):
                 msg = evt.data
                 LOGGER.debug("Received from " + str(msg.sender) \
                              + " msg: " + msg.name)
-            elif evt.type == MasterEvent.M_SIGTERM:
-                LOGGER.info("Process messages thread received SIGTERM. Ending.")
-                break
             #------------------------------------------------------------------- 
             elif evt.type == MasterEvent.M_CLIENT_CONNECTED:
                 self.handleClientConnected(evt.data[0], evt.data[1], \
@@ -635,74 +712,7 @@ class XrdTestMaster(Runnable):
             # Messages from slaves
             elif evt.type == MasterEvent.M_SLAVE_MSG:
                 msg = evt.data
-                if msg.name == XrdMessage.M_TESTCASE_STAGE_RESULT:
-                    if self.testsRunning.has_key(msg.testCase):
-                        LOGGER.info("STAGE RESULT at " + \
-                                    self.slaves[evt.sender].hostname + \
-                                    " " + str(msg.result))
-                        self.testCaseRunning[msg.testCase][msg.testStage] = \
-                                                        msg.result
-
-                        if msg.testStage == "1":
-                            del self.testsRunning[msg.testCase]
-                    else:
-                        raise XrdTestMasterException(("Unknown test case " + \
-                                                     " [%s]") % msg.testCase)
-                elif msg.name == XrdMessage.M_TESTSUITE_STATE:
-                    if msg.state == State(TestSuite.S_SLAVE_INITIALIZED):
-                        slave = self.slaves[msg.sender]
-                        if slave.state != State(Slave.S_SUITINIT_SENT):
-                            #previous state of slave is not correct, should be
-                            #suitinit sent
-                            XrdTestMasterException("Initialized msg not " + \
-                                                   "expected from %s" % slave)
-                        else:
-                            slave.state = State(Slave.S_SUIT_INITIALIZED)
-                            session = self.testSuitsSessions[msg.suiteName]
-
-                            session.addStageResult(msg.state, msg.result)
-                            #update SuiteStatus if all slaves are inited
-                            initedCount = [1 for sl in session.slaves if \
-                                           sl.state == \
-                                           State(Slave.S_SUIT_INITIALIZED)]
-                            LOGGER.info("%s initialized in test suite %s" %
-                                            (slave, session.suiteName))
-                            if len(initedCount) == len(session.slaves):
-                                session.state = State(\
-                                                TestSuite.S_ALL_INITIALIZED)
-                                LOGGER.info("All slaves initialized in " + \
-                                            " test suite %s" %
-                                            session.suiteName)
-                    elif msg.state == State(TestSuite.S_SLAVE_FINALIZED):
-                        self.slaves[msg.sender].state = msg.state
-                        slave.state = State(Slave.S_CONNECTED_IDLE)
-                        finalizedCount = [1 for sl in session.slaves if \
-                                           sl.state == \
-                                           State(Slave.S_CONNECTED_IDLE)]
-                        if len(finalizedCount) == len(session.slaves):
-                                session.state = State(\
-                                                TestSuite.S_ALL_FINALIZED)
-                        LOGGER.info("%s finalized in test suite: %s" % 
-                                    (slave, session.suiteName))
-                    elif msg.state == State(TestSuite.S_TESTCASE_INITIALIZED):
-                        session.addStageResult(msg.state, msg.result)
-                        LOGGER.info("%s initialized case %s in suite %s" % 
-                                    (slave, msg.testName, session.suiteName))
-                    elif msg.state == State(TestSuite.S_TESTCASE_RUNFINISHED):
-                        session.addStageResult(msg.state, msg.result)
-                        LOGGER.info("%s run finished for case %s in suite %s" % 
-                                    (slave, msg.testName, session.suiteName))
-                    elif msg.state == State(TestSuite.S_TESTCASE_FINALIZED):
-                        session.addStageResult(msg.state, msg.result)
-                        slave.state = State(Slave.S_SUIT_INITIALIZED)
-                        tFinalizedCount = [1 for sl in session.slaves if \
-                                           sl.state == \
-                                           State(Slave.S_CONNECTED_IDLE)]
-                        if len(tFinalizedCount) == len(session.slaves):
-                            session.state = State(TestSuite.S_ALL_INITIALIZED)
-
-                        LOGGER.info("%s finalized test case %s in suite %s" % 
-                                (slave, msg.testName, session.suiteName))
+                self.procSlaveMsg(msg)
             else:
                 raise XrdTestMasterException("Unknown incoming evt type " + \
                                              str(evt.type))
@@ -754,7 +764,11 @@ class XrdTestMaster(Runnable):
             self.clusters[clu.name] = clu
             self.clusters[clu.name].state = State(Cluster.S_UNKNOWN)
 
-        self.testSuits = loadTestSuitsDefs(currentDir + "/testSuits")
+        try:
+            self.testSuits = loadTestSuitsDefs(currentDir + "/testSuits")
+        except TestSuiteException, e:
+            LOGGER.error(e.desc)
+            sys.exit()
 
         cherrypyCfg = {'/webpage/js': {
                      'tools.staticdir.on': True,

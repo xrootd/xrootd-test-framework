@@ -7,9 +7,9 @@
 #-------------------------------------------------------------------------------
 # Logging settings
 #-------------------------------------------------------------------------------
+import copy
 import logging
 import sys
-import copy
 
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
@@ -190,13 +190,17 @@ class XrdTestSlave(Runnable):
 
         msg2 = copy.copy(msg)
         msg2.result = self.executeSh(case.run)
-        msg2.state = State(TestSuite.S_TESTCASE_RUNFINISHED)
+        if int(msg2.result[2]) < 0:
+            msg2.state = State(TestSuite.S_TESTCASE_RUNFINISHED_ERROR)
+        else:
+            msg2.state = State(TestSuite.S_TESTCASE_RUNFINISHED)
         self.sockStream.send(msg2)
 
         LOGGER.info("Executed testCase.run() %s [%s] with result %s:" % \
                     (testName, suiteName, msg2.result))
 
         msg3 = copy.copy(msg)
+        msg3.testName = testName
         msg3.result = self.executeSh(case.finalize)
         msg3.state = State(TestSuite.S_TESTCASE_FINALIZED)
 
@@ -208,7 +212,7 @@ class XrdTestSlave(Runnable):
     def handleTestSuiteInit(self, msg):
         cmd = msg.cmd
         suiteName = msg.suiteName
-
+        
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
         msg.state = State(TestSuite.S_SLAVE_INITIALIZED)
         msg.suiteName = suiteName
@@ -219,7 +223,7 @@ class XrdTestSlave(Runnable):
     def handleTestSuiteFinalized(self, msg):
         cmd = msg.cmd
         suiteName = msg.suiteName
-
+        
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
         msg.state = State(TestSuite.S_SLAVE_FINALIZED)
         msg.suiteName = suiteName

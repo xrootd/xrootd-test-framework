@@ -89,11 +89,12 @@ class TestSuite:
     S_SLAVE_FINALIZED   = (31, "slave initialized")
     S_ALL_FINALIZED     = (32, "all machines initialized")
 
-    S_TEST_SENT             = (40, "send test case to run")
-    S_TEST_RUNNING          = (41, "test is running")
-    S_TESTCASE_INITIALIZED  = (42, "test has initialized")
-    S_TESTCASE_RUNFINISHED  = (43, "test has run")
-    S_TESTCASE_FINALIZED    = (44, "test has finalized")
+    S_TEST_SENT                   = (40, "send test case to run")
+    S_TEST_RUNNING                = (41, "test is running")
+    S_TESTCASE_INITIALIZED        = (42, "test initialized")
+    S_TESTCASE_RUNFINISHED        = (43, "test run finished")
+    S_TESTCASE_RUNFINISHED_ERROR  = (-43, "test run finished with error")
+    S_TESTCASE_FINALIZED          = (44, "test finalized")
 #------------------------------------------------------------------------------ 
 class TestCase:
     name = ""       # name of the test case

@@ -23,8 +23,8 @@ class TestSuiteException(Exception):
     '''
     General Exception raised by module
     '''
-    ERR_UNKNOWN     = 1
-    ERR_CRITICAL    = 2
+    ERR_UNKNOWN = 1
+    ERR_CRITICAL = 2
     #---------------------------------------------------------------------------
     def __init__(self, desc, typeFlag=ERR_UNKNOWN):
         '''
@@ -42,30 +42,36 @@ class TestSuiteException(Exception):
         return repr(self.desc)
 #------------------------------------------------------------------------------ 
 class TestSuite:
+    #---------------------------------------------------------------------------
+    def __init__(self):
+        #-----------------------------------------------------------------------
+        # Defining attributes
+        self.name = ""      # name of test suite
+        self.schedule = ""  # define when the test should be run (cron style)
+        self.clusters = []  # a list of virtual clusters needed by 
+                            # the test to be spawned on a hypervisor
+        self.\
+        machines = []   # names of machines, including the virtual machines that
+                        # are needed by the test
+        self.\
+        initialize = "" # an URL to a shell script (starts with http://) or 
+                        # a shell script (starts with #!) that defines 
+                        # the commands that need to be run on each test slave 
+                        # before any test case can run if it fails then the 
+                        # entire test suit should be considered as failed
+        self.\
+        finalize = ""   # an URL to shell script or a shell script that defines
+                        # the clean up procedures to be run after all the 
+                        # tests cases are completed
+        self.\
+        tests = []      # a list of test cases names as defined below
 
-    #---------------------------------------------------------------------------
-    # Defining attributes
-    name = ""       # name of test suite
-    schedule = ""   # define when the test should be run (cron style)
-    clusters = []   # a list of virtual clusters needed by the test to be spawned
-                    # on a hypervisor
-    machines = []   # names of machines, including the virtual machines that
-                    # are needed by the test
-    initialize = "" # an URL to a shell script (starts with http://) or a shell
-                    # script (starts with #!) that defines the commands that need
-                    # to be run on each test slave before any test case can run
-                    # if it fails then the entire test suit should be 
-                    # considered as failed
-    finalize = ""   # an URL to shell script or a shell script that defines the
-                    # clean up procedures to be run after all the tests cases
-                    # are completed
-    tests = []      # a list of test cases names as defined below
-
-    #---------------------------------------------------------------------------
-    # Fields beneath are filled automatically by system
-    testCases = []  #filled automatically by a Python objects representing
-                    #test cases
-    #---------------------------------------------------------------------------
+        #---------------------------------------------------------------------------
+        # Fields beneath are filled automatically by system
+        self.\
+        testCases = []  # filled automatically by a Python objects representing
+                        # test cases
+        #---------------------------------------------------------------------------
     def validateStatic(self):
         '''
         Method checks if definition (e.g given names) is statically correct.
@@ -74,51 +80,58 @@ class TestSuite:
         for t in self.tests:
             if not self.testCases.has_key(t):
                 raise TestSuiteException(("No TestCase %s defined but used" + \
-                                         " in TestSuite definition") % str(t),\
+                                         " in TestSuite definition") % str(t), \
                                           TestSuiteException.ERR_CRITICAL)
         return True
     #---------------------------------------------------------------------------
     # Constants
-    S_IDLE              = (10, "idle")
+    S_IDLE = (10, "idle")
 
-    S_WAIT_4_INIT       = (20, "wait for initialization confirm")
+    S_WAIT_4_INIT = (20, "wait for initialization confirm")
     S_SLAVE_INITIALIZED = (21, "slave initialized")
-    S_ALL_INITIALIZED   = (22, "all machines initialized")
-    
-    S_WAIT_4_FINALIZE   = (30, "wait for finalization confirm")
-    S_SLAVE_FINALIZED   = (31, "slave initialized")
-    S_ALL_FINALIZED     = (32, "all machines initialized")
+    S_ALL_INITIALIZED = (22, "all machines initialized")
 
-    S_TEST_SENT                   = (40, "send test case to run")
-    S_TEST_RUNNING                = (41, "test is running")
-    S_TESTCASE_INITIALIZED        = (42, "test initialized")
-    S_TESTCASE_RUNFINISHED        = (43, "test run finished")
-    S_TESTCASE_RUNFINISHED_ERROR  = (-43, "test run finished with error")
-    S_TESTCASE_FINALIZED          = (44, "test finalized")
+    S_WAIT_4_FINALIZE = (30, "wait for finalization confirm")
+    S_SLAVE_FINALIZED = (31, "slave initialized")
+    S_ALL_FINALIZED = (32, "all machines initialized")
+
+    S_TEST_SENT = (40, "send test case to run")
+    S_TEST_RUNNING = (41, "test is running")
+    S_TESTCASE_INITIALIZED = (42, "test initialized")
+    S_TESTCASE_RUNFINISHED = (43, "test run finished")
+    S_TESTCASE_RUNFINISHED_ERROR = (-43, "test run finished with error")
+    S_TESTCASE_FINALIZED = (44, "test finalized")
 #------------------------------------------------------------------------------ 
 class TestCase:
-    name = ""       # name of the test case
-    machines = []   # names of the machines that the test case should run on
-    initialize = "" # a shell script or a link to a shell script that should
-                    # be run on each machine. The initialize script should
-                    # be completed on each machine before the run script can run.
-                    # initialization failure is considerd as a test case failure
-    run = ""        # a shell script that is the actual test, if the script fails
-                    # then the test case is considered as failed, the run scripts
-                    # have to finish running on all the mashines before the finalize
-                    # script can be invoked
-    finalize = ""  # a script defining the finalization procedures
+    def __init__(self):
+        self.name = ""      # name of the test case
+        self.machines = []  # names of the machines that the test case 
+                            # should run on
+        self.initialize = ""# a shell script or a link to a shell script
+                            # that should be run on each machine. The 
+                            # initialize script should be completed on
+                            # each machine before the run script can run.
+                            # initialization failure is considerd as a 
+                            # test case failure
+        self.run = ""       # a shell script that is the actual test, if
+                            # the script fails then the test case is 
+                            # considered as failed, the run scripts
+                            # have to finish running on all the mashines
+                            # before the finalize script can be invoked
+        self.finalize = ""  # a script defining the finalization procedures
+
+        #---------------------------------------------------------------------------
+        # Fields beneath are filled automatically by system
+        self.resultsFromMachines = {}# keeps results of all test stages
+                                    # on those machines. Index is a machine
+        self.uid = ""
     #---------------------------------------------------------------------------
     def validateStatic(self):
         '''
         Method checks if definition (e.g given names) is statically correct.
         '''
         return True
-    #---------------------------------------------------------------------------
-    # Fields beneath are filled automatically by system
-    resultsFromMachines = {}    # keeps results of all test stages
-                                # on those machines. Index is a machine
-    uid = ""
+
 #In all the scripts mentioned above the string @slavename@ should be replaced
 #with the actual machine name, so that the following statements are possible
 #int he scripts:

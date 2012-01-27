@@ -8,14 +8,16 @@
 #-------------------------------------------------------------------------------
 # Logging settings
 #-------------------------------------------------------------------------------
+from TestUtils import TestSuiteException
 from cherrypy import _cperror
+from copy import deepcopy
+from curses.has_key import has_key
 from multiprocessing import process
+from string import maketrans
 import Cheetah
+import datetime
 import logging
 import sys
-from curses.has_key import has_key
-import datetime
-from TestUtils import TestSuiteException
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
                     '%(message)s', level=logging.INFO)
@@ -63,7 +65,6 @@ class MasterEvent(object):
     The message incoming to XrdTestMaster. May be either the event e.g.
     hypervisor connection or normal message containing data.
     '''
-
     PRIO_NORMAL = 9
     PRIO_IMPORTANT = 1
 
@@ -74,10 +75,6 @@ class MasterEvent(object):
     M_SLAVE_MSG = 16
 
     M_SIGTERM = 128
-
-    type = M_UNKNOWN
-    data = ''
-    sender = None #sender addr, tuple (ip, port)
     #---------------------------------------------------------------------------
     def __init__(self, e_type, e_data, msg_sender_addr=None):
         self.type = e_type
@@ -222,7 +219,7 @@ class WebInterface:
                     'message' : 'Welcome and begin the tests!',
                     'clusters' : self.testMaster.clusters,
                     'hypervisors': self.testMaster.hypervisors,
-                    'suitSessions' : self.testMaster.testSuitsSessions,
+                    'suitSessions' : self.testMaster.suitSessions,
                     'slaves': self.testMaster.slaves,
                     'hostname': socket.gethostname(),
                     'testSuits': self.testMaster.testSuits,
@@ -264,8 +261,7 @@ class WebInterface:
         return self.indexRedirect()
         #---------------------------------------------------------------------------
     def finalizeSuite(self, testSuiteName):
-        LOGGER.info("Finalize requested for test suite [%s] " % \
-                                (testSuiteName))
+        LOGGER.info("Finalize requested for test suite [%s] " % (testSuiteName))
         self.testMaster.finalizeTestSuite(testSuiteName)
         return self.indexRedirect()
     #---------------------------------------------------------------------------
@@ -315,8 +311,8 @@ class Hypervisor(TCPClient):
 #-------------------------------------------------------------------------------
 class Slave(TCPClient):
     #---------------------------------------------------------------------------
-    S_SUITINIT_SENT     = (10, "Test suite init sent to slave")
-    S_SUIT_INITIALIZED  = (11, "Test suite initialized")
+    S_SUITINIT_SENT = (10, "Test suite init sent to slave")
+    S_SUIT_INITIALIZED = (11, "Test suite initialized")
 
     S_TESTCASE_DEF_SENT = (21, "Sent test case definition to slave")
     #---------------------------------------------------------------------------
@@ -325,25 +321,25 @@ class Slave(TCPClient):
 #-------------------------------------------------------------------------------
 class TestSuiteSession(Stateful):
     #---------------------------------------------------------------------------
-    def __init__(self, suite_name):
+    def __init__(self, suite):
+        
         Stateful.__init__(self)
-        #-----------------------------------------------------------------------
-        self.suiteName = ""
-        #-----------------------------------------------------------------------
+        # name of test suite
+        self.suiteName = suite.name
+        # test suite definition copy
+        self.suite = deepcopy(suite)
+        # date of initialization
+        self.initDate = datetime.datetime.now()
         # references to slaves who are necessary for the test suite
         self.slaves = []
-        #-----------------------------------------------------------------------
-        # keeps the results of some stage. Values tuple (State, Result)
+        # keeps the results of each stage.
         self.stagesResults = []
-        # unique identifier
-        self.uid = ""
-        #-----------------------------------------------------------------------
+        # unique identifier of test suite
+        self.uid = self.suite.name + '-' + self.initDate.isoformat()
+        self.uid = self.uid.translate(maketrans('', ''), '-:.')# remove special
+                                                            # chars from uid
         # test cases loaded to run in this session
         self.cases = {}
-        self.suiteName = suite_name
-        d = datetime.datetime.now()
-        self.uid = suite_name + "_" + d.isoformat()
-        self.uid  = self.uid.replace('-', '').replace(':', '').replace('.', '')
     #---------------------------------------------------------------------------
     def addCase(self, tc):
         '''
@@ -355,7 +351,7 @@ class TestSuiteSession(Stateful):
         if not self.cases.has_key(tc):
             self.cases[tc.name] = []
         self.cases[tc.name].append(tc)
-        return len(self.cases[tc.name])-1
+        return len(self.cases[tc.name]) - 1
     #---------------------------------------------------------------------------
     def getCase(self, tcName, idx):
         '''
@@ -373,10 +369,10 @@ class TestSuiteSession(Stateful):
 
         return res
     #---------------------------------------------------------------------------
-    def addStageResult(self, state, result, tc_name = None, slave_name = None):
+    def addStageResult(self, state, result, tc_name=None, slave_name=None):
         LOGGER.info("New stage result %s: (code %s) %s" % \
                     (state, result[2], result[0]))
-        
+
         self.stagesResults.append((state, result, tc_name, slave_name))
     #---------------------------------------------------------------------------
     def getStages4TestCase(self, tc_name):
@@ -401,10 +397,13 @@ class XrdTestMaster(Runnable):
     # Connected slaves, keys: address tuple, values: Slaves
     slaves = {}
     #---------------------------------------------------------------------------
-    # Initialized and in progress test suits
-    testSuitsSessions = {}
+    # TestSuits that has ever run, synchronized with a HDD, key of dict is uid
+    suitsSessions = {}
     #---------------------------------------------------------------------------
-    # Definitions of clusters loaded from a file, name as a key
+    # Reference running suits by name
+    runningSuits = {}
+    #---------------------------------------------------------------------------
+    # Definitions of clusters loaded from a file, keyed by name
     clusters = {}
     #---------------------------------------------------------------------------
     # Definitions of test suits loaded from file
@@ -453,38 +452,37 @@ class XrdTestMaster(Runnable):
         '''
         testSuite = self.testSuits[test_suite_name]
 
-        # Checks if we already initialized
-        if self.testSuitsSessions.has_key(test_suite_name):
-            return
-
         unreadyMachines = []
         for m in testSuite.machines:
             if self.slaveState(m) != State(Slave.S_CONNECTED_IDLE):
                 unreadyMachines.append(m)
-                LOGGER.warning(m + " state " + str(self.slaveState(m)))
+                LOGGER.warning("Can't init %s because %s not ready or busy." %\
+                               (test_suite_name, m))
 
         if len(unreadyMachines):
             LOGGER.warning("Some required machines are not " + \
-                         "ready for the test: %s" % str(unreadyMachines))
+                         "ready for the test suite: %s" % str(unreadyMachines))
             return
 
         testSlaves = [v for v in self.slaves.itervalues() \
                   if v.hostname in testSuite.machines]
 
-        session = TestSuiteSession(testSuite.name)
-        session.slaves = testSlaves
-        session.state = State(TestSuite.S_WAIT_4_INIT)
+        sess = TestSuiteSession(testSuite)
+        sess.slaves = testSlaves
+        sess.state = State(TestSuite.S_WAIT_4_INIT)
 
-        self.testSuitsSessions[test_suite_name] = session
+        self.suitsSessions[sess.uid] = sess
+        self.runningSuits[sess.suiteName] = self.suitsSessions[sess.uid]
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_INIT)
-        msg.suiteName = testSuite.name
+        msg.sessUid = sess.uid
         msg.cmd = testSuite.initialize
 
         for sl in testSlaves:
             LOGGER.info("Sending Test Suite initialize to %s" % sl)
             sl.send(msg)
             sl.state = State(Slave.S_SUITINIT_SENT)
+            sl.state.sessUid = sess.uid
     #---------------------------------------------------------------------------
     def runTestCase(self, test_suite_name, test_name):
         '''
@@ -493,12 +491,12 @@ class XrdTestMaster(Runnable):
         @param test_name:
         '''
         # Checks if we already initialized suite
-        if not self.testSuitsSessions.has_key(test_suite_name):
+        if not self.suitsSessions.has_key(test_suite_name):
             LOGGER.warning("Test Suite %s has not been initialized." % \
                             test_suite_name)
             return
 
-        tss = self.testSuitsSessions[test_suite_name]
+        tss = self.suitsSessions[test_suite_name]
         if not tss.state == State(TestSuite.S_ALL_INITIALIZED):
             LOGGER.warning("TestSuite %s has not been initialized." % \
                             test_suite_name)
@@ -526,20 +524,18 @@ class XrdTestMaster(Runnable):
         Sends finalization message to slaves and destroys TestSuiteSession.
         @param test_suite_name:
         '''
-        testSuite = self.testSuits[test_suite_name]
-
-        # Checks if we already initialized suite
-        if not self.testSuitsSessions.has_key(test_suite_name):
+        if not self.runningSuits.has_key(test_suite_name):
             LOGGER.warning("TestSuite has not been initialized.")
             return
 
-        tss = self.testSuitsSessions[test_suite_name]
+        tss = self.runningSuits[test_suite_name]
+
         if not tss.state == State(TestSuite.S_ALL_INITIALIZED):
             LOGGER.warning("TestSuite not yet initialized.")
             return
 
         unreadyMachines = []
-        for m in testSuite.machines:
+        for m in tss.suite.machines:
             if self.slaveState(m) != State(Slave.S_CONNECTED_IDLE):
                 unreadyMachines.append(m)
                 LOGGER.warning(m + " state " + str(self.slaveState(m)))
@@ -550,15 +546,15 @@ class XrdTestMaster(Runnable):
             return
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_FINALIZE)
-        msg.suiteName = test_suite_name
+        msg.suiteName = tss.suiteName
 
         for sl in tss.slaves:
             LOGGER.debug("Sending Test Suite finalize to %s" % sl)
             sl.send(msg)
             sl.state = State(Slave.S_SUITFINALIZE_SENT)
+            sl.state.sessUid = tss.uid
 
         tss.state = State(TestSuite.S_WAIT_4_FINALIZE)
-
     #---------------------------------------------------------------------------
     def handleClientDisconnected(self, client_type, client_addr):
         clients = self.slaves
@@ -604,17 +600,9 @@ class XrdTestMaster(Runnable):
                          ', '.join(clients_str))
     #---------------------------------------------------------------------------
     def procSlaveMsg(self, msg):
-        if msg.name == XrdMessage.M_TESTCASE_STAGE_RESULT:
-            if self.testsRunning.has_key(msg.testCase):
-                LOGGER.info("STAGE RESULT at " + self.slaves[msg.sender].hostname + " " + str(msg.result))
-                self.testCaseRunning[msg.testCase][msg.testStage] = msg.result
-                if msg.testStage == "1":
-                    del self.testsRunning[msg.testCase]
-            else:
-                raise XrdTestMasterException(
-                    ("Unknown test case " + " [%s]") % msg.testCase)
-        elif msg.name == XrdMessage.M_TESTSUITE_STATE:
+        if msg.name == XrdMessage.M_TESTSUITE_STATE:
             slave = self.slaves[msg.sender]
+
             if msg.state == State(TestSuite.S_SLAVE_INITIALIZED):
                 if slave.state != State(Slave.S_SUITINIT_SENT):
                     #previous state of slave is not correct, should be
@@ -623,10 +611,10 @@ class XrdTestMaster(Runnable):
                                            "expected from %s" % slave)
                 else:
                     slave.state = State(Slave.S_SUIT_INITIALIZED)
-                    session = self.testSuitsSessions[msg.suiteName]
+                    session = self.suitsSessions[msg.suiteName]
                     session.addStageResult(msg.state, msg.result)
                     #update SuiteStatus if all slaves are inited
-                    initedCount = [1 for sl in session.slaves if sl.state == 
+                    initedCount = [1 for sl in session.slaves if sl.state ==
                         State(Slave.S_SUIT_INITIALIZED)]
                     LOGGER.info("%s initialized in test suite %s" % \
                                 (slave, session.suiteName))
@@ -638,33 +626,32 @@ class XrdTestMaster(Runnable):
             elif msg.state == State(TestSuite.S_SLAVE_FINALIZED):
                 self.slaves[msg.sender].state = msg.state
                 slave.state = State(Slave.S_CONNECTED_IDLE)
-                finalizedCount = [1 for sl in session.slaves if 
+                finalizedCount = [1 for sl in session.slaves if
                     sl.state == State(Slave.S_CONNECTED_IDLE)]
                 if len(finalizedCount) == len(session.slaves):
-                    session.state = State(
-                        TestSuite.S_ALL_FINALIZED)
+                    session.state = State(TestSuite.S_ALL_FINALIZED)
                 LOGGER.info("%s finalized in test suite: %s" % \
                             (slave, session.suiteName))
             elif msg.state == State(TestSuite.S_TESTCASE_INITIALIZED):
-                session = self.testSuitsSessions[msg.suiteName]
-                session.addStageResult(msg.state, msg.result, 
-                                       tc_name = msg.testName,
+                session = self.suitsSessions[msg.suiteName]
+                session.addStageResult(msg.state, msg.result,
+                                       tc_name=msg.testName,
                                        slave_name=slave)
                 LOGGER.info("%s initialized case %s in suite %s" % \
                             (slave, msg.testName, session.suiteName))
             elif msg.state == State(TestSuite.S_TESTCASE_RUNFINISHED):
-                session = self.testSuitsSessions[msg.suiteName]
-                session.addStageResult(msg.state, msg.result, 
+                session = self.suitsSessions[msg.suiteName]
+                session.addStageResult(msg.state, msg.result,
                                        slave_name=slave.hostname,
-                                       tc_name = msg.testName)
+                                       tc_name=msg.testName)
                 LOGGER.info("%s run finished for case %s in suite %s" % \
                             (slave, msg.testName, session.suiteName))
             elif msg.state == State(TestSuite.S_TESTCASE_FINALIZED):
 
-                session = self.testSuitsSessions[msg.suiteName]
+                session = self.suitsSessions[msg.suiteName]
                 session.addStageResult(msg.state, msg.result, \
                                        slave_name=slave.hostname,
-                                       tc_name = msg.testName)
+                                       tc_name=msg.testName)
                 slave.state = State(Slave.S_SUIT_INITIALIZED)
                 tFinalizedCount = [1 for sl in session.slaves if \
                     sl.state == State(Slave.S_CONNECTED_IDLE)]
@@ -717,6 +704,10 @@ class XrdTestMaster(Runnable):
                                              str(evt.type))
     #---------------------------------------------------------------------------
     def slaveState(self, slave_name):
+        '''
+        Get state of a slave, even if not connected.
+        @param slave_name: equal to full hostname
+        '''
         key = [k for k, v in self.slaves.iteritems() \
                if slave_name == v.hostname]
         ret = State(TCPClient.S_NOT_CONNECTED)
@@ -904,3 +895,4 @@ if __name__ == '__main__':
     except OSError, e:
         LOGGER.error(str(e))
         sys.exit(1)
+

@@ -5,7 +5,6 @@ logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
                     '%(message)s', level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
-
 #-------------------------------------------------------------------------------
 class State(object):
     '''

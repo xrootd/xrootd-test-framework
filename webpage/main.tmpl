@@ -49,8 +49,8 @@
       standardExpansible : true
       });
 
-     #if $suitSessions and len($suitSessions) > 0
-        #set $testSessionsNum = len($suitSessions)
+     #if $suitsSessions and len($suitsSessions) > 0
+        #set $testSessionsNum = len($suitsSessions)
         #for $i in range($testSessionsNum):
              #set $j = $i + 1
              \$("#acc5${j}").accordion({
@@ -107,7 +107,7 @@ a {padding:1px; border:0 solid #e0e0e0; color:#05b}
 
 a, .accordion .switch a {border-width:0 0 1px 0; text-decoration:none}
 
-.accordion a{border-width:1px; text-decoration:underline}
+.accordion a{border-width:1px; text-decoration:none}
 
 a:hover, a:focus, a:active {border-color:#bcd; text-decoration:none; outline:0 none}
 
@@ -262,7 +262,7 @@ a.trigger.open {background-image: url(../style/img/minus.gif)}
         <h3>${ts[1].name}</h3>
         <div class="inner">
         <p class="sect_title">ACTIONS AVAILABLE</p>
-        <p>&rsaquo;&nbsp; <a href="./initSuite?testSuiteName=${ts[1].name}">Initialize test suite <i>${ts[1].name}</i></a></p>
+        <p>&rsaquo;&nbsp; <a href="./initializeSuite?testSuiteName=${ts[1].name}">Initialize test suite <i>${ts[1].name}</i></a></p>
         <p>&rsaquo;&nbsp; <a href="./finalizeSuite?testSuiteName=${ts[1].name}">Finalize test suite  <i>${ts[1].name}</i></a></p>
         <p class="sect_title">SETTINGS</p>
         <table class="desctab_big" cellspacing="0" cellpadding="0" width="80%">
@@ -288,10 +288,10 @@ a.trigger.open {background-image: url(../style/img/minus.gif)}
         #end if
         </table>
         <p class="sect_title">SESSIONS</p>
-    #if $suitSessions.has_key(ts[1].name)
+    #if $suitsSessions.has_key(ts[1].name)
         <table class="desctab_big" cellspacing="0" cellpadding="0" width="80%">
         <tr><th>Name</th><th>State</th></tr>
-        <tr><td>${suitSessions[$ts[1].name].state}</td><td>&nbsp;</td></tr>
+        <tr><td>${suitsSessions[$ts[1].name].state}</td><td>&nbsp;</td></tr>
         </table>
     #end if
         </div>
@@ -302,18 +302,27 @@ a.trigger.open {background-image: url(../style/img/minus.gif)}
 #set $testSessionsNum = 1
 #set $testCasesNum = 1
 <div style="display:block;width:48%;float:right;">
-    <h1>TEST CASES [loaded or finished; grouped by test suits]</h1>
-
-    #if $suitSessions and len($suitSessions) > 0
-    #for $suitSess in $suitSessions.itervalues()
+    <h1>SUITS SESSIONS [by date]</h1>
+    #if $suitsSessions and len($suitsSessions) > 0
+    #import copy
+    #set $revKeys = copy.copy($suitsSessions.keys())
+    #for $key in $revKeys
+        #set $suitSess = $suitsSessions[$key]
+        #set $htmlSuitColor = "111111"
+        #if $runningSuitsUids.has_key($suitSess.name)
+            #if $runningSuitsUids[$suitSess.name] == $suitSess.uid
+                #set $htmlSuitColor = "00bb00"
+            #end if
+        #end if
         <div id="acc5${testSessionsNum}" class="accordion">
-        <h3><a href="#">${suitSess.suiteName} <span style="font-weight:normal;">[testsuite: ${suitSess.suiteName}]</span></a></h3>
+        <h3><a href="#" style="color:#${htmlSuitColor};">${suitSess.name} 
+        <span style="font-weight:normal;">[inited at: ${suitSess.initDate.strftime("%a %d-%m-%Y %H:%M:%S")}]</span></a></h3>
         <div class="inner">
         #if $suitSess.cases and len($suitSess.cases) > 0
-        #for $tC in $suitSess.getAllCases()
-            <h4><a href="#">${tC.name} <span style="font-weight:normal;">[${suitSess.suiteName}]</span></a></h4>
+        #for $tC in $suitSess.cases.itervalues()
+            <h4><a href="#"><span style="font-weight:normal;">Test Case</span> <i>${tC.name}</i></a></h4>
             <div class="inner">
-                #set $stages=$suitSess.getStages4TestCase($tC.name)
+                #set $stages=$suitSess.getTestCaseStages($tC.uid)
                 #set iS = 1
                 #for $stage in $stages
                     #set $color = "#222222"
@@ -350,7 +359,7 @@ a.trigger.open {background-image: url(../style/img/minus.gif)}
             #set $testCasesNum += 1
         #end for
         #else
-           <p>No test cases has been run in this session yet.</p>
+           <p>No test cases has been run in this session.</p>
         #end if
         </div>
         </div>

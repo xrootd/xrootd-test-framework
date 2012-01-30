@@ -209,7 +209,7 @@ class XrdTestSlave(Runnable):
 
         return msg3
     #---------------------------------------------------------------------------
-    def handleTestSuiteInit(self, msg):
+    def handleTestSuiteInitialize(self, msg):
         cmd = msg.cmd
         suiteName = msg.suiteName
         
@@ -220,7 +220,7 @@ class XrdTestSlave(Runnable):
 
         return msg
     #---------------------------------------------------------------------------
-    def handleTestSuiteFinalized(self, msg):
+    def handleTestSuiteFinalize(self, msg):
         cmd = msg.cmd
         suiteName = msg.suiteName
         
@@ -243,7 +243,7 @@ class XrdTestSlave(Runnable):
                 if msg.name is XrdMessage.M_HELLO:
                     resp = XrdMessage(XrdMessage.M_HELLO)
                 elif msg.name == XrdMessage.M_TESTSUITE_INIT:
-                    resp = self.handleTestSuiteInit(msg)
+                    resp = self.handleTestSuiteInitialize(msg)
                 elif msg.name == XrdMessage.M_TESTSUITE_FINALIZE:
                     resp = self.handleTestSuiteFinalize(msg)
                 elif msg.name == XrdMessage.M_TESTCASE_RUN:

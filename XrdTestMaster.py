@@ -316,6 +316,7 @@ class Slave(TCPClient):
     #---------------------------------------------------------------------------
     S_SUITINIT_SENT = (10, "Test suite init sent to slave")
     S_SUIT_INITIALIZED = (11, "Test suite initialized")
+    S_SUITFINALIZE_SENT = (13, "Test suite finalize sent to slave")
 
     S_TESTCASE_DEF_SENT = (21, "Sent test case definition to slave")
     #---------------------------------------------------------------------------
@@ -691,6 +692,14 @@ class XrdTestMaster(Runnable):
                                    slave_name=slave.hostname, \
                                    tc_uid=msg.testUid)
                 slave.state = State(Slave.S_SUIT_INITIALIZED)
+
+                iSlaves = self.getSuiteSlaves(tss.suite, \
+                            State(Slave.S_SUIT_INITIALIZED))
+
+                # if test ended on all machines, status of whole suite
+                # updates
+                if len(iSlaves) == len(tss.suite.machines):
+                    tss.state = State(TestSuite.S_ALL_INITIALIZED)
 
                 LOGGER.info("%s finalized test case %s in suite %s" % \
                             (slave, msg.testName, tss.name))

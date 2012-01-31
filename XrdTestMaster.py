@@ -215,8 +215,7 @@ class WebInterface:
         tplFile = self.config.get('webserver', 'webpage_dir') \
                     + os.sep + tpl_file
 
-        tpl_vars['webpage_relative_dir'] = \
-            self.config.get('webserver', 'webpage_relative_dir')
+        tpl_vars['HTTPport'] = self.config.getint('webserver', 'port')
         try:
             tpl = Template(file=tplFile, searchList=[tpl_vars])
         except Exception, e:
@@ -239,8 +238,7 @@ class WebInterface:
                     'hostname': socket.gethostname(),
                     'testSuits': self.testMaster.testSuits,
                     'userMsgs' : self.testMaster.userMsgs,
-                    'testMaster': self.testMaster,
-                    'HTTPport' : self.config.getint('webserver', 'port')}
+                    'testMaster': self.testMaster,}
         return self.disp("main.tmpl", tplVars)
     #---------------------------------------------------------------------------
     def suitsSessions(self):
@@ -514,7 +512,7 @@ class XrdTestMaster(Runnable):
         msg = XrdMessage(XrdMessage.M_TESTSUITE_INIT)
         msg.suiteName = tss.name
         msg.tssUid = tss.uid
-        msg.cmd = testSuite.initialize
+        msg.cmd = tss.suite.initialize
 
         for sl in testSlaves:
             LOGGER.info("Sending Test Suite initialize to %s" % sl)
@@ -588,6 +586,7 @@ class XrdTestMaster(Runnable):
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_FINALIZE)
         msg.suiteName = tss.name
+        msg.cmd = tss.suite.finalize
 
         tSlaves = self.getSuiteSlaves(tss.suite)
         for sl in tSlaves:
@@ -658,8 +657,6 @@ class XrdTestMaster(Runnable):
                     #update SuiteStatus if all slaves are inited
                     iSlaves = self.getSuiteSlaves(tss.suite, 
                                             State(Slave.S_SUIT_INITIALIZED))
-                    LOGGER.info("NUM %s VS %s" % \
-                                (str(len(iSlaves)), str(len(tss.suite.machines))))
                     LOGGER.info("%s initialized in test suite %s" % \
                                 (slave, tss.name))
                     if len(iSlaves) == len(tss.suite.machines):

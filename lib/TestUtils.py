@@ -50,27 +50,23 @@ class TestSuite:
         self.schedule = ""  # define when the test should be run (cron style)
         self.clusters = []  # a list of virtual clusters needed by 
                             # the test to be spawned on a hypervisor
-        self.\
-        machines = []   # names of machines, including the virtual machines that
-                        # are needed by the test
-        self.\
-        initialize = "" # an URL to a shell script (starts with http://) or 
-                        # a shell script (starts with #!) that defines 
-                        # the commands that need to be run on each test slave 
-                        # before any test case can run if it fails then the 
-                        # entire test suit should be considered as failed
-        self.\
-        finalize = ""   # an URL to shell script or a shell script that defines
-                        # the clean up procedures to be run after all the 
-                        # tests cases are completed
-        self.\
-        tests = []      # a list of test cases names as defined below
+        self.machines = []  # names of machines, including the virtual machines 
+                            # that are needed by the test
+        self.initialize = "" 
+                            # an URL to a shell script (starts with http://) or 
+                            # a shell script (starts with #!) that defines 
+                            # the commands that need to be run on each test slave 
+                            # before any test case can run if it fails then the 
+                            # entire test suit should be considered as failed
+        self.finalize = ""  # an URL to shell script or a shell script that 
+                            # defines the clean up procedures to be run after 
+                            # all the tests cases are completed
+        self.tests = []     # a list of test cases names as defined below
 
         #---------------------------------------------------------------------------
         # Fields beneath are filled automatically by system
-        self.\
-        testCases = []  # filled automatically by a Python objects representing
-                        # test cases
+        self.testCases = []  # filled automatically by a Python objects 
+                             # representing test cases
         #---------------------------------------------------------------------------
     def validateStatic(self):
         '''

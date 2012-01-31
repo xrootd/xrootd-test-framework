@@ -89,6 +89,7 @@
     #if $suitsSessions and len($suitsSessions) > 0
     #import copy
     #set $revKeys = copy.copy($suitsSessions.keys())
+    #set $revKeys = sorted($revKeys, cmp=lambda x,y: cmp($suitsSessions[$y].initDate, $suitsSessions[$x].initDate))
     #for $key in $revKeys
         #set $suitSess = $suitsSessions[$key]
         #set $htmlSuitColor = "111111"

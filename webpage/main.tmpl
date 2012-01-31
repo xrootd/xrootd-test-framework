@@ -6,7 +6,7 @@
 <script type="text/javascript" src="webpage/js/jquery-ui-1.8.16.custom.min.js"></script>
 <script type="text/javascript" src="webpage/js/jquery.nestedAccordion.js"></script>
 <link rel="stylesheet" type="text/css" href="webpage/css/jquery.css" />
-
+<link rel="stylesheet" type="text/css" href="webpage/css/main.css" />
 <script type="text/javascript">
 <!--//--><![CDATA[//><!--
 
@@ -64,7 +64,7 @@
               });
         #end for
        #end if
-     
+
      \$("#acc7").accordion({
       obj: "div", 
       wrapper: "div", 
@@ -77,115 +77,24 @@
 });
 //--><!]]>
 </script>
-
-<style type="text/css">
-body, table {font:76%/1.6 verdana,geneva,lucida, 'lucida grande',arial,helvetica,sans-serif;}
-
-table.desctab_big th {text-align:center; font-weight:bold; padding:4px; 
-            background-color:#d0d0d0;}
-table.desctab_big td {border-bottom:1px solid #a0a0a0;text-align:center; padding:2px;}
-
-table.desctab th {text-align:center; font-weight:bold; padding:4px; 
-            background-color:#e0e0e0;}
-
-table.desctab td {text-align:center; font-weight:normal; 
-                  padding:4px;border-right:1px solid #d0d0d0;}
-
-p.sect_title {font-weight:bold; font-size:14px;}
-
-/* --- Headings --- */
-h1 {font-family:georgia,'times new roman',times,serif; font-size:2.0em; font-weight:normal; color:#f60}
-
-h1, h2, h3, h4, h5 {margin-bottom:0.1em}
-
-h2, h3 a, h4 a, h5 a {padding:3px 10px}
-
-h2, h3, h4, h5 {font-size:1.1em}
-
-/* --- Links --- */
-a {padding:1px; border:0 solid #e0e0e0; color:#05b}
-
-a, .accordion .switch a {border-width:0 0 1px 0; text-decoration:none}
-
-.accordion a{border-width:1px; text-decoration:none}
-
-a:hover, a:focus, a:active {border-color:#bcd; text-decoration:none; outline:0 none}
-
-/* --- Accordion --- */
-
-.accordion {margin:0; padding:0 10px}
-
-.accordion li {list-style-type:none}
-
-.accordion li.last-child {margin-left:19px; list-style-type:disc}
-
-#side ul.accordion ul {margin:0; padding:0 0 0 20px;}
-
-.accordion .outer {border:1px solid #dadada; border-width:0 1px 1px; background: #fff}
-
-.accordion .inner {margin:0px 0px 10px 0px; padding:.10em 20px 0em; overflow:hidden}
-
-.accordion .inner .inner {padding-bottom:0}
-
-.accordion .h {padding-top:.0em}
-
-.accordion p {margin:.1em 0 1em}
-
-.accordion h3 {background:#f0f0f0;}
-.accordion h4 {background:#e0e0e0;}
-
-.switch {margin-bottom:.5em}
-
-/*  
-  Add styles for all links in the 'accordion':
-.accordion a {...}
-*/    
-
-a.trigger {display:block; padding-left:20px; background-image: url(../style/img/plus.gif); background-repeat: no-repeat; background-position: 1px 50%;  font-weight:700}
-
-a.trigger.open {background-image: url(../style/img/minus.gif)}
-
-.last-child a.trigger{padding-left:1px; background-image:none; font-weight:normal}
-
-#a.trigger {background-color:#f0f0f0}
-
-#a.trigger.open {border-color:#dadada; background-color:#e7e7e7}
-
-#a:hover.trigger.open, #main a:focus.trigger.open, #main a:active.trigger.open {border-color:#bcd}
-
-#main .switch a.open {background:transparent none}
-
-#side a.active{font-weight:700; color:#f72; text-decoration:none}
-
-</style>
-
 </head>
 <body>
 <p>XRootD Testing Framework</p>
 <div style="width:100%;" id="main">
+#include "webpage/main_menu.tmpl"
 <div style="display:block;width:48%;float:left;vertical-align:top;">
 <h1>Clusters definitions</h1>
-<div class="clusters-list">
-
 <div id="acc1" class="accordion">
     #if $clusters and len($clusters) > 0
         #set $cli=1
         #for $cluster in $clusters.itervalues()
-    	<h3><a href="#">${cluster.name} 
+    	<h3><a href="#">${cluster.name}
     	<span style="color:#666666;font-weight:normal;">${cluster.state}</span></a></h3>
     	<div class="inner">
 	    <p class="sect_title">ACTIONS AVAILABLE</p>
-        <p>&rsaquo;&nbsp; <a href="./startCluster?clusterName=${cluster.name}">Send to hypervisor and start</a></p>
-    	<p class="sect_title">LAST STATE</p>
-    	<table class="desctab_big" width="100%" cellspacing="0" cellpadding="0">
-                <tr>
-                    <th><b>State</b></th>
-                </tr>
-                <tr>
-                    <td aligne="left">${cluster.state}</td>
-                </tr>
-            </table>
-    	<p class="sect_title">NETWORK</p>
+        <p>&rsaquo;&nbsp; <a href="./startCluster?clusterName=${cluster.name}">Send definition to hypervisor and start</a></p>
+    	<p class="sect_title">LAST STATE <span style="font-size:11px;font-weight:normal;">${cluster.state}</span></p>
+       	<p class="sect_title">NETWORK</p>
             <table class="desctab_big" width="100%" cellspacing="0" cellpadding="0">
                 <tr>
                     <th><b>Name</b></th><th><b>Bridgename</b></th>
@@ -236,26 +145,7 @@ a.trigger.open {background-image: url(../style/img/minus.gif)}
         #end for
     #end if
 </div>
-</div>
-<h1>Connected hypervisors</h1>
-<div id="acc2"  class="accordion">
-    #if $hypervisors and len($hypervisors) > 0
-        #for $hypervisor in $hypervisors.iteritems()
-        <h3>${hypervisor[1].hostname} <span style="font-weight:normal;color:#666666;">[${hypervisor[0][0]}:${hypervisor[0][1]}]</span></h3>
-        <div class="inner"></div>
-        #end for
-    #end if
-</div>
-<h1>Connected slaves</h1>
-<div id="acc3" class="accordion">
-    #if $slaves and len($slaves) > 0
-        #for $slave in $slaves.iteritems()
-        <h3><a href="#">&rsaquo; ${slave[1].hostname} <span style="font-weight:normal;color:#666666;">[${slave[0][0]}:${slave[0][1]}]</span></a></h3>
-        <div class="inner"></div>
-        #end for
-    #end if
-</div>
-<h1>Test suits</h1>
+<h1>Test suits definitions</h1>
 <div id="acc4" class="accordion">
     #if $testSuits and len($testSuits) > 0
     #for $ts in $testSuits.iteritems()
@@ -299,76 +189,27 @@ a.trigger.open {background-image: url(../style/img/minus.gif)}
     #end if
 </div>
 </div>
-#set $testSessionsNum = 1
-#set $testCasesNum = 1
 <div style="display:block;width:48%;float:right;">
-    <h1>SUITS SESSIONS [by date]</h1>
-    #if $suitsSessions and len($suitsSessions) > 0
-    #import copy
-    #set $revKeys = copy.copy($suitsSessions.keys())
-    #for $key in $revKeys
-        #set $suitSess = $suitsSessions[$key]
-        #set $htmlSuitColor = "111111"
-        #if $runningSuitsUids.has_key($suitSess.name)
-            #if $runningSuitsUids[$suitSess.name] == $suitSess.uid
-                #set $htmlSuitColor = "00bb00"
-            #end if
-        #end if
-        <div id="acc5${testSessionsNum}" class="accordion">
-        <h3><a href="#" style="color:#${htmlSuitColor};">${suitSess.name} 
-        <span style="font-weight:normal;">[inited at: ${suitSess.initDate.strftime("%a %d-%m-%Y %H:%M:%S")}]</span></a></h3>
-        <div class="inner">
-        #if $suitSess.cases and len($suitSess.cases) > 0
-        #for $tC in $suitSess.cases.itervalues()
-            <h4><a href="#"><span style="font-weight:normal;">Test Case</span> <i>${tC.name}</i></a></h4>
-            <div class="inner">
-                #set $stages=$suitSess.getTestCaseStages($tC.uid)
-                #set iS = 1
-                #for $stage in $stages
-                    #set $color = "#222222"
-                    #if $stage[0].id < 0:
-                        #set $color = "#dd0000"
-                    #end if
-                    <p style="color:$color;">${stage[0]} 
-                    <a href="#" id="${tC.uid}_st${iS}_button">see details</a></p>
-                    <div id="${tC.uid}_st${iS}_details" style="display:none;"
-                    title="Details of test result stage at slave ${stage[3]}">
-                    <table>
-                    <tr><td style="background:#e0e0e0;">state</td></tr>
-                    <tr><td>${stage[0]}</td></tr>
-                    <tr><td style="background:#e0e0e0;">return code</td></tr>
-                    <tr><td>${stage[1][2]}</td></tr>
-                    <tr><td style="background:#e0e0e0;">stdout</td></tr>
-                    <tr><td>${stage[1][0]}</td></tr>
-                    <tr><td style="background:#e0e0e0;">stderr</td></tr>
-                    <tr><td>${stage[1][1]}</td></tr>
-                    </table>
-                    </div>
-                    <script style="display:none;">
-                    \$( "#${tC.uid}_st${iS}_button" ).click(function() {
-                        \$( "#${tC.uid}_st${iS}_details" ).dialog({
-                            height: 500,
-                            width: 300,
-                            modal: true
-                        });
-                    });
-                    </script>
-                    #set $iS += 1
-                #end for
-            </div>
-            #set $testCasesNum += 1
-        #end for
+    <h1>Connected hypervisors</h1>
+    <div id="acc2"  class="accordion">
+        #if $hypervisors and len($hypervisors) > 0
+            #for $hypervisor in $hypervisors.iteritems()
+            <h3>${hypervisor[1].hostname} <span style="font-weight:normal;color:#666666;">[${hypervisor[0][0]}:${hypervisor[0][1]}]</span></h3>
+            <div class="inner"></div>
+            #end for
         #else
-           <p>No test cases has been run in this session.</p>
+        None.
         #end if
-        </div>
-        </div>
-        #set $testSessionsNum += 1
-    #end for
-    #end if
     </div>
-</div>
-<div style="display:block;width:48%;float:right;">
+    <h1>Connected slaves</h1>
+    <div id="acc3" class="accordion">
+        #if $slaves and len($slaves) > 0
+            #for $slave in $slaves.iteritems()
+            <h3><a href="#">&rsaquo; ${slave[1].hostname} <span style="font-weight:normal;color:#666666;">[${slave[0][0]}:${slave[0][1]}]</span></a></h3>
+            <div class="inner"></div>
+            #end for
+        #end if
+    </div>
     <h1>ALL LOG MESSAGES</h1>
     <div id="acc7" class="accordion" style="background-color:#ffffff;background-image:none;">
         #if $userMsgs and len($userMsgs) > 0

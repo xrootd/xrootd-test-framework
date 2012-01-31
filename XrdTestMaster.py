@@ -55,6 +55,7 @@ except ImportError, e:
 # Globals and configurations
 #-------------------------------------------------------------------------------
 currentDir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(currentDir)
 #Default daemon configuration
 defaultConfFile = './XrdTestMaster.conf'
 defaultPidFile = '/var/run/XrdTestMaster.pid'
@@ -209,14 +210,25 @@ class WebInterface:
         self.testMaster = test_master_ref
         self.config = config
     #---------------------------------------------------------------------------
+    def disp(self, tpl_file, tpl_vars):
+        tpl = None
+        tplFile = self.config.get('webserver', 'webpage_dir') \
+                    + os.sep + tpl_file
+
+        tpl_vars['webpage_relative_dir'] = \
+            self.config.get('webserver', 'webpage_relative_dir')
+        try:
+            tpl = Template(file=tplFile, searchList=[tpl_vars])
+        except Exception, e:
+            LOGGER.error(str(e))
+            return "An error occured. Check log for details."
+        else:
+            return tpl.respond()
+    #---------------------------------------------------------------------------
     def index(self):
         '''
         Provides web interface for the manager.
         '''
-        tplFile = self.config.get('webserver', 'webpage_dir') \
-                    + os.sep + 'main.tmpl'
-        LOGGER.debug("Loading WebInterface.index(). Template file: " + tplFile)
-
         tplVars = { 'title' : 'Xrd Test Master - Web Iface',
                     'message' : 'Welcome and begin the tests!',
                     'clusters' : self.testMaster.clusters,
@@ -229,28 +241,26 @@ class WebInterface:
                     'userMsgs' : self.testMaster.userMsgs,
                     'testMaster': self.testMaster,
                     'HTTPport' : self.config.getint('webserver', 'port')}
-        tpl = None
-        try:
-            tpl = Template(file=tplFile, searchList=[tplVars])
-        except Exception, e:
-            LOGGER.error(str(e))
-            return "An error occured. Check log for details."
-        else:
-            return tpl.respond()
+        return self.disp("main.tmpl", tplVars)
+    #---------------------------------------------------------------------------
+    def suitsSessions(self):
+        '''
+        Provides web interface for the manager.
+        '''
+        tplVars = { 'title' : 'Xrd Test Master - Web Iface',
+                    'suitsSessions' : self.testMaster.suitsSessions,
+                    'runningSuitsUids' : self.testMaster.runningSuitsUids,
+                    'slaves': self.testMaster.slaves,
+                    'hostname': socket.gethostname(),
+                    'testSuits': self.testMaster.testSuits,
+                    'testMaster': self.testMaster,
+                    'HTTPport' : self.config.getint('webserver', 'port')}
+        return self.disp("suits_sessions.tmpl", tplVars)
     #---------------------------------------------------------------------------
     def indexRedirect(self):
-        tplFile = self.config.get('webserver', 'webpage_dir') \
-                    + os.sep + 'index_redirect.tmpl'
         tplVars = { 'hostname': socket.gethostname(),
                     'HTTPport': self.config.getint('webserver', 'port')}
-        tpl = None
-        try:
-            tpl = Template(file=tplFile, searchList=[tplVars])
-        except Exception, e:
-            LOGGER.error(str(e))
-            return "Error occured. Check the log for details."
-        else:
-            return tpl.respond()
+        return self.disp("index_redirect.tmpl", tplVars)
     #---------------------------------------------------------------------------
     def startCluster(self, clusterName):
         LOGGER.info("startCluster pressed: " + str(clusterName))
@@ -275,6 +285,7 @@ class WebInterface:
         return self.indexRedirect()
 
     index.exposed = True
+    suitsSessions.exposed = True
     startCluster.exposed = True
     runTestCase.exposed = True
     initializeSuite.exposed = True
@@ -899,7 +910,7 @@ def main():
                             + 'reload the deamon')
                 sys.exit(3)
         except (DaemonException, RuntimeError, ValueError, IOError), e:
-            LOGGER.exception('')
+            LOGGER.exception(str(e))
             sys.exit(1)
     #---------------------------------------------------------------------------
     # run test master in standard mode. Used for debugging
@@ -915,4 +926,3 @@ if __name__ == '__main__':
     except OSError, e:
         LOGGER.error(str(e))
         sys.exit(1)
-

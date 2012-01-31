@@ -33,9 +33,11 @@ try:
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
-
+#------------------------------------------------------------------------------ 
+# Globals and configurations
 currentDir = os.path.dirname(os.path.abspath(__file__))
-#Default daemon configuration
+os.chdir(currentDir)
+# Default daemon configuration
 defaultConfFile = './XrdTestHypervisor.conf'
 defaultPidFile = '/var/run/XrdTestHypervisor.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestHypervisor.log'

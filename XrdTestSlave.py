@@ -35,9 +35,10 @@ try:
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
-
+#------------------------------------------------------------------------------ 
+# Globals and configurations
 currentDir = os.path.dirname(os.path.abspath(__file__))
-
+os.chdir(currentDir)
 #Default daemon configuration
 defaultConfFile = './XrdTestSlave.conf'
 defaultPidFile = '/var/run/XrdTestSlave.pid'
@@ -329,7 +330,7 @@ def main():
                 print 'You can either start, stop, check or reload the deamon'
                 sys.exit(3)
         except (DaemonException, RuntimeError, ValueError, IOError), e:
-            LOGGER.exception(e)
+            LOGGER.error(str(e))
             sys.exit(1)
     #--------------------------------------------------------------------------
     # run test master in standard mode. Used for debugging
@@ -341,4 +342,3 @@ def main():
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
     main()
-

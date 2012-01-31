@@ -41,7 +41,7 @@ class DaemonException(Exception):
         '''
         Returns textual representation of an error
         '''
-        return repr(self.desc)
+        return str(self.desc)
 #-------------------------------------------------------------------------------
 def readConfig(confFile):
     '''
@@ -57,7 +57,7 @@ def readConfig(confFile):
             config.readfp(fp)
             fp.close()
         except IOError, e:
-            LOGGER.exception()
+            LOGGER.exception(e)
     else:
         raise DaemonException("Config file could not be read")
     return config
@@ -203,7 +203,8 @@ class Daemon:
             logFile.close()
             pidFile = file(self.pidFile, 'w')
         except Exception, e:
-            raise DaemonException('Cannot access files: ' + str(e))
+            raise DaemonException(('Cannot access log file or pid file: ' + \
+                                  '%s or %s') % (self.logFile, self.pidFile))
         #-----------------------------------------------------------------------
         # Fork - create daemon process
         #-----------------------------------------------------------------------

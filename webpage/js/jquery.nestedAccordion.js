@@ -246,10 +246,20 @@ $(function() {
   $.fn.accordion.defaults.initShow = "#current";
 --- */
 /// Example options for Hover Accordion:
-/* ---
+/*
 $.fn.accordion.defaults.container=false;
 $.fn.accordion.defaults.event="hover";
 $.fn.accordion.defaults.focus=false; // Optional. If it is possible, use {focus: true}, since {focus: false} will break the keyboard accessibility
 $.fn.accordion.defaults.initShow="#current";
 $.fn.accordion.defaults.lastChild=false;
 --- */
+/* CUSTOM DEFAULTS SETTINGS */
+$.fn.accordion.defaults.el			=".h";
+$.fn.accordion.defaults.wrapper		="div";
+$.fn.accordion.defaults.showSpeed	=200;
+$.fn.accordion.defaults.hideSpeed	=200;
+$.fn.accordion.defaults.next 		="div";
+$.fn.accordion.defaults.head 		= "h3, h4, h5";
+$.fn.accordion.defaults.obj 		= "div";
+$.fn.accordion.defaults.initShow 	= "div.shown";
+$.fn.accordion.defaults.standardExpansible = true;

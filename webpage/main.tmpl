@@ -12,68 +12,12 @@
 
 \$.fn.accordion.defaults.container = false; 
 \$(function() {
-     \$("#acc1").accordion({
-      obj: "div", 
-      wrapper: "div", 
-      el: ".h", 
-      head: "h3, h4, h5", 
-      next: "div", 
-      initShow : "div.shown",
-      standardExpansible : true
-      });
-    \$("#acc2").accordion({
-      obj: "div", 
-      wrapper: "div", 
-      el: ".h", 
-      head: "h3, h4, h5", 
-      next: "div", 
-      initShow : "div.shown",
-      standardExpansible : true
-      });
-    \$("#acc3").accordion({
-      obj: "div", 
-      wrapper: "div", 
-      el: ".h", 
-      head: "h3, h4, h5", 
-      next: "div", 
-      initShow : "div.shown",
-      standardExpansible : true
-      });
-    \$("#acc4").accordion({
-      obj: "div", 
-      wrapper: "div", 
-      el: ".h", 
-      head: "h3, h4, h5", 
-      next: "div", 
-      initShow : "div.shown",
-      standardExpansible : true
-      });
+     \$("#acc1").accordion();
+    \$("#acc2").accordion();
+    \$("#acc3").accordion();
+    \$("#acc4").accordion();
 
-     #if $suitsSessions and len($suitsSessions) > 0
-        #set $testSessionsNum = len($suitsSessions)
-        #for $i in range($testSessionsNum):
-             #set $j = $i + 1
-             \$("#acc5${j}").accordion({
-              obj: "div", 
-              wrapper: "div", 
-              el: ".h", 
-              head: "h3, h4, h5", 
-              next: "div", 
-              initShow : "div.shown",
-              standardExpansible : true
-              });
-        #end for
-       #end if
-
-     \$("#acc7").accordion({
-      obj: "div", 
-      wrapper: "div", 
-      el: ".h", 
-      head: "h3, h4, h5", 
-      next: "div", 
-      initShow : "div.shown",
-      standardExpansible : true
-      });
+     \$("#acc7").accordion();
 });
 //--><!]]>
 </script>
@@ -154,9 +98,8 @@
         <p class="sect_title">ACTIONS AVAILABLE</p>
         <p>&rsaquo;&nbsp; <a href="./initializeSuite?testSuiteName=${ts[1].name}">Initialize test suite <i>${ts[1].name}</i></a></p>
         <p>&rsaquo;&nbsp; <a href="./finalizeSuite?testSuiteName=${ts[1].name}">Finalize test suite  <i>${ts[1].name}</i></a></p>
-        <p class="sect_title">SETTINGS</p>
+        <p class="sect_title">SCHEDULER EXPRESSION</p>
         <table class="desctab_big" cellspacing="0" cellpadding="0" width="80%">
-        <tr><th>Scheduler expression</th></tr>
         <tr><td>${ts[1].schedule}</td></tr>
         </table>
         <p class="sect_title">REQUIRED MACHINES</p>
@@ -206,7 +149,18 @@
         #if $slaves and len($slaves) > 0
             #for $slave in $slaves.iteritems()
             <h3><a href="#">&rsaquo; ${slave[1].hostname} <span style="font-weight:normal;color:#666666;">[${slave[0][0]}:${slave[0][1]}]</span></a></h3>
-            <div class="inner"></div>
+            <div class="inner">
+                <b>States:<br /></b>
+                #set sI = 0
+                #for $slSt in $slave[1].states
+                    #set sI = sI+1
+                    #set $color = "#111111"
+                    #if $slSt.id < 0
+                        #set $color = "#dd0000"
+                    #end if
+                    <p style="color:$color;">$sI. ${slSt}</p>
+                #end for
+            </div>
             #end for
         #end if
     </div>

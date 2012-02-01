@@ -12,68 +12,16 @@
 
 \$.fn.accordion.defaults.container = false; 
 \$(function() {
-     \$("#acc1").accordion({
-      obj: "div", 
-      wrapper: "div", 
-      el: ".h", 
-      head: "h3, h4, h5", 
-      next: "div", 
-      initShow : "div.shown",
-      standardExpansible : true
-      });
-    \$("#acc2").accordion({
-      obj: "div", 
-      wrapper: "div", 
-      el: ".h", 
-      head: "h3, h4, h5", 
-      next: "div", 
-      initShow : "div.shown",
-      standardExpansible : true
-      });
-    \$("#acc3").accordion({
-      obj: "div", 
-      wrapper: "div", 
-      el: ".h", 
-      head: "h3, h4, h5", 
-      next: "div", 
-      initShow : "div.shown",
-      standardExpansible : true
-      });
-    \$("#acc4").accordion({
-      obj: "div", 
-      wrapper: "div", 
-      el: ".h", 
-      head: "h3, h4, h5", 
-      next: "div", 
-      initShow : "div.shown",
-      standardExpansible : true
-      });
 
      #if $suitsSessions and len($suitsSessions) > 0
         #set $testSessionsNum = len($suitsSessions)
         #for $i in range($testSessionsNum):
              #set $j = $i + 1
              \$("#acc5${j}").accordion({
-              obj: "div", 
               wrapper: "div", 
-              el: ".h", 
-              head: "h3, h4, h5", 
-              next: "div", 
-              initShow : "div.shown",
-              standardExpansible : true
               });
         #end for
        #end if
-     
-     \$("#acc7").accordion({
-      obj: "div", 
-      wrapper: "div", 
-      el: ".h", 
-      head: "h3, h4, h5", 
-      next: "div", 
-      initShow : "div.shown",
-      standardExpansible : true
-      });
 });
 //--><!]]>
 </script>

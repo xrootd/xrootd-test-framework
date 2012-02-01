@@ -520,44 +520,6 @@ class XrdTestMaster(Runnable):
             sl.state = State(Slave.S_SUITINIT_SENT)
             sl.state.tssUid = tss.uid
     #---------------------------------------------------------------------------
-    def runTestCase(self, test_suite_name, test_name):
-        '''
-        Sends runTest message to slaves.
-        @param test_suite_name:
-        @param test_name:
-        '''
-        # Checks if we already initialized suite
-        if not self.runningSuitsUids.has_key(test_suite_name):
-            LOGGER.warning("Test Suite %s has not been initialized." % \
-                            test_suite_name)
-            return
-
-        tss = self.retrieveSuiteSession(test_suite_name)
-        if not tss.state == State(TestSuite.S_ALL_INITIALIZED):
-            LOGGER.warning("TestSuite %s machines have not been initialized" % \
-                           test_suite_name)
-            return
-
-        # copy test case to test suite session context
-        tc = copy(self.testSuits[test_suite_name].testCases[test_name])
-        tss.addCase(tc)
-
-        msg = XrdMessage(XrdMessage.M_TESTCASE_RUN)
-        msg.suiteName = test_suite_name
-        msg.testName = test_name
-        msg.testUid = tc.uid
-        msg.case = tc
-
-        testSlaves = self.getSuiteSlaves(tss.suite)
-        for sl in testSlaves:
-            LOGGER.info("Sending Test Case %s to %s" % (test_name, sl))
-            sl.send(msg)
-            sl.state = State(Slave.S_TESTCASE_DEF_SENT)
-
-        tss.state = State(TestSuite.S_TEST_SENT)
-        self.suitsSessions[tss.uid] = tss
-        self.suitsSessions.sync()
-    #---------------------------------------------------------------------------
     def finalizeTestSuite(self, test_suite_name):
         '''
         Sends finalization message to slaves and destroys TestSuiteSession.
@@ -596,6 +558,45 @@ class XrdTestMaster(Runnable):
             sl.state.sessUid = tss.uid
 
         tss.state = State(TestSuite.S_WAIT_4_FINALIZE)
+    #---------------------------------------------------------------------------
+    def runTestCase(self, test_suite_name, test_name):
+        '''
+        Sends runTest message to slaves.
+        @param test_suite_name:
+        @param test_name:
+        '''
+        # Checks if we already initialized suite
+        if not self.runningSuitsUids.has_key(test_suite_name):
+            LOGGER.warning("Test Suite %s has not been initialized." % \
+                            test_suite_name)
+            return
+
+        tss = self.retrieveSuiteSession(test_suite_name)
+        if not tss.state == State(TestSuite.S_ALL_INITIALIZED):
+            LOGGER.warning("TestSuite %s machines have not been initialized" % \
+                           test_suite_name)
+            return
+
+        # copy test case to test suite session context
+        tc = copy(self.testSuits[test_suite_name].testCases[test_name])
+        tss.addCase(tc)
+        tc.initDate = datetime.datetime.now()
+
+        msg = XrdMessage(XrdMessage.M_TESTCASE_RUN)
+        msg.suiteName = test_suite_name
+        msg.testName = test_name
+        msg.testUid = tc.uid
+        msg.case = tc
+
+        testSlaves = self.getSuiteSlaves(tss.suite)
+        for sl in testSlaves:
+            LOGGER.info("Sending Test Case %s to %s" % (test_name, sl))
+            sl.send(msg)
+            sl.state = State(Slave.S_TESTCASE_DEF_SENT)
+
+        tss.state = State(TestSuite.S_TEST_SENT)
+        self.suitsSessions[tss.uid] = tss
+        self.suitsSessions.sync()
     #---------------------------------------------------------------------------
     def handleClientConnected(self, client_type, client_addr, \
                               sock_obj, client_hostname):

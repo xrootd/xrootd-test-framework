@@ -39,7 +39,7 @@
         <p>&rsaquo;&nbsp; <a href="./startCluster?clusterName=${cluster.name}">Send definition to hypervisor and start</a></p>
     	<p class="sect_title">LAST STATE <span style="font-size:11px;font-weight:normal;">${cluster.state}</span></p>
        	<p class="sect_title">NETWORK</p>
-            <table class="desctab_big" width="100%" cellspacing="0" cellpadding="0">
+            <table class="desctab" width="100%" cellspacing="0" cellpadding="0">
                 <tr>
                     <th><b>Name</b></th><th><b>Bridgename</b></th>
                     <th>IP</th><th>Netmask</th><th>DHCP range</th>
@@ -51,22 +51,22 @@
                 </tr>
             </table>
             <p class="sect_title">VIRTUAL MACHINES</p>
-            <table class="desctab_big"  cellspacing="0" cellpadding="0" width="80%">
+            <table class="desctab" cellspacing="0" cellpadding="0" width="99%">
                 <tr><th><b>name</b></th><th>state</th><th></th></tr>
                 #if $cluster.hosts and len($cluster.hosts)>0
                     #set $hoi=1
                     #for $host in $cluster.hosts
                         <tr>
                         <td>${host.name}</td>
-                        <td></td>
+                        <td>&nbsp;</td>
                         <td style="text-align:left;">
-                        <div style="cursor:pointer;display:block;clear:both;
-                        color:#4E92A0;" onClick="\$('#host${cli}a${hoi}').toggle()">show/hide description</div>
+                        <div style="cursor:pointer;display:block;clear:both;"
+                         onClick="\$('#host${cli}a${hoi}').toggle()">show/hide description</div>
                         </td></tr>
                         <tr><td colspan="3">
                         #from cgi import escape
-                            <div style="display:none;float:left;" id="host${cli}a${hoi}">
-                            <table class="desctab" cellspacing="0" cellpadding="4">
+                            <div style="width:99%;display:none;float:left;" id="host${cli}a${hoi}">
+                            <table width="100%" class="desctab_inner" cellspacing="0" cellpadding="4">
                             <tr>
                             <th>name</th><th>mac address</th><th>ramsize</th>
                             <th>diskimage</th><th>arch</th><th>uuid</th>
@@ -79,7 +79,7 @@
                             </tr>
                             </table>
                             </div>
-                          </td></tr>
+                        </td></tr>
                         #set $hoi += 1
                     #end for
                     #set $cli += 1
@@ -99,11 +99,11 @@
         <p>&rsaquo;&nbsp; <a href="./initializeSuite?testSuiteName=${ts[1].name}">Initialize test suite <i>${ts[1].name}</i></a></p>
         <p>&rsaquo;&nbsp; <a href="./finalizeSuite?testSuiteName=${ts[1].name}">Finalize test suite  <i>${ts[1].name}</i></a></p>
         <p class="sect_title">SCHEDULER EXPRESSION</p>
-        <table class="desctab_big" cellspacing="0" cellpadding="0" width="80%">
+        <table class="desctab" cellspacing="0" cellpadding="0" width="80%">
         <tr><td>${ts[1].schedule}</td></tr>
         </table>
         <p class="sect_title">REQUIRED MACHINES</p>
-         <table class="desctab_big" cellspacing="0" cellpadding="0" width="80%">
+        <table class="desctab" cellspacing="0" cellpadding="0" width="80%">
         <tr><th>Name</th><th>State</th><th></th></tr>
         #if $testSuits and len($testSuits) > 0
             #for $machine in $ts[1].machines
@@ -112,7 +112,7 @@
         #end if
         </table>
         <p class="sect_title">TestCases</p>
-        <table class="desctab_big" cellspacing="0" cellpadding="0" width="80%">
+        <table class="desctab" cellspacing="0" cellpadding="0" width="80%">
         <tr><th>Name</th><th>Actions</th><th></th></tr>
         #if $ts[1].tests and len($ts[1].tests) > 0
         #for $testname in $ts[1].tests
@@ -122,7 +122,7 @@
         </table>
         <p class="sect_title">SESSIONS</p>
     #if $suitsSessions.has_key(ts[1].name)
-        <table class="desctab_big" cellspacing="0" cellpadding="0" width="80%">
+        <table class="desctab" cellspacing="0" cellpadding="0" width="80%">
         <tr><th>Name</th><th>State</th></tr>
         <tr><td>${suitsSessions[$ts[1].name].state}</td><td>&nbsp;</td></tr>
         </table>

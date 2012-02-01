@@ -52,10 +52,12 @@
         <div class="inner">
         #if $suitSess.cases and len($suitSess.cases) > 0
         #for $tC in $suitSess.cases.itervalues()
-            <h4><a href="#"><span style="font-weight:normal;">Test Case</span> <i>${tC.name}</i></a></h4>
+            #set $stages=$suitSess.getTestCaseStages($tC.uid)
+            <h4><a href="#"><span style="font-weight:normal;">Test Case</span> <i>${tC.name}</i> 
+            <span style='font-weight:normal'>[run at: ${suitSess.initDate.strftime("%H:%M:%S,%f")}]</span></a></h4>
             <div class="inner">
-                #set $stages=$suitSess.getTestCaseStages($tC.uid)
                 #set iS = 1
+                #if $stages and len($stages)
                 #for $stage in $stages
                     #set $color = "#222222"
                     #if $stage[0].id < 0:
@@ -87,6 +89,7 @@
                     </script>
                     #set $iS += 1
                 #end for
+                #end if
             </div>
             #set $testCasesNum += 1
         #end for

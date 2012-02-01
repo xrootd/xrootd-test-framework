@@ -1,6 +1,7 @@
 #-------------------------------------------------------------------------------
 import logging
 import time
+import datetime
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
                     '%(message)s', level=logging.INFO)
@@ -16,10 +17,10 @@ class State(object):
         Creates a state information.
         @param status_tuple: tuple comprised from at least (id, name)
         '''
-        self.time = time.strftime("%I:%m:%S %p %y.%m.%d")
         self.id = status_tuple[0]
         self.name = status_tuple[1]
-        self.preciseTime = time.time()
+        self.datetime = datetime.datetime.now()
+        self.time = self.datetime.strftime("%a %H:%M:%S %d-%m-%Y")
     #---------------------------------------------------------------------------
     def __eq__(self, oth):
         if not isinstance(oth, State):

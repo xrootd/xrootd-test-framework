@@ -67,7 +67,7 @@ class TestSuite:
         # Fields beneath are filled automatically by system
         self.testCases = []  # filled automatically by a Python objects 
                              # representing test cases
-        #---------------------------------------------------------------------------
+    #---------------------------------------------------------------------------
     def validateStatic(self):
         '''
         Method checks if definition (e.g given names) is statically correct.
@@ -115,12 +115,12 @@ class TestCase:
                             # have to finish running on all the mashines
                             # before the finalize script can be invoked
         self.finalize = ""  # a script defining the finalization procedures
-
-        #---------------------------------------------------------------------------
+        #-----------------------------------------------------------------------
         # Fields beneath are filled automatically by system
-        self.resultsFromMachines = {}# keeps results of all test stages
-                                    # on those machines. Index is a machine
+        self.resultsFromMachines = {}   # keeps results of all test stages
+                                        # on those machines. Index is a machine
         self.uid = ""
+        self.initDate = None        #filled with datetime.datetime.now()
     #---------------------------------------------------------------------------
     def validateStatic(self):
         '''
@@ -234,4 +234,3 @@ def loadTestSuitsDefs(path):
                 except ImportError, e:
                     LOGGER.exception(e)
     return testSuits
-

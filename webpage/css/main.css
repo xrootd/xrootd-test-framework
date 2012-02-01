@@ -1,0 +1,77 @@
+body, table {font:76%/1.6 verdana,geneva,lucida, 'lucida grande',arial,helvetica,sans-serif;}
+
+table.desctab_big th {text-align:center; font-weight:bold; padding:4px; 
+            background-color:#d0d0d0;}
+table.desctab_big td {border-bottom:1px solid #a0a0a0;text-align:center; padding:2px;}
+
+table.desctab th {text-align:center; font-weight:bold; padding:4px; 
+            background-color:#e0e0e0;}
+
+table.desctab td {text-align:center; font-weight:normal; 
+                  padding:4px;border-right:1px solid #d0d0d0;}
+
+p.sect_title {font-weight:bold; font-size:14px;}
+
+/* --- Headings --- */
+h1 {font-family:georgia,'times new roman',times,serif; font-size:2.0em; font-weight:normal; color:#f60}
+
+h1, h2, h3, h4, h5 {margin-bottom:0.1em}
+
+h2, h3 a, h4 a, h5 a {padding:3px 10px}
+
+h2, h3, h4, h5 {font-size:1.1em}
+
+/* --- Links --- */
+a { padding:1px; border:0 solid #e0e0e0; color:#05b}
+
+a, .accordion .switch a {border-width:0 0 1px 0; text-decoration:none}
+
+.accordion a{border-width:1px; text-decoration:none}
+
+a:hover, a:focus, a:active {border-color:#bcd; text-decoration:none; outline:0 none}
+
+/* --- Accordion --- */
+
+.accordion {margin:0; padding:0 10px}
+
+.accordion li {list-style-type:none}
+
+.accordion li.last-child {margin-left:19px; list-style-type:disc}
+
+#side ul.accordion ul {margin:0; padding:0 0 0 20px;}
+
+.accordion .outer {border:1px solid #dadada; border-width:0 1px 1px; background: #fff}
+
+.accordion .inner {margin:0px 0px 10px 0px; padding:.10em 20px 0em; overflow:hidden}
+
+.accordion .inner .inner {padding-bottom:0}
+
+.accordion .h {padding-top:.0em}
+
+.accordion p {margin:.1em 0 1em}
+
+.accordion h3 {background:#f0f0f0;}
+.accordion h4 {background:#e0e0e0;}
+
+.switch {margin-bottom:.5em}
+
+/*  
+  Add styles for all links in the 'accordion':
+.accordion a {...}
+*/    
+
+a.trigger {display:block; padding-left:20px; background-image: url(../style/img/plus.gif); background-repeat: no-repeat; background-position: 1px 50%;  font-weight:700}
+
+a.trigger.open {background-image: url(../style/img/minus.gif)}
+
+.last-child a.trigger{padding-left:1px; background-image:none; font-weight:normal}
+
+#a.trigger {background-color:#f0f0f0}
+
+#a.trigger.open {border-color:#dadada; background-color:#e7e7e7}
+
+#a:hover.trigger.open, #main a:focus.trigger.open, #main a:active.trigger.open {border-color:#bcd}
+
+#main .switch a.open {background:transparent none}
+
+#side a.active{font-weight:700; color:#f72; text-decoration:none}

@@ -9,6 +9,7 @@
 # Logging settings
 #-------------------------------------------------------------------------------
 from TestUtils import TestSuiteException
+from apscheduler.scheduler import Scheduler
 from cherrypy import _cperror
 from copy import deepcopy
 from curses.has_key import has_key
@@ -17,9 +18,10 @@ from string import maketrans
 import Cheetah
 import datetime
 import logging
-import sys
-import shelve
 import pickle
+import shelve
+import sys
+from ast import todo
 
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
@@ -353,13 +355,15 @@ class TestSuiteSession(Stateful):
         # test cases loaded to run in this session, key is tc.uid
         self.cases = {}
     #---------------------------------------------------------------------------
-    def addCase(self, tc):
+    def addCaseRun(self, tc):
         '''
         @param tc: TestCase object
         '''
         tc.uid = tc.name + '-' + datetime.datetime.now().isoformat()
         tc.uid = tc.uid.translate(maketrans('', ''), '-:.') # remove special
                                                             # chars from uid
+        tc.initDate = datetime.datetime.now()
+
         self.cases[tc.uid] = tc
     #---------------------------------------------------------------------------
     def addStageResult(self, state, result, tc_uid=None, slave_name=None):
@@ -372,6 +376,15 @@ class TestSuiteSession(Stateful):
         stages = [v for v in \
                   self.stagesResults if v[2] == test_case_uid]
         return stages
+#------------------------------------------------------------------------------ 
+class Job(object):
+    INITIALIZE_TEST_SUITE   = 1
+    RUN_TEST_CASE           = 2
+    FINALIZE_TEST_SUITE     = 3
+    #---------------------------------------------------------------------------
+    def __init__(self, type, args_dict):
+        self.type = type
+        self.args = args_dict
 #-------------------------------------------------------------------------------
 class XrdTestMaster(Runnable):
     '''
@@ -407,6 +420,9 @@ class XrdTestMaster(Runnable):
     # Constants
     C_SLAVE = 'slave'
     C_HYPERV = 'hypervisor'
+    #---------------------------------------------------------------------------
+    # Jobs to run immediatelly if possible. They are put here by scheduler.
+    jobsToRun = []
     #---------------------------------------------------------------------------
     # message logging system
     userMsgs = []
@@ -578,9 +594,8 @@ class XrdTestMaster(Runnable):
             return
 
         # copy test case to test suite session context
-        tc = copy(self.testSuits[test_suite_name].testCases[test_name])
-        tss.addCase(tc)
-        tc.initDate = datetime.datetime.now()
+        tc = deepcopy(tss.suite.testCases[test_name])
+        tss.addCaseRun(tc)
 
         msg = XrdMessage(XrdMessage.M_TESTCASE_RUN)
         msg.suiteName = test_suite_name
@@ -640,6 +655,19 @@ class XrdTestMaster(Runnable):
 
         del clients[client_addr]
         LOGGER.info("Disconnected " + str(client_type) + ":" + str(client_addr))
+    #---------------------------------------------------------------------------
+    def runJob(self, test_suite_name):
+        '''
+        Add job to list of running jobs and initiate its run.
+        @param test_suite_name:
+        '''
+        #@todo
+        #self.jobsToRun.append()
+        self.initializeTestSuite(test_suite_name)
+        time.sleep(3)
+        for tName in self.testSuits[test_suite_name].tests:
+            self.runTestCase(test_suite_name, tName)
+
     #---------------------------------------------------------------------------
     def procSlaveMsg(self, msg):
         if msg.name == XrdMessage.M_TESTSUITE_STATE:
@@ -827,6 +855,17 @@ class XrdTestMaster(Runnable):
             if server:
                 server.shutdown()
             sys.exit(1)
+        #-----------------------------------------------------------------------
+        # Enable scheduler and add jobs
+        sched = Scheduler()
+        sched.start()
+        for ts in self.testSuits.itervalues():
+            if not ts.schedule:
+                continue
+            jobFun = lambda: self.runJob(ts.name)
+            sched.add_cron_job(jobFun, **(ts.schedule))
+            LOGGER.info("Adding scheduler job for test suite %s at %s" % \
+                        (ts.name, str(ts.schedule)))
         #-----------------------------------------------------------------------
         self.procMessages()
         #-----------------------------------------------------------------------

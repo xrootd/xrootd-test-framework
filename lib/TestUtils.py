@@ -23,8 +23,8 @@ class TestSuiteException(Exception):
     '''
     General Exception raised by module
     '''
-    ERR_UNKNOWN = 1
-    ERR_CRITICAL = 2
+    ERR_UNKNOWN     = 1
+    ERR_CRITICAL    = 2
     #---------------------------------------------------------------------------
     def __init__(self, desc, typeFlag=ERR_UNKNOWN):
         '''
@@ -47,7 +47,8 @@ class TestSuite:
         #-----------------------------------------------------------------------
         # Defining attributes
         self.name = ""      # name of test suite
-        self.schedule = ""  # define when the test should be run (cron style)
+        self.schedule = {}  # define when the test should be run (cron style)
+                            # reference: APScheduler cronschedule
         self.clusters = []  # a list of virtual clusters needed by 
                             # the test to be spawned on a hypervisor
         self.machines = []  # names of machines, including the virtual machines 

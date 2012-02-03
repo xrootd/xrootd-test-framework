@@ -236,7 +236,7 @@ class Cluster(Utils.Stateful):
     S_ERROR         =   (-10, "Cluster error")
     S_UNKNOWN       =   (1, "Cluster state unknown")
     S_UNKNOWN_NOHYPERV = (1, "Cluster state unknown, no hypervisor to plant it on")
-    S_ACTIVE =          (2, "Cluster active")
+    S_ACTIVE        =    (2, "Cluster active")
     '''
     Represents a cluster comprised of hosts connected through network.
     '''

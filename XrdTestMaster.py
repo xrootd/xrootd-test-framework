@@ -21,7 +21,6 @@ import logging
 import pickle
 import shelve
 import sys
-from ast import todo
 
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
@@ -422,7 +421,7 @@ class XrdTestMaster(Runnable):
     C_HYPERV = 'hypervisor'
     #---------------------------------------------------------------------------
     # Jobs to run immediatelly if possible. They are put here by scheduler.
-    jobsToRun = []
+    pendingJobs = []
     #---------------------------------------------------------------------------
     # message logging system
     userMsgs = []
@@ -460,13 +459,21 @@ class XrdTestMaster(Runnable):
         @param slave_state: required slave state
         '''
         testSlaves = []
+        cond = None
         if not slave_state:
-            testSlaves = [v for v in self.slaves.itervalues() \
-                      if v.hostname in test_suite.machines]
+            cond = lambda v: (v.hostname in test_suite.machines)
         else:
-            testSlaves = [v for v in self.slaves.itervalues() \
-                      if v.hostname in test_suite.machines and 
-                      self.slaveState(v.hostname) == slave_state]
+
+            if slave_state == State(Slave.S_SUIT_INITIALIZED):
+                cond = lambda v: (v.hostname in test_suite.machines and \
+                          self.slaveState(v.hostname) == slave_state and \
+                          v.state.suiteName == test_suite.name)
+            else:
+                cond = lambda v: (v.hostname in test_suite.machines and \
+                          self.slaveState(v.hostname) == slave_state)
+                
+        testSlaves = [v for v in self.slaves.itervalues() if cond(v)]
+
         return testSlaves
     #---------------------------------------------------------------------------
     def startCluster(self, clusterName):
@@ -515,7 +522,7 @@ class XrdTestMaster(Runnable):
         if len(unreadyMachines):
             LOGGER.warning("Some required machines are not " + \
                          "ready for the test suite: %s" % str(unreadyMachines))
-            return
+            return False
 
         testSlaves = self.getSuiteSlaves(testSuite)
 
@@ -530,11 +537,15 @@ class XrdTestMaster(Runnable):
         msg.tssUid = tss.uid
         msg.cmd = tss.suite.initialize
 
+        #@todo:  if sending to some machines fails 
+        #        initialization on rest should be reversed
         for sl in testSlaves:
             LOGGER.info("Sending Test Suite initialize to %s" % sl)
             sl.send(msg)
             sl.state = State(Slave.S_SUITINIT_SENT)
             sl.state.tssUid = tss.uid
+
+        return True
     #---------------------------------------------------------------------------
     def finalizeTestSuite(self, test_suite_name):
         '''
@@ -543,13 +554,13 @@ class XrdTestMaster(Runnable):
         '''
         if not self.runningSuitsUids.has_key(test_suite_name):
             LOGGER.warning("TestSuite has not been initialized.")
-            return
+            return False
 
         tss = self.retrieveSuiteSession(test_suite_name)
 
         if not tss.state == State(TestSuite.S_ALL_INITIALIZED):
             LOGGER.warning("TestSuite not yet initialized.")
-            return
+            return False
 
         unreadyMachines = []
         for m in tss.suite.machines:
@@ -560,7 +571,7 @@ class XrdTestMaster(Runnable):
         if len(unreadyMachines):
             LOGGER.warning("Some required machines are not " + \
                          " ready for the finalize: %s" % str(unreadyMachines))
-            return
+            return False
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_FINALIZE)
         msg.suiteName = tss.name
@@ -574,6 +585,8 @@ class XrdTestMaster(Runnable):
             sl.state.sessUid = tss.uid
 
         tss.state = State(TestSuite.S_WAIT_4_FINALIZE)
+
+        return True
     #---------------------------------------------------------------------------
     def runTestCase(self, test_suite_name, test_name):
         '''
@@ -585,13 +598,13 @@ class XrdTestMaster(Runnable):
         if not self.runningSuitsUids.has_key(test_suite_name):
             LOGGER.warning("Test Suite %s has not been initialized." % \
                             test_suite_name)
-            return
+            return False
 
         tss = self.retrieveSuiteSession(test_suite_name)
         if not tss.state == State(TestSuite.S_ALL_INITIALIZED):
             LOGGER.warning("TestSuite %s machines have not been initialized" % \
                            test_suite_name)
-            return
+            return False
 
         # copy test case to test suite session context
         tc = deepcopy(tss.suite.testCases[test_name])
@@ -610,8 +623,9 @@ class XrdTestMaster(Runnable):
             sl.state = State(Slave.S_TESTCASE_DEF_SENT)
 
         tss.state = State(TestSuite.S_TEST_SENT)
-        self.suitsSessions[tss.uid] = tss
-        self.suitsSessions.sync()
+        self.storeSuiteSession(tss)
+
+        return True
     #---------------------------------------------------------------------------
     def handleClientConnected(self, client_type, client_addr, \
                               sock_obj, client_hostname):
@@ -661,13 +675,41 @@ class XrdTestMaster(Runnable):
         Add job to list of running jobs and initiate its run.
         @param test_suite_name:
         '''
-        #@todo
-        #self.jobsToRun.append()
-        self.initializeTestSuite(test_suite_name)
-        time.sleep(3)
-        for tName in self.testSuits[test_suite_name].tests:
-            self.runTestCase(test_suite_name, tName)
+        self.pendingJobs.append((Job.INITIALIZE_TEST_SUITE, \
+                                 test_suite_name))
 
+        for tName in self.testSuits[test_suite_name].tests:
+            self.pendingJobs.append((Job.RUN_TEST_CASE, \
+                                     test_suite_name, tName))
+
+        self.pendingJobs.append((Job.FINALIZE_TEST_SUITE, \
+                                 test_suite_name))
+        self.startJobs()
+    #---------------------------------------------------------------------------
+    def startJobs(self):
+        '''
+        Look through queue of jobs and start one, who have conditions.
+        @param test_suite_name:
+        '''
+        fwdPending = []
+        for jobT in self.pendingJobs:
+            job = jobT[0]
+            if job == Job.INITIALIZE_TEST_SUITE:
+                tsn = jobT[1]
+                self.initializeTestSuite(tsn)
+
+                if not self.runningSuitsUids.has_key(tsn):
+                    fwdPending.append(jobT)
+            elif job == Job.RUN_TEST_CASE:
+                runned = self.runTestCase(jobT[1], jobT[2])
+                if not runned:
+                    fwdPending.append(jobT)
+            elif job == Job.FINALIZE_TEST_SUITE:
+                done = self.finalizeTestSuite(tsn)
+                if not done:
+                    fwdPending.append(jobT)
+            else:
+                LOGGER.errror("Job %s unrecognized" % job)
     #---------------------------------------------------------------------------
     def procSlaveMsg(self, msg):
         if msg.name == XrdMessage.M_TESTSUITE_STATE:
@@ -681,6 +723,7 @@ class XrdTestMaster(Runnable):
                                            "expected from %s" % slave)
                 else:
                     slave.state = State(Slave.S_SUIT_INITIALIZED)
+                    slave.state.suiteName = msg.suiteName
                     tss = self.retrieveSuiteSession(msg.suiteName)
                     tss.addStageResult(msg.state, msg.result)
                     #update SuiteStatus if all slaves are inited
@@ -741,6 +784,7 @@ class XrdTestMaster(Runnable):
                 LOGGER.info("%s finalized test case %s in suite %s" % \
                             (slave, msg.testName, tss.name))
                 self.storeSuiteSession(tss)
+            
     #---------------------------------------------------------------------------
     def procMessages(self):
         '''
@@ -783,6 +827,8 @@ class XrdTestMaster(Runnable):
             else:
                 raise XrdTestMasterException("Unknown incoming evt type " + \
                                              str(evt.type))
+
+            self.startJobs()
     #---------------------------------------------------------------------------
     def run(self):
         ''' 

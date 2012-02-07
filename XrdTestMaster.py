@@ -73,18 +73,19 @@ class MasterEvent(object):
     PRIO_NORMAL = 9
     PRIO_IMPORTANT = 1
 
-    M_UNKNOWN = 1
-    M_CLIENT_CONNECTED = 2
-    M_CLIENT_DISCONNECTED = 4
-    M_HYPERV_MSG = 8
-    M_SLAVE_MSG = 16
+    M_UNKNOWN               = 1
+    M_CLIENT_CONNECTED      = 2
+    M_CLIENT_DISCONNECTED   = 4
+    M_HYPERV_MSG            = 8
+    M_SLAVE_MSG             = 16
+    M_JOB_RUN               = 32
 
     #---------------------------------------------------------------------------
     def __init__(self, e_type, e_data, msg_sender_addr=None):
         self.type = e_type
         self.data = e_data
         self.sender = msg_sender_addr
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------------- 
 class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
     """
     Client's request handler.
@@ -324,8 +325,8 @@ class Hypervisor(TCPClient):
 #-------------------------------------------------------------------------------
 class Slave(TCPClient):
     #---------------------------------------------------------------------------
-    S_SUITINIT_SENT = (10, "Test suite init sent to slave")
-    S_SUIT_INITIALIZED = (11, "Test suite initialized")
+    S_SUITINIT_SENT     = (10, "Test suite init sent to slave")
+    S_SUIT_INITIALIZED  = (11, "Test suite initialized")
     S_SUITFINALIZE_SENT = (13, "Test suite finalize sent to slave")
 
     S_TESTCASE_DEF_SENT = (21, "Sent test case definition to slave")
@@ -377,13 +378,12 @@ class TestSuiteSession(Stateful):
         return stages
 #------------------------------------------------------------------------------ 
 class Job(object):
+    S_ADDED   = (0, "Job added to jobs list.")
+    S_STARTED = (1, "Job started. In progress.")
+
     INITIALIZE_TEST_SUITE   = 1
     RUN_TEST_CASE           = 2
     FINALIZE_TEST_SUITE     = 3
-    #---------------------------------------------------------------------------
-    def __init__(self, type, args_dict):
-        self.type = type
-        self.args = args_dict
 #-------------------------------------------------------------------------------
 class XrdTestMaster(Runnable):
     '''
@@ -670,46 +670,63 @@ class XrdTestMaster(Runnable):
         del clients[client_addr]
         LOGGER.info("Disconnected " + str(client_type) + ":" + str(client_addr))
     #---------------------------------------------------------------------------
+    def generateRunJobEvent(self, test_suite_name):
+        evt = MasterEvent(MasterEvent.M_JOB_RUN, (test_suite_name))
+        self.recvQueue.put((MasterEvent.PRIO_IMPORTANT, evt))
+    #---------------------------------------------------------------------------
     def runJob(self, test_suite_name):
         '''
         Add job to list of running jobs and initiate its run.
         @param test_suite_name:
         '''
-        self.pendingJobs.append((Job.INITIALIZE_TEST_SUITE, \
-                                 test_suite_name))
+        j = (Job.INITIALIZE_TEST_SUITE, Job.S_ADDED, (test_suite_name))
+        self.pendingJobs.append(j)
 
         for tName in self.testSuits[test_suite_name].tests:
-            self.pendingJobs.append((Job.RUN_TEST_CASE, \
-                                     test_suite_name, tName))
+            j = (Job.INITIALIZE_TEST_SUITE, Job.S_ADDED, \
+                 (test_suite_name, tName))
+            self.pendingJobs.append(j)
 
-        self.pendingJobs.append((Job.FINALIZE_TEST_SUITE, \
-                                 test_suite_name))
-        self.startJobs()
+        j = (Job.FINALIZE_TEST_SUITE, Job.S_ADDED, (test_suite_name))
+        self.pendingJobs.append(j)
     #---------------------------------------------------------------------------
     def startJobs(self):
         '''
         Look through queue of jobs and start one, who have conditions.
         @param test_suite_name:
         '''
-        fwdPending = []
-        for jobT in self.pendingJobs:
-            job = jobT[0]
-            if job == Job.INITIALIZE_TEST_SUITE:
-                tsn = jobT[1]
-                self.initializeTestSuite(tsn)
+        if len(self.pendingJobs):
+            job, state, names = self.pendingJobs[0]
 
-                if not self.runningSuitsUids.has_key(tsn):
-                    fwdPending.append(jobT)
-            elif job == Job.RUN_TEST_CASE:
-                runned = self.runTestCase(jobT[1], jobT[2])
-                if not runned:
-                    fwdPending.append(jobT)
-            elif job == Job.FINALIZE_TEST_SUITE:
-                done = self.finalizeTestSuite(tsn)
-                if not done:
-                    fwdPending.append(jobT)
-            else:
-                LOGGER.errror("Job %s unrecognized" % job)
+            if not state == Job.S_STARTED:
+                if job == Job.INITIALIZE_TEST_SUITE:
+                    self.initializeTestSuite(names)
+                elif job == Job.RUN_TEST_CASE:
+                    tss = self.retrieveSuiteSession(names[0])
+                    if tss.state == State(TestSuite.S_ALL_INITIALIZED):
+                        self.runTestCase(names[0], names[1])
+                    else:
+                        pass #do nothing
+                elif job == Job.FINALIZE_TEST_SUITE:
+                    tss = self.retrieveSuiteSession(names[0])
+                    if tss.state == State(TestSuite.S_ALL_INITIALIZED):
+                        self.runTestCase(names[0], names[1])
+                    else:
+                        pass #do nothing
+                else:
+                    LOGGER.errror("Job %s unrecognized" % job)
+                self.pendingJobs[0][1] = Job.S_STARTED
+    #---------------------------------------------------------------------------
+    def removeJob(self, tup):
+        '''
+        Look through queue of jobs and start one, who have conditions.
+        @param test_suite_name:
+        '''
+        if len(self.pendingJobs):
+            job, state, names = self.pendingJobs[0]
+            if state == Job.S_STARTED:
+                if job == tup[0] and names[0] == tup[1]:
+                    self.pendingJobs = self.pendingJobs[1:]
     #---------------------------------------------------------------------------
     def procSlaveMsg(self, msg):
         if msg.name == XrdMessage.M_TESTSUITE_STATE:
@@ -772,7 +789,7 @@ class XrdTestMaster(Runnable):
                                    slave_name=slave.hostname, \
                                    tc_uid=msg.testUid)
                 slave.state = State(Slave.S_SUIT_INITIALIZED)
-
+                slave.state.suiteName = msg.suiteName
                 iSlaves = self.getSuiteSlaves(tss.suite, \
                             State(Slave.S_SUIT_INITIALIZED))
 
@@ -784,9 +801,8 @@ class XrdTestMaster(Runnable):
                 LOGGER.info("%s finalized test case %s in suite %s" % \
                             (slave, msg.testName, tss.name))
                 self.storeSuiteSession(tss)
-            
     #---------------------------------------------------------------------------
-    def procMessages(self):
+    def procEvents(self):
         '''
         Receives events and messages from clients and reacts. Actual place 
         of program control.
@@ -824,10 +840,14 @@ class XrdTestMaster(Runnable):
             elif evt.type == MasterEvent.M_SLAVE_MSG:
                 msg = evt.data
                 self.procSlaveMsg(msg)
+            #------------------------------------------------------------------- 
+            elif evt.type == MasterEvent.M_JOB_RUN:
+                suite_name = evt.data[0]
+                self.runJob(suite_name)
+            #-------------------------------------------------------------------
             else:
                 raise XrdTestMasterException("Unknown incoming evt type " + \
                                              str(evt.type))
-
             self.startJobs()
     #---------------------------------------------------------------------------
     def run(self):
@@ -908,12 +928,12 @@ class XrdTestMaster(Runnable):
         for ts in self.testSuits.itervalues():
             if not ts.schedule:
                 continue
-            jobFun = lambda: self.runJob(ts.name)
+            jobFun = lambda: self.generateRunJobEvent(ts.name)
             sched.add_cron_job(jobFun, **(ts.schedule))
             LOGGER.info("Adding scheduler job for test suite %s at %s" % \
                         (ts.name, str(ts.schedule)))
         #-----------------------------------------------------------------------
-        self.procMessages()
+        self.procEvents()
         #-----------------------------------------------------------------------
         # synchronize suits sessions list with HDD storage and close
         xrdTestMaster.suitsSessions.close()

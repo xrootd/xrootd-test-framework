@@ -384,6 +384,11 @@ class Job(object):
     INITIALIZE_TEST_SUITE   = 1
     RUN_TEST_CASE           = 2
     FINALIZE_TEST_SUITE     = 3
+    
+    def __init__(self, job, state=S_ADDED, args=None):
+        self.job    = job
+        self.state  = state
+        self.args   = args
 #-------------------------------------------------------------------------------
 class XrdTestMaster(Runnable):
     '''
@@ -463,7 +468,6 @@ class XrdTestMaster(Runnable):
         if not slave_state:
             cond = lambda v: (v.hostname in test_suite.machines)
         else:
-
             if slave_state == State(Slave.S_SUIT_INITIALIZED):
                 cond = lambda v: (v.hostname in test_suite.machines and \
                           self.slaveState(v.hostname) == slave_state and \
@@ -516,11 +520,11 @@ class XrdTestMaster(Runnable):
         for m in testSuite.machines:
             if self.slaveState(m) != State(Slave.S_CONNECTED_IDLE):
                 unreadyMachines.append(m)
-                LOGGER.warning("Can't init %s because %s not ready or busy." %\
+                LOGGER.debug("Can't init %s because %s not ready or busy." %\
                                (test_suite_name, m))
 
         if len(unreadyMachines):
-            LOGGER.warning("Some required machines are not " + \
+            LOGGER.debug("Some required machines are not " + \
                          "ready for the test suite: %s" % str(unreadyMachines))
             return False
 
@@ -553,23 +557,23 @@ class XrdTestMaster(Runnable):
         @param test_suite_name:
         '''
         if not self.runningSuitsUids.has_key(test_suite_name):
-            LOGGER.warning("TestSuite has not been initialized.")
+            LOGGER.debug("TestSuite has not been initialized.")
             return False
 
         tss = self.retrieveSuiteSession(test_suite_name)
 
         if not tss.state == State(TestSuite.S_ALL_INITIALIZED):
-            LOGGER.warning("TestSuite not yet initialized.")
+            LOGGER.debug("TestSuite not yet initialized.")
             return False
 
         unreadyMachines = []
         for m in tss.suite.machines:
             if self.slaveState(m) != State(Slave.S_SUIT_INITIALIZED):
                 unreadyMachines.append(m)
-                LOGGER.warning(m + " state " + str(self.slaveState(m)))
+                LOGGER.debug(m + " state " + str(self.slaveState(m)))
 
         if len(unreadyMachines):
-            LOGGER.warning("Some required machines are not " + \
+            LOGGER.debug("Some required machines are not " + \
                          " ready for the finalize: %s" % str(unreadyMachines))
             return False
 
@@ -596,13 +600,13 @@ class XrdTestMaster(Runnable):
         '''
         # Checks if we already initialized suite
         if not self.runningSuitsUids.has_key(test_suite_name):
-            LOGGER.warning("Test Suite %s has not been initialized." % \
+            LOGGER.debug("Test Suite %s has not been initialized." % \
                             test_suite_name)
             return False
 
         tss = self.retrieveSuiteSession(test_suite_name)
         if not tss.state == State(TestSuite.S_ALL_INITIALIZED):
-            LOGGER.warning("TestSuite %s machines have not been initialized" % \
+            LOGGER.debug("TestSuite %s machines have not been initialized" % \
                            test_suite_name)
             return False
 
@@ -618,7 +622,7 @@ class XrdTestMaster(Runnable):
 
         testSlaves = self.getSuiteSlaves(tss.suite)
         for sl in testSlaves:
-            LOGGER.info("Sending Test Case %s to %s" % (test_name, sl))
+            LOGGER.debug("Sending Test Case %s to %s" % (test_name, sl))
             sl.send(msg)
             sl.state = State(Slave.S_TESTCASE_DEF_SENT)
 
@@ -671,7 +675,7 @@ class XrdTestMaster(Runnable):
         LOGGER.info("Disconnected " + str(client_type) + ":" + str(client_addr))
     #---------------------------------------------------------------------------
     def generateRunJobEvent(self, test_suite_name):
-        evt = MasterEvent(MasterEvent.M_JOB_RUN, (test_suite_name))
+        evt = MasterEvent(MasterEvent.M_JOB_RUN, test_suite_name)
         self.recvQueue.put((MasterEvent.PRIO_IMPORTANT, evt))
     #---------------------------------------------------------------------------
     def runJob(self, test_suite_name):
@@ -679,15 +683,15 @@ class XrdTestMaster(Runnable):
         Add job to list of running jobs and initiate its run.
         @param test_suite_name:
         '''
-        j = (Job.INITIALIZE_TEST_SUITE, Job.S_ADDED, (test_suite_name))
+        j = Job(Job.INITIALIZE_TEST_SUITE, Job.S_ADDED, test_suite_name)
         self.pendingJobs.append(j)
 
         for tName in self.testSuits[test_suite_name].tests:
-            j = (Job.INITIALIZE_TEST_SUITE, Job.S_ADDED, \
+            j = Job(Job.RUN_TEST_CASE, Job.S_ADDED, \
                  (test_suite_name, tName))
             self.pendingJobs.append(j)
 
-        j = (Job.FINALIZE_TEST_SUITE, Job.S_ADDED, (test_suite_name))
+        j = Job(Job.FINALIZE_TEST_SUITE, Job.S_ADDED, test_suite_name)
         self.pendingJobs.append(j)
     #---------------------------------------------------------------------------
     def startJobs(self):
@@ -695,38 +699,39 @@ class XrdTestMaster(Runnable):
         Look through queue of jobs and start one, who have conditions.
         @param test_suite_name:
         '''
-        if len(self.pendingJobs):
-            job, state, names = self.pendingJobs[0]
+        LOGGER.info("startJobs() pending: %s " % len(self.pendingJobs))
+        if len(self.pendingJobs) > 0:
+            j = self.pendingJobs[0]
 
-            if not state == Job.S_STARTED:
-                if job == Job.INITIALIZE_TEST_SUITE:
-                    self.initializeTestSuite(names)
-                elif job == Job.RUN_TEST_CASE:
-                    tss = self.retrieveSuiteSession(names[0])
-                    if tss.state == State(TestSuite.S_ALL_INITIALIZED):
-                        self.runTestCase(names[0], names[1])
+            if not j.state == Job.S_STARTED:
+                if j.job == Job.INITIALIZE_TEST_SUITE:
+                    if self.initializeTestSuite(j.args):
+                        self.pendingJobs[0].state = Job.S_STARTED
+
+                elif j.job == Job.RUN_TEST_CASE:
+                    if self.runTestCase(j.args[0], j.args[1]):
+                        self.pendingJobs[0].state = Job.S_STARTED
                     else:
                         pass #do nothing
-                elif job == Job.FINALIZE_TEST_SUITE:
-                    tss = self.retrieveSuiteSession(names[0])
-                    if tss.state == State(TestSuite.S_ALL_INITIALIZED):
-                        self.runTestCase(names[0], names[1])
+                elif j.job == Job.FINALIZE_TEST_SUITE:
+                    if self.finalizeTestSuite(j.args):
+                        self.pendingJobs[0].state = Job.S_STARTED
                     else:
                         pass #do nothing
                 else:
-                    LOGGER.errror("Job %s unrecognized" % job)
-                self.pendingJobs[0][1] = Job.S_STARTED
+                    LOGGER.error("Job %s unrecognized" % j.job)
     #---------------------------------------------------------------------------
-    def removeJob(self, tup):
+    def removeJob(self, removeJob):
         '''
         Look through queue of jobs and start one, who have conditions.
         @param test_suite_name:
         '''
         if len(self.pendingJobs):
-            job, state, names = self.pendingJobs[0]
-            if state == Job.S_STARTED:
-                if job == tup[0] and names[0] == tup[1]:
+            j = self.pendingJobs[0]
+            if j.state == Job.S_STARTED:
+                if j.job == removeJob.job and j.args == removeJob.args:
                     self.pendingJobs = self.pendingJobs[1:]
+                    LOGGER.info("Removing job %s", j.job)
     #---------------------------------------------------------------------------
     def procSlaveMsg(self, msg):
         if msg.name == XrdMessage.M_TESTSUITE_STATE:
@@ -750,6 +755,9 @@ class XrdTestMaster(Runnable):
                                 (slave, tss.name))
                     if len(iSlaves) == len(tss.suite.machines):
                         tss.state = State(TestSuite.S_ALL_INITIALIZED)
+                        self.storeSuiteSession(tss)
+                        self.removeJob(Job(Job.INITIALIZE_TEST_SUITE, \
+                                           args=tss.name))
                         LOGGER.info("All slaves initialized in " + \
                                     " test suite %s" % tss.name)
                     self.storeSuiteSession(tss)
@@ -763,15 +771,17 @@ class XrdTestMaster(Runnable):
 
                 if len(iSlaves) == len(tss.suite.machines):
                     tss.state = State(TestSuite.S_ALL_FINALIZED)
+                    self.storeSuiteSession(tss)
+                    self.removeJob(Job(Job.FINALIZE_TEST_SUITE, \
+                                       args=tss.name))
                 LOGGER.info("%s finalized in test suite: %s" % \
                             (slave, tss.name))
-                self.storeSuiteSession(tss)
                 del self.runningSuitsUids[tss.name]
             elif msg.state == State(TestSuite.S_TESTCASE_INITIALIZED):
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 tss.addStageResult(msg.state, msg.result,
-                                       tc_uid=msg.testUid,
-                                       slave_name=slave.hostname)
+                                   tc_uid=msg.testUid,
+                                   slave_name=slave.hostname)
                 LOGGER.info("%s initialized case %s in suite %s" % \
                             (slave, msg.testName, tss.name))
                 self.storeSuiteSession(tss)
@@ -792,11 +802,13 @@ class XrdTestMaster(Runnable):
                 slave.state.suiteName = msg.suiteName
                 iSlaves = self.getSuiteSlaves(tss.suite, \
                             State(Slave.S_SUIT_INITIALIZED))
-
                 # if test ended on all machines, status of whole suite
                 # updates
                 if len(iSlaves) == len(tss.suite.machines):
                     tss.state = State(TestSuite.S_ALL_INITIALIZED)
+                    self.storeSuiteSession(tss)
+                    self.removeJob(Job(Job.RUN_TEST_CASE, 
+                                   args=(tss.name, msg.testName)))
 
                 LOGGER.info("%s finalized test case %s in suite %s" % \
                             (slave, msg.testName, tss.name))
@@ -842,8 +854,7 @@ class XrdTestMaster(Runnable):
                 self.procSlaveMsg(msg)
             #------------------------------------------------------------------- 
             elif evt.type == MasterEvent.M_JOB_RUN:
-                suite_name = evt.data[0]
-                self.runJob(suite_name)
+                self.runJob(evt.data)
             #-------------------------------------------------------------------
             else:
                 raise XrdTestMasterException("Unknown incoming evt type " + \

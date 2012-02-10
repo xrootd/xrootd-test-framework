@@ -73,7 +73,27 @@ class TestSuite:
         '''
         Method checks if definition (e.g given names) is statically correct.
         '''
-        #@todo: finish it 
+        #@todo: finish it
+        if not self.name or " " in self.name:
+            raise TestSuiteException(("No name given in TestSuite " + \
+                                      "definition or the name %s have " + \
+                                      "is not alphanumeric without spaces.") % \
+                                     self.name, \
+                                      TestSuiteException.ERR_CRITICAL)
+        if not self.schedule:
+            raise TestSuiteException(("No scheduler expression " + \
+                                      "given in TestSuite %s definition."), \
+                                      str(self.name), \
+                                      TestSuiteException.ERR_CRITICAL)
+        if not self.initialize or not self.finalize:
+            raise TestSuiteException(("No initialize or finalize script " + \
+                                      "in TestSuite %s definition") % \
+                                      str(self.name), \
+                                      TestSuiteException.ERR_CRITICAL)
+        if not len(self.tests) or not len(self.machines):
+            raise TestSuiteException(("No test cases or no machines " + \
+                                      "given in TestSuite definition."), \
+                                      TestSuiteException.ERR_CRITICAL)
         for t in self.tests:
             if not self.testCases.has_key(t):
                 raise TestSuiteException(("No TestCase %s defined but used" + \
@@ -127,6 +147,12 @@ class TestCase:
         '''
         Method checks if definition (e.g given names) is statically correct.
         '''
+        if not self.name or " " in self.name:
+            raise TestSuiteException(("No name given in TestCase " + \
+                                      "definition or the name %s have " + \
+                                      "is not alphanumeric without spaces.") % \
+                                     self.name, \
+                                      TestSuiteException.ERR_CRITICAL)
         return True
 
 #In all the scripts mentioned above the string @slavename@ should be replaced

@@ -367,6 +367,7 @@ class TestSuiteSession(Stateful):
         self.cases[tc.uid] = tc
     #---------------------------------------------------------------------------
     def addStageResult(self, state, result, tc_uid=None, slave_name=None):
+        state.time = state.datetime.strftime("%H:%M:%S, %f %d-%m-%Y")
         LOGGER.info("New stage result %s: (code %s) %s" % \
                     (state, result[2], result[0]))
 
@@ -427,6 +428,9 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     # Jobs to run immediatelly if possible. They are put here by scheduler.
     pendingJobs = []
+    #---------------------------------------------------------------------------
+    # Jobs to run immediatelly if possible. They are put here by scheduler.
+    pendingJobsDbg = []
     #---------------------------------------------------------------------------
     # message logging system
     userMsgs = []
@@ -674,31 +678,48 @@ class XrdTestMaster(Runnable):
         del clients[client_addr]
         LOGGER.info("Disconnected " + str(client_type) + ":" + str(client_addr))
     #---------------------------------------------------------------------------
-    def generateRunJobEvent(self, test_suite_name):
+    def fireRunJobEvent(self, test_suite_name):
+        '''
+        Add the Run Job event to main events queue of controll thread.
+        @param test_suite_name:
+        '''
         evt = MasterEvent(MasterEvent.M_JOB_RUN, test_suite_name)
-        self.recvQueue.put((MasterEvent.PRIO_IMPORTANT, evt))
+        self.recvQueue.put((MasterEvent.PRIO_NORMAL, evt))
+        #---------------------------------------------------------------------------
+    def executeJob(self, test_suite_name):
+        '''
+        Closure for fireRunJobEvent to hold the test_suite_name 
+        argument for execution.
+        @param test_suite_name: name of test suite
+        '''
+        return lambda: self.fireRunJobEvent(test_suite_name)
     #---------------------------------------------------------------------------
     def runJob(self, test_suite_name):
         '''
         Add job to list of running jobs and initiate its run.
         @param test_suite_name:
         '''
+        LOGGER.info("runJob for testsuite %s " % test_suite_name)
         j = Job(Job.INITIALIZE_TEST_SUITE, Job.S_ADDED, test_suite_name)
         self.pendingJobs.append(j)
+        self.pendingJobsDbg.append("init %s" % test_suite_name)
 
         for tName in self.testSuits[test_suite_name].tests:
             j = Job(Job.RUN_TEST_CASE, Job.S_ADDED, \
                  (test_suite_name, tName))
             self.pendingJobs.append(j)
+            self.pendingJobsDbg.append("runCase %s" % tName)
 
         j = Job(Job.FINALIZE_TEST_SUITE, Job.S_ADDED, test_suite_name)
         self.pendingJobs.append(j)
+        self.pendingJobsDbg.append("final %s" % test_suite_name)
     #---------------------------------------------------------------------------
     def startJobs(self):
         '''
         Look through queue of jobs and start one, who have conditions.
         @param test_suite_name:
         '''
+        LOGGER.info("PENDING JOBS %s " % self.pendingJobsDbg)
         LOGGER.info("startJobs() pending: %s " % len(self.pendingJobs))
         if len(self.pendingJobs) > 0:
             j = self.pendingJobs[0]
@@ -774,9 +795,9 @@ class XrdTestMaster(Runnable):
                     self.storeSuiteSession(tss)
                     self.removeJob(Job(Job.FINALIZE_TEST_SUITE, \
                                        args=tss.name))
+                    del self.runningSuitsUids[tss.name]
                 LOGGER.info("%s finalized in test suite: %s" % \
                             (slave, tss.name))
-                del self.runningSuitsUids[tss.name]
             elif msg.state == State(TestSuite.S_TESTCASE_INITIALIZED):
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 tss.addStageResult(msg.state, msg.result,
@@ -939,8 +960,8 @@ class XrdTestMaster(Runnable):
         for ts in self.testSuits.itervalues():
             if not ts.schedule:
                 continue
-            jobFun = lambda: self.generateRunJobEvent(ts.name)
-            sched.add_cron_job(jobFun, **(ts.schedule))
+
+            sched.add_cron_job(self.executeJob(ts.name), **(ts.schedule))
             LOGGER.info("Adding scheduler job for test suite %s at %s" % \
                         (ts.name, str(ts.schedule)))
         #-----------------------------------------------------------------------

@@ -94,6 +94,7 @@ class XrdTestSlave(Runnable):
 
         command = ""
 
+        LOGGER.info("executeSh: %s" % cmd)
         #reading a file contents
         if cmd[0:2] == "#!":
             LOGGER.info("Direct shell script to be executed.")

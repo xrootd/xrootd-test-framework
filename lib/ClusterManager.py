@@ -110,11 +110,19 @@ class Network(object):
 
         self.xrdTestMasterIP = ""
     #---------------------------------------------------------------------------
+    def addDnsHost(self, host):
+        self.DnsHosts.append(host)
+    #---------------------------------------------------------------------------
     def addDHCPHost(self, host):
         self.DHCPHosts.append(host)
     #---------------------------------------------------------------------------
-    def addDnsHost(self, host):
-        self.DnsHosts.append(host)
+    def addHost(self, host):
+        '''
+        Add host to network. First to DHCP and then to DNS.
+        @param host: tuple (MAC address, IP address, HOST fqdn)
+        '''
+        self.addDHCPHost(host)
+        self.addDnsHost((host[1], host[2]))
     #---------------------------------------------------------------------------
     @property
     def xmlDesc(self):
@@ -459,7 +467,7 @@ def loadClustersDefs(path):
                     if not modPath in sys.path:
                         sys.path.insert(0, modPath)
 
-                    mod = __import__(modName, {}, {}, ['getCluster'])
+                    mod = __import__(modName, globals(), {}, ['getCluster'])
                     cl = mod.getCluster()
                     cl.definitionFile = modFile
                     #after load, check if cluster definition is correct

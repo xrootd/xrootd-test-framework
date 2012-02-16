@@ -137,8 +137,19 @@
     <div id="acc2"  class="accordion">
         #if $hypervisors and len($hypervisors) > 0
             #for $hypervisor in $hypervisors.iteritems()
-            <h3>${hypervisor[1].hostname} <span style="font-weight:normal;color:#666666;">[${hypervisor[0][0]}:${hypervisor[0][1]}]</span></h3>
-            <div class="inner"></div>
+            <h3><a>${hypervisor[1].hostname} <span style="font-weight:normal;color:#666666;">[${hypervisor[0][0]}:${hypervisor[0][1]}]</span></a></h3>
+            <div class="inner">
+                <b>States:<br /></b>
+                #set sI = 0
+                #for $slSt in $hypervisor[1].states
+                    #set sI = sI+1
+                    #set $color = "#111111"
+                    #if $slSt.id < 0
+                        #set $color = "#dd0000"
+                    #end if
+                    <p style="color:$color;">$sI. ${slSt}</p>
+                #end for
+            </div>
             #end for
         #else
         None.

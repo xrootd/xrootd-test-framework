@@ -32,7 +32,7 @@ LOGGER.debug("Running script: " + __file__)
 #-------------------------------------------------------------------------------
 try:
     from Cheetah.Template import Template
-    from ClusterManager import Cluster, loadClustersDefs
+    from ClusterManager import Cluster, Network, Host, loadClustersDefs
     from Daemon import Runnable, Daemon, DaemonException, readConfig
     from SocketUtils import FixedSockStream, XrdMessage, PriorityBlockingQueue, \
         SocketDisconnectedError

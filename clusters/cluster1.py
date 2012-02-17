@@ -1,4 +1,3 @@
-
 from ClusterManager import Cluster, Network, Host
 from copy import copy
 
@@ -25,14 +24,13 @@ def getCluster():
     net.netmask = '255.255.255.0'
     net.DHCPRange = ('192.168.130.1', '192.168.130.254')
 
-    net.addDHCPHost((host1_mac, '192.168.130.1', 'm0.xrd.test'))
-    net.addDHCPHost((host2_mac, '192.168.130.2', 'm1.xrd.test'))
-    net.addDHCPHost((host3_mac, '192.168.130.3', 'm2.xrd.test'))
-
-    net.addDnsHost(("192.168.130.1", "m0.xrd.test"))
-    net.addDnsHost(("192.168.130.2", "m1.xrd.test"))
-    net.addDnsHost(("192.168.130.3", "m2.xrd.test"))
-
+    h1 = (host1_mac, '192.168.130.1', 'm0.xrd.test')
+    h2 = (host1_mac, '192.168.130.2', 'm1.xrd.test')
+    h3 = (host1_mac, '192.168.130.3', 'm0.xrd.test')
+    net.addHost(h1)
+    net.addHost(h2)
+    net.addHost(h3)
+    
     cluster.network = net
     #---------------------------------------------------------------------------
     # Cluster machines definitions
@@ -59,7 +57,7 @@ def getCluster():
     host3.diskImage = '/data/virtual/images/lt_slc5_m2.img'
     host3.uuid = '1fb103a6-8873-e114-a3d5-8bd89bcbac82'
     host3.macAddress = host3_mac
-    
+
     cluster.addHost(host1)
     cluster.addHost(host2)
     cluster.addHost(host3)

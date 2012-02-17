@@ -24,13 +24,9 @@ def getCluster():
     net.netmask = '255.255.255.0'
     net.DHCPRange = ('192.168.130.1', '192.168.130.254')
 
-    net.addDHCPHost((host1_mac, '192.168.130.1', 'm0.xrd.test'))
-    net.addDHCPHost((host2_mac, '192.168.130.2', 'm1.xrd.test'))
-    net.addDHCPHost((host3_mac, '192.168.130.3', 'm2.xrd.test'))
-
-    net.addDnsHost(("192.168.130.1", "m0.xrd.test"))
-    net.addDnsHost(("192.168.130.2", "m1.xrd.test"))
-    net.addDnsHost(("192.168.130.3", "m2.xrd.test"))
+    net.addHost((host1_mac, '192.168.130.1', 'm0.xrd.test'))
+    net.addHost((host2_mac, '192.168.130.2', 'm1.xrd.test'))
+    net.addHost((host3_mac, '192.168.130.3', 'm2.xrd.test'))
 
     cluster.network = net
     #---------------------------------------------------------------------------

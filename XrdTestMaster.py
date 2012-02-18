@@ -58,7 +58,7 @@ except ImportError, e:
 currentDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(currentDir)
 #Default daemon configuration
-defaultConfFile = './XrdTestMaster.conf'
+defaultConfFile = '/etc/XrdTest/XrdTestMaster.conf'
 defaultPidFile = '/var/run/XrdTestMaster.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
 

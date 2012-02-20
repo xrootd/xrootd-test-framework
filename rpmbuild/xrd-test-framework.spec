@@ -20,7 +20,7 @@ XRootD testing framework, client's daemon application.
 %setup -q
 
 %install
-[ "%{buildroot}" != "/" ] && rm -rf %{buildroot}
+[ "x%{buildroot}" != "x/" ] && rm -rf %{buildroot}
 %define libs_path %{buildroot}%{python_sitelib}/XrdTest
 
 mkdir -p %{libs_path}
@@ -31,6 +31,8 @@ install -m 755 lib/TestUtils.py %{libs_path}
 
 mkdir -p %{buildroot}%{_sysconfdir}/XrdTest
 mkdir -p %{buildroot}%{_sysconfdir}/XrdTest/certs
+mkdir -p %{buildroot}%{_sysconfdir}/XrdTest/testSuits
+mkdir -p %{buildroot}%{_sysconfdir}/XrdTest/clusters
 mkdir -p %{buildroot}%{_sbindir}
 
 install -m 755 XrdTestSlave.py %{buildroot}%{_sbindir}
@@ -42,6 +44,10 @@ install -m 755 XrdTestMaster.py %{buildroot}%{_sbindir}
 install -m 755 XrdTestMaster.conf %{buildroot}%{_sysconfdir}/XrdTest
 install -m 755 certs/mastercert.pem %{buildroot}%{_sysconfdir}/XrdTest/certs
 install -m 755 certs/masterkey.pem %{buildroot}%{_sysconfdir}/XrdTest/certs
+
+mkdir -p %{buildroot}%{_datadir}/XrdTest
+cp -r webpage %{buildroot}%{_datadir}/XrdTest
+chmod --recursive 755 %{buildroot}%{_datadir}/XrdTest/webpage
 
 install -m 755 XrdTestHypervisor.py %{buildroot}%{_sbindir}
 install -m 755 XrdTestHypervisor.conf %{buildroot}%{_sysconfdir}/XrdTest
@@ -61,6 +67,9 @@ Xrd Test Master is component of XrdTestFramework.
 %{_sysconfdir}/XrdTest/certs/masterkey.pem
 %{_sysconfdir}/XrdTest/XrdTestMaster.conf
 %{_sbindir}/XrdTestMaster.py
+%{_datadir}/XrdTest/webpage/*
+#%{_sysconfdir}/XrdTest/testSuits/*.py
+#%{_sysconfdir}/XrdTest/clusters/*.py
 
 %package -n XrdTestSlave
 Summary: Xrd Test Slave is component of XrdTestFramework.
@@ -77,6 +86,7 @@ Xrd Test Slave is component of XrdTestFramework.
 
 %package -n XrdTestHypervisor
 Summary: Xrd Test Hypervisor is component of XrdTestFramework.
+Requires: libvirt >= 0.8.8
 Group:	 Development/Tools
 %description -n XrdTestHypervisor
 Xrd Test Hypervisor is component of XrdTestFramework.
@@ -89,9 +99,8 @@ Xrd Test Hypervisor is component of XrdTestFramework.
 %{_sbindir}/XrdTestHypervisor.py
 
 %clean
-[ "%{buildroot}" != "/" fa] && rm -rf %{buildroot}
+[ "x%{buildroot}" != "x/" ] && rm -rf %{buildroot}
 
 %changelog
 * Wed Feb 15 2012 Lukasz Trzaska <ltrzaska@cern.ch>
 - initial package
-

@@ -75,6 +75,7 @@ class XrdMessage(object):
     M_TESTSUITE_STATE = 'test_case_state'
     M_TESTCASE_STAGE_RESULT = 'test_case_stage_result'
 
+    M_DISCONNECT = 'disconnect'
     M_UNKNOWN = 'unknown'
 
     name = M_UNKNOWN
@@ -83,7 +84,8 @@ class XrdMessage(object):
     def __init__(self, name, msg_sender = None):
         '''
         Constructor
-        @param name: string, name of the message
+        @param name: constant from this class
+        @param msg_sender: address tuple (IP, socket)
         '''
         self.name = name
         self.sender = msg_sender

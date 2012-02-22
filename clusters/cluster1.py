@@ -26,40 +26,38 @@ def getCluster():
 
     h1 = (host1_mac, '192.168.130.1', 'm0.xrd.test')
     h2 = (host1_mac, '192.168.130.2', 'm1.xrd.test')
-    h3 = (host1_mac, '192.168.130.3', 'm0.xrd.test')
+    h3 = (host1_mac, '192.168.130.3', 'm2.xrd.test')
     net.addHost(h1)
     net.addHost(h2)
-    net.addHost(h3)
-    
+    #net.addHost(h3)
+
     cluster.network = net
     #---------------------------------------------------------------------------
     # Cluster machines definitions
     #---------------------------------------------------------------------------
     host1 = Host()
-    host1.name = 'lt_m0'
+    host1.name = 'lt_m1'
     host1.ramSize = '524288'
-    host1.diskImage = '/data/virtual/images/lt_slc5_puppetmaster.img'
     host1.arch = 'x86_64'
     host1.uuid = '1fb103a6-8873-e114-a3d5-8bd89bcbac7f'
-    
+
     host1.sourceNetwork = network_name
     host1.macAddress = host1_mac
     #---------------------------------------------------------------------------
     host2 = copy(host1)
-    host2.name = 'lt_m1'
-    host2.diskImage = '/data/virtual/images/lt_slc5_m1.img'
+    host2.name = 'lt_m2'
     host2.uuid = '1fb103a6-8873-e114-a3d5-8bd89bcbac80'
     host2.macAddress = host2_mac
 
     #---------------------------------------------------------------------------
     host3 = copy(host1)
-    host3.name = 'lt_m2'
-    host3.diskImage = '/data/virtual/images/lt_slc5_m2.img'
+    host3.name = 'lt_m3'
     host3.uuid = '1fb103a6-8873-e114-a3d5-8bd89bcbac82'
     host3.macAddress = host3_mac
 
+    cluster.diskImage = '/data/virtual/images/lt_slc5_ref.img'
     cluster.addHost(host1)
     cluster.addHost(host2)
-    cluster.addHost(host3)
+#    cluster.addHost(host3)
 
     return cluster

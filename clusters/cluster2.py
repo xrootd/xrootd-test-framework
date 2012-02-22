@@ -8,6 +8,7 @@ def getCluster():
     # Used commonly in network definition and hosts definition
     #---------------------------------------------------------------------------
     cluster.name = 'cluster2'
+    cluster.diskImage = '/data/virtual/images/lt_slc5_ref.img'
 
     network_name = 'net-xrd.test'
 
@@ -35,7 +36,6 @@ def getCluster():
     host1 = Host()
     host1.name = 'lt_pm1'
     host1.ramSize = '524288'
-    host1.diskImage = '/data/virtual/images/lt_slc5_puppetmaster.img'
     host1.arch = 'x86_64'
     host1.uuid = '1fb103a6-8873-e114-a3d5-8bd89bcbac7f'
     
@@ -44,14 +44,12 @@ def getCluster():
     #---------------------------------------------------------------------------
     host2 = copy(host1)
     host2.name = 'lt_m12'
-    host2.diskImage = '/data/virtual/images/lt_slc5_m1.img'
     host2.uuid = '1fb103a6-8873-e114-a3d5-8bd89bcbac80'
     host2.macAddress = host2_mac
     
     #---------------------------------------------------------------------------
     host3 = copy(host1)
     host3.name = 'lt_m22'
-    host3.diskImage = '/data/virtual/images/lt_slc5_m2.img'
     host3.uuid = '1fb103a6-8873-e114-a3d5-8bd89bcbac82'
     host3.macAddress = host3_mac
     

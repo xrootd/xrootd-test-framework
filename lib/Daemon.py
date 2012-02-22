@@ -263,6 +263,7 @@ class Daemon:
         pid = self.check(pid)
         if not pid:
             LOGGER.info("The process already stopped")
+            return
 
         try:
             os.kill(pid, signal.SIGTERM)

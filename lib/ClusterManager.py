@@ -9,12 +9,14 @@
 #-------------------------------------------------------------------------------
 from libvirt import libvirtError, VIR_ERR_NETWORK_EXIST
 from string import join
+import Utils
 import libvirt
 import logging
 import os
 import sys
 import time
-import Utils
+from tempfile import NamedTemporaryFile
+from copy import copy
 #-------------------------------------------------------------------------------
 # Global variables
 #-------------------------------------------------------------------------------
@@ -133,7 +135,7 @@ class Network(object):
         for h in self.DHCPHosts:
             values = {"mac": h[0], "ip": h[1], "name": h[2]}
             hostsXML = hostsXML + Network.xmlHostPattern % values
-            
+
         for dns in self.DnsHosts:
             values = {"ip": dns[0], "hostname": dns[1]}
             dnsHostsXML = dnsHostsXML + Network.xmlDnsHostPattern % values
@@ -141,7 +143,7 @@ class Network(object):
         values = {"name": self.name,
                   "ip": self.ip, "netmask": self.netmask,
                   "bridgename": self.bridgeName,
-                  "rangestart": self.DHCPRange[0], 
+                  "rangestart": self.DHCPRange[0],
                   "rangeend": self.DHCPRange[1],
                   "hostsxml": hostsXML,
                   "dnshostsxml" : dnsHostsXML,
@@ -154,7 +156,7 @@ class Network(object):
 class Host(object):
     '''
     Represents a virtual host which may be added to network
-    ''' 
+    '''
 # XML pattern representing XML configuration of libvirt domain
     xmlDomainPattern = """
 <domain type='kvm'>
@@ -178,7 +180,7 @@ class Host(object):
     <emulator>%(emulatorPath)s</emulator>
     <disk type='file' device='disk'>
       <driver name='qemu' type='raw'/>
-      <source file='%(diskImage)s'/>
+      <source file='%(runningDiskImage)s'/>
       <target dev='hda' bus='ide'/>
       <address type='drive' controller='0' bus='0' unit='0'/>
     </disk>
@@ -223,7 +225,8 @@ class Host(object):
     def __init__(self):
         self.uuid = ""
         self.name = ""
-        self.diskImage = ""
+        self.diskImage = None
+        self.runningDiskImage = ""
         self.ramSize = ""
         self.macAddress = ""
         self.arch = ""
@@ -240,11 +243,11 @@ class Host(object):
 #-------------------------------------------------------------------------------
 class Cluster(Utils.Stateful):
     #---------------------------------------------------------------------------
-    S_ACTIVE        =   (10, "Cluster active")
-    S_ERROR         =   (-10, "Cluster error")
-    S_UNKNOWN       =   (1, "Cluster state unknown")
+    S_ACTIVE = (10, "Cluster active")
+    S_ERROR = (-10, "Cluster error")
+    S_UNKNOWN = (1, "Cluster state unknown")
     S_UNKNOWN_NOHYPERV = (1, "Cluster state unknown, no hypervisor to plant it on")
-    S_ACTIVE        =    (2, "Cluster active")
+    S_ACTIVE = (2, "Cluster active")
     '''
     Represents a cluster comprised of hosts connected through network.
     '''
@@ -254,8 +257,16 @@ class Cluster(Utils.Stateful):
         self.hosts = []
         self.name = None
         self.network = None
+        self.diskImage = None
     #---------------------------------------------------------------------------
     def addHost(self, host):
+        if not hasattr(host, "diskImage") or not host.diskImage:
+            host.diskImage = self.diskImage
+
+        if not host.diskImage:
+            raise ClusterManagerException(('Host %s definition has no ' + \
+                                          'disk image defined') % host.name)
+
         self.hosts.append(host)
     #---------------------------------------------------------------------------
     def setEmulatorPath(self, emulator_path):
@@ -301,6 +312,12 @@ class ClusterManager:
         '''
         # holds libvirt connection of a type libvirt.virConnect
         self.virtConnection = None
+        #dictionary of currently running hosts
+        self.hosts = {}
+        self.nets  = {}
+
+        self.tmpImagesDir = "/tmp"
+        self.tmpImagesPrefix = "tmpxrdim_"
     #---------------------------------------------------------------------------
     def connect(self, url="qemu:///system"):
         '''
@@ -320,11 +337,36 @@ class ClusterManager:
     #---------------------------------------------------------------------------
     def disconnect(self):
         '''
-        Disconnects from libvirt manager
+        Undefines and removes all virtual machines and networks and
+        disconnects from libvirt manager.
         @raise ClusterManagerException: when fails
         '''
         try:
-            self.virtConnection.close()
+            for v in self.hosts.itervalues():
+                h = v[0]
+                hn = copy(h.name())
+                LOGGER.info("Destroying and undefining machine %s." % hn)
+                h.destroy()
+                h.undefine()
+                LOGGER.info("Done.")
+
+            if len(self.hosts):
+                LOGGER.info("Deleting images tmp files form disk.")
+                self.hosts.clear()
+                LOGGER.info("Done.")
+
+            for n in self.nets.itervalues():
+                nn = copy(n.name())
+                LOGGER.info("Destroying and undefining network %s." % nn)
+                n.destroy()
+                n.undefine()
+                LOGGER.info("Done.")
+
+            if len(self.nets):
+                self.nets.clear()
+
+            if self.virtConnection:
+                self.virtConnection.close()
         except libvirtError, e:
             msg = "Could not disconnect from libvirt: %s", e
             LOGGER.error(msg)
@@ -334,16 +376,39 @@ class ClusterManager:
     #---------------------------------------------------------------------------
     def defineHost(self, hostObj):
         '''
-        Defines virtual host to cluster using given XML definition, not starting
-        it.
-        @param xml: libvirt XML cluster definition
+        Defines virtual host to cluster using given XML definition, 
+        not starting it.
+        @param hostObj: ClusterManager.Host object
         @raise ClusterManagerException: when fails
-        @return: host
+        @return: host object from libvirt lib
         '''
+        if self.hosts.has_key(hostObj.name):
+            return self.hosts[hostObj.name][0]
+
+        # first, copy the original disk image
+        tmpFile = NamedTemporaryFile(prefix=self.tmpImagesPrefix, \
+                                     dir=self.tmpImagesDir)
+        hostObj.runningDiskImage = tmpFile.name
+
+        LOGGER.info(("Copying %s (for %s) to temp file %s") \
+                    % (hostObj.diskImage, hostObj.name, tmpFile.name))
+        f = open(hostObj.diskImage, "r")
+        #buffsize = 52428800 #read 50 MB at a time
+        buffsize = (1024 ** 2) / 2 #read/write 512 MB at a time
+        buff = f.read(buffsize)
+        while buff:
+            tmpFile.file.write(buff)
+            buff = f.read(buffsize)
+        f.close()
+        LOGGER.info(("Disk image %s  (for %s) copied to temp file %s") \
+                    % (hostObj.diskImage, hostObj.name, tmpFile.name))
+
         host = None
         try:
             conn = self.virtConnection
             host = conn.defineXML(hostObj.xmlDesc)
+
+            self.hosts[hostObj.name] = (host, tmpFile)
         except libvirtError, e:
             try:
                 host = conn.lookupByName(hostObj.name)
@@ -384,19 +449,24 @@ class ClusterManager:
         @raise ClusterManagerException: when fails
         @return: None
         '''
+        if netObj.name in self.nets:
+            return self.nets[netObj.name]
+
         net = None
         try:
             conn = self.virtConnection
             net = conn.networkDefineXML(netObj.xmlDesc)
+            self.nets[netObj.name] = net
             LOGGER.info("Defining network " + netObj.name)
         except libvirtError, e:
             LOGGER.exception(e)
             try:
                 net = conn.networkLookupByName(netObj.name)
+                self.nets[netObj.name] = net
             except libvirtError, e:
                 LOGGER.exception(e)
-                msg = "Could not define net neither obtain net definition."
-                msg += " After network already exists."
+                msg = "Could not define net neither obtain net definition. " + \
+                      " After network already exists."
                 raise ClusterManagerException(msg, ERR_CREATE_NETWORK)
 
         return net

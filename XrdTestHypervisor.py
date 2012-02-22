@@ -65,6 +65,8 @@ class TCPReceiveThread(object):
                 LOGGER.debug("Received raw: " + str(msg))
                 self.recvQueue.put(msg)
             except SocketDisconnectedError, e:
+                msg = XrdMessage(XrdMessage.M_DISCONNECT)
+                self.recvQueue.put(msg)
                 LOGGER.info("Connection to XrdTestMaster closed.")
                 break
 #-------------------------------------------------------------------------------
@@ -75,6 +77,8 @@ class XrdTestHypervisor(Runnable):
     sockStream = None
     recvQueue = Queue.Queue()
     config = None
+    clusterManager = None
+
     #---------------------------------------------------------------------------
     def __init__(self, config):
         self.sockStream = None
@@ -82,6 +86,18 @@ class XrdTestHypervisor(Runnable):
         self.recvQueue = Queue.Queue()
         self.config = config
         self.stopEvent = threading.Event()
+        self.clusterManager = ClusterManager()
+        self.clusterManager.tmpImagesDir = \
+            self.config.get('virtual_machines', 'tmp_images_dir')
+        self.clusterManager.tmpImagesPrefix = \
+            self.config.get('virtual_machines', 'tmp_images_prefix')
+        try:
+            self.clusterManager.connect("qemu:///system")
+        except ClusterManagerException, e:
+            LOGGER.error("Can not connect to libvirt (-c qemu:///system)")
+    #---------------------------------------------------------------------------
+    def __del__(self):
+        self.clusterManager.disconnect()
     #---------------------------------------------------------------------------
     def connectMaster(self, masterIp, masterPort):
         global currentDir
@@ -97,7 +113,8 @@ class XrdTestHypervisor(Runnable):
             self.sockStream.connect((masterIp, masterPort))
         except socket.error, e:
             if e[0] == 111:
-                LOGGER.info("Connection from master refused.")
+                LOGGER.info("Connection from master refused: Probably " + \
+                            " wrong address or master not running.")
             else:
                 LOGGER.info("Connection with master could not be established.")
                 LOGGER.exception(e)
@@ -148,26 +165,24 @@ class XrdTestHypervisor(Runnable):
             try:
                 LOGGER.info("Cluster definition semantically correct. " + \
                             "Starting cluster.")
-                cm = ClusterManager()
-                cm.connect("qemu:///system")
 
                 if cluster.network:
-                    act = cm.networkIsActive(cluster.network)
+                    act = self.clusterManager.networkIsActive(cluster.network)
                     LOGGER.info("Network " + cluster.network.name + \
                                     " isActive(): " + str(act))
                     if not act:
                         LOGGER.info("Creating network.")
-                        cm.createNetwork(cluster.network)
+                        self.clusterManager.createNetwork(cluster.network)
+                        LOGGER.info("Done.")
 
                 for h in cluster.hosts:
-                    act = cm.hostIsActive(h)
+                    act = self.clusterManager.hostIsActive(h)
                     LOGGER.info("Host " + h.name + " isActive(): " \
                                     + str(act))
                     if not act:
                         LOGGER.info("Adding host " + h.name)
-                        cm.addHost(h)
-
-                cm.disconnect()
+                        self.clusterManager.addHost(h)
+                        LOGGER.info("Done.")
             except ClusterManagerException, e:
                 LOGGER.exception(e)
                 resp.state = State("Error occured")
@@ -194,6 +209,10 @@ class XrdTestHypervisor(Runnable):
                     resp = XrdMessage(XrdMessage.M_HELLO)
                 elif msg.name == XrdMessage.M_START_CLUSTER:
                     resp = self.handleStartCluster(msg)
+                elif msg.name == XrdMessage.M_DISCONNECT:
+                    #undefine and remove all running machines
+                    self.clusterManager.disconnect()
+                    break
                 else:
                     LOGGER.info("Received unknown message: " + str(msg.name))
 

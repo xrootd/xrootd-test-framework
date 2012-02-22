@@ -1,0 +1,52 @@
+#!/bin/bash
+# Red Hat init.d script for xrdTestSlave damemon
+
+# Source Red Hat function library.
+. /etc/rc.d/init.d/functions
+
+RETVAL=0
+DESC=XrdTestSlave.py
+APP_PATH=/usr/sbin/
+PYTHON=/usr/bin/python
+LOCK_FILE=$APP_PATH/$DESC.lock
+OPTIONS=" -b "
+
+start() {
+        echo -n $"Starting $DESC: "
+        
+	cd $APP_PATH
+	$PYTHON $DESC $OPTIONS start
+	RETVAL=$?
+	echo
+	[ $RETVAL = 0 ] && touch $LOCK_FILE
+	return $RETVAL
+}
+stop() {
+        echo -n $"Stopping $DESC: "
+
+	cd $APP_PATH
+	$PYTHON $DESC $OPTIONS stop
+	RETVAL=$?
+	[ $RETVAL = 0 ] && echo_success && rm -f $LOCK_FILE
+	echo
+}
+
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  restart)
+        stop
+        start
+        ;;
+  *)
+        N=/etc/init.d/$DESC
+        echo "Usage: $N {start|stop|status|restart}" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

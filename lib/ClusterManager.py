@@ -63,7 +63,7 @@ def getFileContent(filePath):
 
     xmlDesc = join(lines)
     if len(xmlDesc) <= 0:
-        logging.info("File %s is empty.", file)
+        logging.info("File %s is empty." % file)
 
     return xmlDesc
 #-------------------------------------------------------------------------------
@@ -247,6 +247,7 @@ class Cluster(Utils.Stateful):
     S_ERROR = (-10, "Cluster error")
     S_UNKNOWN = (1, "Cluster state unknown")
     S_UNKNOWN_NOHYPERV = (1, "Cluster state unknown, no hypervisor to plant it on")
+    S_DEFINITION_SENT = (2, "Cluster definition sent do hypervisor to start")
     S_ACTIVE = (2, "Cluster active")
     '''
     Represents a cluster comprised of hosts connected through network.
@@ -288,6 +289,13 @@ class Cluster(Utils.Stateful):
         if not self.network or not (self.network.name and self.network.xmlDesc):
             raise ClusterManagerException('Cluster definition incomplete: ' + \
                                           ' no or wrong network definition')
+
+        umacs = []
+        uips  = []
+        for h in self.hosts:
+            if h.macAddress in umacs:
+                raise ClusterManagerException('Host MAC address doubled')
+            umacs.append(h.macAddress)
     #---------------------------------------------------------------------------
     def validateDynamic(self):
         '''
@@ -329,7 +337,7 @@ class ClusterManager:
         try:
             self.virtConnection = libvirt.open(url)
         except libvirtError, e:
-            msg = "Could not create connection to libvirt: %s", e
+            msg = "Could not create connection to libvirt: %s" % e
             LOGGER.error(msg)
             raise ClusterManagerException(msg, ERR_CONNECTION)
         else:
@@ -368,7 +376,7 @@ class ClusterManager:
             if self.virtConnection:
                 self.virtConnection.close()
         except libvirtError, e:
-            msg = "Could not disconnect from libvirt: %s", e
+            msg = "Could not disconnect from libvirt: %s" % e
             LOGGER.error(msg)
             raise ClusterManagerException(msg, ERR_CONNECTION)
         else:
@@ -392,7 +400,11 @@ class ClusterManager:
 
         LOGGER.info(("Copying %s (for %s) to temp file %s") \
                     % (hostObj.diskImage, hostObj.name, tmpFile.name))
-        f = open(hostObj.diskImage, "r")
+        try:
+            f = open(hostObj.diskImage, "r")
+        except IOError, e:
+            msg = "Can't open %s. %s" % (hostObj.diskImage, e)
+            raise ClusterManagerException(msg)
         #buffsize = 52428800 #read 50 MB at a time
         buffsize = (1024 ** 2) / 2 #read/write 512 MB at a time
         buff = f.read(buffsize)
@@ -413,8 +425,8 @@ class ClusterManager:
             try:
                 host = conn.lookupByName(hostObj.name)
             except libvirtError, e:
-                LOGGER.exception(e)
-                msg = "Could not define host neither obtain host definition."
+                msg = ("Could not define host neither " + \
+                        + "obtain host definition: %s") % e
                 raise ClusterManagerException(msg, ERR_ADD_HOST)
         return host
     #---------------------------------------------------------------------------
@@ -431,10 +443,9 @@ class ClusterManager:
             if not host.isActive():
                 host.create()
             if not host.isActive():
-                LOGGER.exception("Host created but not started.")
+                LOGGER.error("Host created but not started.")
         except libvirtError, e:
-            msg = "Could not create domain from XML: %s", e
-            LOGGER.exception(msg)
+            msg = "Could not create domain from XML: %s" % e
             raise ClusterManagerException(msg, ERR_ADD_HOST)
 
         if host and host.isActive():
@@ -459,12 +470,12 @@ class ClusterManager:
             self.nets[netObj.name] = net
             LOGGER.info("Defining network " + netObj.name)
         except libvirtError, e:
-            LOGGER.exception(e)
+            LOGGER.error("Couldn't define network: %s" % e)
             try:
                 net = conn.networkLookupByName(netObj.name)
                 self.nets[netObj.name] = net
             except libvirtError, e:
-                LOGGER.exception(e)
+                LOGGER.error(e)
                 msg = "Could not define net neither obtain net definition. " + \
                       " After network already exists."
                 raise ClusterManagerException(msg, ERR_CREATE_NETWORK)
@@ -487,8 +498,8 @@ class ClusterManager:
             if not net.isActive():
                 LOGGER.error("Network created but not active")
         except libvirtError, e:
-            msg = "Could not define network from XML: %s", e
-            LOGGER.exception(msg)
+            msg = "Could not define network from XML: %s" % e
+            LOGGER.error(msg)
             raise ClusterManagerException(msg, ERR_CREATE_NETWORK)
 
         if net and net.isActive():
@@ -544,10 +555,10 @@ def loadClustersDefs(path):
                     cl.validateStatic()
                     clusters.append(cl)
                 except AttributeError, e:
-                    LOGGER.exception(e)
+                    LOGGER.error(e)
                     raise ClusterManagerException("Method getCluster " + \
                           "can't be found in " + \
                           "file: " + str(modFile))
                 except ImportError, e:
-                    LOGGER.exception(e)
+                    LOGGER.error("Can't import %s: %s." % (modName, e))
     return clusters

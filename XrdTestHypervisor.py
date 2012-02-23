@@ -94,7 +94,8 @@ class XrdTestHypervisor(Runnable):
         try:
             self.clusterManager.connect("qemu:///system")
         except ClusterManagerException, e:
-            LOGGER.error("Can not connect to libvirt (-c qemu:///system)")
+            LOGGER.error("Can not connect to libvirt (-c qemu:///system): %s" \
+                         % e)
     #---------------------------------------------------------------------------
     def __del__(self):
         self.clusterManager.disconnect()
@@ -117,7 +118,7 @@ class XrdTestHypervisor(Runnable):
                             " wrong address or master not running.")
             else:
                 LOGGER.info("Connection with master could not be established.")
-                LOGGER.exception(e)
+                LOGGER.error("Socket error occured: %s" % e)
             return None
         else:
             LOGGER.debug("Connected to master.")
@@ -143,7 +144,7 @@ class XrdTestHypervisor(Runnable):
 
             return self.sockStream
         except socket.error, e:
-            LOGGER.exception(e)
+            LOGGER.error("Socket error occured: %s" % e)
             return None
         else:
             LOGGER.debug("Connected to master")
@@ -183,14 +184,14 @@ class XrdTestHypervisor(Runnable):
                         LOGGER.info("Adding host " + h.name)
                         self.clusterManager.addHost(h)
                         LOGGER.info("Done.")
-            except ClusterManagerException, e:
-                LOGGER.exception(e)
-                resp.state = State("Error occured")
 
-            resp.state = State(Cluster.S_ACTIVE)
+                resp.state = State(Cluster.S_ACTIVE)
+            except ClusterManagerException, e:
+                LOGGER.error("Error occured: %s" % e)
+                resp.state = State((-1, "Hypervisor error: %s" % e))
         else:
-            LOGGER.info("Cluster definition semantically incorrect. " + \
-                        " Cannot start the cluster due to: " + str(msg))
+            LOGGER.info(("Cluster definition semantically incorrect. " + \
+                        " Cannot start the cluster due to: %s") % msg)
             resp.state = State(Cluster.S_ERROR)
 
         return resp
@@ -220,6 +221,8 @@ class XrdTestHypervisor(Runnable):
                 LOGGER.debug("Sent msg: " + str(resp))
             except SocketDisconnectedError, e:
                 LOGGER.info("Connection to XrdTestMaster closed.")
+                if self.clusterManager:
+                        self.clusterManager.disconnect()
                 break
     #---------------------------------------------------------------------------
     def run(self):
@@ -264,7 +267,7 @@ def main():
         config = readConfig(confFile)
         isConfigFileRead = True
     except (RuntimeError, ValueError, IOError), e:
-        LOGGER.exception()
+        LOGGER.error("Problem in reading config: %s" % e)
         sys.exit(1)
 
     testHypervisor = XrdTestHypervisor(config)
@@ -294,7 +297,7 @@ def main():
                 print 'You can either start, stop, check or reload the deamon'
                 sys.exit(3)
         except (DaemonException, RuntimeError, ValueError, IOError), e:
-            LOGGER.exception(e)
+            LOGGER.error("Problem in daemon operation: %s" % e)
             sys.exit(1)
     #--------------------------------------------------------------------------
     # run test master in standard mode. Used for debugging

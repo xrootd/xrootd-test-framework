@@ -4,21 +4,22 @@ def getTestSuite():
     ts = TestSuite()
 
     ts.name = "testSuite_remote"
-    ts.machines = ["new1.xrd.test", "new2.xrd.test"]
-    ts.tests = ['TheFirst']
-    ts.schedule = dict(month='2', minute='*/2')
+    ts.clusters = ['cluster1']
+    ts.machines = ["new1.xrd.test"]
+    ts.tests = ['BasicInstall']
+    ts.schedule = dict(month='2', second="0")
+    #minute='*/1', 
+    ts.initialize = "http://master.xrd.test:8080/showScript/suite_init"
+    ts.finalize = "http://master.xrd.test:8080/showScript/suite_finalize"
 
-    ts.initialize = "#!/bin/bash \ntouch /tmp/testSuite_local_init.txt"
-    ts.finalize = "#!/bin/bash \ntouch /tmp/testSuite_local_final.txt"
-    
     return ts
 
 def getTestCases():
     tcs = []
 
     tc1 = TestCase()
-    tc1.name = "TheFirst"
-    tc1.machines = ["new1.xrd.test", "new2.xrd.test"]
+    tc1.name = "BasicInstall"
+    tc1.machines = ["new1.xrd.test"]
     tc1.initialize = "#!/bin/bash \ntouch /tmp/testCase_Basic_init.txt"
 
     tc1.run = "#!/bin/bash \ntouch /tmp/testCase_Basic_run.txt \nls"

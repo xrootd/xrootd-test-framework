@@ -43,7 +43,6 @@ os.chdir(currentDir)
 defaultConfFile = '/etc/XrdTest/XrdTestSlave.conf'
 defaultPidFile = '/var/run/XrdTestSlave.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestSlave.log'
-
 #-------------------------------------------------------------------------------
 class TCPReceiveThread(object):
     #---------------------------------------------------------------------------

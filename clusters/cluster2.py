@@ -8,9 +8,9 @@ def getCluster():
     # Used commonly in network definition and hosts definition
     #---------------------------------------------------------------------------
     cluster.name = 'cluster2'
-    cluster.diskImage = '/data/virtual/images/lt_slc5_ref.img'
+    cluster.diskImage = '/data/virtual/images/lt_slc5_refslave.img'
 
-    network_name = 'net-xrd.test'
+    network_name = 'net2.xrdtest'
 
     host1_mac = '52:54:00:65:44:69'
     host2_mac = '52:54:00:A3:F9:73'
@@ -19,15 +19,15 @@ def getCluster():
     # Network definition
     #---------------------------------------------------------------------------
     net = Network()
-    net.bridgeName = 'virbr90'
+    net.bridgeName = 'virbr91'
     net.name = network_name
-    net.ip = '192.168.130.1'
+    net.ip = '192.168.131.1'
     net.netmask = '255.255.255.0'
-    net.DHCPRange = ('192.168.130.1', '192.168.130.254')
+    net.DHCPRange = ('192.168.131.2', '192.168.131.254')
 
-    net.addHost((host1_mac, '192.168.130.1', 'm0.xrd.test'))
-    net.addHost((host2_mac, '192.168.130.2', 'm1.xrd.test'))
-    net.addHost((host3_mac, '192.168.130.3', 'm2.xrd.test'))
+    net.addHost((host1_mac, '192.168.131.2', 'm0.xrd.test'))
+    net.addHost((host2_mac, '192.168.131.3', 'm1.xrd.test'))
+    net.addHost((host3_mac, '192.168.131.4', 'm2.xrd.test'))
 
     cluster.network = net
     #---------------------------------------------------------------------------

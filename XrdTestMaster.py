@@ -11,6 +11,7 @@
 from TestUtils import TestSuiteException
 from apscheduler.scheduler import Scheduler
 from cherrypy import _cperror
+from cherrypy.lib.static import serve_file
 from copy import deepcopy
 from curses.has_key import has_key
 from multiprocessing import process
@@ -21,6 +22,7 @@ import logging
 import pickle
 import shelve
 import sys
+from ClusterManager import ClusterManagerException
 
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
@@ -73,12 +75,12 @@ class MasterEvent(object):
     PRIO_NORMAL = 9
     PRIO_IMPORTANT = 1
 
-    M_UNKNOWN               = 1
-    M_CLIENT_CONNECTED      = 2
-    M_CLIENT_DISCONNECTED   = 4
-    M_HYPERV_MSG            = 8
-    M_SLAVE_MSG             = 16
-    M_JOB_RUN               = 32
+    M_UNKNOWN = 1
+    M_CLIENT_CONNECTED = 2
+    M_CLIENT_DISCONNECTED = 4
+    M_HYPERV_MSG = 8
+    M_SLAVE_MSG = 16
+    M_JOB_RUN = 32
 
     #---------------------------------------------------------------------------
     def __init__(self, e_type, e_data, msg_sender_addr=None):
@@ -240,7 +242,7 @@ class WebInterface:
                     'hostname': socket.gethostname(),
                     'testSuits': self.testMaster.testSuits,
                     'userMsgs' : self.testMaster.userMsgs,
-                    'testMaster': self.testMaster,}
+                    'testMaster': self.testMaster, }
         return self.disp("main.tmpl", tplVars)
     #---------------------------------------------------------------------------
     def suitsSessions(self):
@@ -272,11 +274,19 @@ class WebInterface:
                                 (testSuiteName))
         self.testMaster.initializeTestSuite(testSuiteName)
         return self.indexRedirect()
-        #---------------------------------------------------------------------------
+    #---------------------------------------------------------------------------
     def finalizeSuite(self, testSuiteName):
         LOGGER.info("Finalize requested for test suite [%s] " % (testSuiteName))
         self.testMaster.finalizeTestSuite(testSuiteName)
         return self.indexRedirect()
+    #--------------------------------------------------------------------------- 
+    def getGetXrdLastReleaseScript(self):
+        return serve_file(self.config.get('webserver', 'webpage_dir') \
+                          + os.sep + "get_xrd_last_release.py", \
+                          "application/x-download", "attachment")
+    #--------------------------------------------------------------------------- 
+    def showScript(self, script_name):
+        return self.disp(script_name + ".sh", {})
     #---------------------------------------------------------------------------
     def runTestCase(self, testSuiteName, testName):
         LOGGER.info("RunTestCase requested for test %s in test suite: %s" % \
@@ -290,6 +300,8 @@ class WebInterface:
     runTestCase.exposed = True
     initializeSuite.exposed = True
     finalizeSuite.exposed = True
+    getGetXrdLastReleaseScript.exposed = True
+    showScript.exposed = True
 
     _cp_config = {'request.error_response': handleCherrypyError}
 #-------------------------------------------------------------------------------
@@ -325,8 +337,8 @@ class Hypervisor(TCPClient):
 #-------------------------------------------------------------------------------
 class Slave(TCPClient):
     #---------------------------------------------------------------------------
-    S_SUITINIT_SENT     = (10, "Test suite init sent to slave")
-    S_SUIT_INITIALIZED  = (11, "Test suite initialized")
+    S_SUITINIT_SENT = (10, "Test suite init sent to slave")
+    S_SUIT_INITIALIZED = (11, "Test suite initialized")
     S_SUITFINALIZE_SENT = (13, "Test suite finalize sent to slave")
 
     S_TESTCASE_DEF_SENT = (21, "Sent test case definition to slave")
@@ -379,17 +391,20 @@ class TestSuiteSession(Stateful):
         return stages
 #------------------------------------------------------------------------------ 
 class Job(object):
-    S_ADDED   = (0, "Job added to jobs list.")
+    S_ADDED = (0, "Job added to jobs list.")
     S_STARTED = (1, "Job started. In progress.")
 
-    INITIALIZE_TEST_SUITE   = 1
-    RUN_TEST_CASE           = 2
-    FINALIZE_TEST_SUITE     = 3
-    
-    def __init__(self, job, state=S_ADDED, args=None):
-        self.job    = job
-        self.state  = state
-        self.args   = args
+    INITIALIZE_TEST_SUITE = 1
+    RUN_TEST_CASE = 2
+    FINALIZE_TEST_SUITE = 3
+
+    START_CLUSTER = 4
+    STOP_CLUSTER = 5
+
+    def __init__(self, job, args=None):
+        self.job = job
+        self.state = Job.S_ADDED
+        self.args = args
 #-------------------------------------------------------------------------------
 class XrdTestMaster(Runnable):
     '''
@@ -426,10 +441,11 @@ class XrdTestMaster(Runnable):
     C_SLAVE = 'slave'
     C_HYPERV = 'hypervisor'
     #---------------------------------------------------------------------------
-    # Jobs to run immediatelly if possible. They are put here by scheduler.
+    # Jobs to run immediately if possible. They are put here by scheduler.
     pendingJobs = []
     #---------------------------------------------------------------------------
-    # Jobs to run immediatelly if possible. They are put here by scheduler.
+    # Jobs to run immediately if possible. They are put here by scheduler.
+    # Queue for DEBUGGING
     pendingJobsDbg = []
     #---------------------------------------------------------------------------
     # message logging system
@@ -460,7 +476,7 @@ class XrdTestMaster(Runnable):
             ret = self.slaves[key].state
         return ret
     #---------------------------------------------------------------------------
-    def getSuiteSlaves(self, test_suite, slave_state = None):
+    def getSuiteSlaves(self, test_suite, slave_state=None):
         '''
         Gets reference to currently connected slaves required by test_suite.
         Optionally return only slaves with state slave_state.
@@ -479,7 +495,7 @@ class XrdTestMaster(Runnable):
             else:
                 cond = lambda v: (v.hostname in test_suite.machines and \
                           self.slaveState(v.hostname) == slave_state)
-                
+
         testSlaves = [v for v in self.slaves.itervalues() if cond(v)]
 
         return testSlaves
@@ -500,15 +516,47 @@ class XrdTestMaster(Runnable):
                     hyperv.send(msg)
 
                     self.clusters[clusterName].state = \
-                        State(Cluster.S_UNKNOWN)
-
+                        State(Cluster.S_DEFINITION_SENT)
+                    self.clusters[clusterName].state.hypervAddr = hyperv.address
+                    
                     LOGGER.info("Cluster start command sent to %s", hyperv)
+                    return True
                 else:
                     LOGGER.warning("No hypervisor to run the cluster on")
                     self.clusters[clusterName].state = \
-                    State(Cluster.S_UNKNOWN_NOHYPERV)
+                        State(Cluster.S_UNKNOWN_NOHYPERV)
+                    return False
         if not clusterFound:
             LOGGER.error("No cluster with name " + str(clusterName) + " found")
+            return False
+    #---------------------------------------------------------------------------
+    def stopCluster(self, clusterName):
+        clusterFound = False
+        if self.clusters.has_key(clusterName):
+            if self.clusters[clusterName].name == clusterName:
+                clusterFound = True
+                if self.clusters[clusterName].state != State(Cluster.S_ACTIVE):
+                    LOGGER.error("Cluster is not active so it can't be stopped")
+                    return
+
+                msg = XrdMessage(XrdMessage.M_STOP_CLUSTER)
+                msg.clusterDef = self.clusters[clusterName]
+                hypervAddr = self.clusters[clusterName].state.hypervAddr
+                if self.hypervisors.has_key(hypervAddr):
+                    hyperv = self.hypervisors[hypervAddr]
+                    hyperv.send(msg)
+                else:
+                    LOGGER.error("Not stored hyperv address.")
+
+                self.clusters[clusterName].state = \
+                    State(Cluster.S_STOPCOMMAND_SENT)
+
+                LOGGER.info("Cluster stop command sent to %s", hyperv)
+                return True
+            return False
+        if not clusterFound:
+            LOGGER.error("No cluster with name " + str(clusterName) + " found")
+            return False
     #---------------------------------------------------------------------------
     def initializeTestSuite(self, test_suite_name):
         '''
@@ -524,7 +572,7 @@ class XrdTestMaster(Runnable):
         for m in testSuite.machines:
             if self.slaveState(m) != State(Slave.S_CONNECTED_IDLE):
                 unreadyMachines.append(m)
-                LOGGER.debug("Can't init %s because %s not ready or busy." %\
+                LOGGER.debug("Can't init %s because %s not ready or busy." % \
                                (test_suite_name, m))
 
         if len(unreadyMachines):
@@ -700,19 +748,30 @@ class XrdTestMaster(Runnable):
         @param test_suite_name:
         '''
         LOGGER.info("runJob for testsuite %s " % test_suite_name)
-        j = Job(Job.INITIALIZE_TEST_SUITE, Job.S_ADDED, test_suite_name)
-        self.pendingJobs.append(j)
-        self.pendingJobsDbg.append("init %s" % test_suite_name)
 
-        for tName in self.testSuits[test_suite_name].tests:
-            j = Job(Job.RUN_TEST_CASE, Job.S_ADDED, \
-                 (test_suite_name, tName))
+        ts = self.testSuits[test_suite_name]
+        for clustName in ts.clusters:
+            j = Job(Job.START_CLUSTER, clustName)
+            self.pendingJobs.append(j)
+            self.pendingJobsDbg.append("startCluster %s" % clustName)
+
+        j = Job(Job.INITIALIZE_TEST_SUITE, test_suite_name)
+        self.pendingJobs.append(j)
+        self.pendingJobsDbg.append("initSuite %s" % test_suite_name)
+
+        for tName in ts.tests:
+            j = Job(Job.RUN_TEST_CASE, (test_suite_name, tName))
             self.pendingJobs.append(j)
             self.pendingJobsDbg.append("runCase %s" % tName)
 
-        j = Job(Job.FINALIZE_TEST_SUITE, Job.S_ADDED, test_suite_name)
+        j = Job(Job.FINALIZE_TEST_SUITE, test_suite_name)
         self.pendingJobs.append(j)
-        self.pendingJobsDbg.append("final %s" % test_suite_name)
+        self.pendingJobsDbg.append("finalilzeSuite %s" % test_suite_name)
+
+        for clustName in ts.clusters:
+            j = Job(Job.STOP_CLUSTER, clustName)
+            self.pendingJobs.append(j)
+            self.pendingJobsDbg.append("stopCluster %s" % clustName)
     #---------------------------------------------------------------------------
     def startJobs(self):
         '''
@@ -728,17 +787,18 @@ class XrdTestMaster(Runnable):
                 if j.job == Job.INITIALIZE_TEST_SUITE:
                     if self.initializeTestSuite(j.args):
                         self.pendingJobs[0].state = Job.S_STARTED
-
                 elif j.job == Job.RUN_TEST_CASE:
                     if self.runTestCase(j.args[0], j.args[1]):
                         self.pendingJobs[0].state = Job.S_STARTED
-                    else:
-                        pass #do nothing
                 elif j.job == Job.FINALIZE_TEST_SUITE:
                     if self.finalizeTestSuite(j.args):
                         self.pendingJobs[0].state = Job.S_STARTED
-                    else:
-                        pass #do nothing
+                elif j.job == Job.START_CLUSTER:
+                    if self.startCluster(j.args):
+                        self.pendingJobs[0].state = Job.S_STARTED
+                elif j.job == Job.STOP_CLUSTER:
+                    if self.stopCluster(j.args):
+                        self.pendingJobs[0].state = Job.S_STARTED
                 else:
                     LOGGER.error("Job %s unrecognized" % j.job)
     #---------------------------------------------------------------------------
@@ -770,7 +830,7 @@ class XrdTestMaster(Runnable):
                     tss = self.retrieveSuiteSession(msg.suiteName)
                     tss.addStageResult(msg.state, msg.result)
                     #update SuiteStatus if all slaves are inited
-                    iSlaves = self.getSuiteSlaves(tss.suite, 
+                    iSlaves = self.getSuiteSlaves(tss.suite,
                                             State(Slave.S_SUIT_INITIALIZED))
                     LOGGER.info("%s initialized in test suite %s" % \
                                 (slave, tss.name))
@@ -828,7 +888,7 @@ class XrdTestMaster(Runnable):
                 if len(iSlaves) == len(tss.suite.machines):
                     tss.state = State(TestSuite.S_ALL_INITIALIZED)
                     self.storeSuiteSession(tss)
-                    self.removeJob(Job(Job.RUN_TEST_CASE, 
+                    self.removeJob(Job(Job.RUN_TEST_CASE,
                                    args=(tss.name, msg.testName)))
 
                 LOGGER.info("%s finalized test case %s in suite %s" % \
@@ -862,8 +922,14 @@ class XrdTestMaster(Runnable):
                     if self.clusters.has_key(msg.clusterName):
                         self.clusters[msg.clusterName].state = msg.state
                         LOGGER.info("Cluster state received [" + \
-                                                     msg.clusterName + "] " + \
-                                                     str(msg.state))
+                                         msg.clusterName + "] " + \
+                                         str(msg.state))
+                        if msg.state == State(Cluster.S_ACTIVE):
+                            self.removeJob(Job(Job.START_CLUSTER, \
+                                               args=msg.clusterName))
+                        elif msg.state == State(Cluster.S_STOPPED):
+                            self.removeJob(Job(Job.STOP_CLUSTER, \
+                                               args=msg.clusterName))
                     else:
                         raise XrdTestMasterException("Unknown cluster " + \
                                                      "state recvd: " + \
@@ -914,15 +980,22 @@ class XrdTestMaster(Runnable):
         server_thread.daemon = True
         server_thread.start()
 
-        clusters = loadClustersDefs(currentDir + "/clusters")
-        for clu in clusters:
-            self.clusters[clu.name] = clu
-            self.clusters[clu.name].state = State(Cluster.S_UNKNOWN)
+        try:
+            clusters = loadClustersDefs(currentDir + "/clusters")
+            for clu in clusters:
+                self.clusters[clu.name] = clu
+                self.clusters[clu.name].state = State(Cluster.S_UNKNOWN)
+        except ClusterManagerException, e:
+            LOGGER.error("ClusterManager Exception: %s" % e)
+            sys.exit()
 
         try:
             self.testSuits = loadTestSuitsDefs(currentDir + "/testSuits")
+            for ts in self.testSuits:
+                self.clusters[clu.name] = clu
+                self.clusters[clu.name].state = State(Cluster.S_UNKNOWN)
         except TestSuiteException, e:
-            LOGGER.error(e.desc)
+            LOGGER.error("Test Suite Exception: %s" % e)
             sys.exit()
 
         cherrypyCfg = {'/webpage/js': {
@@ -1059,5 +1132,6 @@ if __name__ == '__main__':
     try:
         main()
     except OSError, e:
-        LOGGER.error(str(e))
+        LOGGER.error("OS Error occured %s" % e)
         sys.exit(1)
+

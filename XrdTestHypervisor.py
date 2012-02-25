@@ -166,7 +166,6 @@ class XrdTestHypervisor(Runnable):
             try:
                 LOGGER.info("Cluster definition semantically correct. " + \
                             "Starting cluster.")
-
                 if cluster.network:
                     act = self.clusterManager.networkIsActive(cluster.network)
                     LOGGER.info("Network " + cluster.network.name + \
@@ -184,7 +183,6 @@ class XrdTestHypervisor(Runnable):
                         LOGGER.info("Adding host " + h.name)
                         self.clusterManager.addHost(h)
                         LOGGER.info("Done.")
-
                 resp.state = State(Cluster.S_ACTIVE)
             except ClusterManagerException, e:
                 LOGGER.error("Error occured: %s" % e)
@@ -194,6 +192,39 @@ class XrdTestHypervisor(Runnable):
                         " Cannot start the cluster due to: %s") % msg)
             resp.state = State(Cluster.S_ERROR)
 
+        return resp
+        #---------------------------------------------------------------------------
+    def handleStopCluster(self, msg):
+        resp = XrdMessage(XrdMessage.M_CLUSTER_STATE)
+        resp.clusterName = msg.clusterDef.name
+
+        cluster = msg.clusterDef
+        try:
+            LOGGER.info("Cluster definition semantically correct. " + \
+                        "Starting cluster.")
+            for h in cluster.hosts:
+                act = self.clusterManager.hostIsActive(h)
+                LOGGER.info("Host " + h.name + " isActive(): " \
+                                + str(act))
+                if act:
+                    LOGGER.info("Removing host " + h.name)
+                    self.clusterManager.removeHost(h.name)
+                    LOGGER.info("Done.")
+
+            if cluster.network:
+                act = self.clusterManager.networkIsActive(cluster.network)
+                LOGGER.info("Network " + cluster.network.name + \
+                                " isActive(): " + str(act))
+                if act:
+                    LOGGER.info("Creating network.")
+                    self.clusterManager.removeNetwork(cluster.network.name)
+                    LOGGER.info("Done.")
+
+            resp.state = State(Cluster.S_ACTIVE)
+        except ClusterManagerException, e:
+            LOGGER.error("Error occured: %s" % e)
+            resp.state = State((-1, "Hypervisor error: %s" % e))
+            
         return resp
     #---------------------------------------------------------------------------
     def recvLoop(self):
@@ -210,6 +241,8 @@ class XrdTestHypervisor(Runnable):
                     resp = XrdMessage(XrdMessage.M_HELLO)
                 elif msg.name == XrdMessage.M_START_CLUSTER:
                     resp = self.handleStartCluster(msg)
+                elif msg.name == XrdMessage.M_STOP_CLUSTER:
+                    resp = self.handleStopCluster(msg)
                 elif msg.name == XrdMessage.M_DISCONNECT:
                     #undefine and remove all running machines
                     self.clusterManager.disconnect()

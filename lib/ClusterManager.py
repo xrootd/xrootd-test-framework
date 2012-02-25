@@ -16,7 +16,7 @@ import os
 import sys
 import time
 from tempfile import NamedTemporaryFile
-from copy import copy
+from copy import copy, deepcopy
 #-------------------------------------------------------------------------------
 # Global variables
 #-------------------------------------------------------------------------------
@@ -249,6 +249,8 @@ class Cluster(Utils.Stateful):
     S_UNKNOWN_NOHYPERV = (1, "Cluster state unknown, no hypervisor to plant it on")
     S_DEFINITION_SENT = (2, "Cluster definition sent do hypervisor to start")
     S_ACTIVE = (2, "Cluster active")
+    S_STOPPED = (3, "Cluster stopped")
+    S_STOPCOMMAND_SENT = (4, "Cluster stop command sent to cluster")
     '''
     Represents a cluster comprised of hosts connected through network.
     '''
@@ -296,11 +298,20 @@ class Cluster(Utils.Stateful):
             if h.macAddress in umacs:
                 raise ClusterManagerException('Host MAC address doubled')
             umacs.append(h.macAddress)
+
+        if self.network.ip == self.network.DHCPRange[0]:
+            raise ClusterManagerException(('Network %s [%s] IP the ' + \
+                                           'same as DHCPRange ' + \
+                                           ' first address') \
+                                          % (self.network.name, \
+                                             self.definitionFile))
+
     #---------------------------------------------------------------------------
     def validateDynamic(self):
         '''
-        Check if Cluster definition is semantically correct e.g. if disk images
-        really exists on the virtual machine it's to be planted.
+        Check if Cluster definition is semantically correct i.e. on the 
+        hypervisor's machine e.g. if disk images really exists on 
+        the machine it's to be planted.
         '''
         if self.hosts:
             for h in self.hosts:
@@ -342,6 +353,7 @@ class ClusterManager:
             raise ClusterManagerException(msg, ERR_CONNECTION)
         else:
             LOGGER.debug("Connected to libvirt manager.")
+    
     #---------------------------------------------------------------------------
     def disconnect(self):
         '''
@@ -357,7 +369,7 @@ class ClusterManager:
                 h.destroy()
                 h.undefine()
                 LOGGER.info("Done.")
-
+                
             if len(self.hosts):
                 LOGGER.info("Deleting images tmp files form disk.")
                 self.hosts.clear()
@@ -398,7 +410,7 @@ class ClusterManager:
                                      dir=self.tmpImagesDir)
         hostObj.runningDiskImage = tmpFile.name
 
-        LOGGER.info(("Copying %s (for %s) to temp file %s") \
+        LOGGER.info(("Copying %s (for %s) to tmp img %s") \
                     % (hostObj.diskImage, hostObj.name, tmpFile.name))
         try:
             f = open(hostObj.diskImage, "r")
@@ -452,6 +464,23 @@ class ClusterManager:
             LOGGER.info("Host %s created and active." % (hostObj.name))
 
         return host
+    #---------------------------------------------------------------------------
+    def removeHost(self, hostName):
+        try:
+            h = self.hosts[hostName]
+            LOGGER.info("Destroying and undefining machine %s." % hostName)
+            h.destroy()
+            h.undefine()
+            LOGGER.info("Done.")
+
+            newHosts = [(copy(v[0].name), deepcopy(v)) 
+            for v in self.nets.itervalues(v)
+                if v[0].name != hostName]
+            self.hosts = newHosts
+        except libvirtError, e:
+            msg = "Could not remove virtual host: %s" % e
+            LOGGER.error(msg)
+            raise ClusterManagerException(msg, ERR_CONNECTION)
     #---------------------------------------------------------------------------
     def defineNetwork(self, netObj):
         '''
@@ -507,6 +536,22 @@ class ClusterManager:
 
         return net
     #---------------------------------------------------------------------------
+    def removeNetwork(self, netName):
+        try:
+            n = self.nets[netName]
+            LOGGER.info("Destroying and undefining network %s." % netName)
+            n.destroy()
+            n.undefine()
+            LOGGER.info("Done.")
+            newNets = [copy(v[0].name, deepcopy(v)) 
+                        for v in self.nets.itervalues(v)
+                            if v[0].name != netName]
+            self.nets = newNets
+        except libvirtError, e:
+            msg = "Could not destroy network from libvirt: %s" % e
+            LOGGER.error(msg)
+            raise ClusterManagerException(msg, ERR_CONNECTION)
+    #---------------------------------------------------------------------------
     def createCluster(self, cluster):
         '''
         Creates whole cluster: first network, then hosts.
@@ -524,7 +569,6 @@ class ClusterManager:
     def networkIsActive(self, netObj):
         n = self.defineNetwork(netObj)
         return n.isActive()
-
 #---------------------------------------------------------------------------
 def loadClustersDefs(path):
     '''
@@ -561,4 +605,14 @@ def loadClustersDefs(path):
                           "file: " + str(modFile))
                 except ImportError, e:
                     LOGGER.error("Can't import %s: %s." % (modName, e))
+    for clu in clusters:
+        n = [1 for c in clusters \
+                    if clu.network.name == c.network.name or
+                       clu.network.bridgeName == c.network.bridgeName or
+                       clu.network.ip == c.network.ip]
+        if len(n) != 1:
+            raise ClusterManagerException(
+                    ("Cluster's %s some network parameters %s doubled " +\
+                    " in some other cluster") % (clu.name, clu.network.name))
+
     return clusters

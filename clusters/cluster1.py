@@ -8,8 +8,9 @@ def getCluster():
     # Used commonly in network definition and hosts definition
     #---------------------------------------------------------------------------
     cluster.name = 'cluster1'
+    cluster.diskImage = '/data/virtual/images/lt_slc5_refslave.img'
 
-    network_name = 'net-xrd.test'
+    network_name = 'net1.xrdtest'
 
     host1_mac = '52:54:00:65:44:69'
     host2_mac = '52:54:00:A3:F9:73'
@@ -22,13 +23,13 @@ def getCluster():
     net.name = network_name
     net.ip = '192.168.130.1'
     net.netmask = '255.255.255.0'
-    net.DHCPRange = ('192.168.130.1', '192.168.130.254')
+    net.DHCPRange = ('192.168.130.2', '192.168.130.254')
 
-    h1 = (host1_mac, '192.168.130.1', 'new1.xrd.test')
-    h2 = (host2_mac, '192.168.130.2', 'new2.xrd.test')
-    h3 = (host3_mac, '192.168.130.3', 'new3.xrd.test')
+    h1 = (host1_mac, '192.168.130.2', 'new1.xrd.test')
+    #h2 = (host2_mac, '192.168.130.3', 'new2.xrd.test')
+    #h3 = (host3_mac, '192.168.130.4', 'new3.xrd.test')
     net.addHost(h1)
-    net.addHost(h2)
+    #net.addHost(h2)
     #net.addHost(h3)
 
     cluster.network = net
@@ -49,9 +50,9 @@ def getCluster():
     host2.uuid = '1fb103a6-8873-e114-a3d5-8bd89bcbac80'
     host2.macAddress = host2_mac
 
-    cluster.diskImage = '/data/virtual/images/lt_slc5_refslave.img'
+    
     cluster.addHost(host1)
-    cluster.addHost(host2)
-#    cluster.addHost(host3)
+    #cluster.addHost(host2)
+    #cluster.addHost(host3)
 
     return cluster

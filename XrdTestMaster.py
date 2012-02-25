@@ -434,6 +434,10 @@ class XrdTestMaster(Runnable):
     # Definitions of clusters loaded from a file, keyed by name
     clusters = {}
     #---------------------------------------------------------------------------
+    # Which hypervisor run the cluster. Key cluster.name, value hypervisor
+    clustersHypervisor = {}
+
+    #---------------------------------------------------------------------------
     # Definitions of test suits loaded from file
     testSuits = {}
     #---------------------------------------------------------------------------
@@ -517,8 +521,8 @@ class XrdTestMaster(Runnable):
 
                     self.clusters[clusterName].state = \
                         State(Cluster.S_DEFINITION_SENT)
-                    self.clusters[clusterName].state.hypervAddr = hyperv.address
-                    
+                    self.clustersHypervisor[clusterName] = hyperv
+
                     LOGGER.info("Cluster start command sent to %s", hyperv)
                     return True
                 else:
@@ -541,12 +545,9 @@ class XrdTestMaster(Runnable):
 
                 msg = XrdMessage(XrdMessage.M_STOP_CLUSTER)
                 msg.clusterDef = self.clusters[clusterName]
-                hypervAddr = self.clusters[clusterName].state.hypervAddr
-                if self.hypervisors.has_key(hypervAddr):
-                    hyperv = self.hypervisors[hypervAddr]
-                    hyperv.send(msg)
-                else:
-                    LOGGER.error("Not stored hyperv address.")
+
+                hyperv = self.clustersHypervisor[clusterName]
+                hyperv.send(msg)
 
                 self.clusters[clusterName].state = \
                     State(Cluster.S_STOPCOMMAND_SENT)

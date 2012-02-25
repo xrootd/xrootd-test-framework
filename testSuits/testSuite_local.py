@@ -5,14 +5,13 @@ def getTestSuite():
 
     ts.name = "local"
     #fire every 10 seconds in february
-    ts.schedule = dict(month='4', minute='0,20,40')
+    ts.schedule = dict(month='4', minute='*/1')
 
     ts.machines = ["luk-laptop"]
     ts.tests = ['Basic']
-    ts.clusters = "optionally"
 
-    ts.initialize = "#!/bin/bash \ntouch /tmp/testSuite_local_init.txt"
-    ts.finalize = "#!/bin/bash \ntouch /tmp/testSuite_local_final.txt"
+    ts.initialize = "http://localhost:8080/showScript/suite_init"
+    ts.finalize = "http://localhost:8080/showScript/suite_finalize"
 
     return ts
 

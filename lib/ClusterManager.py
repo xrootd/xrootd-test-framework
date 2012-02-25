@@ -467,15 +467,15 @@ class ClusterManager:
     #---------------------------------------------------------------------------
     def removeHost(self, hostName):
         try:
-            h = self.hosts[hostName]
+            h = self.hosts[hostName][0]
             LOGGER.info("Destroying and undefining machine %s." % hostName)
             h.destroy()
             h.undefine()
             LOGGER.info("Done.")
 
-            newHosts = [(copy(v[0].name), deepcopy(v)) 
-            for v in self.nets.itervalues(v)
-                if v[0].name != hostName]
+            newHosts = [(copy(v[0].name), deepcopy(v)) \
+                        for v in self.hosts.itervalues() \
+                            if v[0].name != hostName]
             self.hosts = newHosts
         except libvirtError, e:
             msg = "Could not remove virtual host: %s" % e
@@ -543,8 +543,8 @@ class ClusterManager:
             n.destroy()
             n.undefine()
             LOGGER.info("Done.")
-            newNets = [copy(v[0].name, deepcopy(v)) 
-                        for v in self.nets.itervalues(v)
+            newNets = [copy(v[0].name, deepcopy(v)) \
+                        for v in self.nets.itervalues() \
                             if v[0].name != netName]
             self.nets = newNets
         except libvirtError, e:

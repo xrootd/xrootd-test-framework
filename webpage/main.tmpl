@@ -152,7 +152,7 @@
             </div>
             #end for
         #else
-        None.
+        No hypervisors connected.
         #end if
     </div>
     <h1>Connected slaves</h1>
@@ -173,6 +173,8 @@
                 #end for
             </div>
             #end for
+        #else
+        <div><p>No slaves connected.</p></div>
         #end if
     </div>
     <h1>ALL LOG MESSAGES</h1>

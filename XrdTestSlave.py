@@ -117,7 +117,7 @@ class XrdTestSlave(Runnable):
         try:
             process = Popen(command, shell="None", \
                         stdout=subprocess.PIPE, \
-                        stderr=subprocess.PIPE)
+                        stderr=subprocess.STDOUT)
 
             stdout, stderr = process.communicate()
             res = (stdout, stderr, str(process.returncode))

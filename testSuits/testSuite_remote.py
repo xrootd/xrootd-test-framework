@@ -27,5 +27,4 @@ def getTestCases():
     tc1.finalize = "#!/bin/bash \ntouch /tmp/testCase_Basic_final.txt"
     tcs.append(tc1)
 
-
     return tcs

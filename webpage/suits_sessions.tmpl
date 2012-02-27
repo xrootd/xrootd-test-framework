@@ -12,7 +12,6 @@
 
 \$.fn.accordion.defaults.container = false; 
 \$(function() {
-
      #if $suitsSessions and len($suitsSessions) > 0
         #set $testSessionsNum = len($suitsSessions)
         #for $i in range($testSessionsNum):
@@ -50,39 +49,76 @@
         <h3><a href="#" style="color:#${htmlSuitColor};">${suitSess.name} 
         <span style="font-weight:normal;">[inited at: ${suitSess.initDate.strftime("%a %d-%m-%Y %H:%M:%S")}]</span></a></h3>
         <div class="inner">
+
+#def stageDetailsDiv($div_id, $stage)
+    <div id="$div_id" style="display:none;width:100%;"
+    title="Details of test result stage at slave ${stage[3]}">
+    <table width="99%">
+        <tr><td style="background:#ffffff;font-weight:bold;">state</td></tr>
+        <tr><td>${stage[0]}</td></tr>
+        <tr><td style="background:#ffffff;font-weight:bold;">return code</td></tr>
+        <tr><td>${stage[1][2].replace('\n', '<br />')}</td></tr>
+        <tr><td style="background:#ffffff;font-weight:bold;">stdout</td></tr>
+        <tr><td>${stage[1][0].replace('\n', '<br />')}</td></tr>
+        <tr><td style="background:#ffffff;font-weight:bold;">stderr</td></tr>
+        <tr><td>${stage[1][1].replace('\n', '<br />')}</td></tr>
+    </table>
+    </div>
+#end def
         #if $suitSess.cases and len($suitSess.cases) > 0
+            #set $iS = 1
+            #set $init_stages=$suitSess.getTestCaseStages("suite_inited")
+            #if $init_stages and len($init_stages)
+
+            <h4><a href="#"><span style="font-weight:normal;">Suite initialization</span> 
+            <span style='font-weight:normal'>[run at: ${suitSess.initDate.strftime("%H:%M:%S,%f")}]</span></a></h4>
+            <div class="inner">
+            #for $stage in $init_stages
+                #set $color = "#222222"
+                #if $stage[1][2] != "0":
+                    #set $color = "#dd0000"
+                #end if
+                <p style="color:$color;"><span style="font-size:9px;color;#000000;">${stage[3]}</span> ${stage[0]}
+                #set $div_id = "%s_ist%s_details" % ($suitSess.uid, $iS)
+                #if stage[1][1]
+                <span style="color:#ee0000;">ERRORS</span>
+                #end if
+                <a href="#" id="${suitSess.uid}_ist${iS}_button">see details</a></p>
+                $stageDetailsDiv($div_id, $stage)
+                <script style="display:none;">
+                \$( "#${suitSess.uid}_ist${iS}_button" ).click(function() {
+                    \$( "#${suitSess.uid}_ist${iS}_details" ).dialog({
+                        height: 900, width: 1152,  modal: true
+                    });
+                });
+                </script>
+                #set $iS += 1
+            #end for
+            </div>
+            #end if
         #for $tC in $suitSess.cases.itervalues()
             #set $stages=$suitSess.getTestCaseStages($tC.uid)
             <h4><a href="#"><span style="font-weight:normal;">Test Case</span> <i>${tC.name}</i> 
-            <span style='font-weight:normal'>[run at: ${suitSess.initDate.strftime("%H:%M:%S,%f")}]</span></a></h4>
+            <span style='font-weight:normal'>[run at: ${tC.initDate.strftime("%H:%M:%S,%f")}]</span></a></h4>
             <div class="inner">
-                #set iS = 1
                 #if $stages and len($stages)
                 #for $stage in $stages
                     #set $color = "#222222"
-                    #if $stage[0].id < 0:
+                    #if $stage[1][2] != "0":
                         #set $color = "#dd0000"
                     #end if
-                    <p style="color:$color;">${stage[0]}
+                    <p style="color:$color;"><span style="font-size:9px;color;#000000;">${stage[3]}</span> ${stage[0]}
+                    #if stage[1][1]
+                    <span style="color:#ee0000;">ERRORS</span>
+                    #end if
+                    #set $div_id = "%s_st%s_details" % ($tC.uid, $iS)
                     <a href="#" id="${tC.uid}_st${iS}_button">see details</a></p>
-                    <div id="${tC.uid}_st${iS}_details" style="display:none;"
-                    title="Details of test result stage at slave ${stage[3]}">
-                    <table>
-                    <tr><td style="background:#e0e0e0;">state</td></tr>
-                    <tr><td>${stage[0]}</td></tr>
-                    <tr><td style="background:#e0e0e0;">return code</td></tr>
-                    <tr><td>${stage[1][2]}</td></tr>
-                    <tr><td style="background:#e0e0e0;">stdout</td></tr>
-                    <tr><td>${stage[1][0]}</td></tr>
-                    <tr><td style="background:#e0e0e0;">stderr</td></tr>
-                    <tr><td>${stage[1][1]}</td></tr>
-                    </table>
-                    </div>
+                    $stageDetailsDiv($div_id, $stage)
                     <script style="display:none;">
                     \$( "#${tC.uid}_st${iS}_button" ).click(function() {
                         \$( "#${tC.uid}_st${iS}_details" ).dialog({
-                            height: 500,
-                            width: 300,
+                            height: 900,
+                            width: 1152,
                             modal: true
                         });
                     });
@@ -93,6 +129,34 @@
             </div>
             #set $testCasesNum += 1
         #end for
+            #set $final_stages=$suitSess.getTestCaseStages("suite_finalized")
+            #if $final_stages and len($final_stages)
+                <h4><a href="#"><span style="font-weight:normal;">Suite finalization</span> 
+                <span style='font-weight:normal'>[run at: ${suitSess.initDate.strftime("%H:%M:%S,%f")}]</span></a></h4>
+                <div class="inner">
+            #for $stage in $final_stages
+                #set $color = "#222222"
+                #if $stage[1][2] != "0":
+                    #set $color = "#dd0000"
+                #end if
+                <p style="color:$color;"><span style="font-size:9px;color;#000000;">${stage[3]}</span> ${stage[0]}
+                #set $div_id = "%s_ist%s_details" % ($suitSess.uid, $iS)
+                #if stage[1][1]
+                <span style="color:#ee0000;">ERRORS</span>
+                #end if
+                <a href="#" id="${suitSess.uid}_ist${iS}_button">see details</a></p>
+                $stageDetailsDiv($div_id, $stage)
+                <script style="display:none;">
+                \$( "#${suitSess.uid}_ist${iS}_button" ).click(function() {
+                    \$( "#${suitSess.uid}_ist${iS}_details" ).dialog({
+                        height: 900, width: 1152,  modal: true
+                    });
+                });
+                </script>
+                #set $iS += 1
+            #end for
+            </div>
+            #end if
         #else
            <p>No test cases has been run in this session.</p>
         #end if

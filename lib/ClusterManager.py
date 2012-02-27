@@ -293,7 +293,7 @@ class Cluster(Utils.Stateful):
                                           ' no or wrong network definition')
 
         umacs = []
-        uips  = []
+        uips = []
         for h in self.hosts:
             if h.macAddress in umacs:
                 raise ClusterManagerException('Host MAC address doubled')
@@ -324,6 +324,9 @@ class ClusterManager:
     '''
     Virtual machines cluster's manager
     '''
+    MAINTENANCE_MODE = False    #used only if orinal machine is to
+                                #to be reconfigured, instance is run from 
+                                #original image and it's not deleted after
     #---------------------------------------------------------------------------
     def __init__(self):
         '''
@@ -333,7 +336,7 @@ class ClusterManager:
         self.virtConnection = None
         #dictionary of currently running hosts
         self.hosts = {}
-        self.nets  = {}
+        self.nets = {}
 
         self.tmpImagesDir = "/tmp"
         self.tmpImagesPrefix = "tmpxrdim_"
@@ -353,7 +356,7 @@ class ClusterManager:
             raise ClusterManagerException(msg, ERR_CONNECTION)
         else:
             LOGGER.debug("Connected to libvirt manager.")
-    
+
     #---------------------------------------------------------------------------
     def disconnect(self):
         '''
@@ -369,7 +372,7 @@ class ClusterManager:
                 h.destroy()
                 h.undefine()
                 LOGGER.info("Done.")
-                
+
             if len(self.hosts):
                 LOGGER.info("Deleting images tmp files form disk.")
                 self.hosts.clear()
@@ -396,8 +399,8 @@ class ClusterManager:
     #---------------------------------------------------------------------------
     def defineHost(self, hostObj):
         '''
-        Defines virtual host to cluster using given XML definition, 
-        not starting it.
+        Defines virtual host in a cluster using given host object, 
+        not starting it. Host may be defined only once in the system.
         @param hostObj: ClusterManager.Host object
         @raise ClusterManagerException: when fails
         @return: host object from libvirt lib
@@ -405,34 +408,45 @@ class ClusterManager:
         if self.hosts.has_key(hostObj.name):
             return self.hosts[hostObj.name][0]
 
-        # first, copy the original disk image
-        tmpFile = NamedTemporaryFile(prefix=self.tmpImagesPrefix, \
-                                     dir=self.tmpImagesDir)
-        hostObj.runningDiskImage = tmpFile.name
+        if self.MAINTENANCE_MODE:
+            for h in self.hosts.itervalues():
+                if h[2].diskImage == hostObj.diskImage:
+                    return h[0]
 
-        LOGGER.info(("Copying %s (for %s) to tmp img %s") \
-                    % (hostObj.diskImage, hostObj.name, tmpFile.name))
-        try:
-            f = open(hostObj.diskImage, "r")
-        except IOError, e:
-            msg = "Can't open %s. %s" % (hostObj.diskImage, e)
-            raise ClusterManagerException(msg)
-        #buffsize = 52428800 #read 50 MB at a time
-        buffsize = (1024 ** 2) / 2 #read/write 512 MB at a time
-        buff = f.read(buffsize)
-        while buff:
-            tmpFile.file.write(buff)
+        tmpFile = None
+        if not self.MAINTENANCE_MODE:
+            # first, copy the original disk image
+            tmpFile = NamedTemporaryFile(prefix=self.tmpImagesPrefix, \
+                                         dir=self.tmpImagesDir)
+            hostObj.runningDiskImage = tmpFile.name
+
+            LOGGER.info(("Copying %s (for %s) to tmp img %s") \
+                        % (hostObj.diskImage, hostObj.name, tmpFile.name))
+            try:
+                f = open(hostObj.diskImage, "r")
+            except IOError, e:
+                msg = "Can't open %s. %s" % (hostObj.diskImage, e)
+                raise ClusterManagerException(msg)
+            #buffsize = 52428800 #read 50 MB at a time
+            buffsize = (1024 ** 2) / 2 #read/write 512 MB at a time
             buff = f.read(buffsize)
-        f.close()
-        LOGGER.info(("Disk image %s  (for %s) copied to temp file %s") \
-                    % (hostObj.diskImage, hostObj.name, tmpFile.name))
+            while buff:
+                tmpFile.file.write(buff)
+                buff = f.read(buffsize)
+            f.close()
+            LOGGER.info(("Disk image %s  (for %s) copied to temp file %s") \
+            % (hostObj.diskImage, hostObj.name, tmpFile.name))
+        else:
+            LOGGER.info(("Defining host %s on ORIGINAL IMAGE %s") \
+                        % (hostObj.diskImage, hostObj.name))
+            hostObj.runningDiskImage = hostObj.diskImage
 
         host = None
         try:
             conn = self.virtConnection
             host = conn.defineXML(hostObj.xmlDesc)
 
-            self.hosts[hostObj.name] = (host, tmpFile)
+            self.hosts[hostObj.name] = (host, tmpFile, hostObj)
         except libvirtError, e:
             try:
                 host = conn.lookupByName(hostObj.name)
@@ -444,11 +458,12 @@ class ClusterManager:
     #---------------------------------------------------------------------------
     def addHost(self, hostObj):
         '''
-        Adds virtual host to cluster
+        Adds virtual host to cluster and starts it.
         @param hostObj: Host object
         @raise ClusterManagerException: when fails
         @return: None
         '''
+
         host = None
         try:
             host = self.defineHost(hostObj)
@@ -466,6 +481,10 @@ class ClusterManager:
         return host
     #---------------------------------------------------------------------------
     def removeHost(self, hostName):
+        '''
+        Can not be used inside loop iterating over hosts!
+        @param hostName:
+        '''
         try:
             h = self.hosts[hostName][0]
             LOGGER.info("Destroying and undefining machine %s." % hostName)
@@ -473,10 +492,8 @@ class ClusterManager:
             h.undefine()
             LOGGER.info("Done.")
 
-            newHosts = [(copy(v[0].name), deepcopy(v)) \
-                        for v in self.hosts.itervalues() \
-                            if v[0].name != hostName]
-            self.hosts = newHosts
+            del self.hosts[hostName]
+
         except libvirtError, e:
             msg = "Could not remove virtual host: %s" % e
             LOGGER.error(msg)
@@ -537,16 +554,18 @@ class ClusterManager:
         return net
     #---------------------------------------------------------------------------
     def removeNetwork(self, netName):
+        '''
+        Can not be used inside loop iterating over networks!
+        @param hostName:
+        '''
         try:
             n = self.nets[netName]
             LOGGER.info("Destroying and undefining network %s." % netName)
             n.destroy()
             n.undefine()
             LOGGER.info("Done.")
-            newNets = [copy(v[0].name, deepcopy(v)) \
-                        for v in self.nets.itervalues() \
-                            if v[0].name != netName]
-            self.nets = newNets
+            del self.nets[netName]
+
         except libvirtError, e:
             msg = "Could not destroy network from libvirt: %s" % e
             LOGGER.error(msg)
@@ -612,7 +631,8 @@ def loadClustersDefs(path):
                        clu.network.ip == c.network.ip]
         if len(n) != 1:
             raise ClusterManagerException(
-                    ("Cluster's %s some network parameters %s doubled " +\
+                    ("Cluster's %s some network parameters %s doubled " + \
                     " in some other cluster") % (clu.name, clu.network.name))
 
     return clusters
+

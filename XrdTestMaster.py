@@ -23,6 +23,7 @@ import pickle
 import shelve
 import sys
 from ClusterManager import ClusterManagerException
+import cgi
 
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
@@ -72,6 +73,7 @@ class MasterEvent(object):
     The message incoming to XrdTestMaster. May be either the event e.g.
     hypervisor connection or normal message containing data.
     '''
+
     PRIO_NORMAL = 9
     PRIO_IMPORTANT = 1
 
@@ -80,7 +82,7 @@ class MasterEvent(object):
     M_CLIENT_DISCONNECTED = 4
     M_HYPERV_MSG = 8
     M_SLAVE_MSG = 16
-    M_JOB_RUN = 32
+    M_JOB_ENQUEUE = 32
 
     #---------------------------------------------------------------------------
     def __init__(self, e_type, e_data, msg_sender_addr=None):
@@ -378,12 +380,17 @@ class TestSuiteSession(Stateful):
 
         self.cases[tc.uid] = tc
     #---------------------------------------------------------------------------
-    def addStageResult(self, state, result, tc_uid=None, slave_name=None):
+    def addStageResult(self, state, result, uid=None, slave_name=None):
+        '''
+        @param state: state that happened
+        @param result: result of test run (code, stdout, stderr)
+        @param uid: uid of test case or test suite init/finalize
+        @param slave_name: where stage ended
+        '''
         state.time = state.datetime.strftime("%H:%M:%S, %f %d-%m-%Y")
         LOGGER.info("New stage result %s: (code %s) %s" % \
                     (state, result[2], result[0]))
-
-        self.stagesResults.append((state, result, tc_uid, slave_name))
+        self.stagesResults.append((state, result, uid, slave_name))
     #--------------------------------------------------------------------------- 
     def getTestCaseStages(self, test_case_uid):
         stages = [v for v in \
@@ -487,7 +494,6 @@ class XrdTestMaster(Runnable):
         @param test_suite: test suite definition
         @param slave_state: required slave state
         '''
-        testSlaves = []
         cond = None
         if not slave_state:
             cond = lambda v: (v.hostname in test_suite.machines)
@@ -587,7 +593,6 @@ class XrdTestMaster(Runnable):
         tss.state = State(TestSuite.S_WAIT_4_INIT)
 
         self.storeSuiteSession(tss)
-        tssCpy = self.retrieveSuiteSession(tss.name)
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_INIT)
         msg.suiteName = tss.name
@@ -727,23 +732,23 @@ class XrdTestMaster(Runnable):
         del clients[client_addr]
         LOGGER.info("Disconnected " + str(client_type) + ":" + str(client_addr))
     #---------------------------------------------------------------------------
-    def fireRunJobEvent(self, test_suite_name):
+    def fireEnqueueJobEvent(self, test_suite_name):
         '''
         Add the Run Job event to main events queue of controll thread.
         @param test_suite_name:
         '''
-        evt = MasterEvent(MasterEvent.M_JOB_RUN, test_suite_name)
+        evt = MasterEvent(MasterEvent.M_JOB_ENQUEUE, test_suite_name)
         self.recvQueue.put((MasterEvent.PRIO_NORMAL, evt))
         #---------------------------------------------------------------------------
     def executeJob(self, test_suite_name):
         '''
-        Closure for fireRunJobEvent to hold the test_suite_name 
+        Closure for fireEnqueueJobEvent to hold the test_suite_name 
         argument for execution.
         @param test_suite_name: name of test suite
         '''
-        return lambda: self.fireRunJobEvent(test_suite_name)
+        return lambda: self.fireEnqueueJobEvent(test_suite_name)
     #---------------------------------------------------------------------------
-    def runJob(self, test_suite_name):
+    def enqueueJob(self, test_suite_name):
         '''
         Add job to list of running jobs and initiate its run.
         @param test_suite_name:
@@ -755,7 +760,7 @@ class XrdTestMaster(Runnable):
             j = Job(Job.START_CLUSTER, clustName)
             self.pendingJobs.append(j)
             self.pendingJobsDbg.append("startCluster %s" % clustName)
-
+            
         j = Job(Job.INITIALIZE_TEST_SUITE, test_suite_name)
         self.pendingJobs.append(j)
         self.pendingJobsDbg.append("initSuite %s" % test_suite_name)
@@ -773,6 +778,7 @@ class XrdTestMaster(Runnable):
             j = Job(Job.STOP_CLUSTER, clustName)
             self.pendingJobs.append(j)
             self.pendingJobsDbg.append("stopCluster %s" % clustName)
+
     #---------------------------------------------------------------------------
     def startJobs(self):
         '''
@@ -829,7 +835,9 @@ class XrdTestMaster(Runnable):
                     slave.state = State(Slave.S_SUIT_INITIALIZED)
                     slave.state.suiteName = msg.suiteName
                     tss = self.retrieveSuiteSession(msg.suiteName)
-                    tss.addStageResult(msg.state, msg.result)
+                    tss.addStageResult(msg.state, msg.result,
+                                       uid="suite_inited",
+                                       slave_name=slave.hostname)
                     #update SuiteStatus if all slaves are inited
                     iSlaves = self.getSuiteSlaves(tss.suite,
                                             State(Slave.S_SUIT_INITIALIZED))
@@ -847,6 +855,9 @@ class XrdTestMaster(Runnable):
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 self.slaves[msg.sender].state = msg.state
                 slave.state = State(Slave.S_CONNECTED_IDLE)
+                tss.addStageResult(msg.state, msg.result,
+                                   uid="suite_finalized",
+                                   slave_name=slave.hostname)
 
                 iSlaves = self.getSuiteSlaves(tss.suite, \
                                             State(Slave.S_CONNECTED_IDLE))
@@ -862,7 +873,7 @@ class XrdTestMaster(Runnable):
             elif msg.state == State(TestSuite.S_TESTCASE_INITIALIZED):
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 tss.addStageResult(msg.state, msg.result,
-                                   tc_uid=msg.testUid,
+                                   uid=msg.testUid,
                                    slave_name=slave.hostname)
                 LOGGER.info("%s initialized case %s in suite %s" % \
                             (slave, msg.testName, tss.name))
@@ -871,7 +882,7 @@ class XrdTestMaster(Runnable):
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 tss.addStageResult(msg.state, msg.result,
                                        slave_name=slave.hostname,
-                                       tc_uid=msg.testUid)
+                                       uid=msg.testUid)
                 LOGGER.info("%s run finished for case %s in suite %s" % \
                             (slave, msg.testName, tss.name))
                 self.storeSuiteSession(tss)
@@ -879,7 +890,7 @@ class XrdTestMaster(Runnable):
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 tss.addStageResult(msg.state, msg.result, \
                                    slave_name=slave.hostname, \
-                                   tc_uid=msg.testUid)
+                                   uid=msg.testUid)
                 slave.state = State(Slave.S_SUIT_INITIALIZED)
                 slave.state.suiteName = msg.suiteName
                 iSlaves = self.getSuiteSlaves(tss.suite, \
@@ -941,8 +952,8 @@ class XrdTestMaster(Runnable):
                 msg = evt.data
                 self.procSlaveMsg(msg)
             #------------------------------------------------------------------- 
-            elif evt.type == MasterEvent.M_JOB_RUN:
-                self.runJob(evt.data)
+            elif evt.type == MasterEvent.M_JOB_ENQUEUE:
+                self.enqueueJob(evt.data)
             #-------------------------------------------------------------------
             else:
                 raise XrdTestMasterException("Unknown incoming evt type " + \
@@ -1034,8 +1045,12 @@ class XrdTestMaster(Runnable):
         for ts in self.testSuits.itervalues():
             if not ts.schedule:
                 continue
+            
+            #MAINTENANCE
+#            sched.add_cron_job(self.executeJob(ts.name), **(ts.schedule))
+            if ts.name == "testSuite_remote":
+                self.executeJob(ts.name)()
 
-            sched.add_cron_job(self.executeJob(ts.name), **(ts.schedule))
             LOGGER.info("Adding scheduler job for test suite %s at %s" % \
                         (ts.name, str(ts.schedule)))
         #-----------------------------------------------------------------------

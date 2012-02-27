@@ -25,7 +25,7 @@ def getCluster():
     net.netmask = '255.255.255.0'
     net.DHCPRange = ('192.168.130.2', '192.168.130.254')
 
-    h1 = (host1_mac, '192.168.130.2', 'new1.xrd.test')
+    h1 = (host1_mac, '192.168.130.2', 'new1')
     #h2 = (host2_mac, '192.168.130.3', 'new2.xrd.test')
     #h3 = (host3_mac, '192.168.130.4', 'new3.xrd.test')
     net.addHost(h1)
@@ -37,7 +37,7 @@ def getCluster():
     # Cluster machines definitions
     #---------------------------------------------------------------------------
     host1 = Host()
-    host1.name = 'new1.xrd.test'
+    host1.name = 'new1'
     host1.ramSize = '524288'
     host1.arch = 'x86_64'
     host1.uuid = '1fb103a6-8873-e114-a3d5-8bd89bcbac7f'

@@ -196,7 +196,7 @@ def main():
 
         (dist, version, arch) = name.split("-")
         dist = dist.upper()[0:2] + version
-        if dist != "SL5" or arch != "x64_64":
+        if dist != "SL5" or arch != "i386":
             continue
 
         print "Filepath %s" % filepath

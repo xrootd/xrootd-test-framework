@@ -10,7 +10,7 @@
 <script type="text/javascript">
 <!--//--><![CDATA[//><!--
 
-\$.fn.accordion.defaults.container = false; 
+\$.fn.accordion.defaults.container = false;
 \$(function() {
      #if $suitsSessions and len($suitsSessions) > 0
         #set $testSessionsNum = len($suitsSessions)
@@ -44,6 +44,9 @@
             #if $runningSuitsUids[$suitSess.name] == $suitSess.uid
                 #set $htmlSuitColor = "00bb00"
             #end if
+        #end if
+        #if hasattr($suitSess, 'failed') and $suitSess.failed
+            #set $htmlSuitColor = "ee0000"
         #end if
         <div id="acc5${testSessionsNum}" class="accordion">
         <h3><a href="#" style="color:#${htmlSuitColor};">${suitSess.name} 
@@ -80,9 +83,6 @@
                 #end if
                 <p style="color:$color;"><span style="font-size:9px;color;#000000;">${stage[3]}</span> ${stage[0]}
                 #set $div_id = "%s_ist%s_details" % ($suitSess.uid, $iS)
-                #if stage[1][1]
-                <span style="color:#ee0000;">ERRORS</span>
-                #end if
                 <a href="#" id="${suitSess.uid}_ist${iS}_button">see details</a></p>
                 $stageDetailsDiv($div_id, $stage)
                 <script style="display:none;">
@@ -108,9 +108,6 @@
                         #set $color = "#dd0000"
                     #end if
                     <p style="color:$color;"><span style="font-size:9px;color;#000000;">${stage[3]}</span> ${stage[0]}
-                    #if stage[1][1]
-                    <span style="color:#ee0000;">ERRORS</span>
-                    #end if
                     #set $div_id = "%s_st%s_details" % ($tC.uid, $iS)
                     <a href="#" id="${tC.uid}_st${iS}_button">see details</a></p>
                     $stageDetailsDiv($div_id, $stage)
@@ -141,9 +138,6 @@
                 #end if
                 <p style="color:$color;"><span style="font-size:9px;color;#000000;">${stage[3]}</span> ${stage[0]}
                 #set $div_id = "%s_ist%s_details" % ($suitSess.uid, $iS)
-                #if stage[1][1]
-                <span style="color:#ee0000;">ERRORS</span>
-                #end if
                 <a href="#" id="${suitSess.uid}_ist${iS}_button">see details</a></p>
                 $stageDetailsDiv($div_id, $stage)
                 <script style="display:none;">

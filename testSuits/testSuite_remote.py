@@ -7,10 +7,10 @@ def getTestSuite():
     ts.clusters = ['cluster1']
     ts.machines = ["new1.xrd.test"]
     ts.tests = ['BasicInstall']
-    ts.schedule = dict(month='2', second="0")
+    ts.schedule = dict(month='3', second="0")
     #minute='*/1', 
-    ts.initialize = "http://master.xrd.test:8080/showScript/suite_init"
-    ts.finalize = "http://master.xrd.test:8080/showScript/suite_finalize"
+    ts.initialize = "http://master.xrd.test:8080/showScript/sinit_remote.sh"
+    ts.finalize = "http://master.xrd.test:8080/showScript/sfinalize_remote.sh"
 
     return ts
 

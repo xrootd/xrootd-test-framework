@@ -282,13 +282,17 @@ class WebInterface:
         self.testMaster.finalizeTestSuite(testSuiteName)
         return self.indexRedirect()
     #--------------------------------------------------------------------------- 
-    def getGetXrdLastReleaseScript(self):
+    def downloadScript(self, script_name):
         return serve_file(self.config.get('webserver', 'webpage_dir') \
-                          + os.sep + "get_xrd_last_release.py", \
+                          + os.sep + 'scripts' + os.sep + script_name, \
                           "application/x-download", "attachment")
     #--------------------------------------------------------------------------- 
     def showScript(self, script_name):
-        return self.disp(script_name + ".sh", {})
+        return serve_file(self.config.get('webserver', 'webpage_dir') \
+                          + os.sep + 'scripts' + os.sep + script_name, \
+                          "text/html")
+        
+        return self.disp('scripts' + os.sep + script_name, {})
     #---------------------------------------------------------------------------
     def runTestCase(self, testSuiteName, testName):
         LOGGER.info("RunTestCase requested for test %s in test suite: %s" % \
@@ -302,7 +306,7 @@ class WebInterface:
     runTestCase.exposed = True
     initializeSuite.exposed = True
     finalizeSuite.exposed = True
-    getGetXrdLastReleaseScript.exposed = True
+    downloadScript.exposed = True
     showScript.exposed = True
 
     _cp_config = {'request.error_response': handleCherrypyError}
@@ -368,6 +372,10 @@ class TestSuiteSession(Stateful):
                                                             # chars from uid
         # test cases loaded to run in this session, key is tc.uid
         self.cases = {}
+
+        #if result of any stage i.a. init, test case stages or finalize
+        #ended with non-zero status code 
+        self.failed = False
     #---------------------------------------------------------------------------
     def addCaseRun(self, tc):
         '''
@@ -388,8 +396,15 @@ class TestSuiteSession(Stateful):
         @param slave_name: where stage ended
         '''
         state.time = state.datetime.strftime("%H:%M:%S, %f %d-%m-%Y")
-        LOGGER.info("New stage result %s: (code %s) %s" % \
+
+        LOGGER.info("New stage result %s (ret code %s)" % \
+                     (state, result[2]))
+        LOGGER.debug("New stage result %s: (code %s) %s" % \
                     (state, result[2], result[0]))
+
+        if result[2] != 0:
+            self.failed = True
+
         self.stagesResults.append((state, result, uid, slave_name))
     #--------------------------------------------------------------------------- 
     def getTestCaseStages(self, test_case_uid):
@@ -487,24 +502,34 @@ class XrdTestMaster(Runnable):
             ret = self.slaves[key].state
         return ret
     #---------------------------------------------------------------------------
-    def getSuiteSlaves(self, test_suite, slave_state=None):
+    def getSuiteSlaves(self, test_suite, slave_state=None, test_case=None):
         '''
         Gets reference to currently connected slaves required by test_suite.
         Optionally return only slaves with state slave_state.
         @param test_suite: test suite definition
         @param slave_state: required slave state
         '''
-        cond = None
-        if not slave_state:
-            cond = lambda v: (v.hostname in test_suite.machines)
+        cond_ts = lambda v: (v.hostname in test_suite.machines)
+
+        if not test_case:
+            cond_tc = lambda v: True
         else:
-            if slave_state == State(Slave.S_SUIT_INITIALIZED):
-                cond = lambda v: (v.hostname in test_suite.machines and \
-                          self.slaveState(v.hostname) == slave_state and \
-                          v.state.suiteName == test_suite.name)
-            else:
-                cond = lambda v: (v.hostname in test_suite.machines and \
-                          self.slaveState(v.hostname) == slave_state)
+            cond_tc = lambda v: (v.hostname in test_case.machines)
+
+        cond_state = lambda v: True
+        if not slave_state:
+            pass
+        elif slave_state == State(Slave.S_SUIT_INITIALIZED):
+            cond_state = lambda v: \
+                        (self.slaveState(v.hostname) == slave_state and \
+                         v.state.suiteName == test_suite.name)
+        elif slave_state:
+            cond_state = lambda v: \
+                        (self.slaveState(v.hostname) == slave_state)
+        else:
+            pass
+
+        cond = lambda v: cond_ts(v) and cond_tc(v) and cond_state(v)
 
         testSlaves = [v for v in self.slaves.itervalues() if cond(v)]
 
@@ -678,7 +703,13 @@ class XrdTestMaster(Runnable):
         msg.testUid = tc.uid
         msg.case = tc
 
-        testSlaves = self.getSuiteSlaves(tss.suite)
+        if not len(tc.machines):
+            testSlaves = self.getSuiteSlaves(tss.suite)
+            LOGGER.debug(("Test Case %s runs " + \
+                          "on all suite machines") % (test_name))
+        else:
+            testSlaves = self.getSuiteSlaves(tss.suite, test_case=tc)
+
         for sl in testSlaves:
             LOGGER.debug("Sending Test Case %s to %s" % (test_name, sl))
             sl.send(msg)
@@ -819,6 +850,7 @@ class XrdTestMaster(Runnable):
             if j.state == Job.S_STARTED:
                 if j.job == removeJob.job and j.args == removeJob.args:
                     self.pendingJobs = self.pendingJobs[1:]
+                    self.pendingJobsDbg = self.pendingJobsDbg[1:]
                     LOGGER.info("Removing job %s", j.job)
     #---------------------------------------------------------------------------
     def procSlaveMsg(self, msg):
@@ -1003,9 +1035,14 @@ class XrdTestMaster(Runnable):
 
         try:
             self.testSuits = loadTestSuitsDefs(currentDir + "/testSuits")
-            for ts in self.testSuits:
-                self.clusters[clu.name] = clu
-                self.clusters[clu.name].state = State(Cluster.S_UNKNOWN)
+            for ts in self.testSuits.itervalues():
+                if not len(ts.machines):
+                    for cName in ts.clusters:
+                        ts.machines.extend(\
+                            [h.name for h in self.clusters[cName].hosts])
+                    LOGGER.info(("Host list for suite %s " +\
+                                 "filled automatically with %s") %\
+                                (ts.name, ts.machines))
         except TestSuiteException, e:
             LOGGER.error("Test Suite Exception: %s" % e)
             sys.exit()
@@ -1048,7 +1085,7 @@ class XrdTestMaster(Runnable):
             
             #MAINTENANCE
 #            sched.add_cron_job(self.executeJob(ts.name), **(ts.schedule))
-            if ts.name == "testSuite_remote":
+            if ts.name == "testSuite_metaaa":
                 self.executeJob(ts.name)()
 
             LOGGER.info("Adding scheduler job for test suite %s at %s" % \

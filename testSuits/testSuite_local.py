@@ -5,13 +5,13 @@ def getTestSuite():
 
     ts.name = "local"
     #fire every 10 seconds in february
-    ts.schedule = dict(month='2', minute='*/2')
+    ts.schedule = dict(month='3', minute='*/2')
 
     ts.machines = ["luk-laptop"]
     ts.tests = ['Basic']
 
-    ts.initialize = "http://localhost:8080/showScript/ubuntu_suite_init"
-    ts.finalize = "http://localhost:8080/showScript/ubuntu_suite_finalize"
+    ts.initialize = "http://localhost:8080/showScript/sinit_ubuntu.sh"
+    ts.finalize = "http://localhost:8080/showScript/sfinal_ubuntu.sh"
 
     return ts
 

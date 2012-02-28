@@ -110,6 +110,7 @@ class Network(object):
         self.DHCPHosts = []
         self.DnsHosts = []
 
+        #fields beneath filled automatically by hypervisor
         self.xrdTestMasterIP = ""
     #---------------------------------------------------------------------------
     def addDnsHost(self, host):
@@ -125,6 +126,14 @@ class Network(object):
         '''
         self.addDHCPHost(host)
         self.addDnsHost((host[1], host[2]))
+    #---------------------------------------------------------------------------
+    def addHosts(self, hostsList):
+        '''
+        Add hosts to network.
+        @param param: hostsList
+        '''
+        for h in hostsList:
+            self.addHost(h)
     #---------------------------------------------------------------------------
     @property
     def xmlDesc(self):
@@ -207,13 +216,13 @@ class Host(object):
       <target type='serial' port='0'/>
     </console>
     <input type='mouse' bus='ps2'/>
-    
+    <!-- VIDEO SECTION - NORMALLY NOT NEEDED
     <graphics type='vnc' port='-1' autoport='yes' keymap='en-us'/>
     <video>
     <model type='cirrus' vram='9216' heads='1' />
     <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0' />
     </video>
-    
+    END OF VIDEO SECTION -->
     <memballoon model='virtio'>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x04' 
       function='0x0'/>
@@ -260,17 +269,31 @@ class Cluster(Utils.Stateful):
         self.hosts = []
         self.name = None
         self.network = None
-        self.diskImage = None
+
+        self.defaultHost = Host()
+        self.defaultHost.diskImage = '/data/virtual/images/lt_slc5_refslave.img'
+        self.defaultHost.arch = 'x86_64'
+        self.defaultHost.ramSize = '524288'
+        self.defaultHost.sourceNetwork = None
     #---------------------------------------------------------------------------
     def addHost(self, host):
         if not hasattr(host, "diskImage") or not host.diskImage:
-            host.diskImage = self.diskImage
-
+            host.diskImage = self.defaultHost.diskImage
+        if not hasattr(host, "arch") or not host.arch:
+            host.arch = self.defaultHost.arch
+        if not hasattr(host, "ramSize") or not host.ramSize:
+            host.ramSize = self.defaultHost.ramSize
+        if not hasattr(host, "sourceNetwork") or not host.sourceNetwork:
+            host.sourceNetwork = self.defaultHost.sourceNetwork
         if not host.diskImage:
             raise ClusterManagerException(('Host %s definition has no ' + \
                                           'disk image defined') % host.name)
 
         self.hosts.append(host)
+    #---------------------------------------------------------------------------
+    def addHosts(self, hosts):
+        for h in hosts:
+            self.addHosts(h)
     #---------------------------------------------------------------------------
     def setEmulatorPath(self, emulator_path):
         if len(self.hosts):
@@ -296,7 +319,8 @@ class Cluster(Utils.Stateful):
         uips = []
         for h in self.hosts:
             if h.macAddress in umacs:
-                raise ClusterManagerException('Host MAC address doubled')
+                raise ClusterManagerException(('Host MAC %s address ' + \
+                                               'doubled') % h.macAddress)
             umacs.append(h.macAddress)
 
         if self.network.ip == self.network.DHCPRange[0]:
@@ -305,7 +329,6 @@ class Cluster(Utils.Stateful):
                                            ' first address') \
                                           % (self.network.name, \
                                              self.definitionFile))
-
     #---------------------------------------------------------------------------
     def validateDynamic(self):
         '''
@@ -452,7 +475,7 @@ class ClusterManager:
                 host = conn.lookupByName(hostObj.name)
             except libvirtError, e:
                 msg = ("Could not define host neither " + \
-                        + "obtain host definition: %s") % e
+                        "obtain host definition: %s") % e
                 raise ClusterManagerException(msg, ERR_ADD_HOST)
         return host
     #---------------------------------------------------------------------------
@@ -625,14 +648,15 @@ def loadClustersDefs(path):
                 except ImportError, e:
                     LOGGER.error("Can't import %s: %s." % (modName, e))
     for clu in clusters:
-        n = [1 for c in clusters \
+        n = [c.name for c in clusters \
                     if clu.network.name == c.network.name or
                        clu.network.bridgeName == c.network.bridgeName or
                        clu.network.ip == c.network.ip]
-        if len(n) != 1:
+        n.remove(clu.name)
+        if len(n) != 0:
             raise ClusterManagerException(
-                    ("Cluster's %s some network parameters %s doubled " + \
-                    " in some other cluster") % (clu.name, clu.network.name))
+                    ("Cluster's %s some network's %s parameters doubled" + \
+                    " in %s") % (clu.name, clu.network.name, ",".join(n)))
 
     return clusters
 

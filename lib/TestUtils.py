@@ -66,8 +66,8 @@ class TestSuite:
 
         #---------------------------------------------------------------------------
         # Fields beneath are filled automatically by system
-        self.testCases = []  # filled automatically by a Python objects 
-                             # representing test cases
+        self.testCases = [] # filled automatically by load test suite defs.
+                            # holds Python objectsrepresenting test cases
     #---------------------------------------------------------------------------
     def validateStatic(self):
         '''
@@ -78,21 +78,22 @@ class TestSuite:
             raise TestSuiteException(("No name given in TestSuite " + \
                                       "definition or the name %s have " + \
                                       "is not alphanumeric without spaces.") % \
-                                     self.name, \
+                                      self.name, \
                                       TestSuiteException.ERR_CRITICAL)
         if not self.schedule:
             raise TestSuiteException(("No scheduler expression " + \
-                                      "given in TestSuite %s definition."), \
-                                      str(self.name), \
+                                      "given in TestSuite %s definition.") % \
+                                      self.name, \
                                       TestSuiteException.ERR_CRITICAL)
         if not self.initialize or not self.finalize:
             raise TestSuiteException(("No initialize or finalize script " + \
                                       "in TestSuite %s definition") % \
-                                      str(self.name), \
+                                      self.name, \
                                       TestSuiteException.ERR_CRITICAL)
-        if not len(self.tests) or not len(self.machines):
+        if not len(self.tests):
             raise TestSuiteException(("No test cases or no machines " + \
-                                      "given in TestSuite definition."), \
+                                      "given in TestSuite %s definition.") % \
+                                      self.name, \
                                       TestSuiteException.ERR_CRITICAL)
         for t in self.tests:
             if not self.testCases.has_key(t):
@@ -123,7 +124,8 @@ class TestCase:
     def __init__(self):
         self.name = ""      # name of the test case
         self.machines = []  # names of the machines that the test case 
-                            # should run on
+                            # should run on. If empty: it runs on all
+                            # machines in test suite
         self.initialize = ""# a shell script or a link to a shell script
                             # that should be run on each machine. The 
                             # initialize script should be completed on

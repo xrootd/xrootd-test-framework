@@ -92,6 +92,7 @@ class XrdTestSlave(Runnable):
         global LOGGER
 
         command = ""
+        cmd = cmd.strip()
 
         LOGGER.info("executeSh: %s" % cmd)
         #reading a file contents

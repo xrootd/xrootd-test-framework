@@ -48,8 +48,8 @@ service cmsd start
 service xrootd start
 
 echo "#----------------------------------------------"
-echo "xrootd .log file"
-cat /var/log/xrootd/xrootd.log
+echo "xrootd /var/log/xrootd/${NAME}/xrootd.log file"
+cat /var/log/xrootd/${NAME}/xrootd.log
 echo "#----------------------------------------------"
-echo "cmsd .log file"
-cat /var/log/xrootd/cmsd.log
+echo "cmsd /var/log/xrootd/${NAME}/cmsd.log file"
+cat /var/log/xrootd/${NAME}/cmsd.log

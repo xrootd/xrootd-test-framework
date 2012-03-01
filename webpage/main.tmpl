@@ -179,6 +179,7 @@
     </div>
     <h1>ALL LOG MESSAGES</h1>
     <div id="acc7" class="accordion" style="background-color:#ffffff;background-image:none;">
+        #from cgi import escape
         #if $userMsgs and len($userMsgs) > 0
             <h3>Messages (last 15)</h3>
             <div class="inner">
@@ -194,7 +195,7 @@
                     #if $userMsg.levelno == logging.ERROR
                         #set $color = "#E86850"
                     #end if
-                    <p style="color:$color;">${iM}. ${userMsg.getMessage()}</p>
+                    <p style="color:$color;">${iM}. ${escape($userMsg.getMessage())}</p>
                 #end if
                 #set $iM += 1
             #end for

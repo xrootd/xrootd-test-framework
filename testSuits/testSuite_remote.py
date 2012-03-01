@@ -7,10 +7,12 @@ def getTestSuite():
     ts.clusters = ['cluster_remote']
     ts.machines = ["new1"]
     ts.tests = ['BasicInstall']
-    ts.schedule = dict(month='3', second="0")
-    #minute='*/1', 
+    ts.schedule = dict(month='4', second="0")
+
     ts.initialize = "http://master.xrd.test:8080/showScript/sinit_remote.sh"
-    ts.finalize = "http://master.xrd.test:8080/showScript/sfinalize_remote.sh"
+    ts.finalize = """
+    #!/bin/bash
+    touch /tmp/testSuite_remote_finalize.txt"""
 
     return ts
 

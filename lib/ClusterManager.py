@@ -454,7 +454,7 @@ class ClusterManager:
             msg = "Can't open %s. %s" % (hostObj.diskImage, e)
             raise ClusterManagerException(msg)
         #buffsize = 52428800 #read 50 MB at a time
-        buffsize = (1024 ** 3) #read/write 512 MB at a time
+        buffsize = (1024 ** 3) /2  #read/write 512 MB at a time
         buff = f.read(buffsize)
         while buff:
             tmpFile.file.write(buff)

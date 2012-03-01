@@ -882,7 +882,7 @@ class XrdTestMaster(Runnable):
         j = Job(Job.INITIALIZE_TEST_SUITE, test_suite_name)
         self.pendingJobs.append(j)
         self.pendingJobsDbg.append("initSuite(%s)" % test_suite_name)
-        
+
         for tName in ts.tests:
             j = Job(Job.INITIALIZE_TEST_CASE, (test_suite_name, tName))
             self.pendingJobs.append(j)
@@ -911,7 +911,11 @@ class XrdTestMaster(Runnable):
         Look through queue of jobs and start one, who have conditions.
         @param test_suite_name:
         '''
-        LOGGER.info("PENDING JOBS %s " % self.pendingJobsDbg)
+        if len(self.pendingJobsDbg) <= 7:
+            LOGGER.info("PENDING JOBS %s " % self.pendingJobsDbg)
+        else:
+            LOGGER.info("PENDING JOBS (next 7) %s " % self.pendingJobsDbg[:7])
+
         LOGGER.info("startJobs() pending: %s " % len(self.pendingJobs))
         if len(self.pendingJobs) > 0:
             j = self.pendingJobs[0]
@@ -938,6 +942,15 @@ class XrdTestMaster(Runnable):
                     if self.startCluster(j.args):
                         self.pendingJobs[0].state = Job.S_STARTED
                 elif j.job == Job.STOP_CLUSTER:
+                    if len(self.pendingJobs) > 1:
+                        nj = self.pendingJobs[1]
+                        if nj and nj.job == Job.START_CLUSTER and \
+                            nj.args == j.args:
+                            self.pendingJobs = self.pendingJobs[2:]
+                            self.pendingJobsDbg = self.pendingJobsDbg[2:]
+                            self.startJobs()
+                            return
+
                     if self.stopCluster(j.args):
                         self.pendingJobs[0].state = Job.S_STARTED
                 else:
@@ -1207,9 +1220,9 @@ class XrdTestMaster(Runnable):
                 continue
 
             #MAINTENANCE directly run some suite
-            if ts.name == "testSuite_meta1":
-                self.executeJob(ts.name)()
-            #sched.add_cron_job(self.executeJob(ts.name), **(ts.schedule))
+            #if ts.name == "testSuite_remote":
+            #    self.executeJob(ts.name)()
+            sched.add_cron_job(self.executeJob(ts.name), **(ts.schedule))
 
             LOGGER.info("Adding scheduler job for test suite %s at %s" % \
                         (ts.name, str(ts.schedule)))

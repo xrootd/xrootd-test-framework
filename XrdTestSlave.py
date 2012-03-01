@@ -178,12 +178,12 @@ class XrdTestSlave(Runnable):
         self.cases[testUid] = copy(msg.case)
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
-        msg.state = State(TestSuite.S_SLAVE_TEST_INITIALIZED)
         msg.testUid = testUid
         msg.suiteName = suiteName
         msg.testName = testName
 
         msg.result = self.executeSh(self.cases[testUid].initialize)
+        msg.state = State(TestSuite.S_SLAVE_TEST_INITIALIZED)
 
         LOGGER.info("Initialized test %s [%s] with result %s:" % \
                     (testName, suiteName, msg.result))
@@ -196,12 +196,12 @@ class XrdTestSlave(Runnable):
         testUid = msg.testUid
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
-        msg.state = State(TestSuite.S_SLAVE_TEST_RUN_FINISHED)
         msg.testUid = testUid
         msg.suiteName = suiteName
         msg.testName = testName
 
         msg.result = self.executeSh(self.cases[testUid].run)
+        msg.state = State(TestSuite.S_SLAVE_TEST_RUN_FINISHED)
 
         LOGGER.info("Run finished test %s [%s] with result %s:" % \
                     (testName, suiteName, msg.result))
@@ -214,12 +214,12 @@ class XrdTestSlave(Runnable):
         testUid = msg.testUid
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
-        msg.state = State(TestSuite.S_SLAVE_TEST_FINALIZED)
         msg.testUid = testUid
         msg.suiteName = suiteName
         msg.testName = testName
 
         msg.result = self.executeSh(self.cases[testUid].finalize)
+        msg.state = State(TestSuite.S_SLAVE_TEST_FINALIZED)
 
         LOGGER.info("Finalized test %s [%s] with result %s:" % \
                     (testName, suiteName, msg.result))
@@ -231,9 +231,9 @@ class XrdTestSlave(Runnable):
         suiteName = msg.suiteName
         
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
-        msg.state = State(TestSuite.S_SLAVE_INITIALIZED)
         msg.suiteName = suiteName
         msg.result = self.executeSh(cmd)
+        msg.state = State(TestSuite.S_SLAVE_INITIALIZED)
 
         return msg
     #---------------------------------------------------------------------------
@@ -242,9 +242,9 @@ class XrdTestSlave(Runnable):
         suiteName = msg.suiteName
         
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
-        msg.state = State(TestSuite.S_SLAVE_FINALIZED)
         msg.suiteName = suiteName
         msg.result = self.executeSh(cmd)
+        msg.state = State(TestSuite.S_SLAVE_FINALIZED)
 
         return msg
     #---------------------------------------------------------------------------

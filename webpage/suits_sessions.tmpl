@@ -55,16 +55,17 @@
 #from string import replace
 #def stageDetailsDiv($div_id, $stage)
     <div id="$div_id" style="display:none;width:100%;"
-    title="Details of test result stage at slave ${stage[3]}">
+    title="Details of test result stage at slave <b>${stage[3]}</b>">
     <table width="99%">
-        <tr><td style="background:#ffffff;font-weight:bold;">state</td></tr>
-        <tr><td>${stage[0]}</td></tr>
-        <tr><td style="background:#ffffff;font-weight:bold;">return code</td></tr>
-        <tr><td>${stage[1][2].replace('\n', '<br />')}</td></tr>
+        <tr><td style="background:#ffffff;font-size:11px;font-weight:bold;font-size:10px;">state: <span style="font-weight:normal;color:#05b;">${stage[0]}</span></td></tr>
+        <tr><td style="background:#ffffff;font-size:11px;font-weight:bold;font-size:10px;">slave: <span style="font-weight:normal;">${stage[3]}</span></td></tr>
+        <tr><td style="background:#ffffff;font-size:11px;font-weight:bold;">return code: <span style="font-weight:normal;">${stage[1][2].replace('\n', '<br />')}</span></td></tr>
         <tr><td style="background:#ffffff;font-weight:bold;">stdout</td></tr>
         <tr><td>${stage[1][0].replace('\n', '<br />')}</td></tr>
-        <tr><td style="background:#ffffff;font-weight:bold;">stderr</td></tr>
-        <tr><td>${stage[1][1].replace('\n', '<br />')}</td></tr>
+        #if $stage[1][1]
+            <tr><td style="background:#ffffff;font-weight:bold;">stderr</td></tr>
+            <tr><td>${stage[1][1].replace('\n', '<br />')}</td></tr>
+        #end if
     </table>
     </div>
 #end def

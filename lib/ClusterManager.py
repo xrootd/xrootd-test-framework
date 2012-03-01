@@ -16,7 +16,9 @@ import os
 import sys
 import time
 from tempfile import NamedTemporaryFile
-from copy import copy, deepcopy
+from copy import copy
+import threading
+from threading import Lock, Condition
 #-------------------------------------------------------------------------------
 # Global variables
 #-------------------------------------------------------------------------------
@@ -249,6 +251,29 @@ class Host(object):
         self.__xmlDesc = self.xmlDomainPattern % values
 
         return self.__xmlDesc
+
+#------------------------------------------------------------------------------ 
+class SafeCounter(object):
+    #---------------------------------------------------------------------------
+    def __init__(self):
+        self.lock = Lock()
+        self.criticalSection = Condition(self.lock)
+        self.counter = 0
+    #---------------------------------------------------------------------------
+    def inc(self):
+        self.criticalSection.acquire()
+        LOGGER.debug("COUNTER += 1")
+        self.counter += 1
+        self.criticalSection.notify()
+        self.criticalSection.release()
+    #---------------------------------------------------------------------------
+    def get(self):
+        self.criticalSection.acquire()
+        self.criticalSection.wait()
+        num = copy(self.counter)
+        LOGGER.debug("COUNTER get")
+        self.criticalSection.release()
+        return num
 #-------------------------------------------------------------------------------
 class Cluster(Utils.Stateful):
     #---------------------------------------------------------------------------
@@ -420,6 +445,26 @@ class ClusterManager:
         else:
             LOGGER.debug("libvirt manager disconnected")
     #---------------------------------------------------------------------------
+    def copyHostImg(self, hostObj, tmpFile, safeCounter = None):
+        LOGGER.info(("Start copying %s (for %s) to tmp img %s") \
+                    % (hostObj.diskImage, hostObj.name, tmpFile.name))
+        try:
+            f = open(hostObj.diskImage, "r")
+        except IOError, e:
+            msg = "Can't open %s. %s" % (hostObj.diskImage, e)
+            raise ClusterManagerException(msg)
+        #buffsize = 52428800 #read 50 MB at a time
+        buffsize = (1024 ** 3) #read/write 512 MB at a time
+        buff = f.read(buffsize)
+        while buff:
+            tmpFile.file.write(buff)
+            buff = f.read(buffsize)
+        f.close()
+        LOGGER.info(("Disk image %s  (for %s) copied to temp file %s") \
+                    % (hostObj.diskImage, hostObj.name, tmpFile.name))
+        if safeCounter:
+            safeCounter.inc()
+    #---------------------------------------------------------------------------
     def defineHost(self, hostObj):
         '''
         Defines virtual host in a cluster using given host object, 
@@ -442,23 +487,6 @@ class ClusterManager:
             tmpFile = NamedTemporaryFile(prefix=self.tmpImagesPrefix, \
                                          dir=self.tmpImagesDir)
             hostObj.runningDiskImage = tmpFile.name
-
-            LOGGER.info(("Copying %s (for %s) to tmp img %s") \
-                        % (hostObj.diskImage, hostObj.name, tmpFile.name))
-            try:
-                f = open(hostObj.diskImage, "r")
-            except IOError, e:
-                msg = "Can't open %s. %s" % (hostObj.diskImage, e)
-                raise ClusterManagerException(msg)
-            #buffsize = 52428800 #read 50 MB at a time
-            buffsize = (1024 ** 2) / 2 #read/write 512 MB at a time
-            buff = f.read(buffsize)
-            while buff:
-                tmpFile.file.write(buff)
-                buff = f.read(buffsize)
-            f.close()
-            LOGGER.info(("Disk image %s  (for %s) copied to temp file %s") \
-            % (hostObj.diskImage, hostObj.name, tmpFile.name))
         else:
             LOGGER.info(("Defining host %s on ORIGINAL IMAGE %s") \
                         % (hostObj.diskImage, hostObj.name))
@@ -477,30 +505,6 @@ class ClusterManager:
                 msg = ("Could not define host neither " + \
                         "obtain host definition: %s") % e
                 raise ClusterManagerException(msg, ERR_ADD_HOST)
-        return host
-    #---------------------------------------------------------------------------
-    def addHost(self, hostObj):
-        '''
-        Adds virtual host to cluster and starts it.
-        @param hostObj: Host object
-        @raise ClusterManagerException: when fails
-        @return: None
-        '''
-
-        host = None
-        try:
-            host = self.defineHost(hostObj)
-            if not host.isActive():
-                host.create()
-            if not host.isActive():
-                LOGGER.error("Host created but not started.")
-        except libvirtError, e:
-            msg = "Could not create domain from XML: %s" % e
-            raise ClusterManagerException(msg, ERR_ADD_HOST)
-
-        if host and host.isActive():
-            LOGGER.info("Host %s created and active." % (hostObj.name))
-
         return host
     #---------------------------------------------------------------------------
     def removeHost(self, hostName):
@@ -600,9 +604,34 @@ class ClusterManager:
         @param cluster:
         '''
         self.createNetwork(cluster.network)
+
         if cluster.hosts and len(cluster.hosts):
+            copyThreads = {}
+            safeCounter = SafeCounter()
             for h in cluster.hosts:
-                self.addHost(h)
+                self.defineHost(h)
+
+                if not self.MAINTENANCE_MODE:
+                    copyThreads[h.name] =\
+                        threading.Thread(target=self.copyHostImg, args =\
+                                         (self.hosts[h.name][2], \
+                                          self.hosts[h.name][1], \
+                                          safeCounter))
+                    copyThreads[h.name].start()
+
+            if not self.MAINTENANCE_MODE:
+                #wait for all threads to copy images
+                n = 0
+                m = len(cluster.hosts)
+                while(n < m):
+                    n = safeCounter.get()
+                    LOGGER.info("Machines images copied: %s of %s" % (n, m))
+            #start all domains
+            for h in cluster.hosts:
+                LOGGER.info("Starting %s" % h.name)
+                self.hosts[h.name][0].create()
+                LOGGER.info("Started %s" % h.name)
+
     #---------------------------------------------------------------------------
     def hostIsActive(self, hostObj):
         h = self.defineHost(hostObj)

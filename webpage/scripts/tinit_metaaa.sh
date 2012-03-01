@@ -22,13 +22,11 @@ SERVICE_CONFIG_FILE=/etc/sysconfig/xrootd
 rm -rf $SERVICE_CONFIG_FILE
 touch $SERVICE_CONFIG_FILE
 UCASE_NAME=$(echo $NAME | tr a-z A-Z)
-chown --recursive daemon /var/spool/xrootd
-chown --recursive daemon /var/run/xrootd
 echo "
 XROOTD_USER=daemon
 XROOTD_GROUP=daemon
-XROOTD_${UCASE_NAME}_OPTIONS=\"-d -l /var/log/xrootd/xrootd.log -c ${CONFIG_PATH} -k 7\"
-CMSD_${UCASE_NAME}_OPTIONS=\"-d -l /var/log/xrootd/cmsd.log -c ${CONFIG_PATH} -k 7\"
+XROOTD_${UCASE_NAME}_OPTIONS=\" -l /var/log/xrootd/xrootd.log -c ${CONFIG_PATH} -k 7\"
+CMSD_${UCASE_NAME}_OPTIONS=\" -l /var/log/xrootd/cmsd.log -c ${CONFIG_PATH} -k 7\"
 XROOTD_INSTANCES=\"${NAME}\"
 CMSD_INSTANCES=\"${NAME}\"
 " > $SERVICE_CONFIG_FILE
@@ -44,8 +42,10 @@ mkdir -p /var/log/xrootd
 mkdir -p /root/xrdfilesystem
 df -ah
 
-service cmsd start
+service xrootd setup
+
 service xrootd start
+service cmsd start
 
 echo "#----------------------------------------------"
 echo "xrootd /var/log/xrootd/${NAME}/xrootd.log file"

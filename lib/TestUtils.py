@@ -103,22 +103,27 @@ class TestSuite:
         return True
     #---------------------------------------------------------------------------
     # Constants
-    S_IDLE = (10, "idle")
+    S_IDLE                   = (10, "idle")
 
-    S_WAIT_4_INIT = (20, "wait for initialization confirm")
-    S_SLAVE_INITIALIZED = (21, "slave initialized")
-    S_ALL_INITIALIZED = (22, "all machines initialized")
+    S_WAIT_4_INIT            = (20, "wait for suite initialization")
+    S_SLAVE_INITIALIZED      = (21, "slave initialized")
+    S_ALL_INITIALIZED        = (22, "all machines initialized")
 
-    S_WAIT_4_FINALIZE = (30, "wait for finalization confirm")
-    S_SLAVE_FINALIZED = (31, "slave initialized")
-    S_ALL_FINALIZED = (32, "all machines initialized")
+    S_WAIT_4_FINALIZE        = (30, "wait for suite finalization")
+    S_SLAVE_FINALIZED        = (31, "slave finalized")
+    S_ALL_FINALIZED          = (32, "all machines initialized")
 
-    S_TEST_SENT = (40, "send test case to run")
-    S_TEST_RUNNING = (41, "test is running")
-    S_TESTCASE_INITIALIZED = (42, "test initialized")
-    S_TESTCASE_RUNFINISHED = (43, "test run finished")
-    S_TESTCASE_RUNFINISHED_ERROR = (-43, "test run finished with error")
-    S_TESTCASE_FINALIZED = (44, "test finalized")
+    S_WAIT_4_TEST_INIT       = (40, "sent test init")
+    S_SLAVE_TEST_INITIALIZED = (41, "test initialized on a slave")
+    S_ALL_TEST_INITIALIZED   = (42, "test initialized on all slaves")
+
+    S_WAIT_4_TEST_RUN        = (43, "sent test to run")
+    S_SLAVE_TEST_RUN_FINISHED= (44, "test run finished on a slave")
+    S_ALL_TEST_RUN_FINISHED  = (45, "test run finished on all slaves")
+
+    S_WAIT_4_TEST_FINALIZE   = (46, "send test to finalize")
+    S_SLAVE_TEST_FINALIZED   = (47, "test finalized on a slave")
+    S_ALL_TEST_FINALIZED     = (48, "test finalized on all slaves")
 #------------------------------------------------------------------------------ 
 class TestCase:
     def __init__(self):

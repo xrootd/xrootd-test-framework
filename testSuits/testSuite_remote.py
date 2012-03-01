@@ -4,8 +4,8 @@ def getTestSuite():
     ts = TestSuite()
 
     ts.name = "testSuite_remote"
-    ts.clusters = ['cluster1']
-    ts.machines = ["new1.xrd.test"]
+    ts.clusters = ['cluster_remote']
+    ts.machines = ["new1"]
     ts.tests = ['BasicInstall']
     ts.schedule = dict(month='3', second="0")
     #minute='*/1', 
@@ -19,11 +19,8 @@ def getTestCases():
 
     tc1 = TestCase()
     tc1.name = "BasicInstall"
-    tc1.machines = ["new1.xrd.test"]
     tc1.initialize = "#!/bin/bash \ntouch /tmp/testCase_Basic_init.txt"
-
     tc1.run = "#!/bin/bash \ntouch /tmp/testCase_Basic_run.txt \nls"
-
     tc1.finalize = "#!/bin/bash \ntouch /tmp/testCase_Basic_final.txt"
     tcs.append(tc1)
 

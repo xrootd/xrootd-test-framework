@@ -166,23 +166,9 @@ class XrdTestHypervisor(Runnable):
             try:
                 LOGGER.info("Cluster definition semantically correct. " + \
                             "Starting cluster.")
-                if cluster.network:
-                    act = self.clusterManager.networkIsActive(cluster.network)
-                    LOGGER.info("Network " + cluster.network.name + \
-                                    " isActive(): " + str(act))
-                    if not act:
-                        LOGGER.info("Creating network.")
-                        self.clusterManager.createNetwork(cluster.network)
-                        LOGGER.info("Done.")
 
-                for h in cluster.hosts:
-                    act = self.clusterManager.hostIsActive(h)
-                    LOGGER.info("Host " + h.name + " isActive(): " \
-                                    + str(act))
-                    if not act:
-                        LOGGER.info("Adding host " + h.name)
-                        self.clusterManager.addHost(h)
-                        LOGGER.info("Done.")
+                self.clusterManager.createCluster(cluster)
+
                 resp.state = State(Cluster.S_ACTIVE)
             except ClusterManagerException, e:
                 LOGGER.error("Error occured: %s" % e)
@@ -193,7 +179,7 @@ class XrdTestHypervisor(Runnable):
             resp.state = State(Cluster.S_ERROR)
 
         return resp
-        #---------------------------------------------------------------------------
+    #---------------------------------------------------------------------------
     def handleStopCluster(self, msg):
         resp = XrdMessage(XrdMessage.M_CLUSTER_STATE)
         resp.clusterName = msg.clusterDef.name
@@ -220,7 +206,7 @@ class XrdTestHypervisor(Runnable):
                     self.clusterManager.removeNetwork(cluster.network.name)
                     LOGGER.info("Done.")
 
-            resp.state = State(Cluster.S_ACTIVE)
+            resp.state = State(Cluster.S_STOPPED)
         except ClusterManagerException, e:
             LOGGER.error("Error occured: %s" % e)
             resp.state = State((-1, "Hypervisor error: %s" % e))

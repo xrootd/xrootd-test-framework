@@ -3,15 +3,17 @@ from TestUtils import TestSuite, TestCase
 def getTestSuite():
     ts = TestSuite()
 
-    ts.name = "local"
+    ts.name = "testSuite_local"
     #fire every 10 seconds in february
-    ts.schedule = dict(month='3', minute='*/2')
+    ts.schedule = dict(month='3', minute='*/1')
 
     ts.machines = ["luk-laptop"]
     ts.tests = ['Basic']
 
-    ts.initialize = "http://localhost:8080/showScript/sinit_ubuntu.sh"
-    ts.finalize = "http://localhost:8080/showScript/sfinal_ubuntu.sh"
+    ts.initialize = " http://localhost:8080/showScript/sinit_local.sh "
+    ts.finalize = """
+    #!/bin/bash 
+    touch /tmp/testSuite_final.txt"""
 
     return ts
 
@@ -21,11 +23,19 @@ def getTestCases():
 
     tc1.name = "Basic"
     tc1.machines = ["luk-laptop"]
-    tc1.initialize = "#!/bin/bash \ntouch /tmp/testCase_Basic_init.txt"
+    tc1.initialize = """
+    #!/bin/bash 
+    touch /tmp/testCase_Basic_init.txt"""
 
-    tc1.run = "#!/bin/bash \ntouch /tmp/testCase_Basic_run.txt"
+    tc1.run = """
+    #!/bin/bash
+    touch /tmp/testCase_Basic_run.txt
+    """
 
-    tc1.finalize = "#!/bin/bash \ntouch /tmp/testCase_Basic_final.txt"
+    tc1.finalize = """
+    #!/bin/bash
+    touch /tmp/testCase_Basic_final.txt
+    """
     tcs.append(tc1)
 
     return tcs

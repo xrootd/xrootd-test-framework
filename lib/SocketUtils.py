@@ -61,19 +61,21 @@ class XrdMessage(object):
     '''
     Network message passed between Xrd Testing Framework nodes.
     '''
-
     #---------------------------------------------------------------------------
     # Constants for XrdMessage name values 
     M_HELLO = 'hello'
-    M_START_CLUSTER = 'start_cluster'
-    M_STOP_CLUSTER  = 'stop_cluster'
-    M_CLUSTER_STATE = 'cluster_state'
+    M_START_CLUSTER      = 'start_cluster'
+    M_STOP_CLUSTER       = 'stop_cluster'
+    M_CLUSTER_STATE      = 'cluster_state'
     #--------------------------------------------------------------------------
-    M_TESTSUITE_INIT = 'init_test_suite'
-    M_TESTSUITE_FINALIZE = 'finalize_test_suite'
-    M_TESTSUITE_STATE = "test_suite_state"
+    M_TESTSUITE_INIT     = 'test_suite_init'
+    M_TESTSUITE_FINALIZE = 'test_suite_finalize'
+    M_TESTSUITE_STATE    = "test_suite_state"
     #---------------------------------------------------------------------------
-    M_TESTCASE_RUN = 'test_case_run'
+    M_TESTCASE_INIT      = 'test_case_init'
+    M_TESTCASE_RUN       = 'test_case_run'
+    M_TESTCASE_FINALIZE  = 'test_case_finalize'
+
     M_TESTSUITE_STATE = 'test_case_state'
     M_TESTCASE_STAGE_RESULT = 'test_case_stage_result'
 

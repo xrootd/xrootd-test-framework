@@ -7,7 +7,7 @@
 #-------------------------------------------------------------------------------
 # Logging settings
 #-------------------------------------------------------------------------------
-import copy
+from copy import copy
 import logging
 import sys
 
@@ -74,9 +74,6 @@ class XrdTestSlave(Runnable):
     '''
     Test Slave main executable class.
     '''
-    sockStream = None
-    recvQueue = Queue.Queue()
-    config = None
     #---------------------------------------------------------------------------
     def __init__(self, config):
         self.sockStream = None
@@ -84,6 +81,8 @@ class XrdTestSlave(Runnable):
         self.recvQueue = Queue.Queue()
         self.config = config
         self.stopEvent = threading.Event()
+        # runned test cases, indexed by test.uid
+        self.cases = {}
     #---------------------------------------------------------------------------
     def executeSh(self, cmd):
         '''
@@ -172,44 +171,60 @@ class XrdTestSlave(Runnable):
 
         return self.sockStream
     #---------------------------------------------------------------------------
-    def handleRunTestCase(self, msg):
+    def handleTestCaseInitialize(self, msg):
         suiteName = msg.suiteName
         testName = msg.testName
         testUid = msg.testUid
-        case = msg.case
+        self.cases[testUid] = copy(msg.case)
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
-        msg.state = State(TestSuite.S_TESTCASE_INITIALIZED)
+        msg.state = State(TestSuite.S_SLAVE_TEST_INITIALIZED)
         msg.testUid = testUid
         msg.suiteName = suiteName
         msg.testName = testName
 
-        msg.result = self.executeSh(case.initialize)
+        msg.result = self.executeSh(self.cases[testUid].initialize)
 
-        LOGGER.info("Executed testCase.initialize() %s [%s] with result %s:" % \
+        LOGGER.info("Initialized test %s [%s] with result %s:" % \
                     (testName, suiteName, msg.result))
-        self.sockStream.send(msg)
 
-        msg2 = copy.copy(msg)
-        msg2.result = self.executeSh(case.run)
-        if int(msg2.result[2]) < 0:
-            msg2.state = State(TestSuite.S_TESTCASE_RUNFINISHED_ERROR)
-        else:
-            msg2.state = State(TestSuite.S_TESTCASE_RUNFINISHED)
-        self.sockStream.send(msg2)
+        return msg
+    #---------------------------------------------------------------------------
+    def handleTestCaseRun(self, msg):
+        suiteName = msg.suiteName
+        testName = msg.testName
+        testUid = msg.testUid
 
-        LOGGER.info("Executed testCase.run() %s [%s] with result %s:" % \
-                    (testName, suiteName, msg2.result))
+        msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
+        msg.state = State(TestSuite.S_SLAVE_TEST_RUN_FINISHED)
+        msg.testUid = testUid
+        msg.suiteName = suiteName
+        msg.testName = testName
 
-        msg3 = copy.copy(msg)
-        msg3.testName = testName
-        msg3.result = self.executeSh(case.finalize)
-        msg3.state = State(TestSuite.S_TESTCASE_FINALIZED)
+        msg.result = self.executeSh(self.cases[testUid].run)
 
-        LOGGER.info("Executed testCase.finalize() %s [%s] with result %s:" % \
-            (testName, suiteName, msg2.result))
+        LOGGER.info("Run finished test %s [%s] with result %s:" % \
+                    (testName, suiteName, msg.result))
 
-        return msg3
+        return msg
+    #---------------------------------------------------------------------------
+    def handleTestCaseFinalize(self, msg):
+        suiteName = msg.suiteName
+        testName = msg.testName
+        testUid = msg.testUid
+
+        msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
+        msg.state = State(TestSuite.S_SLAVE_TEST_FINALIZED)
+        msg.testUid = testUid
+        msg.suiteName = suiteName
+        msg.testName = testName
+
+        msg.result = self.executeSh(self.cases[testUid].finalize)
+
+        LOGGER.info("Finalized test %s [%s] with result %s:" % \
+                    (testName, suiteName, msg.result))
+
+        return msg
     #---------------------------------------------------------------------------
     def handleTestSuiteInitialize(self, msg):
         cmd = msg.cmd
@@ -248,8 +263,13 @@ class XrdTestSlave(Runnable):
                     resp = self.handleTestSuiteInitialize(msg)
                 elif msg.name == XrdMessage.M_TESTSUITE_FINALIZE:
                     resp = self.handleTestSuiteFinalize(msg)
+                
+                elif msg.name == XrdMessage.M_TESTCASE_INIT:
+                    resp = self.handleTestCaseInitialize(msg)
                 elif msg.name == XrdMessage.M_TESTCASE_RUN:
-                    resp = self.handleRunTestCase(msg)
+                    resp = self.handleTestCaseRun(msg)
+                elif msg.name == XrdMessage.M_TESTCASE_FINALIZE:
+                    resp = self.handleTestCaseFinalize(msg)
                 else:
                     LOGGER.info("Received unknown message: " + str(msg.name))
                 self.sockStream.send(resp)

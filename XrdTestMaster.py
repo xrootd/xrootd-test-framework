@@ -14,13 +14,13 @@ from cherrypy import _cperror
 from cherrypy.lib.static import serve_file
 from copy import deepcopy
 from curses.has_key import has_key
-from multiprocessing import process
 from string import maketrans, replace
 import Cheetah
 import datetime
 import logging
 import pickle
 import shelve
+import uuid
 import sys
 from ClusterManager import ClusterManagerException
 import cgi
@@ -267,8 +267,13 @@ class WebInterface:
         return self.disp("index_redirect.tmpl", tplVars)
     #---------------------------------------------------------------------------
     def startCluster(self, clusterName):
-        LOGGER.info("startCluster pressed: " + str(clusterName))
-        self.testMaster.startCluster(clusterName)
+        LOGGER.info("startCluster in mainte pressed: " + str(clusterName))
+        self.testMaster.startCluster(clusterName, maintenance=True)
+        return self.indexRedirect()
+    #---------------------------------------------------------------------------
+    def stopCluster(self, clusterName):
+        LOGGER.info("stopCluster pressed: " + str(clusterName))
+        self.testMaster.stopCluster(clusterName, maintenance=True)
         return self.indexRedirect()
     #---------------------------------------------------------------------------
     def initializeSuite(self, testSuiteName):
@@ -303,6 +308,7 @@ class WebInterface:
     index.exposed = True
     suitsSessions.exposed = True
     startCluster.exposed = True
+    stopCluster.exposed = True
     runTestCase.exposed = True
     initializeSuite.exposed = True
     finalizeSuite.exposed = True
@@ -403,7 +409,7 @@ class TestSuiteSession(Stateful):
         @param uid: uid of test case or test suite init/finalize
         @param slave_name: where stage ended
         '''
-        state.time = state.datetime.strftime("%H:%M:%S, %f %d-%m-%Y")
+        state.time = state.datetime.strftime("%H:%M:%S, %d-%m-%Y")
 
         LOGGER.info("New stage result %s (ret code %s)" % \
                      (state, result[2]))
@@ -550,7 +556,7 @@ class XrdTestMaster(Runnable):
 
         return testSlaves
     #---------------------------------------------------------------------------
-    def startCluster(self, clusterName):
+    def startCluster(self, clusterName, maintenance=False):
         clusterFound = False
         if self.clusters.has_key(clusterName):
             if self.clusters[clusterName].name == clusterName:
@@ -560,6 +566,7 @@ class XrdTestMaster(Runnable):
                 if len(self.hypervisors):
                     msg = XrdMessage(XrdMessage.M_START_CLUSTER)
                     msg.clusterDef = self.clusters[clusterName]
+                    msg.maintenance = maintenance
 
                     #take first possible hypervisor and send him cluster def
                     hyperv = [h for h in self.hypervisors.itervalues()][0]
@@ -580,7 +587,7 @@ class XrdTestMaster(Runnable):
             LOGGER.error("No cluster with name " + str(clusterName) + " found")
             return False
     #---------------------------------------------------------------------------
-    def stopCluster(self, clusterName):
+    def stopCluster(self, clusterName, maintenance=False):
         clusterFound = False
         if self.clusters.has_key(clusterName):
             if self.clusters[clusterName].name == clusterName:
@@ -591,6 +598,7 @@ class XrdTestMaster(Runnable):
 
                 msg = XrdMessage(XrdMessage.M_STOP_CLUSTER)
                 msg.clusterDef = self.clusters[clusterName]
+                msg.maintenance = maintenance
 
                 hyperv = self.clustersHypervisor[clusterName]
                 hyperv.send(msg)
@@ -878,7 +886,6 @@ class XrdTestMaster(Runnable):
             self.pendingJobs.append(j)
             self.pendingJobsDbg.append("startCluster(%s)" % clustName)
 
-        #MAINTENANCE
         j = Job(Job.INITIALIZE_TEST_SUITE, test_suite_name)
         self.pendingJobs.append(j)
         self.pendingJobsDbg.append("initSuite(%s)" % test_suite_name)
@@ -1211,21 +1218,22 @@ class XrdTestMaster(Runnable):
             if server:
                 server.shutdown()
             sys.exit(1)
-        #-----------------------------------------------------------------------
-        # Enable scheduler and add jobs
-        sched = Scheduler()
-        sched.start()
-        for ts in self.testSuits.itervalues():
-            if not ts.schedule:
-                continue
 
-            #MAINTENANCE directly run some suite
-            #if ts.name == "testSuite_remote":
-            #    self.executeJob(ts.name)()
-            sched.add_cron_job(self.executeJob(ts.name), **(ts.schedule))
+        if self.config.getint('scheduler', 'enabled') == 1:
+            #-------------------------------------------------------------------
+            # Enable scheduler and add jobs
+            sched = Scheduler()
+            sched.start()
+            for ts in self.testSuits.itervalues():
+                if not ts.schedule:
+                    continue
 
-            LOGGER.info("Adding scheduler job for test suite %s at %s" % \
-                        (ts.name, str(ts.schedule)))
+                    sched.add_cron_job(self.executeJob(ts.name), **(ts.schedule))
+
+                LOGGER.info("Adding scheduler job for test suite %s at %s" % \
+                            (ts.name, str(ts.schedule)))
+        else:
+            LOGGER.info("SCHEDULER is disabled.")
         #-----------------------------------------------------------------------
         self.procEvents()
         #-----------------------------------------------------------------------

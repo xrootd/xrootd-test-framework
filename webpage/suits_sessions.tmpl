@@ -75,7 +75,7 @@
             #if $init_stages and len($init_stages)
 
             <h4><a href="#"><span style="font-weight:normal;">Suite initialization</span> 
-            <span style='font-weight:normal'>[run at: ${suitSess.initDate.strftime("%H:%M:%S,%f")}]</span></a></h4>
+            <span style='font-weight:normal'>[run at: ${suitSess.initDate.strftime("%H:%M:%S")}]</span></a></h4>
             <div class="inner">
             #for $stage in $init_stages
                 #set $color = "#222222"
@@ -100,7 +100,7 @@
         #for $tC in $suitSess.cases.itervalues()
             #set $stages=$suitSess.getTestCaseStages($tC.uid)
             <h4><a href="#"><span style="font-weight:normal;">Test Case</span> <i>${tC.name}</i> 
-            <span style='font-weight:normal'>[run at: ${tC.initDate.strftime("%H:%M:%S,%f")}]</span></a></h4>
+            <span style='font-weight:normal'>[run at: ${tC.initDate.strftime("%H:%M:%S")}]</span></a></h4>
             <div class="inner">
                 #if $stages and len($stages)
                 #for $stage in $stages
@@ -130,7 +130,7 @@
             #set $final_stages=$suitSess.getTestCaseStages("suite_finalized")
             #if $final_stages and len($final_stages)
                 <h4><a href="#"><span style="font-weight:normal;">Suite finalization</span> 
-                <span style='font-weight:normal'>[run at: ${suitSess.initDate.strftime("%H:%M:%S,%f")}]</span></a></h4>
+                <span style='font-weight:normal'>[run at: ${suitSess.initDate.strftime("%H:%M:%S")}]</span></a></h4>
                 <div class="inner">
             #for $stage in $final_stages
                 #set $color = "#222222"

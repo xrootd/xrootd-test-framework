@@ -155,6 +155,7 @@ class XrdTestHypervisor(Runnable):
 
         resp = XrdMessage(XrdMessage.M_CLUSTER_STATE)
         resp.clusterName = msg.clusterDef.name
+        maintenance = msg.maintenance
 
         cluster = msg.clusterDef
         cluster.setEmulatorPath(self.config.get('virtual_machines',
@@ -167,7 +168,7 @@ class XrdTestHypervisor(Runnable):
                 LOGGER.info("Cluster definition semantically correct. " + \
                             "Starting cluster.")
 
-                self.clusterManager.createCluster(cluster)
+                self.clusterManager.createCluster(cluster, maintenance)
 
                 resp.state = State(Cluster.S_ACTIVE)
             except ClusterManagerException, e:

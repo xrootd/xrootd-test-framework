@@ -36,7 +36,8 @@
     	<span style="color:#666666;font-weight:normal;">${cluster.state}</span></a></h3>
     	<div class="inner">
 	    <p class="sect_title">ACTIONS AVAILABLE</p>
-        <p>&rsaquo;&nbsp; <a href="./startCluster?clusterName=${cluster.name}">Send definition to hypervisor and start</a></p>
+        <p>&rsaquo;&nbsp; <a href="./startCluster?clusterName=${cluster.name}">Start cluster in maintenance mode</a></p>
+        <p>&rsaquo;&nbsp; <a href="./stopCluster?clusterName=${cluster.name}">Stop cluster in maintenance mode</a></p>
     	<p class="sect_title">LAST STATE <span style="font-size:11px;font-weight:normal;">${cluster.state}</span></p>
        	<p class="sect_title">NETWORK</p>
             <table class="desctab" width="100%" cellspacing="0" cellpadding="0">
@@ -95,9 +96,6 @@
     #for $ts in $testSuits.iteritems()
         <h3>${ts[1].name}</h3>
         <div class="inner">
-        <p class="sect_title">ACTIONS AVAILABLE</p>
-        <p>&rsaquo;&nbsp; <a href="./initializeSuite?testSuiteName=${ts[1].name}">Initialize test suite <i>${ts[1].name}</i></a></p>
-        <p>&rsaquo;&nbsp; <a href="./finalizeSuite?testSuiteName=${ts[1].name}">Finalize test suite  <i>${ts[1].name}</i></a></p>
         <p class="sect_title">SCHEDULER EXPRESSION</p>
         <table class="desctab" cellspacing="0" cellpadding="0" width="80%">
         <tr><td style="text-align:left;background-color:#e0e0e0;">${ts[1].schedule}</td></tr>
@@ -116,7 +114,7 @@
         <tr><th>Name</th><th>Actions</th><th></th></tr>
         #if $ts[1].tests and len($ts[1].tests) > 0
         #for $testname in $ts[1].tests
-            <tr><td>$testname</td><td>n/a</td><td><a href="./runTestCase?testSuiteName=${ts[1].name}&testName=$testname">RUN</a></td></tr>
+            <tr><td>$testname</td><td>n/a</td></tr>
         #end for
         #end if
         </table>
@@ -177,7 +175,7 @@
         <div><p>No slaves connected.</p></div>
         #end if
     </div>
-    <h1>ALL LOG MESSAGES</h1>
+    <h1>LOG MESSAGES (this run)</h1>
     <div id="acc7" class="accordion" style="background-color:#ffffff;background-image:none;">
         #from cgi import escape
         #if $userMsgs and len($userMsgs) > 0

@@ -2,6 +2,8 @@
 import logging
 import time
 import datetime
+from copy import copy
+from threading import Lock, Condition
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
                     '%(message)s', level=logging.INFO)
@@ -53,3 +55,25 @@ class Stateful(object):
         return self.states.append(state)
 
     state = property(getState, setState)
+#------------------------------------------------------------------------------ 
+class SafeCounter(object):
+    #---------------------------------------------------------------------------
+    def __init__(self):
+        self.lock = Lock()
+        self.criticalSection = Condition(self.lock)
+        self.counter = 0
+    #---------------------------------------------------------------------------
+    def inc(self):
+        self.criticalSection.acquire()
+        LOGGER.debug("COUNTER += 1")
+        self.counter += 1
+        self.criticalSection.notify()
+        self.criticalSection.release()
+    #---------------------------------------------------------------------------
+    def get(self):
+        self.criticalSection.acquire()
+        self.criticalSection.wait()
+        num = copy(self.counter)
+        LOGGER.debug("COUNTER get")
+        self.criticalSection.release()
+        return num

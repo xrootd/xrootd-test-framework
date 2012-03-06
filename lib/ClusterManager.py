@@ -7,18 +7,17 @@
 #-------------------------------------------------------------------------------
 # Imports
 #-------------------------------------------------------------------------------
-from libvirt import libvirtError, VIR_ERR_NETWORK_EXIST
+from libvirt import libvirtError
 from string import join
 import Utils
 import libvirt
 import logging
 import os
 import sys
-import time
 from tempfile import NamedTemporaryFile
 from copy import copy
 import threading
-from threading import Lock, Condition
+from Utils import SafeCounter
 #-------------------------------------------------------------------------------
 # Global variables
 #-------------------------------------------------------------------------------
@@ -251,29 +250,6 @@ class Host(object):
         self.__xmlDesc = self.xmlDomainPattern % values
 
         return self.__xmlDesc
-
-#------------------------------------------------------------------------------ 
-class SafeCounter(object):
-    #---------------------------------------------------------------------------
-    def __init__(self):
-        self.lock = Lock()
-        self.criticalSection = Condition(self.lock)
-        self.counter = 0
-    #---------------------------------------------------------------------------
-    def inc(self):
-        self.criticalSection.acquire()
-        LOGGER.debug("COUNTER += 1")
-        self.counter += 1
-        self.criticalSection.notify()
-        self.criticalSection.release()
-    #---------------------------------------------------------------------------
-    def get(self):
-        self.criticalSection.acquire()
-        self.criticalSection.wait()
-        num = copy(self.counter)
-        LOGGER.debug("COUNTER get")
-        self.criticalSection.release()
-        return num
 #-------------------------------------------------------------------------------
 class Cluster(Utils.Stateful):
     #---------------------------------------------------------------------------
@@ -371,8 +347,8 @@ class Cluster(Utils.Stateful):
 class ClusterManager:
     '''
     Virtual machines cluster's manager
-    '''
-    MAINTENANCE_MODE = False    #used only if orinal machine is to
+    '''                         
+                                #used only if orinal machine is to
                                 #to be reconfigured, instance is run from 
                                 #original image and it's not deleted after
     #---------------------------------------------------------------------------
@@ -465,7 +441,7 @@ class ClusterManager:
         if safeCounter:
             safeCounter.inc()
     #---------------------------------------------------------------------------
-    def defineHost(self, hostObj):
+    def defineHost(self, hostObj, maintenance):
         '''
         Defines virtual host in a cluster using given host object, 
         not starting it. Host may be defined only once in the system.
@@ -476,13 +452,13 @@ class ClusterManager:
         if self.hosts.has_key(hostObj.name):
             return self.hosts[hostObj.name][0]
 
-        if self.MAINTENANCE_MODE:
+        if maintenance:
             for h in self.hosts.itervalues():
                 if h[2].diskImage == hostObj.diskImage:
                     return h[0]
 
         tmpFile = None
-        if not self.MAINTENANCE_MODE:
+        if not maintenance:
             # first, copy the original disk image
             tmpFile = NamedTemporaryFile(prefix=self.tmpImagesPrefix, \
                                          dir=self.tmpImagesDir)
@@ -492,20 +468,21 @@ class ClusterManager:
                         % (hostObj.diskImage, hostObj.name))
             hostObj.runningDiskImage = hostObj.diskImage
 
-        host = None
+        self.hosts[hostObj.name] = None
         try:
             conn = self.virtConnection
             host = conn.defineXML(hostObj.xmlDesc)
 
-            self.hosts[hostObj.name] = (host, tmpFile, hostObj)
+            self.hosts[hostObj.name] = (host, tmpFile, hostObj, maintenance)
         except libvirtError, e:
             try:
                 host = conn.lookupByName(hostObj.name)
+                self.hosts[hostObj.name] = (host, "", None, None)
             except libvirtError, e:
                 msg = ("Could not define host neither " + \
                         "obtain host definition: %s") % e
                 raise ClusterManagerException(msg, ERR_ADD_HOST)
-        return host
+        return self.hosts[hostObj.name]
     #---------------------------------------------------------------------------
     def removeHost(self, hostName):
         '''
@@ -536,24 +513,21 @@ class ClusterManager:
         if netObj.name in self.nets:
             return self.nets[netObj.name]
 
-        net = None
         try:
             conn = self.virtConnection
-            net = conn.networkDefineXML(netObj.xmlDesc)
-            self.nets[netObj.name] = net
+            self.nets[netObj.name] = conn.networkDefineXML(netObj.xmlDesc)
             LOGGER.info("Defining network " + netObj.name)
         except libvirtError, e:
             LOGGER.error("Couldn't define network: %s" % e)
             try:
-                net = conn.networkLookupByName(netObj.name)
-                self.nets[netObj.name] = net
+                self.nets[netObj.name] = conn.networkLookupByName(netObj.name)
             except libvirtError, e:
                 LOGGER.error(e)
                 msg = "Could not define net neither obtain net definition. " + \
                       " After network already exists."
                 raise ClusterManagerException(msg, ERR_CREATE_NETWORK)
 
-        return net
+        return self.nets[netObj.name]
     #---------------------------------------------------------------------------
     def createNetwork(self, networkObj):
         '''
@@ -598,7 +572,7 @@ class ClusterManager:
             LOGGER.error(msg)
             raise ClusterManagerException(msg, ERR_CONNECTION)
     #---------------------------------------------------------------------------
-    def createCluster(self, cluster):
+    def createCluster(self, cluster, maintenance=False):
         '''
         Creates whole cluster: first network, then hosts.
         @param cluster:
@@ -609,9 +583,10 @@ class ClusterManager:
             copyThreads = {}
             safeCounter = SafeCounter()
             for h in cluster.hosts:
-                self.defineHost(h)
+                self.defineHost(h, maintenance)
 
-                if not self.MAINTENANCE_MODE:
+                if not maintenance:
+                    sys.setcheckinterval(500)
                     copyThreads[h.name] =\
                         threading.Thread(target=self.copyHostImg, args =\
                                          (self.hosts[h.name][2], \
@@ -619,13 +594,14 @@ class ClusterManager:
                                           safeCounter))
                     copyThreads[h.name].start()
 
-            if not self.MAINTENANCE_MODE:
+            if not maintenance:
                 #wait for all threads to copy images
                 n = 0
                 m = len(cluster.hosts)
                 while(n < m):
                     n = safeCounter.get()
                     LOGGER.info("Machines images copied: %s of %s" % (n, m))
+                sys.setcheckinterval(100)
             #start all domains
             for h in cluster.hosts:
                 LOGGER.info("Starting %s" % h.name)
@@ -672,8 +648,7 @@ def loadClustersDefs(path):
                 except AttributeError, e:
                     LOGGER.error(e)
                     raise ClusterManagerException("Method getCluster " + \
-                          "can't be found in " + \
-                          "file: " + str(modFile))
+                          "can't be found in file: " + str(modFile))
                 except ImportError, e:
                     LOGGER.error("Can't import %s: %s." % (modName, e))
     for clu in clusters:

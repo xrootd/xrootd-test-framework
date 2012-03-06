@@ -33,5 +33,9 @@ cp $CP_OPTS ${SRC}/lib/Daemon.py ${DEST}/lib
 cp $CP_OPTS ${SRC}/lib/Utils.py ${DEST}/lib
 cp $CP_OPTS ${SRC}/lib/ClusterManager.py ${DEST}/lib
 
+mkdir -p ${DEST}/rpmbuild
+cp $CP_OPTS ${SRC}/rpmbuild/* ${DEST}/rpmbuild
+
+
 tar -cvzf ${NAME}.tar.gz ${NAME}
 rm -rf ${DEST}

@@ -20,7 +20,6 @@ import datetime
 import logging
 import pickle
 import shelve
-import uuid
 import sys
 from ClusterManager import ClusterManagerException
 import cgi

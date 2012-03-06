@@ -18,6 +18,7 @@ from tempfile import NamedTemporaryFile
 from copy import copy
 import threading
 from Utils import SafeCounter
+import uuid
 #-------------------------------------------------------------------------------
 # Global variables
 #-------------------------------------------------------------------------------

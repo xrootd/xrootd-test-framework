@@ -20,20 +20,32 @@ XRootD testing framework, client's daemon application.
 %prep
 %setup -q
 
+#-------------------------------------------------------------------------------
+# Install section
+#-------------------------------------------------------------------------------
 %install
 [ "x%{buildroot}" != "x/" ] && rm -rf %{buildroot}
 %define libs_path %{buildroot}%{python_sitelib}/XrdTest
 
-
+# libs
 mkdir -p %{libs_path}
 install -pm 755 lib/Utils.py %{libs_path}
 install -pm 755 lib/SocketUtils.py %{libs_path}
 install -pm 755 lib/Daemon.py %{libs_path}
 install -pm 755 lib/TestUtils.py %{libs_path}
+install -pm 755 lib/uuid.py %{libs_path}
 
+#logs
 mkdir -p %{buildroot}%{_localstatedir}\log\XrdTest
 chmod --recursive 755 %{buildroot}%{_localstatedir}\log\XrdTest
 
+#init scripts
+mkdir -p %{buildroot}%{_initrddir}
+install -pm 755 rpmbuild/xrdtestmasterd %{buildroot}%{_initrddir}
+install -pm 755 rpmbuild/xrdtesthypervisord %{buildroot}%{_initrddir}
+install -pm 755 rpmbuild/xrdtestslaved %{buildroot}%{_initrddir}
+
+#configs
 mkdir -p %{buildroot}%{_sysconfdir}/XrdTest
 mkdir -p %{buildroot}%{_sysconfdir}/XrdTest/certs
 mkdir -p %{buildroot}%{_sysconfdir}/XrdTest/testSuits
@@ -60,9 +72,15 @@ install -pm 755 certs/hypervisorcert.pem %{buildroot}%{_sysconfdir}/XrdTest/cert
 install -pm 755 certs/hypervisorkey.pem %{buildroot}%{_sysconfdir}/XrdTest/certs
 install -pm 755 lib/ClusterManager.py %{libs_path}
 
+#-------------------------------------------------------------------------------
+# XrdTestMaster
+#-------------------------------------------------------------------------------
 %package -n XrdTestMaster
+
 Summary: Xrd Test Master is component of XrdTestFramework.
 Group:   Development/Tools
+#Requires: 
+
 %description -n XrdTestMaster
 Xrd Test Master is component of XrdTestFramework.
 %files -n XrdTestMaster
@@ -75,9 +93,10 @@ Xrd Test Master is component of XrdTestFramework.
 %{_sbindir}/XrdTestMaster.pyc
 %{_sbindir}/XrdTestMaster.pyo
 %{_datadir}/XrdTest/webpage/*
-#%{_sysconfdir}/XrdTest/testSuits/*.py
-#%{_sysconfdir}/XrdTest/clusters/*.py
-
+%{_initrddir}/xrdtestmasterd
+#-------------------------------------------------------------------------------
+# XrdTestSlave
+#-------------------------------------------------------------------------------
 %package -n XrdTestSlave
 Summary: Xrd Test Slave is component of XrdTestFramework.
 Group:   Development/Tools
@@ -92,10 +111,13 @@ Xrd Test Slave is component of XrdTestFramework.
 %{_sbindir}/XrdTestSlave.py
 %{_sbindir}/XrdTestSlave.pyc
 %{_sbindir}/XrdTestSlave.pyo
-
+%{_initrddir}/xrdtestslaved
+#-------------------------------------------------------------------------------
+# XrdTestHypervisor
+#-------------------------------------------------------------------------------
 %package -n XrdTestHypervisor
 Summary: Xrd Test Hypervisor is component of XrdTestFramework.
-Requires: libvirt >= 0.8.8
+#Requires: libvirt >= 0.8.8
 Group:	 Development/Tools
 %description -n XrdTestHypervisor
 Xrd Test Hypervisor is component of XrdTestFramework.
@@ -108,9 +130,22 @@ Xrd Test Hypervisor is component of XrdTestFramework.
 %{_sbindir}/XrdTestHypervisor.py
 %{_sbindir}/XrdTestHypervisor.pyc
 %{_sbindir}/XrdTestHypervisor.pyo
+%{_initrddir}/xrdtesthypervisord
 
 %clean
 [ "x%{buildroot}" != "x/" ] && rm -rf %{buildroot}
+#-------------------------------------------------------------------------------
+# Install rc*.d links
+#-------------------------------------------------------------------------------
+%post -n XrdTestMaster
+/sbin/ldconfig
+/sbin/chkconfig --add xrdtestmasterd
+%post -n XrdTestSlave
+/sbin/ldconfig
+/sbin/chkconfig --add xrdtestslaved
+%post -n XrdTestHypervisor
+/sbin/ldconfig
+/sbin/chkconfig --add xrdtesthypervisord
 
 %changelog
 * Wed Feb 15 2012 Lukasz Trzaska <ltrzaska@cern.ch>

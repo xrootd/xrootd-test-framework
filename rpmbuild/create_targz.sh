@@ -4,7 +4,7 @@ ARCHIVE_DEST=$PWD
 NAME=XrdTestFramework-0.0.1
 
 DEST=${ARCHIVE_DEST}/${NAME}
-SRC=/home/ltrzaska/dev/pydev-workspace/xrd-test/src
+SRC=/home/ltrzaska/dev/git-repos/xrootd-tests
 CP_OPTS=-vr
 
 mkdir -p ${DEST}
@@ -32,10 +32,10 @@ cp $CP_OPTS ${SRC}/lib/SocketUtils.py ${DEST}/lib
 cp $CP_OPTS ${SRC}/lib/Daemon.py ${DEST}/lib
 cp $CP_OPTS ${SRC}/lib/Utils.py ${DEST}/lib
 cp $CP_OPTS ${SRC}/lib/ClusterManager.py ${DEST}/lib
+cp $CP_OPTS ${SRC}/lib/uuid.py ${DEST}/lib
 
 mkdir -p ${DEST}/rpmbuild
 cp $CP_OPTS ${SRC}/rpmbuild/* ${DEST}/rpmbuild
-
 
 tar -cvzf ${NAME}.tar.gz ${NAME}
 rm -rf ${DEST}

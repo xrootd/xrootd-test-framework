@@ -46,7 +46,10 @@ class TestSuite:
     def __init__(self):
         #-----------------------------------------------------------------------
         # Defining attributes
-        self.name = ""      # name of test suite
+        self.name = ""      # name of test suite, has to the same as
+                            # the name of test suite definition file
+        self.descName = ""  # name of test suite readable for human, only
+                            # for informational need
         self.schedule = {}  # define when the test should be run (cron style)
                             # reference: APScheduler cronschedule
         self.clusters = []  # a list of virtual clusters needed by 

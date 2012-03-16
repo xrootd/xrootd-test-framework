@@ -22,6 +22,7 @@ import pickle
 import shelve
 import sys
 from ClusterManager import ClusterManagerException
+from pyinotify import WatchManager, Notifier, ThreadedNotifier, ProcessEvent
 import cgi
 
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
@@ -73,22 +74,23 @@ class MasterEvent(object):
     hypervisor connection or normal message containing data.
     '''
 
-    PRIO_NORMAL = 9
-    PRIO_IMPORTANT = 1
+    PRIO_NORMAL             = 9
+    PRIO_IMPORTANT          = 1
 
-    M_UNKNOWN = 1
-    M_CLIENT_CONNECTED = 2
-    M_CLIENT_DISCONNECTED = 4
-    M_HYPERV_MSG = 8
-    M_SLAVE_MSG = 16
-    M_JOB_ENQUEUE = 32
+    M_UNKNOWN               = 1
+    M_CLIENT_CONNECTED      = 2
+    M_CLIENT_DISCONNECTED   = 4
+    M_HYPERV_MSG            = 8
+    M_SLAVE_MSG             = 16
+    M_JOB_ENQUEUE           = 32
+    M_RELOAD_DEFINITIONS    = 64
 
     #---------------------------------------------------------------------------
     def __init__(self, e_type, e_data, msg_sender_addr=None):
         self.type = e_type
         self.data = e_data
         self.sender = msg_sender_addr
-#------------------------------------------------------------------------------- 
+#-------------------------------------------------------------------------------
 class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
     """
     Client's request handler.
@@ -210,10 +212,17 @@ class WebInterface:
     #reference to testMaster
     testMaster = None
     config = None
+    cp_config = {}
+
     #---------------------------------------------------------------------------
     def __init__(self, config, test_master_ref):
         self.testMaster = test_master_ref
         self.config = config
+
+        self.cp_config = {'request.error_response': handleCherrypyError,
+                          'error_page.404': \
+                          self.config.get('webserver', 'webpage_dir') +\
+                          os.sep + "page_404.tmpl"}
     #---------------------------------------------------------------------------
     def disp(self, tpl_file, tpl_vars):
         tpl = None
@@ -274,47 +283,34 @@ class WebInterface:
         LOGGER.info("stopCluster pressed: " + str(clusterName))
         self.testMaster.stopCluster(clusterName, maintenance=True)
         return self.indexRedirect()
-    #---------------------------------------------------------------------------
-    def initializeSuite(self, testSuiteName):
-        LOGGER.info("Initialize requested for test suite [%s] " % \
-                                (testSuiteName))
-        self.testMaster.initializeTestSuite(testSuiteName)
-        return self.indexRedirect()
-    #---------------------------------------------------------------------------
-    def finalizeSuite(self, testSuiteName):
-        LOGGER.info("Finalize requested for test suite [%s] " % (testSuiteName))
-        self.testMaster.finalizeTestSuite(testSuiteName)
-        return self.indexRedirect()
     #--------------------------------------------------------------------------- 
     def downloadScript(self, script_name):
-        return serve_file(self.config.get('webserver', 'webpage_dir') \
-                          + os.sep + 'scripts' + os.sep + script_name, \
-                          "application/x-download", "attachment")
+        from xml.sax.saxutils import quoteattr
+        p = self.config.get('webserver', 'webpage_dir') \
+                + os.sep + 'scripts' + os.sep + quoteattr(script_name)
+
+        if os.path.exists(p):
+            return serve_file(p , "application/x-download", "attachment")
+        else:
+            return ""
     #--------------------------------------------------------------------------- 
     def showScript(self, script_name):
-        return serve_file(self.config.get('webserver', 'webpage_dir') \
-                          + os.sep + 'scripts' + os.sep + script_name, \
-                          "text/html")
+        from xml.sax.saxutils import quoteattr
+        p = self.config.get('webserver', 'webpage_dir') \
+                          + os.sep + 'scripts' + os.sep +\
+                          quoteattr(script_name)
+        if os.path.exists(p):
+            return serve_file(p ,"text/html")
+        else:
+            return ""
 
-        return self.disp('scripts' + os.sep + script_name, {})
-    #---------------------------------------------------------------------------
-    def runTestCase(self, testSuiteName, testName):
-        LOGGER.info("RunTestCase requested for test %s in test suite: %s" % \
-                                (testName, testSuiteName))
-        self.testMaster.runTestCase(testSuiteName, testName)
-        return self.indexRedirect()
-
+#    startCluster.exposed = True
+#    stopCluster.exposed = True
     index.exposed = True
     suitsSessions.exposed = True
-    startCluster.exposed = True
-    stopCluster.exposed = True
-    runTestCase.exposed = True
-    initializeSuite.exposed = True
-    finalizeSuite.exposed = True
     downloadScript.exposed = True
     showScript.exposed = True
 
-    _cp_config = {'request.error_response': handleCherrypyError}
 #-------------------------------------------------------------------------------
 class TCPClient(Stateful):
     S_CONNECTED_IDLE = (1, "Connected")
@@ -448,6 +444,20 @@ class Job(object):
         self.state = Job.S_ADDED
         self.args = args
 #-------------------------------------------------------------------------------
+class DefinitionsChangeHandler(ProcessEvent):
+    '''
+    Definitions files change handler
+    '''
+    def __init__(self, pevent=None, **kwargs):
+        ProcessEvent.__init__(self, pevent=pevent, **kwargs)
+        self.callback = kwargs['masterCallback']
+    #---------------------------------------------------------------------------
+    def process_IN_CREATE(self, event):
+        print "Create: %s" %  os.path.join(event.path, event.name)
+    #---------------------------------------------------------------------------
+    def process_IN_DELETE(self, event):
+        print "Remove: %s" %  os.path.join(event.path, event.name)
+#-------------------------------------------------------------------------------
 class XrdTestMaster(Runnable):
     '''
     Runnable class, doing XrdTestMaster jobs.
@@ -467,7 +477,7 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     # TestSuits that has ever run, synchronized with a HDD, key of dict is 
     # session.uid
-    suitsSessions = shelve.open('SUITS_SESSIONS.bin')
+    suitsSessions = None
     #---------------------------------------------------------------------------
     # Mapping from names to uids of running test suits. Useful for retrieval 
     # of test suit sessions saved in suitsSessions python shelve. 
@@ -497,8 +507,13 @@ class XrdTestMaster(Runnable):
     # message logging system
     userMsgs = []
     #---------------------------------------------------------------------------
+    # tasks scheduler instance
+    sched = Scheduler()
+    #---------------------------------------------------------------------------
     def __init__(self, config):
         self.config = config
+        self.suitsSessions = shelve.open(\
+                             self.config.get('tests', 'suits_sessions_file'))
     #---------------------------------------------------------------------------
     def retrieveSuiteSession(self, suite_name):
         return self.suitsSessions[self.runningSuitsUids[suite_name]]
@@ -507,6 +522,55 @@ class XrdTestMaster(Runnable):
         self.runningSuitsUids[test_suite_session.name] = test_suite_session.uid
         self.suitsSessions[test_suite_session.uid] = test_suite_session
         self.suitsSessions.sync()
+    #---------------------------------------------------------------------------
+    def fireReloadDefinitionsEvent(self):
+        evt = MasterEvent(MasterEvent.M_RELOAD_DEFINITIONS, None)
+        self.recvQueue.put((MasterEvent.PRIO_NORMAL, evt))
+    #---------------------------------------------------------------------------
+    def reloadDefinitions(self):
+        LOGGER.info("Reloading definitions...")
+        try:
+            clusters = loadClustersDefs(\
+                        self.config.get('server', 'clusters_definition_path'))
+            for clu in clusters:
+                clu.state = State(Cluster.S_UNKNOWN)
+                self.clusters[clu.name] = clu
+        except ClusterManagerException, e:
+            LOGGER.error("ClusterManager Exception: %s" % e)
+            sys.exit()
+
+        try:
+            testSuits = loadTestSuitsDefs(\
+                        self.config.get('server', 'testsuits_definition_path'))
+            for ts in testSuits.itervalues():
+                for cluN in ts.clusters:
+                    if not cluN in self.clusters:
+                        raise TestSuiteException(\
+                        ("Cluster %s in suite %s " + \
+                         "doesn't exist in definitions") % (cluN, ts.name))
+                # filling test suite machines automatically if user
+                # provided none
+                if not len(ts.machines):
+                    for cName in ts.clusters:
+                        ts.machines.extend(\
+                            [h.name for h in self.clusters[cName].hosts])
+                    LOGGER.info(("Host list for suite %s " + \
+                                 "filled automatically with %s") % \
+                                (ts.name, ts.machines))
+                self.testSuits = testSuits
+        except TestSuiteException, e:
+            LOGGER.error("Test Suite Exception: %s" % e)
+            sys.exit()
+
+        if self.config.getint('scheduler', 'enabled') == 1:
+            for ts in self.testSuits.itervalues():
+                if not ts.schedule:
+                    continue
+                self.sched.add_cron_job(self.executeJob(ts.name),\
+                                         **(ts.schedule))
+
+                LOGGER.info("Adding scheduler job for test suite %s at %s" % \
+                            (ts.name, str(ts.schedule)))
     #---------------------------------------------------------------------------
     def slaveState(self, slave_name):
         '''
@@ -643,7 +707,6 @@ class XrdTestMaster(Runnable):
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_INIT)
         msg.suiteName = tss.name
-        msg.tssUid = tss.uid
         msg.cmd = tss.suite.initialize
 
         #@todo:  if sending to some machines fails 
@@ -652,7 +715,6 @@ class XrdTestMaster(Runnable):
             LOGGER.info("Sending Test Suite initialize to %s" % sl)
             sl.send(msg)
             sl.state = State(Slave.S_SUITINIT_SENT)
-            sl.state.tssUid = tss.uid
 
         return True
     #---------------------------------------------------------------------------
@@ -1122,6 +1184,9 @@ class XrdTestMaster(Runnable):
             #------------------------------------------------------------------- 
             elif evt.type == MasterEvent.M_JOB_ENQUEUE:
                 self.enqueueJob(evt.data)
+            #------------------------------------------------------------------- 
+            elif evt.type == MasterEvent.M_RELOAD_DEFINITIONS:
+                self.reloadDefinitions()
             #-------------------------------------------------------------------
             else:
                 raise XrdTestMasterException("Unknown incoming evt type " + \
@@ -1160,36 +1225,38 @@ class XrdTestMaster(Runnable):
         server_thread.daemon = True
         server_thread.start()
 
-        try:
-            clusters = loadClustersDefs(currentDir + "/clusters")
-            for clu in clusters:
-                self.clusters[clu.name] = clu
-                self.clusters[clu.name].state = State(Cluster.S_UNKNOWN)
-        except ClusterManagerException, e:
-            LOGGER.error("ClusterManager Exception: %s" % e)
-            sys.exit()
+        if self.config.getint('scheduler', 'enabled') == 1:
+            #-------------------------------------------------------------------
+            # Enable scheduler
+            self.sched.start()
+        else:
+            LOGGER.info("SCHEDULER is disabled.")
 
-        try:
-            self.testSuits = loadTestSuitsDefs(currentDir + "/testSuits")
-            for ts in self.testSuits.itervalues():
-                for cluN in ts.clusters:
-                    if not cluN in self.clusters:
-                        LOGGER.error(("Cluster %s in suite %s " + \
-                                 "doesn't exist") % (cluN, ts.name))
-                        sys.exit(1)
-                if not len(ts.machines):
-                    for cName in ts.clusters:
-                        ts.machines.extend(\
-                            [h.name for h in self.clusters[cName].hosts])
-                    LOGGER.info(("Host list for suite %s " + \
-                                 "filled automatically with %s") % \
-                                (ts.name, ts.machines))
+        self.reloadDefinitions()
+        #-----------------------------------------------------------------------
+        # schedule config reloading job
+#        self.sched.add_cron_job(self.fireReloadDefinitionsEvent, \
+#                           minute=self.config.get('server', \
+#                           'definitions_reload_minute'))
 
-        except TestSuiteException, e:
-            LOGGER.error("Test Suite Exception: %s" % e)
-            sys.exit()
+        wm = WatchManager()
+        # constants from /usr/src/linux/include/linux/inotify.h
+        IN_MOVED_FROM   = 0x00000040L     # File was moved from X
+        IN_MOVED_TO     = 0x00000080L     # File was moved to Y
+        IN_CREATE       = 0x00000100L     # Subfile was created
+        IN_DELETE       = 0x00000200L     # Subfile was delete
+        mask = IN_DELETE | IN_CREATE | IN_MOVED_FROM | IN_MOVED_TO
+        notifier = ThreadedNotifier(wm,\
+                            DefinitionsChangeHandler(\
+                            masterCallback=self.fireReloadDefinitionsEvent()))
+        notifier.start()
 
-        cherrypyCfg = {'/webpage/js': {
+        wdd = wm.add_watch(self.config.get('server', \
+                           'testsuits_definition_path'),\
+                           mask, rec=True)
+
+        cherrypyCfg = {
+                    '/webpage/js': {
                      'tools.staticdir.on': True,
                      'tools.staticdir.dir' : \
                      self.config.get('webserver', 'webpage_dir') \
@@ -1217,26 +1284,11 @@ class XrdTestMaster(Runnable):
             if server:
                 server.shutdown()
             sys.exit(1)
-
-        if self.config.getint('scheduler', 'enabled') == 1:
-            #-------------------------------------------------------------------
-            # Enable scheduler and add jobs
-            sched = Scheduler()
-            sched.start()
-            for ts in self.testSuits.itervalues():
-                if not ts.schedule:
-                    continue
-
-                    sched.add_cron_job(self.executeJob(ts.name), **(ts.schedule))
-
-                LOGGER.info("Adding scheduler job for test suite %s at %s" % \
-                            (ts.name, str(ts.schedule)))
-        else:
-            LOGGER.info("SCHEDULER is disabled.")
         #-----------------------------------------------------------------------
         self.procEvents()
         #-----------------------------------------------------------------------
         # synchronize suits sessions list with HDD storage and close
+        notifier.stop()
         xrdTestMaster.suitsSessions.close()
 #-------------------------------------------------------------------------------
 class UserInfoHandler(logging.Handler):

@@ -229,7 +229,7 @@ class XrdTestSlave(Runnable):
     def handleTestSuiteInitialize(self, msg):
         cmd = msg.cmd
         suiteName = msg.suiteName
-        
+
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
         msg.suiteName = suiteName
         msg.result = self.executeSh(cmd)

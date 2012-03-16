@@ -29,10 +29,10 @@ LOGGER.debug("Running script: " + __file__)
 #-------------------------------------------------------------------------------
 # Global error types
 #-------------------------------------------------------------------------------
-ERR_UNKNOWN = 1
-ERR_CONNECTION = 2
-ERR_ADD_HOST = 4
-ERR_CREATE_NETWORK = 8
+ERR_UNKNOWN         = 1
+ERR_CONNECTION      = 2
+ERR_ADD_HOST        = 4
+ERR_CREATE_NETWORK  = 8
 #-------------------------------------------------------------------------------
 class ClusterManagerException(Exception):
     '''
@@ -270,6 +270,7 @@ class Cluster(Utils.Stateful):
         Utils.Stateful.__init__(self)
         self.hosts = []
         self.name = None
+        self.info = None
         self.network = None
 
         self.defaultHost = Host()

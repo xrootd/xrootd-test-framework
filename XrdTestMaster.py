@@ -13,15 +13,14 @@ from apscheduler.scheduler import Scheduler
 from cherrypy import _cperror
 from cherrypy.lib.static import serve_file
 from copy import deepcopy
-from curses.has_key import has_key
-from string import maketrans, replace
+from string import maketrans
 import Cheetah
 import datetime
 import logging
-import pickle
 import shelve
 import sys
-from ClusterManager import ClusterManagerException
+from ClusterManager import ClusterManagerException, loadClusterDef,\
+    extractClusterName
 from pyinotify import WatchManager, Notifier, ThreadedNotifier, ProcessEvent
 import cgi
 
@@ -79,11 +78,12 @@ class MasterEvent(object):
 
     M_UNKNOWN               = 1
     M_CLIENT_CONNECTED      = 2
-    M_CLIENT_DISCONNECTED   = 4
-    M_HYPERV_MSG            = 8
-    M_SLAVE_MSG             = 16
-    M_JOB_ENQUEUE           = 32
-    M_RELOAD_DEFINITIONS    = 64
+    M_CLIENT_DISCONNECTED   = 3
+    M_HYPERV_MSG            = 4
+    M_SLAVE_MSG             = 5
+    M_JOB_ENQUEUE           = 6
+    M_RELOAD_CLUSTER_DEF    = 7
+    M_RELOAD_SUIT_DEF       = 8
 
     #---------------------------------------------------------------------------
     def __init__(self, e_type, e_data, msg_sender_addr=None):
@@ -444,19 +444,29 @@ class Job(object):
         self.state = Job.S_ADDED
         self.args = args
 #-------------------------------------------------------------------------------
-class DefinitionsChangeHandler(ProcessEvent):
+class ClustersDefinitionsChangeHandler(ProcessEvent):
     '''
-    Definitions files change handler
+    Clusters' definitions files change handler
     '''
+    #---------------------------------------------------------------------------
     def __init__(self, pevent=None, **kwargs):
         ProcessEvent.__init__(self, pevent=pevent, **kwargs)
         self.callback = kwargs['masterCallback']
     #---------------------------------------------------------------------------
-    def process_IN_CREATE(self, event):
-        print "Create: %s" %  os.path.join(event.path, event.name)
+    def process_default(self, event):
+        self.callback("CLUSTER", event)
+#-------------------------------------------------------------------------------
+class SuitsDefinitionsChangeHandler(ProcessEvent):
+    '''
+    Suits' definitions files change handler
+    '''
     #---------------------------------------------------------------------------
-    def process_IN_DELETE(self, event):
-        print "Remove: %s" %  os.path.join(event.path, event.name)
+    def __init__(self, pevent=None, **kwargs):
+        ProcessEvent.__init__(self, pevent=pevent, **kwargs)
+        self.callback = kwargs['masterCallback']
+    #---------------------------------------------------------------------------
+    def process_default(self, event):
+        self.callback("SUIT", event)
 #-------------------------------------------------------------------------------
 class XrdTestMaster(Runnable):
     '''
@@ -523,17 +533,26 @@ class XrdTestMaster(Runnable):
         self.suitsSessions[test_suite_session.uid] = test_suite_session
         self.suitsSessions.sync()
     #---------------------------------------------------------------------------
-    def fireReloadDefinitionsEvent(self):
-        evt = MasterEvent(MasterEvent.M_RELOAD_DEFINITIONS, None)
-        self.recvQueue.put((MasterEvent.PRIO_NORMAL, evt))
+    def fireReloadDefinitionsEvent(self, type, dirEvent):
+        evt = None
+        if type == "CLUSTER":
+            evt = MasterEvent(MasterEvent.M_RELOAD_CLUSTER_DEF, dirEvent)
+        if type == "SUIT":
+            evt = MasterEvent(MasterEvent.M_RELOAD_SUIT_DEF, dirEvent)
+        self.recvQueue.put((MasterEvent.PRIO_IMPORTANT, evt))
     #---------------------------------------------------------------------------
-    def reloadDefinitions(self):
-        LOGGER.info("Reloading definitions...")
+    def suitDefinitionChanged(self, dirEvent):
+        LOGGER.info("SUIT EVT: %s" %  os.path.join(dirEvent.path,\
+                                                      dirEvent.name))
+        LOGGER.info("TYPE: %s" % dirEvent.maskname)
+    #---------------------------------------------------------------------------
+    def loadDefinitions(self):
+        LOGGER.info("Loading definitions...")
+
         try:
             clusters = loadClustersDefs(\
                         self.config.get('server', 'clusters_definition_path'))
             for clu in clusters:
-                clu.state = State(Cluster.S_UNKNOWN)
                 self.clusters[clu.name] = clu
         except ClusterManagerException, e:
             LOGGER.error("ClusterManager Exception: %s" % e)
@@ -571,6 +590,29 @@ class XrdTestMaster(Runnable):
 
                 LOGGER.info("Adding scheduler job for test suite %s at %s" % \
                             (ts.name, str(ts.schedule)))
+    #---------------------------------------------------------------------------
+    def clusterDefinitionChanged(self, dirEvent):
+        LOGGER.info("TYPE: %s" % dirEvent.maskname)
+
+        remMasks = ["IN_DELETE", "IN_MOVED_FROM"]
+        addMasks = ["IN_CREATE", "IN_MOVED_TO"]
+        try:
+            p = os.path.join(dirEvent.path, dirEvent.name)
+
+            #TODO it may couse inconsistency in suits defs
+            if dirEvent.maskname in remMasks:
+                (modName, ext, modPath, modFile) = extractClusterName(p)
+                if ext == ".py":
+                    LOGGER.info("Undefining cluster: %s" % modName)
+                    del sys.modules[modName]
+                    del self.clusters[modName]
+                    del modName
+            if dirEvent.maskname in addMasks:
+                clu = loadClusterDef(p, self.clusters.values(), True)
+                LOGGER.info("Defining cluster: %s" % clu.name)
+                self.clusters[clu.name] = clu
+        except ClusterManagerException, e:
+            LOGGER.info("Error while redefining: %s" % e)
     #---------------------------------------------------------------------------
     def slaveState(self, slave_name):
         '''
@@ -1185,8 +1227,11 @@ class XrdTestMaster(Runnable):
             elif evt.type == MasterEvent.M_JOB_ENQUEUE:
                 self.enqueueJob(evt.data)
             #------------------------------------------------------------------- 
-            elif evt.type == MasterEvent.M_RELOAD_DEFINITIONS:
-                self.reloadDefinitions()
+            elif evt.type == MasterEvent.M_RELOAD_CLUSTER_DEF:
+                self.clusterDefinitionChanged(evt.data)
+            #------------------------------------------------------------------- 
+            elif evt.type == MasterEvent.M_RELOAD_SUIT_DEF:
+                self.suitDefinitionChanged(evt.data)
             #-------------------------------------------------------------------
             else:
                 raise XrdTestMasterException("Unknown incoming evt type " + \
@@ -1232,26 +1277,36 @@ class XrdTestMaster(Runnable):
         else:
             LOGGER.info("SCHEDULER is disabled.")
 
-        self.reloadDefinitions()
+        self.loadDefinitions()
         #-----------------------------------------------------------------------
         # schedule config reloading job
 #        self.sched.add_cron_job(self.fireReloadDefinitionsEvent, \
 #                           minute=self.config.get('server', \
 #                           'definitions_reload_minute'))
 
+        #-----------------------------------------------------------------------
+        # NOTIFYING FOR DEFINITIONS CHANGE SETUP
         wm = WatchManager()
+        wm2 = WatchManager()
         # constants from /usr/src/linux/include/linux/inotify.h
-        IN_MOVED_FROM   = 0x00000040L     # File was moved from X
-        IN_MOVED_TO     = 0x00000080L     # File was moved to Y
-        IN_CREATE       = 0x00000100L     # Subfile was created
-        IN_DELETE       = 0x00000200L     # Subfile was delete
-        mask = IN_DELETE | IN_CREATE | IN_MOVED_FROM | IN_MOVED_TO
-        notifier = ThreadedNotifier(wm,\
-                            DefinitionsChangeHandler(\
-                            masterCallback=self.fireReloadDefinitionsEvent()))
-        notifier.start()
+        IN_MOVED  = 0x00000040L | 0x00000080L     # File was moved to or from X
+        IN_CREATE = 0x00000100L     # Subfile was created
+        IN_DELETE = 0x00000200L     # was delete
+        IN_MODIFY = 0x00000002L     # was modified
+        mask = IN_DELETE | IN_CREATE | IN_MOVED | IN_MODIFY
+        clustersNotifier = ThreadedNotifier(wm,\
+                            ClustersDefinitionsChangeHandler(\
+                            masterCallback=self.fireReloadDefinitionsEvent))
+        suitsNotifier = ThreadedNotifier(wm2,\
+                            SuitsDefinitionsChangeHandler(\
+                            masterCallback=self.fireReloadDefinitionsEvent))
+        clustersNotifier.start()
+        suitsNotifier.start()
 
-        wdd = wm.add_watch(self.config.get('server', \
+        wddc = wm.add_watch(self.config.get('server', \
+                           'clusters_definition_path'),\
+                           mask, rec=True)
+        wdds = wm2.add_watch(self.config.get('server', \
                            'testsuits_definition_path'),\
                            mask, rec=True)
 
@@ -1288,7 +1343,8 @@ class XrdTestMaster(Runnable):
         self.procEvents()
         #-----------------------------------------------------------------------
         # synchronize suits sessions list with HDD storage and close
-        notifier.stop()
+        clustersNotifier.stop()
+        suitsNotifier.stop()
         xrdTestMaster.suitsSessions.close()
 #-------------------------------------------------------------------------------
 class UserInfoHandler(logging.Handler):

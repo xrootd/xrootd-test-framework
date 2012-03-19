@@ -17,7 +17,7 @@ import sys
 from tempfile import NamedTemporaryFile
 from copy import copy
 import threading
-from Utils import SafeCounter
+from Utils import SafeCounter, State
 import uuid
 #-------------------------------------------------------------------------------
 # Global variables
@@ -618,6 +618,54 @@ class ClusterManager:
     def networkIsActive(self, netObj):
         n = self.defineNetwork(netObj)
         return n.isActive()
+#-------------------------------------------------------------------------------
+def validateWithCurrentClusters(cluster, clusters):
+    clu = cluster
+
+    n = [c.name for c in clusters \
+                if clu.name == c.name or \
+                   clu.network.name == c.network.name or \
+                   clu.network.bridgeName == c.network.bridgeName or \
+                   clu.network.ip == c.network.ip]
+    if len(n) != 0:
+        raise ClusterManagerException(
+                ("Cluster's %s some network's %s parameters doubled" + \
+                " in %s") % (clu.name, clu.network.name, ",".join(n)))
+#-------------------------------------------------------------------------------
+def extractClusterName(path):
+    (modPath, modFile) = os.path.split(path)
+    modPath = os.path.abspath(modPath)
+    (modName, ext) = os.path.splitext(modFile)
+    return (modName, ext, modPath, modFile)
+#-------------------------------------------------------------------------------
+def loadClusterDef(fp, clusters, validateWithRest = True):
+            (modName, ext, modPath, modFile) = extractClusterName(fp)
+
+            cl = None
+            if os.path.isfile(fp) and ext == '.py':
+                mod = None
+                try:
+                    if not modPath in sys.path:
+                        sys.path.insert(0, modPath)
+
+                    mod = __import__(modName, globals(), {}, ['getCluster'])
+                    cl = mod.getCluster()
+                    cl.definitionFile = modFile
+                    #after load, check if cluster definition is correct
+                    cl.state = State(Cluster.S_UNKNOWN)
+                    cl.validateStatic()
+                    if validateWithRest:
+                        validateWithCurrentClusters(cl, clusters)
+                except AttributeError, e:
+                    raise ClusterManagerException("Method getCluster " + \
+                          "can't be found in file: " + str(modFile))
+                except ImportError, e:
+                    raise ClusterManagerException("Can't import %s: %s." %\
+                                                   (modName, e))
+            else:
+                raise ClusterManagerException("It's not cluster def: %s" %\
+                                               (modName))
+            return cl
 #---------------------------------------------------------------------------
 def loadClustersDefs(path):
     '''
@@ -630,39 +678,12 @@ def loadClustersDefs(path):
     if os.path.exists(path):
         for f in os.listdir(path):
             fp = path + os.sep + f
-            (modPath, modFile) = os.path.split(fp)
-            modPath = os.path.abspath(modPath)
-            (modName, ext) = os.path.splitext(modFile)
+            clu = None
+            try:
+                clu = loadClusterDef(fp, clusters)
+            except ClusterManagerException, e:
+                LOGGER.error("%s" % e)
 
-            if os.path.isfile(fp) and ext == '.py':
-                mod = None
-                cl = None
-                try:
-                    if not modPath in sys.path:
-                        sys.path.insert(0, modPath)
-
-                    mod = __import__(modName, globals(), {}, ['getCluster'])
-                    cl = mod.getCluster()
-                    cl.definitionFile = modFile
-                    #after load, check if cluster definition is correct
-                    cl.validateStatic()
-                    clusters.append(cl)
-                except AttributeError, e:
-                    LOGGER.error(e)
-                    raise ClusterManagerException("Method getCluster " + \
-                          "can't be found in file: " + str(modFile))
-                except ImportError, e:
-                    LOGGER.error("Can't import %s: %s." % (modName, e))
-    for clu in clusters:
-        n = [c.name for c in clusters \
-                    if clu.network.name == c.network.name or
-                       clu.network.bridgeName == c.network.bridgeName or
-                       clu.network.ip == c.network.ip]
-        n.remove(clu.name)
-        if len(n) != 0:
-            raise ClusterManagerException(
-                    ("Cluster's %s some network's %s parameters doubled" + \
-                    " in %s") % (clu.name, clu.network.name, ",".join(n)))
-
+            if clu:
+                clusters.append(clu)
     return clusters
-

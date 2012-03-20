@@ -333,6 +333,23 @@ class Cluster(Utils.Stateful):
                                           % (self.network.name, \
                                              self.definitionFile))
     #---------------------------------------------------------------------------
+    def validateAgainstSystem(self, clusters):
+        '''
+        Check if cluster definition is correct with other 
+        clusters defined in the system. This correctness is critical for
+        cluster definition to be added.
+        @param clusters:
+        '''
+        n = [c.name for c in clusters \
+                    if self.name == c.name or \
+                       self.network.name == c.network.name or \
+                       self.network.bridgeName == c.network.bridgeName or \
+                       self.network.ip == c.network.ip]
+        if len(n) != 0:
+            raise ClusterManagerException(
+                    ("Cluster's %s some network's %s parameters doubled" + \
+                    " in %s") % (self.name, self.network.name, ",".join(n)))
+    #---------------------------------------------------------------------------
     def validateDynamic(self):
         '''
         Check if Cluster definition is semantically correct i.e. on the 
@@ -619,19 +636,6 @@ class ClusterManager:
         n = self.defineNetwork(netObj)
         return n.isActive()
 #-------------------------------------------------------------------------------
-def validateWithCurrentClusters(cluster, clusters):
-    clu = cluster
-
-    n = [c.name for c in clusters \
-                if clu.name == c.name or \
-                   clu.network.name == c.network.name or \
-                   clu.network.bridgeName == c.network.bridgeName or \
-                   clu.network.ip == c.network.ip]
-    if len(n) != 0:
-        raise ClusterManagerException(
-                ("Cluster's %s some network's %s parameters doubled" + \
-                " in %s") % (clu.name, clu.network.name, ",".join(n)))
-#-------------------------------------------------------------------------------
 def extractClusterName(path):
     (modPath, modFile) = os.path.split(path)
     modPath = os.path.abspath(modPath)
@@ -655,16 +659,18 @@ def loadClusterDef(fp, clusters, validateWithRest = True):
                     cl.state = State(Cluster.S_UNKNOWN)
                     cl.validateStatic()
                     if validateWithRest:
-                        validateWithCurrentClusters(cl, clusters)
+                        cl.validateAgainstSystem(clusters)
                 except AttributeError, e:
                     raise ClusterManagerException("Method getCluster " + \
                           "can't be found in file: " + str(modFile))
                 except ImportError, e:
                     raise ClusterManagerException("Can't import %s: %s." %\
                                                    (modName, e))
+            elif ext == ".pyc":
+                return None
             else:
-                raise ClusterManagerException("It's not cluster def: %s" %\
-                                               (modName))
+                raise ClusterManagerException("%s is not cluster definition." %\
+                                               (modFile))
             return cl
 #---------------------------------------------------------------------------
 def loadClustersDefs(path):
@@ -678,12 +684,11 @@ def loadClustersDefs(path):
     if os.path.exists(path):
         for f in os.listdir(path):
             fp = path + os.sep + f
-            clu = None
             try:
                 clu = loadClusterDef(fp, clusters)
+                if clu:
+                    clusters.append(clu)
             except ClusterManagerException, e:
-                LOGGER.error("%s" % e)
+                raise e
 
-            if clu:
-                clusters.append(clu)
     return clusters

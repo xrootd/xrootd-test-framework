@@ -67,10 +67,15 @@ class TestSuite:
                             # all the tests cases are completed
         self.tests = []     # a list of test cases names as defined below
 
-        #---------------------------------------------------------------------------
+        #-----------------------------------------------------------------------
         # Fields beneath are filled automatically by system
-        self.testCases = [] # filled automatically by load test suite defs.
-                            # holds Python objectsrepresenting test cases
+        self.enabled    = True  # if set to False, test suite can't be used
+                                # e.g. when there is lack of cluster def
+        self.jobFun = None      # handle to function that will be used
+                                # by scheduler. Has to be kept in case of
+                                # unscheduling.
+        self.testCases  = []    # filled automatically by load test suite defs.
+                                # holds Python objectsrepresenting test cases
     #---------------------------------------------------------------------------
     def validateStatic(self):
         '''
@@ -104,6 +109,15 @@ class TestSuite:
                                          " in TestSuite definition") % str(t), \
                                           TestSuiteException.ERR_CRITICAL)
         return True
+    #---------------------------------------------------------------------------
+    def validateAgainstSystem(self, clusters):
+        for cluN in self.clusters:
+            if not cluN in self.clusters:
+                self.enabled = False
+                raise TestSuiteException(\
+                ("Cluster %s in suite %s definition " + \
+                "doesn't exist in clusters' definitions.") % (cluN, self.name))
+
     #---------------------------------------------------------------------------
     # Constants
     S_IDLE                   = (10, "idle")
@@ -176,6 +190,13 @@ class TestCase:
 #else
 #  foobar
 #fi
+#-------------------------------------------------------------------------------
+def extractSuiteName(path):
+    (modPath, modFile) = os.path.split(path)
+    modPath = os.path.abspath(modPath)
+    (modName, ext) = os.path.splitext(modFile)
+
+    return (modName, ext, modPath, modFile)
 #------------------------------------------------------------------------------- 
 def loadTestCasesDefs(filePath):
     '''
@@ -187,9 +208,7 @@ def loadTestCasesDefs(filePath):
 
     testCases = {}
 
-    (modPath, modFile) = os.path.split(filePath)
-    modPath = os.path.abspath(modPath)
-    (modName, ext) = os.path.splitext(modFile)
+    (modName, ext, modPath, modFile) = extractSuiteName(filePath)
 
     if os.path.isfile(filePath) and ext == '.py':
         mod = None
@@ -217,14 +236,51 @@ def loadTestCasesDefs(filePath):
             LOGGER.exception(e)
         except AttributeError, e:
             LOGGER.exception(e)
-            raise TestSuiteException("Method " + method + \
-                  "can't be found in " + \
-                  "file: " + str(filePath))
+            raise TestSuiteException(("Sth can't be found in test suite " + \
+                                      "definition file %s: %s") % (modFile, e))
         except ImportError:
             LOGGER.exception(e)
         except TestSuiteException, e:
             LOGGER.error(e.desc)
     return testCases
+
+#-------------------------------------------------------------------------------
+def loadTestSuiteDef(path):
+    fp = path
+    (modName, ext, modPath, modFile) = extractSuiteName(fp)
+    obj = None
+    if os.path.isfile(fp) and ext == '.py':
+        mod = None
+        try:
+            if not modPath in sys.path:
+                sys.path.insert(0, modPath)
+
+            method = 'getTestSuite'
+            mod = __import__(modName, globals(), {}, [method])
+
+            fun = getattr(mod, method)
+            obj = fun()
+
+            obj.definitionFile = modFile
+            #load TestCases
+            obj.testCases = loadTestCasesDefs(fp)
+            #after load, check if testSuite definition is correct
+            obj.validateStatic()
+        except TypeError, e:
+            raise TestSuiteException(("Wrong type in test suite definition " + \
+                  "file: %s") % modFile)
+        except AttributeError, e:
+            raise TestSuiteException(("Sth can't be found in test suite " + \
+                                      "definition file %s: %s") % (modFile, e))
+        except ImportError, e:
+            raise TestSuiteException("Import error " + \
+                  "during test suite %s import." % modFile)
+    elif ext == ".pyc":
+        return None
+    else:
+        raise TestSuiteException(("File %s " + \
+              "seems not to be test suite definition.") % fp)
+    return obj
 #------------------------------------------------------------------------------ 
 def loadTestSuitsDefs(path):
     '''
@@ -238,36 +294,11 @@ def loadTestSuitsDefs(path):
     if os.path.exists(path):
         for f in os.listdir(path):
             fp = path + os.sep + f
-            (modPath, modFile) = os.path.split(fp)
-            modPath = os.path.abspath(modPath)
-            (modName, ext) = os.path.splitext(modFile)
+            try:
+                ts = loadTestSuiteDef(fp)
+                if ts:
+                    testSuits[ts.name] = ts
+            except TestSuiteException, e:
+                raise e
 
-            if os.path.isfile(fp) and ext == '.py':
-                mod = None
-                try:
-                    if not modPath in sys.path:
-                        sys.path.insert(0, modPath)
-
-                    method = 'getTestSuite'
-                    mod = __import__(modName, {}, {}, [method])
-                    fun = getattr(mod, method)
-                    obj = fun()
-                    obj.definitionFile = modFile
-                    #load TestCases
-                    obj.testCases = loadTestCasesDefs(fp)
-                    testSuits[obj.name] = obj
-
-                    #after load, check if testSuite definition is correct
-                    obj.validateStatic()
-
-                except TypeError, e:
-                    LOGGER.info("Wrong type in TestSuite definition")
-                    LOGGER.exception(e)
-                except AttributeError, e:
-                    LOGGER.exception(e)
-                    raise TestSuiteException("Method " + method + \
-                          "can't be found in " + \
-                          "file: " + str(modFile))
-                except ImportError, e:
-                    LOGGER.exception(e)
     return testSuits

@@ -8,21 +8,8 @@
 #-------------------------------------------------------------------------------
 # Logging settings
 #-------------------------------------------------------------------------------
-from TestUtils import TestSuiteException
-from apscheduler.scheduler import Scheduler
-from cherrypy import _cperror
-from cherrypy.lib.static import serve_file
-from copy import deepcopy
-from string import maketrans
-import Cheetah
-import datetime
 import logging
-import shelve
 import sys
-from ClusterManager import ClusterManagerException, loadClusterDef,\
-    extractClusterName
-from pyinotify import WatchManager, Notifier, ThreadedNotifier, ProcessEvent
-import cgi
 
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
@@ -34,23 +21,30 @@ LOGGER.debug("Running script: " + __file__)
 #-------------------------------------------------------------------------------
 try:
     from Cheetah.Template import Template
-    from ClusterManager import Cluster, Network, Host, loadClustersDefs
+    from ClusterManager import ClusterManagerException, extractClusterName, \
+    loadClusterDef, loadClustersDefs, Cluster
     from Daemon import Runnable, Daemon, DaemonException, readConfig
     from SocketUtils import FixedSockStream, XrdMessage, PriorityBlockingQueue, \
         SocketDisconnectedError
-    from TestUtils import loadTestSuitsDefs, TestSuite
+    from TestUtils import TestSuiteException, loadTestSuiteDef,\
+    loadTestSuitsDefs, TestSuite
+    from apscheduler.scheduler import Scheduler
     from Utils import Stateful, State
     from copy import copy
     from optparse import OptionParser
     import ConfigParser
     import SocketServer
     import cherrypy
+    from cherrypy.lib.static import serve_file
     import os
-    import signal
     import socket
     import ssl
+    from copy import deepcopy
+    from string import maketrans
     import threading
-    import time
+    from pyinotify import WatchManager, Notifier, ThreadedNotifier, ProcessEvent
+    import datetime
+    import shelve
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
@@ -73,17 +67,17 @@ class MasterEvent(object):
     hypervisor connection or normal message containing data.
     '''
 
-    PRIO_NORMAL             = 9
-    PRIO_IMPORTANT          = 1
+    PRIO_NORMAL = 9
+    PRIO_IMPORTANT = 1
 
-    M_UNKNOWN               = 1
-    M_CLIENT_CONNECTED      = 2
-    M_CLIENT_DISCONNECTED   = 3
-    M_HYPERV_MSG            = 4
-    M_SLAVE_MSG             = 5
-    M_JOB_ENQUEUE           = 6
-    M_RELOAD_CLUSTER_DEF    = 7
-    M_RELOAD_SUIT_DEF       = 8
+    M_UNKNOWN = 1
+    M_CLIENT_CONNECTED = 2
+    M_CLIENT_DISCONNECTED = 3
+    M_HYPERV_MSG = 4
+    M_SLAVE_MSG = 5
+    M_JOB_ENQUEUE = 6
+    M_RELOAD_CLUSTER_DEF = 7
+    M_RELOAD_SUIT_DEF = 8
 
     #---------------------------------------------------------------------------
     def __init__(self, e_type, e_data, msg_sender_addr=None):
@@ -206,7 +200,7 @@ def handleCherrypyError():
         cherrypy.response.body = \
                         ["An error occured. Check log for details."]
         LOGGER.error("Cherrypy error: " + \
-                     str(_cperror.format_exc(None))) #@UndefinedVariable
+                     str(cherrypy._cperror.format_exc(None))) #@UndefinedVariable
 #-------------------------------------------------------------------------------
 class WebInterface:
     #reference to testMaster
@@ -221,7 +215,7 @@ class WebInterface:
 
         self.cp_config = {'request.error_response': handleCherrypyError,
                           'error_page.404': \
-                          self.config.get('webserver', 'webpage_dir') +\
+                          self.config.get('webserver', 'webpage_dir') + \
                           os.sep + "page_404.tmpl"}
     #---------------------------------------------------------------------------
     def disp(self, tpl_file, tpl_vars):
@@ -297,10 +291,10 @@ class WebInterface:
     def showScript(self, script_name):
         from xml.sax.saxutils import quoteattr
         p = self.config.get('webserver', 'webpage_dir') \
-                          + os.sep + 'scripts' + os.sep +\
+                          + os.sep + 'scripts' + os.sep + \
                           quoteattr(script_name)
         if os.path.exists(p):
-            return serve_file(p ,"text/html")
+            return serve_file(p , "text/html")
         else:
             return ""
 
@@ -541,11 +535,6 @@ class XrdTestMaster(Runnable):
             evt = MasterEvent(MasterEvent.M_RELOAD_SUIT_DEF, dirEvent)
         self.recvQueue.put((MasterEvent.PRIO_IMPORTANT, evt))
     #---------------------------------------------------------------------------
-    def suitDefinitionChanged(self, dirEvent):
-        LOGGER.info("SUIT EVT: %s" %  os.path.join(dirEvent.path,\
-                                                      dirEvent.name))
-        LOGGER.info("TYPE: %s" % dirEvent.maskname)
-    #---------------------------------------------------------------------------
     def loadDefinitions(self):
         LOGGER.info("Loading definitions...")
 
@@ -562,21 +551,11 @@ class XrdTestMaster(Runnable):
             testSuits = loadTestSuitsDefs(\
                         self.config.get('server', 'testsuits_definition_path'))
             for ts in testSuits.itervalues():
-                for cluN in ts.clusters:
-                    if not cluN in self.clusters:
-                        raise TestSuiteException(\
-                        ("Cluster %s in suite %s " + \
-                         "doesn't exist in definitions") % (cluN, ts.name))
-                # filling test suite machines automatically if user
-                # provided none
-                if not len(ts.machines):
-                    for cName in ts.clusters:
-                        ts.machines.extend(\
-                            [h.name for h in self.clusters[cName].hosts])
-                    LOGGER.info(("Host list for suite %s " + \
-                                 "filled automatically with %s") % \
-                                (ts.name, ts.machines))
-                self.testSuits = testSuits
+                try:
+                    ts.validateAgainstSystem(self.clusters)
+                except TestSuiteException, e:
+                    LOGGER.error("Test Suite Exception: %s" % e)
+            self.testSuits = testSuits
         except TestSuiteException, e:
             LOGGER.error("Test Suite Exception: %s" % e)
             sys.exit()
@@ -585,14 +564,50 @@ class XrdTestMaster(Runnable):
             for ts in self.testSuits.itervalues():
                 if not ts.schedule:
                     continue
-                self.sched.add_cron_job(self.executeJob(ts.name),\
+
+                ts.jobFun = self.executeJob(ts.name)
+                self.sched.add_cron_job(ts.jobFun, \
                                          **(ts.schedule))
 
                 LOGGER.info("Adding scheduler job for test suite %s at %s" % \
                             (ts.name, str(ts.schedule)))
     #---------------------------------------------------------------------------
-    def clusterDefinitionChanged(self, dirEvent):
-        LOGGER.info("TYPE: %s" % dirEvent.maskname)
+    def handleSuiteDefinitionChanged(self, dirEvent):
+        p = os.path.join(dirEvent.path, dirEvent.name)
+        LOGGER.info("Suit def changed(%s): %s" % (dirEvent.maskname, p))
+
+        remMasks = ["IN_DELETE", "IN_MOVED_FROM"]
+        addMasks = ["IN_CREATE", "IN_MOVED_TO"]
+
+        try:
+            #TODO it may couse inconsistency in suits defs
+            if dirEvent.maskname in remMasks:
+                (modName, ext, modPath, modFile) = extractClusterName(p)
+                if ext == ".py":
+                    LOGGER.info("Undefining test suite: %s" % modName)
+                    if not self.testSuits.has_key(modName):
+                        raise TestSuiteException(("There is no test suite " + \
+                                                 "%s defined.") % (modName))
+                    self.sched.unschedule_func(self.testSuits[modName].jobFun)
+                    del sys.modules[modName]
+                    del self.testSuits[modName]
+                    del modName
+            elif dirEvent.maskname in addMasks:
+                suite = loadTestSuiteDef(p)
+                try:
+                    suite.validateAgainstSystem(self.clusters)
+                except TestSuiteException, e:
+                    LOGGER.info("Definition warning: %s." % e)
+                self.testSuits[suite.name] = suite
+                self.testSuits[suite.name].jobFun = self.executeJob(suite.name)
+                self.sched.add_cron_job(self.testSuits[suite.name].jobFun, \
+                                         **(suite.schedule))
+        except TestSuiteException, e:
+            LOGGER.info("Error while (un)defining: %s" % e)
+    #---------------------------------------------------------------------------
+    def handleClusterDefinitionChanged(self, dirEvent):
+        p = os.path.join(dirEvent.path, dirEvent.name)
+        LOGGER.info("Cluster def changed(%s): " % (dirEvent.maskname, p))
 
         remMasks = ["IN_DELETE", "IN_MOVED_FROM"]
         addMasks = ["IN_CREATE", "IN_MOVED_TO"]
@@ -607,12 +622,12 @@ class XrdTestMaster(Runnable):
                     del sys.modules[modName]
                     del self.clusters[modName]
                     del modName
-            if dirEvent.maskname in addMasks:
+            elif dirEvent.maskname in addMasks:
                 clu = loadClusterDef(p, self.clusters.values(), True)
                 LOGGER.info("Defining cluster: %s" % clu.name)
                 self.clusters[clu.name] = clu
         except ClusterManagerException, e:
-            LOGGER.info("Error while redefining: %s" % e)
+            LOGGER.info("Error while (un)defining: %s" % e)
     #---------------------------------------------------------------------------
     def slaveState(self, slave_name):
         '''
@@ -724,10 +739,23 @@ class XrdTestMaster(Runnable):
         and stores it at HDD.
         @param test_suite_name:
         '''
-        #-----------------------------------------------------------------------
-        # check if all required machines are connected and idle
+        # filling test suite machines automatically if user
+        # provided none
         testSuite = self.testSuits[test_suite_name]
 
+        if not testSuite.enabled:
+            LOGGER.info("Test suite has to be enabled to be runned.")
+            return False
+        #-----------------------------------------------------------------------
+        # check if all required machines are connected and idle
+        ts = testSuite
+        if not len(ts.machines):
+            for cName in ts.clusters:
+                ts.machines.extend(\
+                [h.name for h in self.clusters[cName].hosts])
+                LOGGER.info(("Host list for suite %s " + \
+                            "filled automatically with %s") % \
+                            (ts.name, ts.machines))
         unreadyMachines = []
         for m in testSuite.machines:
             if self.slaveState(m) != State(Slave.S_CONNECTED_IDLE):
@@ -1228,10 +1256,10 @@ class XrdTestMaster(Runnable):
                 self.enqueueJob(evt.data)
             #------------------------------------------------------------------- 
             elif evt.type == MasterEvent.M_RELOAD_CLUSTER_DEF:
-                self.clusterDefinitionChanged(evt.data)
+                self.handleClusterDefinitionChanged(evt.data)
             #------------------------------------------------------------------- 
             elif evt.type == MasterEvent.M_RELOAD_SUIT_DEF:
-                self.suitDefinitionChanged(evt.data)
+                self.handleSuiteDefinitionChanged(evt.data)
             #-------------------------------------------------------------------
             else:
                 raise XrdTestMasterException("Unknown incoming evt type " + \
@@ -1289,25 +1317,25 @@ class XrdTestMaster(Runnable):
         wm = WatchManager()
         wm2 = WatchManager()
         # constants from /usr/src/linux/include/linux/inotify.h
-        IN_MOVED  = 0x00000040L | 0x00000080L     # File was moved to or from X
+        IN_MOVED = 0x00000040L | 0x00000080L     # File was moved to or from X
         IN_CREATE = 0x00000100L     # Subfile was created
         IN_DELETE = 0x00000200L     # was delete
         IN_MODIFY = 0x00000002L     # was modified
         mask = IN_DELETE | IN_CREATE | IN_MOVED | IN_MODIFY
-        clustersNotifier = ThreadedNotifier(wm,\
+        clustersNotifier = ThreadedNotifier(wm, \
                             ClustersDefinitionsChangeHandler(\
                             masterCallback=self.fireReloadDefinitionsEvent))
-        suitsNotifier = ThreadedNotifier(wm2,\
+        suitsNotifier = ThreadedNotifier(wm2, \
                             SuitsDefinitionsChangeHandler(\
                             masterCallback=self.fireReloadDefinitionsEvent))
         clustersNotifier.start()
         suitsNotifier.start()
 
         wddc = wm.add_watch(self.config.get('server', \
-                           'clusters_definition_path'),\
+                           'clusters_definition_path'), \
                            mask, rec=True)
         wdds = wm2.add_watch(self.config.get('server', \
-                           'testsuits_definition_path'),\
+                           'testsuits_definition_path'), \
                            mask, rec=True)
 
         cherrypyCfg = {

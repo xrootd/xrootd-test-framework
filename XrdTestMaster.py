@@ -27,7 +27,7 @@ try:
     from SocketUtils import FixedSockStream, XrdMessage, PriorityBlockingQueue, \
         SocketDisconnectedError
     from TestUtils import TestSuiteException, loadTestSuiteDef,\
-    loadTestSuitsDefs, TestSuite
+    loadTestSuitsDefs, TestSuite, extractSuiteName
     from apscheduler.scheduler import Scheduler
     from Utils import Stateful, State
     from copy import copy
@@ -551,10 +551,7 @@ class XrdTestMaster(Runnable):
             testSuits = loadTestSuitsDefs(\
                         self.config.get('server', 'testsuits_definition_path'))
             for ts in testSuits.itervalues():
-                try:
-                    ts.validateAgainstSystem(self.clusters)
-                except TestSuiteException, e:
-                    LOGGER.error("Test Suite Exception: %s" % e)
+                ts.checkIfDefComplete(self.clusters)
             self.testSuits = testSuits
         except TestSuiteException, e:
             LOGGER.error("Test Suite Exception: %s" % e)
@@ -564,70 +561,99 @@ class XrdTestMaster(Runnable):
             for ts in self.testSuits.itervalues():
                 if not ts.schedule:
                     continue
+                try:
+                    ts.jobFun = self.executeJob(ts.name)
+                    self.sched.add_cron_job(ts.jobFun, \
+                                             **(ts.schedule))
 
-                ts.jobFun = self.executeJob(ts.name)
-                self.sched.add_cron_job(ts.jobFun, \
-                                         **(ts.schedule))
-
-                LOGGER.info("Adding scheduler job for test suite %s at %s" % \
-                            (ts.name, str(ts.schedule)))
+                    LOGGER.info("Adding scheduler job for test suite %s at %s" % \
+                                (ts.name, str(ts.schedule)))
+                except Exception, e:
+                    LOGGER.error(("Error while scheduling job " + \
+                               "for test suite %s: %s") % (ts.name, e))
+                    sys.exit()
     #---------------------------------------------------------------------------
     def handleSuiteDefinitionChanged(self, dirEvent):
         p = os.path.join(dirEvent.path, dirEvent.name)
-        LOGGER.info("Suit def changed(%s): %s" % (dirEvent.maskname, p))
+        (modName, ext, modPath, modFile) = extractSuiteName(p)
+
+        if ext != ".py":
+            return
+
+        LOGGER.info("Suit def changed (%s) in %s" % (dirEvent.maskname, p))
 
         remMasks = ["IN_DELETE", "IN_MOVED_FROM"]
         addMasks = ["IN_CREATE", "IN_MOVED_TO"]
 
-        try:
-            #TODO it may couse inconsistency in suits defs
-            if dirEvent.maskname in remMasks:
-                (modName, ext, modPath, modFile) = extractClusterName(p)
-                if ext == ".py":
-                    LOGGER.info("Undefining test suite: %s" % modName)
-                    if not self.testSuits.has_key(modName):
-                        raise TestSuiteException(("There is no test suite " + \
-                                                 "%s defined.") % (modName))
-                    self.sched.unschedule_func(self.testSuits[modName].jobFun)
-                    del sys.modules[modName]
-                    del self.testSuits[modName]
-                    del modName
-            elif dirEvent.maskname in addMasks:
+        #TODO it may couse inconsistency in suits defs
+        if dirEvent.maskname in remMasks or \
+            dirEvent.maskname == "IN_MODIFY":
+            try:
+                LOGGER.info("Undefining test suite: %s" % modName)
+                if not self.testSuits.has_key(modName):
+                    raise TestSuiteException(("There is no test suite " + \
+                                             "%s defined.") % (modName))
+                self.sched.unschedule_func(self.testSuits[modName].jobFun)
+                del sys.modules[modName]
+                del self.testSuits[modName]
+                del modName
+            except TestSuiteException, e:
+                LOGGER.error("Error while undefining: %s" % e)
+        if dirEvent.maskname in addMasks or \
+            dirEvent.maskname == "IN_MODIFY":
+            try:
                 suite = loadTestSuiteDef(p)
                 try:
-                    suite.validateAgainstSystem(self.clusters)
+                    if suite:
+                        suite.checkIfDefComplete(self.clusters)
                 except TestSuiteException, e:
-                    LOGGER.info("Definition warning: %s." % e)
-                self.testSuits[suite.name] = suite
-                self.testSuits[suite.name].jobFun = self.executeJob(suite.name)
-                self.sched.add_cron_job(self.testSuits[suite.name].jobFun, \
-                                         **(suite.schedule))
-        except TestSuiteException, e:
-            LOGGER.info("Error while (un)defining: %s" % e)
+                    LOGGER.error("Definition warning: %s." % e)
+                if suite:
+                    self.testSuits[suite.name] = suite
+                    self.testSuits[suite.name].jobFun = self.executeJob(suite.name)
+                    self.sched.add_cron_job(self.testSuits[suite.name].jobFun, \
+                                             **(suite.schedule))
+            except TestSuiteException, e:
+                LOGGER.error("Error while defining: %s" % e)
+            except Exception, e:
+                LOGGER.info(("Error while defining " + \
+                            " test suite %s") % e)
+    #---------------------------------------------------------------------------
+    def checkIfSuitsDefsComplete(self):
+        for ts in self.testSuits.values():
+            ts.checkIfDefComplete(self.clusters)
     #---------------------------------------------------------------------------
     def handleClusterDefinitionChanged(self, dirEvent):
         p = os.path.join(dirEvent.path, dirEvent.name)
-        LOGGER.info("Cluster def changed(%s): " % (dirEvent.maskname, p))
+        (modName, ext, modPath, modFile) = extractClusterName(p)
+
+        if ext != ".py":
+            return
+
+        LOGGER.info("Cluster def changed (%s) in %s: " % (dirEvent.maskname, p))
 
         remMasks = ["IN_DELETE", "IN_MOVED_FROM"]
         addMasks = ["IN_CREATE", "IN_MOVED_TO"]
-        try:
-            p = os.path.join(dirEvent.path, dirEvent.name)
 
-            #TODO it may couse inconsistency in suits defs
-            if dirEvent.maskname in remMasks:
-                (modName, ext, modPath, modFile) = extractClusterName(p)
-                if ext == ".py":
-                    LOGGER.info("Undefining cluster: %s" % modName)
-                    del sys.modules[modName]
-                    del self.clusters[modName]
-                    del modName
-            elif dirEvent.maskname in addMasks:
+        if dirEvent.maskname in remMasks or \
+            dirEvent.maskname == "IN_MODIFY":
+            try:
+                LOGGER.info("Undefining cluster: %s" % modName)
+                del sys.modules[modName]
+                del self.clusters[modName]
+                del modName
+                self.checkIfSuitsDefsComplete()
+            except ClusterManagerException, e:
+                LOGGER.error("Error while undefining: %s" % e)
+        if dirEvent.maskname in addMasks or \
+            dirEvent.maskname == "IN_MODIFY":
+            try:
                 clu = loadClusterDef(p, self.clusters.values(), True)
                 LOGGER.info("Defining cluster: %s" % clu.name)
                 self.clusters[clu.name] = clu
-        except ClusterManagerException, e:
-            LOGGER.info("Error while (un)defining: %s" % e)
+                self.checkIfSuitsDefsComplete()
+            except ClusterManagerException, e:
+                LOGGER.error("Error while defining: %s" % e)
     #---------------------------------------------------------------------------
     def slaveState(self, slave_name):
         '''
@@ -743,19 +769,11 @@ class XrdTestMaster(Runnable):
         # provided none
         testSuite = self.testSuits[test_suite_name]
 
-        if not testSuite.enabled:
-            LOGGER.info("Test suite has to be enabled to be runned.")
+        if not testSuite.defComplete:
+            LOGGER.info("Test suite definition is not complete, " + \
+                        " some clusters need to be defined.")
             return False
-        #-----------------------------------------------------------------------
-        # check if all required machines are connected and idle
-        ts = testSuite
-        if not len(ts.machines):
-            for cName in ts.clusters:
-                ts.machines.extend(\
-                [h.name for h in self.clusters[cName].hosts])
-                LOGGER.info(("Host list for suite %s " + \
-                            "filled automatically with %s") % \
-                            (ts.name, ts.machines))
+
         unreadyMachines = []
         for m in testSuite.machines:
             if self.slaveState(m) != State(Slave.S_CONNECTED_IDLE):

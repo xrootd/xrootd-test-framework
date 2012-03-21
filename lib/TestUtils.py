@@ -69,8 +69,8 @@ class TestSuite:
 
         #-----------------------------------------------------------------------
         # Fields beneath are filled automatically by system
-        self.enabled    = True  # if set to False, test suite can't be used
-                                # e.g. when there is lack of cluster def
+        self.defComplete = True # means that all cluster definitions that the
+                                # cluster depends on are available
         self.jobFun = None      # handle to function that will be used
                                 # by scheduler. Has to be kept in case of
                                 # unscheduling.
@@ -110,13 +110,22 @@ class TestSuite:
                                           TestSuiteException.ERR_CRITICAL)
         return True
     #---------------------------------------------------------------------------
-    def validateAgainstSystem(self, clusters):
+    def checkIfDefComplete(self, clusters):
         for cluN in self.clusters:
             if not cluN in self.clusters:
-                self.enabled = False
+                self.defEnabled = False
                 raise TestSuiteException(\
                 ("Cluster %s in suite %s definition " + \
                 "doesn't exist in clusters' definitions.") % (cluN, self.name))
+        #-----------------------------------------------------------------------
+        # check if all required machines are connected and idle
+        if not len(self.machines):
+            for cName in self.clusters:
+                self.machines.extend(\
+                [h.name for h in clusters[cName].hosts])
+                LOGGER.info(("Host list for suite %s " + \
+                            "filled automatically with %s") % \
+                            (self.name, self.machines))
 
     #---------------------------------------------------------------------------
     # Constants
@@ -217,6 +226,8 @@ def loadTestCasesDefs(filePath):
                 sys.path.insert(0, modPath)
 
             method = 'getTestCases'
+            if sys.modules.has_key(modName):
+                del sys.modules[modName]
             mod = __import__(modName, {}, {}, [method])
             fun = getattr(mod, method)
             objs = fun()
@@ -232,16 +243,17 @@ def loadTestCasesDefs(filePath):
                   " doesn't return list of objects in " + \
                   " file: " + str(modFile))
         except TypeError, e:
-            LOGGER.info("Wrong type somewhere in TestCase definition")
-            LOGGER.exception(e)
+            raise TestSuiteException(("TypeError while loading test case " + \
+                          "definition file %s: %s") % (modFile, e))
         except AttributeError, e:
-            LOGGER.exception(e)
-            raise TestSuiteException(("Sth can't be found in test suite " + \
-                                      "definition file %s: %s") % (modFile, e))
+            raise TestSuiteException(("AttributeError during loading test" + \
+                          "case definition file %s: %s") % (modFile, e))
         except ImportError:
-            LOGGER.exception(e)
-        except TestSuiteException, e:
-            LOGGER.error(e.desc)
+            raise TestSuiteException(("ImportError during loading test case"+ \
+                          "definition file %s: %s") % (modFile, e))
+        except Exception, e:
+            raise TestSuiteException(("Exception during loading test case"+ \
+                          "definition file %s: %s") % (modFile, e))
     return testCases
 
 #-------------------------------------------------------------------------------
@@ -256,25 +268,37 @@ def loadTestSuiteDef(path):
                 sys.path.insert(0, modPath)
 
             method = 'getTestSuite'
+            if sys.modules.has_key(modName):
+                del sys.modules[modName]
             mod = __import__(modName, globals(), {}, [method])
 
             fun = getattr(mod, method)
             obj = fun()
 
+            if obj.name != modName:
+                raise TestSuiteException(("TestSuite name %s in file %s" + \
+                  " is not the same as filename <test_suite_name>.py") % \
+                                         (obj.name, modFile))
             obj.definitionFile = modFile
             #load TestCases
             obj.testCases = loadTestCasesDefs(fp)
             #after load, check if testSuite definition is correct
             obj.validateStatic()
         except TypeError, e:
-            raise TestSuiteException(("Wrong type in test suite definition " + \
-                  "file: %s") % modFile)
+            raise TestSuiteException(("TypeError in test suite definition " + \
+                  "file %s: %s") % (modFile, e))
+        except NameError, e:
+            raise TestSuiteException(("Name error in test suite def file " + \
+                  " %s: %s") % (modFile, e))
         except AttributeError, e:
             raise TestSuiteException(("Sth can't be found in test suite " + \
                                       "definition file %s: %s") % (modFile, e))
         except ImportError, e:
             raise TestSuiteException("Import error " + \
-                  "during test suite %s import." % modFile)
+                  "during test suite %s import: %s" % (modFile, e))
+        except Exception, e:
+            raise TestSuiteException("Exception occured " + \
+                  "during test suite %s import: %s" % (modFile, e))
     elif ext == ".pyc":
         return None
     else:

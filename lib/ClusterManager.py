@@ -643,35 +643,49 @@ def extractClusterName(path):
     return (modName, ext, modPath, modFile)
 #-------------------------------------------------------------------------------
 def loadClusterDef(fp, clusters, validateWithRest = True):
-            (modName, ext, modPath, modFile) = extractClusterName(fp)
+    (modName, ext, modPath, modFile) = extractClusterName(fp)
+    
+    cl = None
+    if os.path.isfile(fp) and ext == '.py':
+        mod = None
+        try:
+            if not modPath in sys.path:
+                sys.path.insert(0, modPath)
+    
+            if sys.modules.has_key(modName):
+                del sys.modules[modName]
+            mod = __import__(modName, globals(), {}, ['getCluster'])
 
-            cl = None
-            if os.path.isfile(fp) and ext == '.py':
-                mod = None
-                try:
-                    if not modPath in sys.path:
-                        sys.path.insert(0, modPath)
-
-                    mod = __import__(modName, globals(), {}, ['getCluster'])
-                    cl = mod.getCluster()
-                    cl.definitionFile = modFile
-                    #after load, check if cluster definition is correct
-                    cl.state = State(Cluster.S_UNKNOWN)
-                    cl.validateStatic()
-                    if validateWithRest:
-                        cl.validateAgainstSystem(clusters)
-                except AttributeError, e:
-                    raise ClusterManagerException("Method getCluster " + \
-                          "can't be found in file: " + str(modFile))
-                except ImportError, e:
-                    raise ClusterManagerException("Can't import %s: %s." %\
-                                                   (modName, e))
-            elif ext == ".pyc":
-                return None
-            else:
-                raise ClusterManagerException("%s is not cluster definition." %\
-                                               (modFile))
-            return cl
+            cl = mod.getCluster()
+            if cl.name != modName:
+                raise ClusterManagerException(("Cluster name %s in file %s" + \
+                  " is not the same as filename <cluster_name>.py") % \
+                                         (cl.name, modFile))
+            cl.definitionFile = modFile
+            #after load, check if cluster definition is correct
+            cl.state = State(Cluster.S_UNKNOWN)
+            cl.validateStatic()
+            if validateWithRest:
+                cl.validateAgainstSystem(clusters)
+        except AttributeError, e:
+            raise ClusterManagerException("Method getCluster " + \
+                  "can't be found in file: " + str(modFile))
+        except ImportError, e:
+            raise ClusterManagerException("Can't import %s: %s." %\
+                                           (modName, e))
+        except NameError, e:
+            raise ClusterManagerException("Name error while " + \
+                                          "cluster  %s import: %s." %\
+                                           (modName, e))
+        except Exception, e:
+            raise ClusterManagerException("Exception occured " + \
+                  "during test suite %s import: %s" % (modFile, e))
+    elif ext == ".pyc":
+        return None
+    else:
+        raise ClusterManagerException("%s is not cluster definition." %\
+                                       (modFile))
+    return cl
 #---------------------------------------------------------------------------
 def loadClustersDefs(path):
     '''

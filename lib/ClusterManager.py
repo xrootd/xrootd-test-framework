@@ -280,6 +280,8 @@ class Cluster(Utils.Stateful):
         self.defaultHost.sourceNetwork = None
     #---------------------------------------------------------------------------
     def addHost(self, host):
+        if not hasattr(host, "uuid") or not host.uuid:
+            host.uuid = uuid.uuid1()
         if not hasattr(host, "diskImage") or not host.diskImage:
             host.diskImage = self.defaultHost.diskImage
         if not hasattr(host, "arch") or not host.arch:

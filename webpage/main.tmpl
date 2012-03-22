@@ -16,7 +16,7 @@
     \$("#acc2").accordion();
     \$("#acc3").accordion();
     \$("#acc4").accordion();
-
+    \$("#acc6").accordion();
      \$("#acc7").accordion();
 });
 //--><!]]>
@@ -175,31 +175,57 @@
         <div><p>No slaves connected.</p></div>
         #end if
     </div>
-    <h1>LOG MESSAGES (this run)</h1>
+    <h1>LOG MESSAGES (more recent higher)</h1>
+
+    #import copy
+    #set $rUserMsgs = copy.copy($userMsgs)
+    #if $userMsgs and len($userMsgs) > 0
+    #set $iM = len($userMsgs)+1
+    #set $mLen = len($userMsgs)-16
+    ${$rUserMsgs.reverse()}ls
+        <div id="acc6" class="accordion" style="background-color:#ffffff;background-image:none;">
+        <h3>Error messages and warnings</h3>
+        <div class="inner">
+        <div id="errorMsgs1" style="overflow:scroll;width:100%;height:400px;">
+        #for $userMsg in $rUserMsgs
+            #set $color = "#222222"
+            #set $iM -= 1
+            #if $userMsg.levelno == logging.WARNING
+                #set $color = "#587498"
+            #elif $userMsg.levelno == logging.ERROR
+                #set $color = "#E86850"
+            #else
+                #continue
+            #end if
+            <p style="color:$color;">${iM}. ${escape($userMsg.getMessage())}</p>
+        #end for
+        </div>
+        </div>
+
+    #set $iM = len($userMsgs)+1
     <div id="acc7" class="accordion" style="background-color:#ffffff;background-image:none;">
         #from cgi import escape
-        #if $userMsgs and len($userMsgs) > 0
-            <h3>Messages (last 15)</h3>
-            <div class="inner">
-            #set $iM = 1
-            #set $mLen = len($userMsgs)-16
-            
-            #for $userMsg in $userMsgs
-                #if $iM>$mLen
-                    #set $color = "#222222"
-                    #if $userMsg.levelno == logging.WARNING
-                        #set $color = "#587498"
-                    #end if
-                    #if $userMsg.levelno == logging.ERROR
-                        #set $color = "#E86850"
-                    #end if
-                    <p style="color:$color;">${iM}. ${escape($userMsg.getMessage())}</p>
-                #end if
-                #set $iM += 1
-            #end for
-            </div>
-        #end if
+
+        <h3>All Messages</h3>
+        <div class="inner">
+        <div style="overflow:scroll;width:100%;height:400px;">
+        #set $mLen = len($userMsgs)-16
+
+        #for $userMsg in $userMsgs
+            #set $iM -= 1
+            #set $color = "#222222"
+            #if $userMsg.levelno == logging.WARNING
+                #set $color = "#587498"
+            #end if
+            #if $userMsg.levelno == logging.ERROR
+                #set $color = "#E86850"
+            #end if
+            <p style="color:$color;">${iM}. ${escape($userMsg.getMessage())}</p>
+        #end for
+        </div>
+        </div>
     </div>
+    #end if
 </div>
 </div>
 </body>

@@ -26,7 +26,7 @@ try:
     from Daemon import Runnable, Daemon, DaemonException, readConfig
     from SocketUtils import FixedSockStream, XrdMessage, PriorityBlockingQueue, \
         SocketDisconnectedError
-    from TestUtils import TestSuiteException, loadTestSuiteDef,\
+    from TestUtils import TestSuiteException, loadTestSuiteDef, \
     loadTestSuitsDefs, TestSuite, extractSuiteName
     from apscheduler.scheduler import Scheduler
     from Utils import Stateful, State
@@ -417,6 +417,12 @@ class TestSuiteSession(Stateful):
         stages = [v for v in \
                   self.stagesResults if v[2] == test_case_uid]
         return stages
+#---------------------------------------------------------------------------
+def genNameUid(self, name):
+    d = datetime.datetime.now()
+    r = "%s-%s" % (name, d.isoformat())
+    r = r.translate(maketrans('', ''), '-:.')# remove special
+    return r
 #------------------------------------------------------------------------------ 
 class Job(object):
 
@@ -432,11 +438,13 @@ class Job(object):
 
     START_CLUSTER = 6
     STOP_CLUSTER = 7
-
-    def __init__(self, job, args=None):
+    #---------------------------------------------------------------------------
+    def __init__(self, job, groupUid, args=None):
         self.job = job
         self.state = Job.S_ADDED
         self.args = args
+
+        self.groupUid = ""
 #-------------------------------------------------------------------------------
 class ClustersDefinitionsChangeHandler(ProcessEvent):
     '''
@@ -593,10 +601,13 @@ class XrdTestMaster(Runnable):
                 if not self.testSuits.has_key(modName):
                     raise TestSuiteException(("There is no test suite " + \
                                              "%s defined.") % (modName))
-                self.sched.unschedule_func(self.testSuits[modName].jobFun)
-                del sys.modules[modName]
-                del self.testSuits[modName]
-                del modName
+                else:
+                    if self.testSuits[modName].jobFun:
+                        self.sched.unschedule_func(\
+                                                self.testSuits[modName].jobFun)
+                    del sys.modules[modName]
+                    del self.testSuits[modName]
+                    del modName
             except TestSuiteException, e:
                 LOGGER.error("Error while undefining: %s" % e)
         if dirEvent.maskname in addMasks or \
@@ -609,10 +620,9 @@ class XrdTestMaster(Runnable):
                 except TestSuiteException, e:
                     LOGGER.error("Definition warning: %s." % e)
                 if suite:
+                    suite.jobFun = self.executeJob(suite.name)
+                    self.sched.add_cron_job(suite.jobFun, **(suite.schedule))
                     self.testSuits[suite.name] = suite
-                    self.testSuits[suite.name].jobFun = self.executeJob(suite.name)
-                    self.sched.add_cron_job(self.testSuits[suite.name].jobFun, \
-                                             **(suite.schedule))
             except TestSuiteException, e:
                 LOGGER.error("Error while defining: %s" % e)
             except Exception, e:
@@ -639,6 +649,7 @@ class XrdTestMaster(Runnable):
             dirEvent.maskname == "IN_MODIFY":
             try:
                 LOGGER.info("Undefining cluster: %s" % modName)
+
                 del sys.modules[modName]
                 del self.clusters[modName]
                 del modName
@@ -725,7 +736,8 @@ class XrdTestMaster(Runnable):
                     LOGGER.info("Cluster start command sent to %s", hyperv)
                     return True
                 else:
-                    LOGGER.warning("No hypervisor to run the cluster on")
+                    LOGGER.warning("No hypervisor to run the cluster %s on" + \
+                                   clusterName)
                     self.clusters[clusterName].state = \
                         State(Cluster.S_UNKNOWN_NOHYPERV)
                     return False
@@ -1013,7 +1025,7 @@ class XrdTestMaster(Runnable):
         '''
         evt = MasterEvent(MasterEvent.M_JOB_ENQUEUE, test_suite_name)
         self.recvQueue.put((MasterEvent.PRIO_NORMAL, evt))
-        #---------------------------------------------------------------------------
+    #---------------------------------------------------------------------------
     def executeJob(self, test_suite_name):
         '''
         Closure for fireEnqueueJobEvent to hold the test_suite_name 
@@ -1029,42 +1041,43 @@ class XrdTestMaster(Runnable):
         '''
         LOGGER.info("runJob for testsuite %s " % test_suite_name)
 
+        groupUid = genNameUid(test_suite_name)
+
         ts = self.testSuits[test_suite_name]
         for clustName in ts.clusters:
-            j = Job(Job.START_CLUSTER, clustName)
+            j = Job(Job.START_CLUSTER, groupUid, clustName)
             self.pendingJobs.append(j)
             self.pendingJobsDbg.append("startCluster(%s)" % clustName)
 
-        j = Job(Job.INITIALIZE_TEST_SUITE, test_suite_name)
+        j = Job(Job.INITIALIZE_TEST_SUITE, groupUid, test_suite_name)
         self.pendingJobs.append(j)
         self.pendingJobsDbg.append("initSuite(%s)" % test_suite_name)
 
         for tName in ts.tests:
-            j = Job(Job.INITIALIZE_TEST_CASE, (test_suite_name, tName))
+            j = Job(Job.INITIALIZE_TEST_CASE, groupUid, (test_suite_name, tName))
             self.pendingJobs.append(j)
             self.pendingJobsDbg.append("initTest(%s)" % tName)
 
-            j = Job(Job.RUN_TEST_CASE, (test_suite_name, tName))
+            j = Job(Job.RUN_TEST_CASE, groupUid, (test_suite_name, tName))
             self.pendingJobs.append(j)
             self.pendingJobsDbg.append("runTest(%s)" % tName)
 
-            j = Job(Job.FINALIZE_TEST_CASE, (test_suite_name, tName))
+            j = Job(Job.FINALIZE_TEST_CASE, groupUid, (test_suite_name, tName))
             self.pendingJobs.append(j)
             self.pendingJobsDbg.append("finalizeTest(%s)" % tName)
 
-        j = Job(Job.FINALIZE_TEST_SUITE, test_suite_name)
+        j = Job(Job.FINALIZE_TEST_SUITE, groupUid, test_suite_name)
         self.pendingJobs.append(j)
         self.pendingJobsDbg.append("finalizeSuite(%s)" % test_suite_name)
 
         for clustName in ts.clusters:
-            j = Job(Job.STOP_CLUSTER, clustName)
+            j = Job(Job.STOP_CLUSTER, groupUid, clustName)
             self.pendingJobs.append(j)
             self.pendingJobsDbg.append("stopCluster(%s)" % clustName)
-
     #---------------------------------------------------------------------------
-    def startJobs(self):
+    def startNextJob(self):
         '''
-        Look through queue of jobs and start one, who have conditions.
+        Start next possible job enqueued from queue.
         @param test_suite_name:
         '''
         if len(self.pendingJobsDbg) <= 7:
@@ -1075,7 +1088,6 @@ class XrdTestMaster(Runnable):
         LOGGER.info("startJobs() pending: %s " % len(self.pendingJobs))
         if len(self.pendingJobs) > 0:
             j = self.pendingJobs[0]
-            #LOGGER.info("JOB: %s, %s, %s" % (j.job, j.state, j.args))
             if not j.state == Job.S_STARTED:
                 if j.job == Job.INITIALIZE_TEST_SUITE:
                     if self.initializeTestSuite(j.args):
@@ -1083,7 +1095,6 @@ class XrdTestMaster(Runnable):
                 elif j.job == Job.FINALIZE_TEST_SUITE:
                     if self.finalizeTestSuite(j.args):
                         self.pendingJobs[0].state = Job.S_STARTED
-
                 elif j.job == Job.INITIALIZE_TEST_CASE:
                     if self.initializeTestCase(j.args[0], j.args[1]):
                         self.pendingJobs[0].state = Job.S_STARTED
@@ -1093,11 +1104,11 @@ class XrdTestMaster(Runnable):
                 elif j.job == Job.FINALIZE_TEST_CASE:
                     if self.finalizeTestCase(j.args[0], j.args[1]):
                         self.pendingJobs[0].state = Job.S_STARTED
-
                 elif j.job == Job.START_CLUSTER:
                     if self.startCluster(j.args):
                         self.pendingJobs[0].state = Job.S_STARTED
                 elif j.job == Job.STOP_CLUSTER:
+                    #if next job is starting cluster, don't stop it. Save time.
                     if len(self.pendingJobs) > 1:
                         nj = self.pendingJobs[1]
                         if nj and nj.job == Job.START_CLUSTER and \
@@ -1282,7 +1293,7 @@ class XrdTestMaster(Runnable):
             else:
                 raise XrdTestMasterException("Unknown incoming evt type " + \
                                              str(evt.type))
-            self.startJobs()
+            self.startNextJob()
     #---------------------------------------------------------------------------
     def run(self):
         ''' 

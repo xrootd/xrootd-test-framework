@@ -100,10 +100,26 @@
         <table class="desctab" cellspacing="0" cellpadding="0" width="80%">
         <tr><td style="text-align:left;background-color:#e0e0e0;">${ts[1].schedule}</td></tr>
         </table>
+        <p class="sect_title">REQUIRED CLUSTERS</p>
+        <table class="desctab" cellspacing="0" cellpadding="0" width="80%">
+        <tr><th>Name</th><th>cluster definition state</th><th></th></tr>
+        #if $ts[1].clusters and len($ts[1].clusters) > 0
+            #for $cl in $ts[1].clusters
+                <tr><td>$cl</td><td>
+                #if $clusters.has_key($cl)
+                    loaded
+                #else
+                    <span style="color:#ff0000;">unavailable</span>
+                #end if
+                </td></tr>
+            #end for
+        #end if
+        </table>
         <p class="sect_title">REQUIRED MACHINES</p>
+        <p>Machines were autofilled by system: ${ts[1].machinesAutoFilled}</p>
         <table class="desctab" cellspacing="0" cellpadding="0" width="80%">
         <tr><th>Name</th><th>State</th><th></th></tr>
-        #if $testSuits and len($testSuits) > 0
+        #if $ts[1].machines and len($ts[1].machines) > 0
             #for $machine in $ts[1].machines
                 <tr><td>$machine</td><td>${testMaster.slaveState($machine)}</td><td>&nbsp;</td></tr>
             #end for
@@ -182,7 +198,7 @@
     #if $userMsgs and len($userMsgs) > 0
     #set $iM = len($userMsgs)+1
     #set $mLen = len($userMsgs)-16
-    ${$rUserMsgs.reverse()}ls
+    ${$rUserMsgs.reverse()}
         <div id="acc6" class="accordion" style="background-color:#ffffff;background-image:none;">
         <h3>Error messages and warnings</h3>
         <div class="inner">

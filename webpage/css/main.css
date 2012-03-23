@@ -1,7 +1,7 @@
 body, table {font:76%/1.6 verdana,geneva,lucida, 'lucida grande',arial,helvetica,sans-serif;}
 
 table.desctab th {  text-align:center; font-weight:bold; padding:4px;
-                    background-color:#e0e0e0; font-size:12px;}
+                    background-color:#e0e0e0; font-size:12px;margin-top:1px;}
 
 table.desctab td {  text-align:center; font-size:1.1em; padding:4px;
                     border-bottom:1px solid #a0a0a0;text-align:center;

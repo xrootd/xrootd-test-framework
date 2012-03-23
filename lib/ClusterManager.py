@@ -18,7 +18,8 @@ from tempfile import NamedTemporaryFile
 from copy import copy
 import threading
 from Utils import SafeCounter, State
-import uuid
+from uuid import uuid1
+import random
 #-------------------------------------------------------------------------------
 # Global variables
 #-------------------------------------------------------------------------------
@@ -265,7 +266,14 @@ class Cluster(Utils.Stateful):
     '''
     Represents a cluster comprised of hosts connected through network.
     '''
-    #-------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------
+    def randMac(self, history=[]):
+        import random
+
+        history.append(':'.join(map(lambda x: "%02x" % x, \
+                            [ 0x00, 0x16, 0x3E, random.randint(0x00, 0x7F), \
+                             random.randint(0x00, 0xFF), random.randint(0x00, 0xFF) ])))
+    #---------------------------------------------------------------------------
     def __init__(self):
         Utils.Stateful.__init__(self)
         self.hosts = []
@@ -281,7 +289,7 @@ class Cluster(Utils.Stateful):
     #---------------------------------------------------------------------------
     def addHost(self, host):
         if not hasattr(host, "uuid") or not host.uuid:
-            host.uuid = uuid.uuid1()
+            host.uuid = str(uuid1())
         if not hasattr(host, "diskImage") or not host.diskImage:
             host.diskImage = self.defaultHost.diskImage
         if not hasattr(host, "arch") or not host.arch:
@@ -670,8 +678,8 @@ def loadClusterDef(fp, clusters, validateWithRest = True):
             if validateWithRest:
                 cl.validateAgainstSystem(clusters)
         except AttributeError, e:
-            raise ClusterManagerException("Method getCluster " + \
-                  "can't be found in file: " + str(modFile))
+            raise ClusterManagerException("AttributeError in cluster def " + \
+                  " file %s: %s" % (modFile, e))
         except ImportError, e:
             raise ClusterManagerException("Can't import %s: %s." %\
                                            (modName, e))

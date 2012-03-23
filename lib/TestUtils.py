@@ -74,6 +74,9 @@ class TestSuite:
         self.jobFun = None      # handle to function that will be used
                                 # by scheduler. Has to be kept in case of
                                 # unscheduling.
+        self.machinesAutoFilled = False #if machines were empty, system has
+                                # to remember to reload them every time cluster
+                                # definition changes
         self.testCases  = []    # filled automatically by load test suite defs.
                                 # holds Python objectsrepresenting test cases
     #---------------------------------------------------------------------------
@@ -111,8 +114,11 @@ class TestSuite:
         return True
     #---------------------------------------------------------------------------
     def checkIfDefComplete(self, clusters):
+        if self.machinesAutoFilled:
+            self.machines = []
+
         for cluN in self.clusters:
-            if not cluN in self.clusters:
+            if not cluN in clusters:
                 self.defEnabled = False
                 raise TestSuiteException(\
                 ("Cluster %s in suite %s definition " + \
@@ -120,6 +126,7 @@ class TestSuite:
         #-----------------------------------------------------------------------
         # check if all required machines are connected and idle
         if not len(self.machines):
+            self.machinesAutoFilled = True
             for cName in self.clusters:
                 self.machines.extend(\
                 [h.name for h in clusters[cName].hosts])

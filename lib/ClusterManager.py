@@ -117,10 +117,12 @@ class Network(object):
         self.xrdTestMasterIP = ""
     #---------------------------------------------------------------------------
     def addDnsHost(self, host):
-        self.DnsHosts.append(host)
+        hostup = (host.ip, host.name)
+        self.DnsHosts.append(hostup)
     #---------------------------------------------------------------------------
     def addDHCPHost(self, host):
-        self.DHCPHosts.append(host)
+        hostup = (host.mac, host.ip, host.name)
+        self.DHCPHosts.append(hostup)
     #---------------------------------------------------------------------------
     def addHost(self, host):
         '''
@@ -128,7 +130,7 @@ class Network(object):
         @param host: tuple (MAC address, IP address, HOST fqdn)
         '''
         self.addDHCPHost(host)
-        self.addDnsHost((host[1], host[2]))
+        self.addDnsHost(host)
     #---------------------------------------------------------------------------
     def addHosts(self, hostsList):
         '''
@@ -207,8 +209,8 @@ class Host(object):
       function='0x1'/>
     </controller>
     <interface type='network'>
-      <mac address='%(macAddress)s'/>
-      <source network='%(sourceNetwork)s'/>
+      <mac address='%(mac)s'/>
+      <source network='%(net)s'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x03' 
       function='0x0'/>
     </interface>
@@ -234,18 +236,21 @@ class Host(object):
 </domain>
 """
     #---------------------------------------------------------------------------
-    def __init__(self):
-        self.uuid = ""
-        self.name = ""
-        self.diskImage = None
+    def __init__(self, name="", ip="", mac="", diskImage=None, \
+                 ramSize="", arch="", net="", \
+                 emulatorPath="", uuid=""):
+        self.uuid = uuid
+        self.name = name
+        self.ip = ip
+        self.mac = mac
+        self.diskImage = diskImage
+        self.ramSize = ramSize
+        self.arch = arch
+        self.net = net
+        self.emulatorPath = emulatorPath
+
         self.runningDiskImage = ""
-        self.ramSize = ""
-        self.macAddress = ""
-        self.arch = ""
-        self.sourceNetwork = ""
-        self.emulatorPath = "/usr/libexec/qemu-kvm"
         self.__xmlDesc = ""
-    #---------------------------------------------------------------------------
     @property
     def xmlDesc(self):
         values = self.__dict__
@@ -285,7 +290,8 @@ class Cluster(Utils.Stateful):
         self.defaultHost.diskImage = '/data/virtual/images/lt_slc5_refslave.img'
         self.defaultHost.arch = 'x86_64'
         self.defaultHost.ramSize = '524288'
-        self.defaultHost.sourceNetwork = None
+        self.defaultHost.net = None
+        self.defaultHost.useOriginalImage = False
     #---------------------------------------------------------------------------
     def addHost(self, host):
         if not hasattr(host, "uuid") or not host.uuid:
@@ -296,8 +302,10 @@ class Cluster(Utils.Stateful):
             host.arch = self.defaultHost.arch
         if not hasattr(host, "ramSize") or not host.ramSize:
             host.ramSize = self.defaultHost.ramSize
-        if not hasattr(host, "sourceNetwork") or not host.sourceNetwork:
-            host.sourceNetwork = self.defaultHost.sourceNetwork
+        if not hasattr(host, "net") or not host.net:
+            host.net = self.defaultHost.net
+        if not hasattr(host, "useOriginalImage"):
+            host.useOriginalImage = self.defaultHost.useOriginalImage
         if not host.diskImage:
             raise ClusterManagerException(('Host %s definition has no ' + \
                                           'disk image defined') % host.name)
@@ -306,7 +314,7 @@ class Cluster(Utils.Stateful):
     #---------------------------------------------------------------------------
     def addHosts(self, hosts):
         for h in hosts:
-            self.addHosts(h)
+            self.addHost(h)
     #---------------------------------------------------------------------------
     def setEmulatorPath(self, emulator_path):
         if len(self.hosts):
@@ -331,10 +339,10 @@ class Cluster(Utils.Stateful):
         umacs = []
         uips = []
         for h in self.hosts:
-            if h.macAddress in umacs:
+            if h.mac in umacs:
                 raise ClusterManagerException(('Host MAC %s address ' + \
-                                               'doubled') % h.macAddress)
-            umacs.append(h.macAddress)
+                                               'doubled') % h.mac)
+            umacs.append(h.mac)
 
         if self.network.ip == self.network.DHCPRange[0]:
             raise ClusterManagerException(('Network %s [%s] IP the ' + \
@@ -665,7 +673,7 @@ def loadClusterDef(fp, clusters, validateWithRest = True):
             if sys.modules.has_key(modName):
                 del sys.modules[modName]
             mod = __import__(modName, globals(), {}, ['getCluster'])
-
+    
             cl = mod.getCluster()
             if cl.name != modName:
                 raise ClusterManagerException(("Cluster name %s in file %s" + \

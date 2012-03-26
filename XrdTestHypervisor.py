@@ -153,7 +153,6 @@ class XrdTestHypervisor(Runnable):
 
         resp = XrdMessage(XrdMessage.M_CLUSTER_STATE)
         resp.clusterName = msg.clusterDef.name
-        maintenance = msg.maintenance
 
         cluster = msg.clusterDef
         cluster.setEmulatorPath(self.config.get('virtual_machines',
@@ -166,7 +165,7 @@ class XrdTestHypervisor(Runnable):
                 LOGGER.info("Cluster definition semantically correct. " + \
                             "Starting cluster.")
 
-                self.clusterManager.createCluster(cluster, maintenance)
+                self.clusterManager.createCluster(cluster)
 
                 resp.state = State(Cluster.S_ACTIVE)
             except ClusterManagerException, e:
@@ -189,20 +188,20 @@ class XrdTestHypervisor(Runnable):
                         "Starting cluster.")
             for h in cluster.hosts:
                 act = self.clusterManager.hostIsActive(h)
-                LOGGER.info("Host " + h.name + " isActive(): " \
+                LOGGER.info("Host " + h.uname + " isActive(): " \
                                 + str(act))
                 if act:
-                    LOGGER.info("Removing host " + h.name)
-                    self.clusterManager.removeHost(h.name)
+                    LOGGER.info("Removing machine " + h.uname)
+                    self.clusterManager.removeHost(h.uname)
                     LOGGER.info("Done.")
 
             if cluster.network:
                 act = self.clusterManager.networkIsActive(cluster.network)
-                LOGGER.info("Network " + cluster.network.name + \
+                LOGGER.info("Network " + cluster.network.uname + \
                                 " isActive(): " + str(act))
                 if act:
                     LOGGER.info("Creating network.")
-                    self.clusterManager.removeNetwork(cluster.network.name)
+                    self.clusterManager.removeNetwork(cluster.network.uname)
                     LOGGER.info("Done.")
 
             resp.state = State(Cluster.S_STOPPED)

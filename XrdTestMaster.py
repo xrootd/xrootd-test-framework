@@ -333,7 +333,7 @@ class TCPClient(Stateful):
 class Hypervisor(TCPClient):
     #---------------------------------------------------------------------------
     def __init__(self, socket, hostname, address, state):
-        Stateful.__init__(self. socket, hostname, address, state)
+        TCPClient.__init__(self, socket, hostname, address, state)
         self.runningClusterDefs = {}
     #---------------------------------------------------------------------------
     def __str__(self):

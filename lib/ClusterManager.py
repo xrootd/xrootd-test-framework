@@ -205,7 +205,7 @@ class Host(object):
     <emulator>%(emulatorPath)s</emulator>
     <disk type='file' device='disk'>
       <driver name='qemu' type='raw'/>
-      <source file='%(__runningDiskImage)s'/>
+      <source file='%(runningDiskImage)s'/>
       <target dev='hda' bus='ide'/>
       <address type='drive' controller='0' bus='0' unit='0'/>
     </disk>
@@ -262,9 +262,9 @@ class Host(object):
 
         #filled automatically
         self.clusterName = ""
+        self.runningDiskImage = ""
 
         # private properties
-        self.__runningDiskImage = ""
         self.__xmlDesc = ""
     #---------------------------------------------------------------------------
     @property
@@ -282,6 +282,7 @@ class Host(object):
     def xmlDesc(self):
         values = self.__dict__
         values['uname'] = self.uname
+        values['net'] = self.clusterName + "_" + self.net
         self.__xmlDesc = self.xmlDomainPattern % values
 
         return self.__xmlDesc
@@ -410,8 +411,10 @@ class Cluster(Utils.Stateful):
         '''
         if self.hosts:
             for h in self.hosts:
-                if not os.path.exists(h.diskImage) and \
-                    not os.path.exists(self.defaultHost.diskImage):
+                c1 = (h.diskImage and not os.path.exists(h.diskImage))
+                c2 = (self.defaultHost.diskImage and \
+                      not os.path.exists(self.defaultHost.diskImage))
+                if c1 and c2:
                     return (False, ("One of disk images %s, %s" +\
                                     "has to exist") + \
                                     (h.diskImage, self.defaultHost.diskImage))
@@ -496,32 +499,35 @@ class ClusterManager:
         else:
             LOGGER.debug("libvirt manager disconnected")
     #---------------------------------------------------------------------------
-    def copyHostImg(self, hostObj, tmpFile, safeCounter = None):
+    def copyImg(self, huName, safeCounter = None):
+        (host, tmpFile, hostObj) = self.hosts[huName]
+
+        dip = self.clusters[hostObj.clusterName].defaultHost.diskImage
         LOGGER.info(("Start copying %s (for %s) to tmp img %s") \
-                    % (hostObj.diskImage, self.defa .name, tmpFile.name))
-        dip = None
+                    % (dip, hostObj.uname, tmpFile.name))
         try:
-            dip = self.clusters[hostObj.clusterName].defaultHost.diskImage
             f = open(dip , "r")
+            #buffsize = 52428800 #read 50 MB at a time
+            buffsize = (1024 ** 3) /2  #read/write 512 MB at a time
+            buff = f.read(buffsize)
+            while buff:
+                tmpFile.file.write(buff)
+                buff = f.read(buffsize)
+            f.close()
         except IOError, e:
             msg = "Can't open %s. %s" % (dip, e)
             raise ClusterManagerException(msg)
-        #buffsize = 52428800 #read 50 MB at a time
-        buffsize = (1024 ** 3) /2  #read/write 512 MB at a time
-        buff = f.read(buffsize)
-        while buff:
-            tmpFile.file.write(buff)
-            buff = f.read(buffsize)
-        f.close()
-        LOGGER.info(("Disk image %s  (for %s) copied to temp file %s") \
-                    % (dip, hostObj.name, tmpFile.name))
-        if safeCounter:
-            safeCounter.inc()
+        else:
+            LOGGER.info(("Disk image %s  (for %s) copied to temp file %s") \
+                        % (dip, hostObj.name, tmpFile.name))
+            if safeCounter:
+                safeCounter.inc()
     #---------------------------------------------------------------------------
     def defineHost(self, hostObj):
         '''
         Defines virtual host in a cluster using given host object, 
-        not starting it. Host may be defined only once in the system.
+        not starting it. Host with the given name may be defined once 
+        in the system. Stores hosts objects in class property self.hosts.
         @param hostObj: ClusterManager.Host object
         @raise ClusterManagerException: when fails
         @return: host object from libvirt lib
@@ -531,54 +537,58 @@ class ClusterManager:
 
         for h in self.hosts.itervalues():
             cip = self.clusters[hostObj.clusterName].defaultHost.diskImage
-            if h[2].__runningDiskImage == hostObj.diskImage or \
-                (hostObj.diskImage == "" and h[2].__runningDiskImage == cip):
+            if h[2].runningDiskImage == hostObj.diskImage or \
+                (not hostObj.diskImage and h[2].runningDiskImage == cip):
                 return h[0]
 
         tmpFile = None
-        if hostObj.diskImage == "":
+        if not hostObj.diskImage:
             # first, copy the original disk image
             tmpFile = NamedTemporaryFile(prefix=self.tmpImagesPrefix, \
                                          dir=self.tmpImagesDir)
-            hostObj.__runningDiskImage = tmpFile.name
+            hostObj.runningDiskImage = tmpFile.name
         else:
             LOGGER.info(("Defining machine %s using ORIGINAL IMAGE %s") \
                         % (hostObj.uname, hostObj.diskImage))
-            hostObj.__runningDiskImage = hostObj.diskImage
+            hostObj.runningDiskImage = hostObj.diskImage
 
         self.hosts[hostObj.uname] = None
         try:
             conn = self.virtConnection
             host = conn.defineXML(hostObj.xmlDesc)
 
-            self.hosts[hostObj.uname] = (host, tmpFile, hostObj,\
-                                        hostObj.useOriginalImage)
+            self.hosts[hostObj.uname] = (host, tmpFile, hostObj)
+            LOGGER.info("DEF self.hosts.uname: %s" % hostObj.uname)
+
         except libvirtError, e:
             try:
                 host = conn.lookupByName(hostObj.uname)
-                self.hosts[hostObj.uname] = (host, "", None, None)
+                self.hosts[hostObj.uname] = (host, None, hostObj)
+                LOGGER.info("DEF self.hosts.uname: %s" % hostObj.uname)
+
             except libvirtError, e:
-                msg = ("Could not define machine neither " + \
-                        "obtain machine definition: %s") % e
+                msg = ("Can't define machine %s on image %s neither " + \
+                        "obtain machine definition: %s") % \
+                        (hostObj.uname, hostObj.runningDiskImage, e)
                 raise ClusterManagerException(msg, ERR_ADD_HOST)
         return self.hosts[hostObj.uname]
     #---------------------------------------------------------------------------
-    def removeHost(self, hostName):
+    def removeHost(self, hostUName):
         '''
         Can not be used inside loop iterating over hosts!
-        @param hostName:
+        @param hostUName:
         '''
         try:
-            h = self.hosts[hostName][0]
-            LOGGER.info("Destroying and undefining machine %s." % hostName)
+            h = self.hosts[hostUName][0]
+            LOGGER.info("Destroying and undefining machine %s." % hostUName)
             h.destroy()
             h.undefine()
             LOGGER.info("Done.")
 
-            del self.hosts[hostName]
+            del self.hosts[hostUName]
 
         except libvirtError, e:
-            msg = "Could not remove virtual host: %s" % e
+            msg = "Could not remove virtual machine: %s" % e
             LOGGER.error(msg)
             raise ClusterManagerException(msg, ERR_CONNECTION)
     #---------------------------------------------------------------------------
@@ -602,8 +612,8 @@ class ClusterManager:
                 self.nets[netObj.uname] = conn.networkLookupByName(netObj.uname)
             except libvirtError, e:
                 LOGGER.error(e)
-                msg = "Could not define net neither obtain net definition. " + \
-                      " After network already exists."
+                msg = ("Could not define net %s neither obtain net definition. " + \
+                      " After network already exists.") % netObj.uname
                 raise ClusterManagerException(msg, ERR_CREATE_NETWORK)
 
         return self.nets[netObj.uname]
@@ -633,18 +643,18 @@ class ClusterManager:
 
         return net
     #---------------------------------------------------------------------------
-    def removeNetwork(self, netName):
+    def removeNetwork(self, netUName):
         '''
         Can not be used inside loop iterating over networks!
         @param hostName:
         '''
         try:
-            n = self.nets[netName]
-            LOGGER.info("Destroying and undefining network %s." % netName)
+            n = self.nets[netUName]
+            LOGGER.info("Destroying and undefining network %s." % netUName)
             n.destroy()
             n.undefine()
             LOGGER.info("Done.")
-            del self.nets[netName]
+            del self.nets[netUName]
 
         except libvirtError, e:
             msg = "Could not destroy network from libvirt: %s" % e
@@ -657,39 +667,54 @@ class ClusterManager:
         @param cluster:
         '''
         self.clusters[cluster.name] = cluster
-        self.createNetwork(cluster.network)
+        net = self.createNetwork(cluster.network)
 
-        if cluster.hosts and len(cluster.hosts):
-            copyThreads = {}
-            safeCounter = SafeCounter()
+        if not net:
+            raise ClusterManagerException(("Network %s couldn't be created." + \
+                                          " Stoping cluster %s creation.") % \
+                                          (cluster.network.uname, cluster.name))
+            return
 
-            needCopy = 0
-            for h in cluster.hosts:
-                self.defineHost(h)
+        try:
+            if cluster.hosts and len(cluster.hosts):
+                copyThreads = {}
+                safeCounter = SafeCounter()
 
-                if not h.diskImage:
-                    sys.setcheckinterval(500)
-                    needCopy += 1
-                    copyThreads[h.uname] =\
-                        threading.Thread(target=self.copyHostImg, args =\
-                                         (self.hosts[h.name][2], \
-                                          self.hosts[h.name][1], \
-                                          safeCounter))
-                    copyThreads[h.uname].start()
+                needCopy = 0
+                for h in cluster.hosts:
+                    LOGGER.info("HostObj.clusterName %s" % h.clusterName)
+                    self.defineHost(h)
 
-            if needCopy > 0:
-                #wait for all threads to copy images
-                n = 0
-                while(n < needCopy):
-                    n = safeCounter.get()
-                    LOGGER.info("Machines images copied: %s of %s" % (n, \
-                                                                      needCopy))
-                sys.setcheckinterval(100)
-            #start all domains
-            for h in cluster.hosts:
-                LOGGER.info("Starting %s" % h.uname)
-                self.hosts[h.uname][0].create()
-                LOGGER.info("Started %s" % h.uname)
+                    LOGGER.info("Host diskimage: %s" % h.diskImage)
+                    if not h.diskImage:
+                        LOGGER.info("Copying image %s for machine %s." %\
+                                    (cluster.defaultHost.diskImage, h.uname))
+                        sys.setcheckinterval(500)
+                        needCopy += 1
+                        copyThreads[h.uname] =\
+                            threading.Thread(target=self.copyImg, args =\
+                                             (h.uname, safeCounter))
+                        copyThreads[h.uname].start()
+                    else:
+                        LOGGER.info("Using original image %s for machine %s." %\
+                                    (h.diskImage, h.uname))
+
+                if needCopy > 0:
+                    #wait for all threads to copy images
+                    n = 0
+                    while(n < needCopy):
+                        n = safeCounter.get()
+                        LOGGER.info("Machines images copied: %s of %s" %\
+                                    (n, needCopy))
+                    sys.setcheckinterval(100)
+                #start all domains
+                for h in cluster.hosts:
+                    LOGGER.info("Creating machine %s" % h.uname)
+                    self.hosts[h.uname][0].create()
+                    LOGGER.info("Created machine %s" % h.uname)
+        except ClusterManagerException, e:
+            self.removeNetwork(cluster.network.uname)
+            raise e
     #---------------------------------------------------------------------------
     def hostIsActive(self, hostObj):
         h = self.defineHost(hostObj)

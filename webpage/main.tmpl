@@ -35,9 +35,6 @@
     	<h3><a href="#">${cluster.name}
     	<span style="color:#666666;font-weight:normal;">${cluster.state}</span></a></h3>
     	<div class="inner">
-	    <p class="sect_title">ACTIONS AVAILABLE</p>
-        <p>&rsaquo;&nbsp; <a href="./startCluster?clusterName=${cluster.name}">Start cluster in maintenance mode</a></p>
-        <p>&rsaquo;&nbsp; <a href="./stopCluster?clusterName=${cluster.name}">Stop cluster in maintenance mode</a></p>
     	<p class="sect_title">LAST STATE <span style="font-size:11px;font-weight:normal;">${cluster.state}</span></p>
        	<p class="sect_title">NETWORK</p>
             <table class="desctab" width="100%" cellspacing="0" cellpadding="0">
@@ -73,9 +70,13 @@
                             <th>diskimage</th><th>arch</th><th>uuid</th>
                             </tr>
                             <tr><td><%= escape(host.name) %></td>
-                            <td><%= escape(host.macAddress) %></td>
+                            <td><%= escape(host.mac) %></td>
                             <td><%= escape(host.ramSize) %></td>
+                            #if $host.diskImage
                             <td><%= escape(host.diskImage) %></td>
+                            #else
+                            <td>copy from cluster definition</td>
+                            #end if
                             <td><%= escape(host.arch) %></td><td>uuid</td>
                             </tr>
                             </table>
@@ -221,7 +222,6 @@
     #set $iM = len($userMsgs)+1
     <div id="acc7" class="accordion" style="background-color:#ffffff;background-image:none;">
         #from cgi import escape
-
         <h3>All Messages</h3>
         <div class="inner">
         <div style="overflow:scroll;width:100%;height:400px;">

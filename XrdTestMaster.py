@@ -35,6 +35,7 @@ try:
     import ConfigParser
     import SocketServer
     import cherrypy
+    import random
     from cherrypy.lib.static import serve_file
     import os
     import socket
@@ -266,16 +267,6 @@ class WebInterface:
         tplVars = { 'hostname': socket.gethostname(),
                     'HTTPport': self.config.getint('webserver', 'port')}
         return self.disp("index_redirect.tmpl", tplVars)
-    #---------------------------------------------------------------------------
-    def startCluster(self, clusterName):
-        LOGGER.info("startCluster in mainte pressed: " + str(clusterName))
-        self.testMaster.startCluster(clusterName, maintenance=True)
-        return self.indexRedirect()
-    #---------------------------------------------------------------------------
-    def stopCluster(self, clusterName):
-        LOGGER.info("stopCluster pressed: " + str(clusterName))
-        self.testMaster.stopCluster(clusterName, maintenance=True)
-        return self.indexRedirect()
     #--------------------------------------------------------------------------- 
     def downloadScript(self, script_name):
         from xml.sax.saxutils import quoteattr
@@ -297,8 +288,6 @@ class WebInterface:
         else:
             return ""
 
-#    startCluster.exposed = True
-#    stopCluster.exposed = True
     index.exposed = True
     suitsSessions.exposed = True
     downloadScript.exposed = True
@@ -443,12 +432,12 @@ class Job(object):
     START_CLUSTER           = 6
     STOP_CLUSTER            = 7
     #---------------------------------------------------------------------------
-    def __init__(self, job, groupUid, args=None):
+    def __init__(self, job, groupUid="", args=None):
         self.job = job
         self.state = Job.S_ADDED
         self.args = args
 
-        self.groupUid = ""
+        self.groupUid = groupUid
 #-------------------------------------------------------------------------------
 class ClustersDefinitionsChangeHandler(ProcessEvent):
     '''
@@ -568,7 +557,8 @@ class XrdTestMaster(Runnable):
         except TestSuiteException, e:
             LOGGER.error("Test Suite Exception: %s" % e)
             sys.exit()
-
+        
+        # add jobs to scheduler if it's enabled
         if self.config.getint('scheduler', 'enabled') == 1:
             for ts in self.testSuits.itervalues():
                 if not ts.schedule:
@@ -597,9 +587,8 @@ class XrdTestMaster(Runnable):
         remMasks = ["IN_DELETE", "IN_MOVED_FROM"]
         addMasks = ["IN_CREATE", "IN_MOVED_TO"]
 
-        #TODO it may couse inconsistency in suits defs
-        if dirEvent.maskname in remMasks or \
-            dirEvent.maskname == "IN_MODIFY":
+        # if removed of modified do removal tasks
+        if dirEvent.maskname in remMasks or dirEvent.maskname == "IN_MODIFY":
             try:
                 LOGGER.info("Undefining test suite: %s" % modName)
                 if self.testSuits.has_key(modName):
@@ -614,6 +603,7 @@ class XrdTestMaster(Runnable):
             except Exception, e:
                 LOGGER.error(("Error while defining test suite %s") % e)
 
+        #if file added or modified do adding tasks
         if dirEvent.maskname in addMasks or \
             dirEvent.maskname == "IN_MODIFY":
             try:
@@ -722,7 +712,7 @@ class XrdTestMaster(Runnable):
 
         return testSlaves
     #---------------------------------------------------------------------------
-    def startCluster(self, clusterName, maintenance=False):
+    def startCluster(self, clusterName):
         clusterFound = False
         if self.clusters.has_key(clusterName):
             if self.clusters[clusterName].name == clusterName:
@@ -732,10 +722,10 @@ class XrdTestMaster(Runnable):
                 if len(self.hypervisors):
                     msg = XrdMessage(XrdMessage.M_START_CLUSTER)
                     msg.clusterDef = self.clusters[clusterName]
-                    msg.maintenance = maintenance
 
-                    #take first possible hypervisor and send him cluster def
-                    hyperv = [h for h in self.hypervisors.itervalues()][0]
+                    #take random hypervisor and send him cluster def
+                    hNum = random.randint(0, len(self.hypervisors)-1)
+                    hyperv = [h for h in self.hypervisors.itervalues()][hNum]
                     hyperv.send(msg)
 
                     self.clusters[clusterName].state = \
@@ -756,7 +746,7 @@ class XrdTestMaster(Runnable):
             LOGGER.error("No cluster with name " + str(clusterName) + " found")
             return False
     #---------------------------------------------------------------------------
-    def stopCluster(self, clusterName, maintenance=False):
+    def stopCluster(self, clusterName):
         clusterFound = False
         if self.clusters.has_key(clusterName):
             if self.clusters[clusterName].name == clusterName:
@@ -769,7 +759,6 @@ class XrdTestMaster(Runnable):
                 hyperv = self.clustersHypervisor[clusterName]
 
                 msg.clusterDef = hyperv.runningClusterDefs[clusterName]
-                msg.maintenance = maintenance
 
                 hyperv.send(msg)
 
@@ -1367,9 +1356,9 @@ class XrdTestMaster(Runnable):
         server_thread.daemon = True
         server_thread.start()
 
+        #-----------------------------------------------------------------------
+        # Start schduler if it's enabled
         if self.config.getint('scheduler', 'enabled') == 1:
-            #-------------------------------------------------------------------
-            # Enable scheduler
             self.sched.start()
         else:
             LOGGER.info("SCHEDULER is disabled.")
@@ -1439,6 +1428,7 @@ class XrdTestMaster(Runnable):
         #-----------------------------------------------------------------------
         self.procEvents()
         #-----------------------------------------------------------------------
+        # if here - program is ending
         # synchronize suits sessions list with HDD storage and close
         clustersNotifier.stop()
         suitsNotifier.stop()
@@ -1454,7 +1444,6 @@ class UserInfoHandler(logging.Handler):
             self.testMaster = xrdTestMaster
     def emit(self, record):
         self.testMaster.userMsgs.append(record)
-
 #-------------------------------------------------------------------------------
 def main():
     '''

@@ -288,9 +288,12 @@ class Host(object):
         return self.__xmlDesc
 #-------------------------------------------------------------------------------
 class Cluster(Utils.Stateful):
+
     #---------------------------------------------------------------------------
     S_ACTIVE = (10, "Cluster active")
     S_ERROR = (-10, "Cluster error")
+    S_ERROR_START = (-11, "Cluster error at start")
+    S_ERROR_STOP = (-12, "Cluster error at stop")
     S_UNKNOWN = (1, "Cluster state unknown")
     S_UNKNOWN_NOHYPERV = (1, "Cluster state unknown, no hypervisor to plant it on")
     S_DEFINITION_SENT = (2, "Cluster definition sent do hypervisor to start")
@@ -323,6 +326,10 @@ class Cluster(Utils.Stateful):
         self.__network = None
     #---------------------------------------------------------------------------
     def addHost(self, host):
+        if not self.network:
+            raise ClusterManagerException(('First assign network ' + \
+                                           'before you add hosts to cluster' + \
+                                          ' %s definition.') % (self.name))
         if not hasattr(host, "uuid") or not host.uuid:
             host.uuid = str(uuid1())
         if not hasattr(host, "arch") or not host.arch:
@@ -345,6 +352,7 @@ class Cluster(Utils.Stateful):
     #---------------------------------------------------------------------------
     def networkSet(self, net):
         net.clusterName = self.name
+        self.defaultHost.net = net.name
         self.__network = net
     #---------------------------------------------------------------------------
     def networkGet(self):
@@ -378,7 +386,11 @@ class Cluster(Utils.Stateful):
                 raise ClusterManagerException(('Host MAC %s address ' + \
                                                'doubled') % h.mac)
             umacs.append(h.mac)
-
+            if h.net != self.network.name:
+                raise ClusterManagerException(('Network name %s in host %s' + \
+                                               ' definition not defined in' + \
+                                               ' cluster %s.') % \
+                                              (h.net, h.name, self.name))
         if self.network.ip == self.network.DHCPRange[0]:
             raise ClusterManagerException(('Network %s [%s] IP the ' + \
                                            'same as DHCPRange ' + \
@@ -414,9 +426,9 @@ class Cluster(Utils.Stateful):
                 c1 = (h.diskImage and not os.path.exists(h.diskImage))
                 c2 = (self.defaultHost.diskImage and \
                       not os.path.exists(self.defaultHost.diskImage))
-                if c1 and c2:
+                if c1 or c2:
                     return (False, ("One of disk images %s, %s" +\
-                                    "has to exist") + \
+                                    "has to exist") % \
                                     (h.diskImage, self.defaultHost.diskImage))
 
         return (True, "")
@@ -467,29 +479,14 @@ class ClusterManager:
         @raise ClusterManagerException: when fails
         '''
         try:
-            for v in self.hosts.itervalues():
-                h = v[0]
-                hn = copy(h.name())
-                LOGGER.info("Destroying and undefining machine %s." % hn)
-                h.destroy()
-                h.undefine()
-                LOGGER.info("Done.")
-
-            if len(self.hosts):
-                LOGGER.info("Deleting images tmp files form disk.")
-                self.hosts.clear()
-                LOGGER.info("Done.")
-
-            for n in self.nets.itervalues():
-                nn = copy(n.name())
-                LOGGER.info("Destroying and undefining network %s." % nn)
-                n.destroy()
-                n.undefine()
-                LOGGER.info("Done.")
-
-            if len(self.nets):
-                self.nets.clear()
-
+            err = ''
+            for clusterName in self.clusters:
+                try:
+                    self.removeCluster(clusterName)
+                except ClusterManagerException, e:
+                    err += ',' + str(e)
+            if err:
+                LOGGER.error(err)
             if self.virtConnection:
                 self.virtConnection.close()
         except libvirtError, e:
@@ -558,13 +555,13 @@ class ClusterManager:
             host = conn.defineXML(hostObj.xmlDesc)
 
             self.hosts[hostObj.uname] = (host, tmpFile, hostObj)
-            LOGGER.info("DEF self.hosts.uname: %s" % hostObj.uname)
+            LOGGER.info("Defined machine: %s" % hostObj.uname)
 
         except libvirtError, e:
             try:
                 host = conn.lookupByName(hostObj.uname)
                 self.hosts[hostObj.uname] = (host, None, hostObj)
-                LOGGER.info("DEF self.hosts.uname: %s" % hostObj.uname)
+                LOGGER.info("Machine already defined: %s" % hostObj.uname)
 
             except libvirtError, e:
                 msg = ("Can't define machine %s on image %s neither " + \
@@ -591,6 +588,24 @@ class ClusterManager:
             msg = "Could not remove virtual machine: %s" % e
             LOGGER.error(msg)
             raise ClusterManagerException(msg, ERR_CONNECTION)
+    #---------------------------------------------------------------------------
+    def removeHosts(self, hostsUnameList):
+        '''
+        Remove multiple hosts.
+        @param hostsUnameList: list of unames of defined hosts.
+        '''
+
+        innerErrors = []
+        for huName in hostsUnameList:
+            try:
+                self.removeHost(huName)
+            except ClusterManagerException, e:
+                innerErrors.append(e)
+
+        errMsgs = map(str, innerErrors)
+        errMsg = ', '.join(errMsgs)
+
+        return errMsg
     #---------------------------------------------------------------------------
     def defineNetwork(self, netObj):
         '''
@@ -661,12 +676,45 @@ class ClusterManager:
             LOGGER.error(msg)
             raise ClusterManagerException(msg, ERR_CONNECTION)
     #---------------------------------------------------------------------------
+    def removeDanglingHost(self, hostObj):
+        host = None
+        try:
+            conn = self.virtConnection
+            host = conn.lookupByName(hostObj.uname)
+            LOGGER.info("Machine already defined: %s" % hostObj.uname)
+        except libvirtError, e:
+            return
+
+        if host:
+            LOGGER.info("Old host %s definition found. Removing." % \
+                        hostObj.uname)
+            if host.isActive():
+                host.destroy()
+            host.undefine()
+    #---------------------------------------------------------------------------
+    def removeDanglingNetwork(self, netObj):
+        net = None
+        try:
+            conn = self.virtConnection
+            net = conn.networkLookupByName(netObj.uname)
+            LOGGER.info("Machine already defined: %s" % netObj.uname)
+        except libvirtError, e:
+            return
+
+        if net:
+            LOGGER.info("Old network %s definition found. Removing." % \
+                        netObj.uname)
+            if net.isActive():
+                net.destroy()
+            net.undefine()
+
     def createCluster(self, cluster):
         '''
-        Creates whole cluster: first network, then hosts.
+        Creates whole cluster: first network, then virtual machines - hosts.
         @param cluster:
         '''
         self.clusters[cluster.name] = cluster
+        self.removeDanglingNetwork(cluster.network)
         net = self.createNetwork(cluster.network)
 
         if not net:
@@ -680,10 +728,13 @@ class ClusterManager:
                 copyThreads = {}
                 safeCounter = SafeCounter()
 
-                needCopy = 0
+                needCopy = 0    # number of machines that need additional
+                                # thread to copy
+                waitingForCreate = []
                 for h in cluster.hosts:
-                    LOGGER.info("HostObj.clusterName %s" % h.clusterName)
+                    self.removeDanglingHost(h)
                     self.defineHost(h)
+                    waitingForCreate.append(h.uname)
 
                     LOGGER.info("Host diskimage: %s" % h.diskImage)
                     if not h.diskImage:
@@ -707,22 +758,52 @@ class ClusterManager:
                         LOGGER.info("Machines images copied: %s of %s" %\
                                     (n, needCopy))
                     sys.setcheckinterval(100)
-                #start all domains
-                for h in cluster.hosts:
-                    LOGGER.info("Creating machine %s" % h.uname)
-                    self.hosts[h.uname][0].create()
-                    LOGGER.info("Created machine %s" % h.uname)
+                # remember locally domains created correctly to remove them
+                # in case one can't be created
+                hostsCreated = []
+                try:
+                    # start machines - in libvirt aka create domains
+                    for huname in waitingForCreate:
+                        LOGGER.info("Creating machine %s" % huname)
+                        self.hosts[huname][0].create()
+                        hostsCreated.append(huname)
+                        LOGGER.info("Created machine %s" % huname)
+                except libvirt.libvirtError, e:
+                    LOGGER.info("Error occured. Undefining created machines.")
+                    innerErrMsg = self.removeHosts(hostsCreated)
+                    raise ClusterManagerException("Error during "+ \
+                          "creation of machine %s: %s. %s" %\
+                          (h.uname, e, innerErrMsg))
+            else:
+                LOGGER.info("No hosts in cluster defined.")
         except ClusterManagerException, e:
             self.removeNetwork(cluster.network.uname)
             raise e
     #---------------------------------------------------------------------------
-    def hostIsActive(self, hostObj):
-        h = self.defineHost(hostObj)
-        return h.isActive()
-    #---------------------------------------------------------------------------
-    def networkIsActive(self, netObj):
-        n = self.defineNetwork(netObj)
-        return n.isActive()
+    def removeCluster(self, clusterName):
+        if not self.clusters.has_key(clusterName):
+            raise ClusterManagerException(("No cluster %s defined " +\
+                                          " via cluster manager.") \
+                                          % clusterName)
+        LOGGER.info("Removing cluster %s." % clusterName)
+        cluster = self.clusters[clusterName]
+
+        removeErr = ''
+
+        hostsToRemove = [h.uname for h in cluster.hosts]
+        removeErr += self.removeHosts(hostsToRemove)
+
+        if cluster.network and self.nets.has_key(cluster.network.uname):
+            try:
+                self.clusterManager.removeNetwork(cluster.network.uname)
+            except ClusterManagerException, e:
+                removeErr += str(e)
+
+        if removeErr:
+            raise ClusterManagerException("Errors during cluster " +\
+                                          "removal: %s" % removeErr)
+        else:
+            del self.clusters[clusterName]
 #-------------------------------------------------------------------------------
 def extractClusterName(path):
     (modPath, modFile) = os.path.split(path)
@@ -756,8 +837,8 @@ def loadClusterDef(fp, clusters, validateWithRest = True):
             if validateWithRest:
                 cl.validateAgainstSystem(clusters)
         except AttributeError, e:
-            raise ClusterManagerException("AttributeError in cluster def " + \
-                  " file %s: %s" % (modFile, e))
+            raise ClusterManagerException("AttributeError in cluster defini" + \
+                  "tion file %s: %s" % (modFile, e))
         except ImportError, e:
             raise ClusterManagerException("Can't import %s: %s." %\
                                            (modName, e))
@@ -766,8 +847,8 @@ def loadClusterDef(fp, clusters, validateWithRest = True):
                                           "cluster  %s import: %s." %\
                                            (modName, e))
         except Exception, e:
-            raise ClusterManagerException("Exception occured " + \
-                  "during test suite %s import: %s" % (modFile, e))
+            raise ClusterManagerException("Error during" + \
+                  " test suite %s import: %s" % (modFile, e))
     elif ext == ".pyc":
         return None
     else:

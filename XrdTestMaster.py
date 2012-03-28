@@ -63,10 +63,11 @@ xrdTestMaster = None
 #-------------------------------------------------------------------------------
 class MasterEvent(object):
     '''
-    The message incoming to XrdTestMaster. May be either the event e.g.
-    hypervisor connection or normal message containing data.
+    Wrapper for all events that comes to XrdTestMaster. MasterEvent can 
+    be message from slave or hypervisor, system event like socket disconnection, 
+    cluster or test suite definition file change or scheduler job initiation.
+    It has priorities. PRIO_IMPORTANT is processed before PRIO_NORMAL.
     '''
-
     PRIO_NORMAL = 9
     PRIO_IMPORTANT = 1
 
@@ -78,7 +79,6 @@ class MasterEvent(object):
     M_JOB_ENQUEUE = 6
     M_RELOAD_CLUSTER_DEF = 7
     M_RELOAD_SUIT_DEF = 8
-
     #---------------------------------------------------------------------------
     def __init__(self, e_type, e_data, msg_sender_addr=None):
         self.type = e_type
@@ -87,7 +87,7 @@ class MasterEvent(object):
 #-------------------------------------------------------------------------------
 class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
     """
-    Client's request handler.
+    Client's TCP request handler.
     """
     C_SLAVE = "slave"
     C_HYPERV = "hypervisor"
@@ -203,6 +203,10 @@ def handleCherrypyError():
                      str(cherrypy._cperror.format_exc(None))) #@UndefinedVariable
 #-------------------------------------------------------------------------------
 class WebInterface:
+    '''
+    All pages and files available via Web Interface, 
+    defined as methods of this class.
+    '''
     #reference to testMaster
     testMaster = None
     config = None
@@ -712,7 +716,7 @@ class XrdTestMaster(Runnable):
 
         return testSlaves
     #---------------------------------------------------------------------------
-    def startCluster(self, clusterName):
+    def startCluster(self, clusterName, jobUid):
         clusterFound = False
         if self.clusters.has_key(clusterName):
             if self.clusters[clusterName].name == clusterName:
@@ -722,6 +726,7 @@ class XrdTestMaster(Runnable):
                 if len(self.hypervisors):
                     msg = XrdMessage(XrdMessage.M_START_CLUSTER)
                     msg.clusterDef = self.clusters[clusterName]
+                    msg.jobUid = jobUid
 
                     #take random hypervisor and send him cluster def
                     hNum = random.randint(0, len(self.hypervisors)-1)
@@ -1123,7 +1128,7 @@ class XrdTestMaster(Runnable):
                         self.pendingJobs[0].state = Job.S_STARTED
                 elif j.job == Job.START_CLUSTER:
                     if self.isJobValid(j):
-                        if self.startCluster(j.args[0]):
+                        if self.startCluster(j.args[0], j.groupUid):
                             self.pendingJobs[0].state = Job.S_STARTED
                     else:
                         self.removeJobs(j.groupUid)
@@ -1143,14 +1148,20 @@ class XrdTestMaster(Runnable):
                 else:
                     LOGGER.error("Job %s unrecognized" % j.job)
     #---------------------------------------------------------------------------
-    def removeJobs(self, groupUid):
+    def removeJobs(self, groupUid, jobType=Job.START_CLUSTER):
         newJobs = []
+        newJobsDbg = []
+        i = 0
+        LOGGER.debug("Removing jobs concerning job group id: %s")
         for j in self.pendingJobs:
             if j.groupUid == groupUid:
-                continue
+                LOGGER.debug("Removing job %s" % self.pendingJobsDbg[i])
             else:
                 newJobs.append(j)
+                newJobsDbg.append(self.pendingJobsDbg[i])
+            i+=1
         self.pendingJobs = newJobs
+        self.pendingJobsDbg = newJobsDbg
     #---------------------------------------------------------------------------
     def removeJob(self, removeJob):
         '''
@@ -1267,8 +1278,7 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     def procEvents(self):
         '''
-        Receives events and messages from clients and reacts. Actual place 
-        of program control.
+        Main loop processing MasterEvents. 
         '''
         while True:
             evt = self.recvQueue.get()
@@ -1297,7 +1307,14 @@ class XrdTestMaster(Runnable):
                         if msg.state == State(Cluster.S_ACTIVE):
                             self.removeJob(Job(Job.START_CLUSTER, \
                                                args=msg.clusterName))
+                        elif msg.state == State(Cluster.S_ERROR_START):
+                            LOGGER.error("Cluster error: %s" % msg.state)
+                            self.removeJobs(msg.jobUid)
                         elif msg.state == State(Cluster.S_STOPPED):
+                            self.removeJob(Job(Job.STOP_CLUSTER, \
+                                               args=msg.clusterName))
+                        elif msg.state == State(Cluster.S_ERROR_STOP):
+                            LOGGER.error("Cluster error: %s" % msg.state)
                             self.removeJob(Job(Job.STOP_CLUSTER, \
                                                args=msg.clusterName))
                     else:

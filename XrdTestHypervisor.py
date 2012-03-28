@@ -150,21 +150,24 @@ class XrdTestHypervisor(Runnable):
         return self.sockStream
     #---------------------------------------------------------------------------
     def handleStartCluster(self, msg):
-
+        '''
+        Handle start cluster message.
+        '''
         resp = XrdMessage(XrdMessage.M_CLUSTER_STATE)
         resp.clusterName = msg.clusterDef.name
+        resp.jobUid = msg.jobUid
 
+        # assign rest of local constants to cluster definition
         cluster = msg.clusterDef
         cluster.setEmulatorPath(self.config.get('virtual_machines',
                                                 'emulator_path'))
-
         cluster.network.xrdTestMasterIP = self.config.get('test_master', 'ip')
+        # check if cluster definition is correct on this hypervisor
         res, msg = cluster.validateDynamic()
         if res:
             try:
                 LOGGER.info("Cluster definition semantically correct. " + \
                             "Starting cluster.")
-
                 self.clusterManager.createCluster(cluster)
 
                 resp.state = State(Cluster.S_ACTIVE)
@@ -172,46 +175,34 @@ class XrdTestHypervisor(Runnable):
                 LOGGER.error("Error occured: %s" % e)
                 resp.state = State((-1, "Hypervisor error: %s" % e))
         else:
-            LOGGER.info(("Cluster definition semantically incorrect. " + \
+            LOGGER.info(("Cluster definition incorrect. " + \
                         " Cannot start the cluster due to: %s") % msg)
-            resp.state = State(Cluster.S_ERROR)
+            resp.state = State(Cluster.S_ERROR_START)
 
         return resp
     #---------------------------------------------------------------------------
     def handleStopCluster(self, msg):
+        '''
+        Handle stop cluster message.
+        '''
         resp = XrdMessage(XrdMessage.M_CLUSTER_STATE)
         resp.clusterName = msg.clusterDef.name
 
         cluster = msg.clusterDef
         try:
-            LOGGER.info("Cluster definition semantically correct. " + \
-                        "Starting cluster.")
-            for h in cluster.hosts:
-                act = self.clusterManager.hostIsActive(h)
-                LOGGER.info("Host " + h.uname + " isActive(): " \
-                                + str(act))
-                if act:
-                    LOGGER.info("Removing machine " + h.uname)
-                    self.clusterManager.removeHost(h.uname)
-                    LOGGER.info("Done.")
-
-            if cluster.network:
-                act = self.clusterManager.networkIsActive(cluster.network)
-                LOGGER.info("Network " + cluster.network.uname + \
-                                " isActive(): " + str(act))
-                if act:
-                    LOGGER.info("Creating network.")
-                    self.clusterManager.removeNetwork(cluster.network.uname)
-                    LOGGER.info("Done.")
-
+            self.clusterManager.removeCluster(cluster.name)
             resp.state = State(Cluster.S_STOPPED)
         except ClusterManagerException, e:
             LOGGER.error("Error occured: %s" % e)
             resp.state = State((-1, "Hypervisor error: %s" % e))
-            
+
         return resp
     #---------------------------------------------------------------------------
     def recvLoop(self):
+        '''
+        Main loop processing messages. It take out jobs from blocking queue 
+        of received messages, runs appropriate and return answer message.
+        '''
         global LOGGER
         while not self.stopEvent.isSet():
             try:
@@ -243,6 +234,9 @@ class XrdTestHypervisor(Runnable):
                 break
     #---------------------------------------------------------------------------
     def run(self):
+        '''
+        Main thread. Initialize TCP threads and run recvLoop().
+        '''
         sock = self.connectMaster(self.config.get('test_master', 'ip'),
                            self.config.getint('test_master', 'port'))
         if not sock:

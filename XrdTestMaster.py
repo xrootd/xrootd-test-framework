@@ -415,9 +415,9 @@ class TestSuiteSession(Stateful):
                   self.stagesResults if v[2] == test_case_uid]
         return stages
 #---------------------------------------------------------------------------
-def genNameUid(name):
+def genJobGroupId(suite_name):
     d = datetime.datetime.now()
-    r = "%s-%s" % (name, d.isoformat())
+    r = "%s-%s" % (suite_name, d.isoformat())
     r = r.translate(maketrans('', ''), '-:.')# remove special
     return r
 #------------------------------------------------------------------------------ 
@@ -436,12 +436,12 @@ class Job(object):
     START_CLUSTER           = 6
     STOP_CLUSTER            = 7
     #---------------------------------------------------------------------------
-    def __init__(self, job, groupUid="", args=None):
+    def __init__(self, job, groupId="", args=None):
         self.job = job
         self.state = Job.S_ADDED
         self.args = args
 
-        self.groupUid = groupUid
+        self.groupId = groupId
 #-------------------------------------------------------------------------------
 class ClustersDefinitionsChangeHandler(ProcessEvent):
     '''
@@ -742,7 +742,7 @@ class XrdTestMaster(Runnable):
                     LOGGER.info("Cluster start command sent to %s", hyperv)
                     return True
                 else:
-                    LOGGER.warning("No hypervisor to run the cluster %s on" + \
+                    LOGGER.warning("No hypervisor to run the cluster %s on" % \
                                    clusterName)
                     self.clusters[clusterName].state = \
                         State(Cluster.S_UNKNOWN_NOHYPERV)
@@ -762,9 +762,7 @@ class XrdTestMaster(Runnable):
 
                 msg = XrdMessage(XrdMessage.M_STOP_CLUSTER)
                 hyperv = self.clustersHypervisor[clusterName]
-
                 msg.clusterDef = hyperv.runningClusterDefs[clusterName]
-
                 hyperv.send(msg)
 
                 self.clusters[clusterName].state = \
@@ -777,7 +775,7 @@ class XrdTestMaster(Runnable):
             LOGGER.error("No cluster with name " + str(clusterName) + " found")
             return False
     #---------------------------------------------------------------------------
-    def initializeTestSuite(self, test_suite_name):
+    def initializeTestSuite(self, test_suite_name, jobGroupId):
         '''
         Sends initialize message to slaves, creates TestSuite Session
         and stores it at HDD.
@@ -809,6 +807,7 @@ class XrdTestMaster(Runnable):
         msg = XrdMessage(XrdMessage.M_TESTSUITE_INIT)
         msg.suiteName = tss.name
         msg.cmd = tss.suite.initialize
+        msg.jobGroupId = jobGroupId
 
         #@todo:  if sending to some machines fails 
         #        initialization on rest should be reversed
@@ -1042,37 +1041,37 @@ class XrdTestMaster(Runnable):
         '''
         LOGGER.info("runJob for testsuite %s " % test_suite_name)
 
-        groupUid = genNameUid(test_suite_name)
+        groupId = genJobGroupId(test_suite_name)
 
         ts = self.testSuits[test_suite_name]
         for clustName in ts.clusters:
-            j = Job(Job.START_CLUSTER, groupUid, (clustName, test_suite_name))
+            j = Job(Job.START_CLUSTER, groupId, (clustName, test_suite_name))
             self.pendingJobs.append(j)
             self.pendingJobsDbg.append("startCluster(%s)" % clustName)
 
-        j = Job(Job.INITIALIZE_TEST_SUITE, groupUid, test_suite_name)
+        j = Job(Job.INITIALIZE_TEST_SUITE, groupId, test_suite_name)
         self.pendingJobs.append(j)
         self.pendingJobsDbg.append("initSuite(%s)" % test_suite_name)
 
         for tName in ts.tests:
-            j = Job(Job.INITIALIZE_TEST_CASE, groupUid, (test_suite_name, tName))
+            j = Job(Job.INITIALIZE_TEST_CASE, groupId, (test_suite_name, tName))
             self.pendingJobs.append(j)
             self.pendingJobsDbg.append("initTest(%s)" % tName)
 
-            j = Job(Job.RUN_TEST_CASE, groupUid, (test_suite_name, tName))
+            j = Job(Job.RUN_TEST_CASE, groupId, (test_suite_name, tName))
             self.pendingJobs.append(j)
             self.pendingJobsDbg.append("runTest(%s)" % tName)
 
-            j = Job(Job.FINALIZE_TEST_CASE, groupUid, (test_suite_name, tName))
+            j = Job(Job.FINALIZE_TEST_CASE, groupId, (test_suite_name, tName))
             self.pendingJobs.append(j)
             self.pendingJobsDbg.append("finalizeTest(%s)" % tName)
 
-        j = Job(Job.FINALIZE_TEST_SUITE, groupUid, test_suite_name)
+        j = Job(Job.FINALIZE_TEST_SUITE, groupId, test_suite_name)
         self.pendingJobs.append(j)
         self.pendingJobsDbg.append("finalizeSuite(%s)" % test_suite_name)
 
         for clustName in ts.clusters:
-            j = Job(Job.STOP_CLUSTER, groupUid, (clustName, test_suite_name))
+            j = Job(Job.STOP_CLUSTER, groupId, (clustName, test_suite_name))
             self.pendingJobs.append(j)
             self.pendingJobsDbg.append("stopCluster(%s)" % clustName)
     #---------------------------------------------------------------------------
@@ -1104,16 +1103,15 @@ class XrdTestMaster(Runnable):
             LOGGER.info("PENDING JOBS[%s] (next 7) %s " % \
                                                     (len(self.pendingJobs), 
                                                     self.pendingJobsDbg[:7]))
-
         if len(self.pendingJobs) > 0:
             j = self.pendingJobs[0]
             if not j.state == Job.S_STARTED:
                 if j.job == Job.INITIALIZE_TEST_SUITE:
                     if self.isJobValid(j):
-                        if self.initializeTestSuite(j.args):
+                        if self.initializeTestSuite(j.args, j.groupId):
                             self.pendingJobs[0].state = Job.S_STARTED
                         else:
-                            self.removeJobs(j.groupUid)
+                            self.removeJobs(j.groupId)
                 elif j.job == Job.FINALIZE_TEST_SUITE:
                     if self.finalizeTestSuite(j.args):
                         self.pendingJobs[0].state = Job.S_STARTED
@@ -1128,10 +1126,10 @@ class XrdTestMaster(Runnable):
                         self.pendingJobs[0].state = Job.S_STARTED
                 elif j.job == Job.START_CLUSTER:
                     if self.isJobValid(j):
-                        if self.startCluster(j.args[0], j.groupUid):
+                        if self.startCluster(j.args[0], j.groupId):
                             self.pendingJobs[0].state = Job.S_STARTED
                     else:
-                        self.removeJobs(j.groupUid)
+                        self.removeJobs(j.groupId)
                 elif j.job == Job.STOP_CLUSTER:
                     #if next job is starting cluster, don't stop it. Save time.
                     if len(self.pendingJobs) > 1:
@@ -1142,19 +1140,44 @@ class XrdTestMaster(Runnable):
                             self.pendingJobsDbg = self.pendingJobsDbg[2:]
                             self.startJobs()
                             return
-
                     if self.stopCluster(j.args[0]):
                         self.pendingJobs[0].state = Job.S_STARTED
                 else:
                     LOGGER.error("Job %s unrecognized" % j.job)
     #---------------------------------------------------------------------------
-    def removeJobs(self, groupUid, jobType=Job.START_CLUSTER):
+    def removeJobs(self, groupId, jobType=Job.START_CLUSTER, testName=None):
+        '''
+        Remove multiple jobs from enqueued jobs list. Depending of what kind
+        of job is removed, different parameters are used.
+        @param groupId: used for all kind of deleted jobs
+        @param jobType: determines type of job that begins the chain of 
+                        jobs to be removed
+        @param testName: used if removed jobs concerns particular test case
+        '''
         newJobs = []
         newJobsDbg = []
         i = 0
-        LOGGER.debug("Removing jobs concerning job group id: %s")
+        cond = lambda j: False
+        cond1 = lambda j: (j.groupId == groupId)
+        if jobType == Job.INITIALIZE_TEST_SUITE:
+            LOGGER.debug("Removing jobs for whole test suite group id: %s")
+            cond2 = lambda j: (j.job == Job.INITIALIZE_TEST_SUITE or \
+                     j.job == Job.FINALIZE_TEST_SUITE or \
+                     j.job == Job.INITIALIZE_TEST_CASE or \
+                     j.job == Job.RUN_TEST_CASE or \
+                     j.job == Job.FINALIZE_TEST_CASE)
+            cond = lambda j: cond1(j) and cond2(j)
+        elif jobType == Job.INITIALIZE_TEST_CASE:
+            cond2 = lambda j: (j.job == Job.INITIALIZE_TEST_CASE or \
+                     j.job == Job.RUN_TEST_CASE or \
+                     j.job == Job.FINALIZE_TEST_CASE)
+            cond3 = lambda j: j.args[1] == testName
+            cond = lambda j: cond1(j) and cond2(j) and cond3(j)
+        else:
+            cond = lambda j: cond1(j)
+
         for j in self.pendingJobs:
-            if j.groupUid == groupUid:
+            if cond(j):
                 LOGGER.debug("Removing job %s" % self.pendingJobsDbg[i])
             else:
                 newJobs.append(j)
@@ -1181,24 +1204,42 @@ class XrdTestMaster(Runnable):
             slave = self.slaves[msg.sender]
 
             if msg.state == State(TestSuite.S_SLAVE_INITIALIZED):
-                slave.state = State(Slave.S_SUIT_INITIALIZED)
-                slave.state.suiteName = msg.suiteName
-
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 tss.addStageResult(msg.state, msg.result,
                                    uid="suite_inited",
                                    slave_name=slave.hostname)
-                #update SuiteStatus if all slaves are inited
-                iSlaves = self.getSuiteSlaves(tss.suite,
-                                        State(Slave.S_SUIT_INITIALIZED))
-                LOGGER.info("%s initialized in test suite %s" % \
-                            (slave, tss.name))
-                if len(iSlaves) == len(tss.suite.machines):
-                    tss.state = State(TestSuite.S_ALL_INITIALIZED)
-                    self.removeJob(Job(Job.INITIALIZE_TEST_SUITE, \
-                                       args=tss.name))
-                    LOGGER.info("All slaves initialized in " + \
-                                " test suite %s" % tss.name)
+                suiteInError = (tss.state == TestSuite.S_INIT_ERROR)
+
+                #---------------------------------------------------------------
+                # check if any error occured during init, 
+                # if so release all slaves and remove proper pending jobs
+                if msg.result[2] != "0":
+                    # check if suite init error was already handled
+                    if not suiteInError:
+                        tss.state = State(TestSuite.S_INIT_ERROR)
+                        LOGGER.error("%s slave initialization error in " +\
+                                     " test suite %s" % (slave, tss.name))
+                        sSlaves = self.getSuiteSlaves(tss.suite)
+                        for sSlave in sSlaves:
+                            sSlave.state = State(Slave.S_CONNECTED_IDLE)
+
+                        self.removeJobs(msg.jobGroupId, \
+                                        Job.INITIALIZE_TEST_SUITE)
+                else:
+                    slave.state = State(Slave.S_SUIT_INITIALIZED)
+                    slave.state.suiteName = msg.suiteName
+
+                    #update SuiteStatus if all slaves are inited
+                    iSlaves = self.getSuiteSlaves(tss.suite,
+                                            State(Slave.S_SUIT_INITIALIZED))
+                    LOGGER.info("%s initialized in test suite %s" % \
+                                (slave, tss.name))
+                    if len(iSlaves) == len(tss.suite.machines):
+                        tss.state = State(TestSuite.S_ALL_INITIALIZED)
+                        self.removeJob(Job(Job.INITIALIZE_TEST_SUITE, \
+                                           args=tss.name))
+                        LOGGER.info("All slaves initialized in " + \
+                                    " test suite %s" % tss.name)
                 self.storeSuiteSession(tss)
             elif msg.state == State(TestSuite.S_SLAVE_FINALIZED):
                 tss = self.retrieveSuiteSession(msg.suiteName)

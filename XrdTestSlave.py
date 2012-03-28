@@ -228,12 +228,14 @@ class XrdTestSlave(Runnable):
     #---------------------------------------------------------------------------
     def handleTestSuiteInitialize(self, msg):
         cmd = msg.cmd
+        jobGroupId = msg.jobGroupId
         suiteName = msg.suiteName
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
         msg.suiteName = suiteName
         msg.result = self.executeSh(cmd)
         msg.state = State(TestSuite.S_SLAVE_INITIALIZED)
+        msg.jobGroupId = jobGroupId
 
         return msg
     #---------------------------------------------------------------------------

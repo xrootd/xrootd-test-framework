@@ -42,6 +42,7 @@ class TestSuiteException(Exception):
         return repr(self.desc)
 #------------------------------------------------------------------------------ 
 class TestSuite:
+
     #---------------------------------------------------------------------------
     def __init__(self):
         #-----------------------------------------------------------------------
@@ -157,6 +158,8 @@ class TestSuite:
     S_WAIT_4_TEST_FINALIZE   = (46, "send test to finalize")
     S_SLAVE_TEST_FINALIZED   = (47, "test finalized on a slave")
     S_ALL_TEST_FINALIZED     = (48, "test finalized on all slaves")
+
+    S_INIT_ERROR             = (-22, "initialization error")
 #------------------------------------------------------------------------------ 
 class TestCase:
     def __init__(self):

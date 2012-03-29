@@ -7,7 +7,6 @@
 #-------------------------------------------------------------------------------
 # Logging settings
 #-------------------------------------------------------------------------------
-from copy import copy
 import logging
 import sys
 
@@ -24,6 +23,7 @@ try:
     from Utils import State
     from optparse import OptionParser
     from string import join, replace
+    from copy import copy
     from subprocess import Popen
     import ConfigParser
     import Queue
@@ -175,6 +175,7 @@ class XrdTestSlave(Runnable):
         suiteName = msg.suiteName
         testName = msg.testName
         testUid = msg.testUid
+
         self.cases[testUid] = copy(msg.case)
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)

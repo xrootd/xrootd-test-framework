@@ -14,15 +14,24 @@ class State(object):
     Represents current state of some entity.
     '''
     #---------------------------------------------------------------------------
-    def __init__(self, status_tuple):
+    def __init__(self, status_tuple, additDesc = ''):
         '''
         Creates a state information.
         @param status_tuple: tuple comprised from at least (id, name)
+        @param additDesc: additional descriptin of a status, e.g. Exception
         '''
         self.id = status_tuple[0]
         self.name = status_tuple[1]
         self.datetime = datetime.datetime.now()
         self.time = self.datetime.strftime("%a %H:%M:%S %d-%m-%Y")
+        if additDesc:
+            self.addDesc(additDesc)
+    #---------------------------------------------------------------------------
+    def isError(self):
+        return self.id < 0
+    #---------------------------------------------------------------------------
+    def addDesc(self, anyStr):
+        self.name = self.name + ' ' + str(anyStr)
     #---------------------------------------------------------------------------
     def __eq__(self, oth):
         if not isinstance(oth, State):

@@ -1,4 +1,4 @@
-from ClusterManager import Cluster, Network, Host
+from ClusterUtils import Cluster, Network, Host
 
 def getCluster():
     cluster = Cluster()

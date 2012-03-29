@@ -70,6 +70,8 @@ install -pm 755 XrdTestHypervisor.conf %{buildroot}%{_sysconfdir}/XrdTest
 install -pm 755 certs/hypervisorcert.pem %{buildroot}%{_sysconfdir}/XrdTest/certs
 install -pm 755 certs/hypervisorkey.pem %{buildroot}%{_sysconfdir}/XrdTest/certs
 install -pm 755 lib/ClusterManager.py %{libs_path}
+install -pm 755 lib/ClusterUtils.py %{libs_path}
+
 
 #-------------------------------------------------------------------------------
 # XrdTestMaster

@@ -21,7 +21,7 @@ LOGGER.debug("Running script: " + __file__)
 #-------------------------------------------------------------------------------
 try:
     from Cheetah.Template import Template
-    from ClusterManager import ClusterManagerException, extractClusterName, \
+    from ClusterUtils import ClusterManagerException, extractClusterName, \
     loadClusterDef, loadClustersDefs, Cluster
     from Daemon import Runnable, Daemon, DaemonException, readConfig
     from SocketUtils import FixedSockStream, XrdMessage, PriorityBlockingQueue, \
@@ -250,7 +250,7 @@ class WebInterface:
                     'hostname': socket.gethostname(),
                     'testSuits': self.testMaster.testSuits,
                     'userMsgs' : self.testMaster.userMsgs,
-                    'testMaster': self.testMaster, }
+                    'testMaster': self.testMaster,}
         return self.disp("main.tmpl", tplVars)
     #---------------------------------------------------------------------------
     def suitsSessions(self):
@@ -1039,7 +1039,8 @@ class XrdTestMaster(Runnable):
         Add job to list of running jobs and initiate its run.
         @param test_suite_name:
         '''
-        LOGGER.info("runJob for testsuite %s " % test_suite_name)
+        LOGGER.info("Enqueuing job for test suite: %s " %\
+                     test_suite_name)
 
         groupId = genJobGroupId(test_suite_name)
 
@@ -1319,7 +1320,7 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     def procEvents(self):
         '''
-        Main loop processing MasterEvents. 
+        Main loop processing incoming MasterEvents.
         '''
         while True:
             evt = self.recvQueue.get()
@@ -1342,9 +1343,8 @@ class XrdTestMaster(Runnable):
                 if msg.name == XrdMessage.M_CLUSTER_STATE:
                     if self.clusters.has_key(msg.clusterName):
                         self.clusters[msg.clusterName].state = msg.state
-                        LOGGER.info("Cluster state received [" + \
-                                         msg.clusterName + "] " + \
-                                         str(msg.state))
+                        LOGGER.info(("Cluster state received [%s] %s") % \
+                                    (msg.clusterName, str(msg.state)))
                         if msg.state == State(Cluster.S_ACTIVE):
                             self.removeJob(Job(Job.START_CLUSTER, \
                                                args=msg.clusterName))
@@ -1422,12 +1422,6 @@ class XrdTestMaster(Runnable):
             LOGGER.info("SCHEDULER is disabled.")
 
         self.loadDefinitions()
-        #-----------------------------------------------------------------------
-        # schedule config reloading job
-#        self.sched.add_cron_job(self.fireReloadDefinitionsEvent, \
-#                           minute=self.config.get('server', \
-#                           'definitions_reload_minute'))
-
         #-----------------------------------------------------------------------
         # NOTIFYING FOR DEFINITIONS CHANGE SETUP
         wm = WatchManager()

@@ -17,10 +17,11 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
 #------------------------------------------------------------------------------ 
 try:
-    from ClusterManager import ClusterManager, ClusterManagerException, Cluster
     from Daemon import Daemon, readConfig, DaemonException, Runnable
     from SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
     from optparse import OptionParser
+    from ClusterManager import ClusterManager
+    from ClusterUtils import ClusterManagerException, Cluster
     import ConfigParser
     import Queue
     import os
@@ -172,13 +173,12 @@ class XrdTestHypervisor(Runnable):
 
                 resp.state = State(Cluster.S_ACTIVE)
             except ClusterManagerException, e:
-                LOGGER.error("Error occured: %s" % e)
-                resp.state = State((-1, "Hypervisor error: %s" % e))
+                LOGGER.error("Error occured during cluster start: %s" % e)
+                resp.state = State(Cluster.S_ERROR_START, e)
         else:
-            LOGGER.info(("Cluster definition incorrect. " + \
-                        " Cannot start the cluster due to: %s") % msg)
-            resp.state = State(Cluster.S_ERROR_START)
-
+            m = ("Cluster definition incorrect: %s") % msg
+            LOGGER.error(m)
+            resp.state = State(Cluster.S_ERROR_START, m)
         return resp
     #---------------------------------------------------------------------------
     def handleStopCluster(self, msg):
@@ -194,14 +194,15 @@ class XrdTestHypervisor(Runnable):
             resp.state = State(Cluster.S_STOPPED)
         except ClusterManagerException, e:
             LOGGER.error("Error occured: %s" % e)
-            resp.state = State((-1, "Hypervisor error: %s" % e))
+            resp.state = State(Cluster.S_ERROR_STOP, e)
 
         return resp
     #---------------------------------------------------------------------------
     def recvLoop(self):
         '''
-        Main loop processing messages. It take out jobs from blocking queue 
-        of received messages, runs appropriate and return answer message.
+        Main loop processing messages from master. It take out jobs
+        from blocking queue of received messages, runs appropriate and 
+        return answer message.
         '''
         global LOGGER
         while not self.stopEvent.isSet():

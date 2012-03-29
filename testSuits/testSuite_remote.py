@@ -7,7 +7,7 @@ def getTestSuite():
     ts.clusters = ['cluster_remote']
     ts.machines = ["new1"]
     ts.tests = ['BasicInstall']
-    ts.schedule = dict(month='3', second="30")
+    ts.schedule = dict(month='3')
 
     ts.initialize = "http://master.xrd.test:8080/showScript/sinit_remote.sh"
     ts.finalize = """

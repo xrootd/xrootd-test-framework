@@ -1,4 +1,4 @@
-from ClusterManager import Cluster, Network, Host
+from ClusterUtils import Cluster, Network, Host
 
 def getCluster():
     cluster = Cluster()
@@ -22,12 +22,13 @@ def getCluster():
 
     h1 = Host('new1', '192.168.130.2', "52:54:00:65:44:69",
               ramSize='524288', arch='x86_64', net="net1_xrd")
-    h2 = Host('new2', '192.168.130.2', "52:54:00:65:44:70",
-              net="net1_xrd", diskImage="/var/tmp/virt-images/non-existsing")
+#    h2 = Host('new2', '192.168.130.2', "52:54:00:65:44:70",
+#              net="net1_xrd", diskImage="/var/tmp/virt-images/non-existsing")
 
-    net.addHosts([h1, h2])
+    hosts = [h1]
+    net.addHosts(hosts)
     cluster.network = net
-    cluster.addHosts([h1, h2])
+    cluster.addHosts(hosts)
 
     return cluster
 

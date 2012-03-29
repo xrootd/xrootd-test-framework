@@ -41,7 +41,7 @@ cp $CP_OPTS ${SRC}/lib/SocketUtils.py ${DEST}/lib
 cp $CP_OPTS ${SRC}/lib/Daemon.py ${DEST}/lib
 cp $CP_OPTS ${SRC}/lib/Utils.py ${DEST}/lib
 cp $CP_OPTS ${SRC}/lib/ClusterManager.py ${DEST}/lib
-cp $CP_OPTS ${SRC}/lib/uuid.py ${DEST}/lib
+cp $CP_OPTS ${SRC}/lib/ClusterUtils.py ${DEST}/lib
 
 mkdir -p ${DEST}/rpmbuild
 cp $CP_OPTS ${SRC}/rpmbuild/*.sh ${DEST}/rpmbuild

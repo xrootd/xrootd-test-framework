@@ -33,7 +33,6 @@ install -pm 755 lib/Utils.py %{libs_path}
 install -pm 755 lib/SocketUtils.py %{libs_path}
 install -pm 755 lib/Daemon.py %{libs_path}
 install -pm 755 lib/TestUtils.py %{libs_path}
-install -pm 755 lib/uuid.py %{libs_path}
 
 #logs
 mkdir -p %{buildroot}%{_localstatedir}\log\XrdTest
@@ -81,7 +80,7 @@ Summary: Xrd Test Master is component of XrdTestFramework.
 Group:   Development/Tools
 Requires: python >= 2.4
 Requires: python-ssl
-Requires: APScheduler, python-uuid, python-cherrypy, python-cheetah
+Requires: python-apscheduler, python-uuid, python-cherrypy, python-cheetah, python-inotify
 
 %description master
 Xrd Test Master is component of XrdTestFramework.
@@ -107,7 +106,7 @@ Requires: python >= 2.4
 Requires: python-ssl
 
 %description slave
-Xrd Test Slave is component of XrdTestFramework.
+Xrd Test Slave is component of XrdTestFramework. It runs tests provided by Xrd Test Master on virtual or physical machines.
 %files slave
 %defattr(-,root,root,755)
 %{python_sitelib}/XrdTest
@@ -123,12 +122,13 @@ Xrd Test Slave is component of XrdTestFramework.
 #-------------------------------------------------------------------------------
 %package hypervisor
 Summary: Xrd Test Hypervisor is component of XrdTestFramework.
-Requires: libvirt >= 0.8.8, python >= 2.4
+Requires: python >= 2.4
 Requires: python-ssl
+Requires: libvirt >= 0.9.3, libvirt-python >= 0.9.3
 
 Group:	 Development/Tools
 %description hypervisor
-Xrd Test Hypervisor is component of XrdTestFramework.
+Xrd Test Hypervisor is component of XrdTestFramework. It manages virtual machines clusters, on master's requests.
 %files hypervisor
 %defattr(-,root,root,755)
 %{python_sitelib}/XrdTest

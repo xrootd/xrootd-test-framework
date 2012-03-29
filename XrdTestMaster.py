@@ -223,7 +223,9 @@ class WebInterface:
 
     #---------------------------------------------------------------------------
     def __init__(self, config, test_master_ref):
+        # reference to XrdTestMaster main object
         self.testMaster = test_master_ref
+        # reference to loaded config
         self.config = config
 
         self.cp_config = {'request.error_response': handleCherrypyError,
@@ -232,6 +234,11 @@ class WebInterface:
                           os.sep + "page_404.tmpl"}
     #---------------------------------------------------------------------------
     def disp(self, tpl_file, tpl_vars):
+        '''
+        Utility method for displying tpl_file and replace tpl_vars.
+        @param tpl_file: to be displayed as HTML page
+        @param tpl_vars: vars can be used in HTML page, Cheetah style
+        '''
         tpl = None
         tplFile = self.config.get('webserver', 'webpage_dir') \
                     + os.sep + tpl_file
@@ -247,7 +254,7 @@ class WebInterface:
     #---------------------------------------------------------------------------
     def index(self):
         '''
-        Provides web interface for the manager.
+        Main page of web interface, shows definitions.
         '''
         tplVars = { 'title' : 'Xrd Test Master - Web Iface',
                     'message' : 'Welcome and begin the tests!',
@@ -264,7 +271,7 @@ class WebInterface:
     #---------------------------------------------------------------------------
     def suitsSessions(self):
         '''
-        Provides web interface for the manager.
+        Page showing suit sessions runs.
         '''
         tplVars = { 'title' : 'Xrd Test Master - Web Iface',
                     'suitsSessions' : self.testMaster.suitsSessions,
@@ -277,11 +284,19 @@ class WebInterface:
         return self.disp("suits_sessions.tmpl", tplVars)
     #---------------------------------------------------------------------------
     def indexRedirect(self):
+        '''
+        Page that at once redirects user to index. Used to clear URL parameters.
+        '''
         tplVars = { 'hostname': socket.gethostname(),
                     'HTTPport': self.config.getint('webserver', 'port')}
         return self.disp("index_redirect.tmpl", tplVars)
     #--------------------------------------------------------------------------- 
     def downloadScript(self, script_name):
+        '''
+        Enable slave to download some script as a regular FILE from masters
+        scripts (WEBPAGE_DIR/scripts dir) and run it.
+        @param script_name:
+        '''
         from xml.sax.saxutils import quoteattr
         p = self.config.get('webserver', 'webpage_dir') \
                 + os.sep + 'scripts' + os.sep + quoteattr(script_name)
@@ -292,6 +307,11 @@ class WebInterface:
             return ""
     #--------------------------------------------------------------------------- 
     def showScript(self, script_name):
+        '''
+        Enable slave to view some script as TEXT from masters
+        scripts (WEBPAGE_DIR/scripts dir) and run it.
+        @param script_name:
+        '''
         from xml.sax.saxutils import quoteattr
         p = self.config.get('webserver', 'webpage_dir') \
                           + os.sep + 'scripts' + os.sep + \
@@ -311,7 +331,8 @@ class TCPClient(Stateful):
     S_CONNECTED_IDLE = (1, "Connected")
     S_NOT_CONNECTED = (2, "Not connected")
     '''
-    Represents any type of TCP client that connects to XrdTestMaster.
+    Represents any type of TCP client that connects to XrdTestMaster. Base
+    class for Hypervisor and Slave.
     '''
     #---------------------------------------------------------------------------
     # states of a client
@@ -333,6 +354,9 @@ class TCPClient(Stateful):
                          (self.hostname, str(self.address)))
 #-------------------------------------------------------------------------------
 class Hypervisor(TCPClient):
+    '''
+    Wrapper for any hypervisor connection established.
+    '''
     #---------------------------------------------------------------------------
     def __init__(self, socket, hostname, address, state):
         TCPClient.__init__(self, socket, hostname, address, state)
@@ -343,7 +367,11 @@ class Hypervisor(TCPClient):
     #---------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 class Slave(TCPClient):
+    '''
+    Wrapper for any slave connection established.
+    '''
     #---------------------------------------------------------------------------
+    # constants representing states of slave
     S_SUITINIT_SENT = (10, "Test suite init sent to slave")
     S_SUIT_INITIALIZED = (11, "Test suite initialized")
     S_SUITFINALIZE_SENT = (12, "Test suite finalize sent to slave")
@@ -359,6 +387,12 @@ class Slave(TCPClient):
         return "Slave %s [%s]" % (self.hostname, self.address)
 #-------------------------------------------------------------------------------
 class TestSuiteSession(Stateful):
+    '''
+    Represents run of Test Suite from the moment of its initialization. 
+    It stores all information required for test suite to be run as well as
+    results of test stages. It has unique id (uid parameter) for recognition,
+    because there will be for sure many test suites with the same name.
+    '''
     #---------------------------------------------------------------------------
     def __init__(self, suiteDef):
         Stateful.__init__(self)
@@ -377,18 +411,21 @@ class TestSuiteSession(Stateful):
         self.uid = self.suite.name + '-' + self.initDate.isoformat()
         self.uid = self.uid.translate(maketrans('', ''), '-:.')# remove special
                                                             # chars from uid
-        # test cases loaded to run in this session, key is tc.uid
+        # test cases loaded to run in this session, key is testCase.uid
         self.cases = {}
-        # uid of last test case with a name 
+        # uid of last run test case with given name 
         self.caseUidByName = {}
 
-        #if result of any stage i.a. init, test case stages or finalize
-        #ended with non-zero status code 
+        # if result of any stage i.a. init, test case stages or finalize
+        # ended with non-zero status code 
         self.failed = False
     #---------------------------------------------------------------------------
     def addCaseRun(self, tc):
         '''
-        @param tc: TestCase object
+        Registers run of test case. Gives unique id (uid) for started 
+        test case, because one test case can be run many time within test 
+        suite session.
+        @param tc: TestCase definition object
         '''
         tc.uid = tc.name + '-' + datetime.datetime.now().isoformat()
         tc.uid = tc.uid.translate(maketrans('', ''), '-:.') # remove special
@@ -400,6 +437,9 @@ class TestSuiteSession(Stateful):
     #---------------------------------------------------------------------------
     def addStageResult(self, state, result, uid=None, slave_name=None):
         '''
+        Adds all information about stage that has finished to test suite session
+        object. Stage are e.g.: initialize suite on some slave, run test case 
+        on some slave etc.
         @param state: state that happened
         @param result: result of test run (code, stdout, stderr)
         @param uid: uid of test case or test suite init/finalize
@@ -421,21 +461,35 @@ class TestSuiteSession(Stateful):
         self.stagesResults.append((state, result, uid, slave_name))
     #--------------------------------------------------------------------------- 
     def getTestCaseStages(self, test_case_uid):
+        '''
+        Retrieve test case stages for given test case unique id.
+        @param test_case_uid:
+        '''
         stages = [v for v in \
                   self.stagesResults if v[2] == test_case_uid]
         return stages
 #---------------------------------------------------------------------------
 def genJobGroupId(suite_name):
+    '''
+    Utility function to create unique name for group of jobs.
+    @param suite_name:
+    '''
     d = datetime.datetime.now()
     r = "%s-%s" % (suite_name, d.isoformat())
     r = r.translate(maketrans('', ''), '-:.')# remove special
     return r
 #------------------------------------------------------------------------------ 
 class Job(object):
-
+    '''
+    Keeps information about job, that is to be run. It's enqueued by scheduler 
+    and dequeued if fore coming job was handled.
+    '''
+    #---------------------------------------------------------------------------
+    # constants representing jobs states
     S_ADDED     = (0, "Job added to jobs list.")
     S_STARTED   = (1, "Job started. In progress.")
-
+    #---------------------------------------------------------------------------
+    # constants representing jobs' types
     INITIALIZE_TEST_SUITE   = 1
     FINALIZE_TEST_SUITE     = 2
 
@@ -447,15 +501,15 @@ class Job(object):
     STOP_CLUSTER            = 7
     #---------------------------------------------------------------------------
     def __init__(self, job, groupId="", args=None):
-        self.job = job
-        self.state = Job.S_ADDED
-        self.args = args
-
-        self.groupId = groupId
+        self.job = job              # job type
+        self.state = Job.S_ADDED    # initial job state
+        self.args = args            # additional job's attributes
+                                    # e.g. suite name or cluster_name
+        self.groupId = groupId      # group of jobs to which this one belongs
 #-------------------------------------------------------------------------------
 class ClustersDefinitionsChangeHandler(ProcessEvent):
     '''
-    Clusters' definitions files change handler
+    If cluster' definition file changes - it runs.
     '''
     #---------------------------------------------------------------------------
     def __init__(self, pevent=None, **kwargs):
@@ -467,7 +521,7 @@ class ClustersDefinitionsChangeHandler(ProcessEvent):
 #-------------------------------------------------------------------------------
 class SuitsDefinitionsChangeHandler(ProcessEvent):
     '''
-    Suits' definitions files change handler
+    If suit' definition file changes it runs
     '''
     #---------------------------------------------------------------------------
     def __init__(self, pevent=None, **kwargs):
@@ -479,55 +533,58 @@ class SuitsDefinitionsChangeHandler(ProcessEvent):
 #-------------------------------------------------------------------------------
 class XrdTestMaster(Runnable):
     '''
-    Runnable class, doing XrdTestMaster jobs.
+    Main class of module, only one instance can exist in the system, 
+    it's runnable as a daemon.
     '''
     #---------------------------------------------------------------------------
     # Global configuration for master
     config = None
     #---------------------------------------------------------------------------
     # Priority queue (locking) with incoming events, i.a. incoming messages
+    # Refered to as: main events queue.
     recvQueue = PriorityBlockingQueue()
     #---------------------------------------------------------------------------
-    # Connected hypervisors, keys: address tuple, values: Hypervisor
+    # Connected hypervisors, keys: address tuple, values: Hypervisor object
     hypervisors = {}
     #---------------------------------------------------------------------------
-    # Connected slaves, keys: address tuple, values: Slaves
+    # Connected slaves, keys: address tuple, values: Slave object
     slaves = {}
     #---------------------------------------------------------------------------
-    # TestSuits that has ever run, synchronized with a HDD, key of dict is 
-    # session.uid
+    # TestSuits that has ever run, synchronized with a HDD, key is session.uid
     suitsSessions = None
     #---------------------------------------------------------------------------
-    # Mapping from names to uids of running test suits. Useful for retrieval 
-    # of test suit sessions saved in suitsSessions python shelve. 
+    # Mapping from names to uids of running test suits. For retrieval of 
+    # TestSuiteSessions saved in suitsSessions python shelve. 
     runningSuitsUids = {}
     #---------------------------------------------------------------------------
-    # Definitions of clusters loaded from a file, keyed by name
+    # Definitions of clusters loaded from a file, key is cluster.name
+    # Refreshed any time definitions change.
     clusters = {}
     #---------------------------------------------------------------------------
-    # Which hypervisor run the cluster. Key cluster.name, value hypervisor
+    # Which hypervisor run given cluster. Key: cluster.name Value: Hypervisor
+    # object
     clustersHypervisor = {}
-
     #---------------------------------------------------------------------------
-    # Definitions of test suits loaded from file
+    # Definitions of test suits loaded from file. Key: testSuite.name 
+    # Value: testSuite.definition. Refreshed any time definitions chage.
     testSuits = {}
-    #---------------------------------------------------------------------------
-    # Constants
-    C_SLAVE = 'slave'
-    C_HYPERV = 'hypervisor'
     #---------------------------------------------------------------------------
     # Jobs to run immediately if possible. They are put here by scheduler.
     pendingJobs = []
     #---------------------------------------------------------------------------
-    # Jobs to run immediately if possible. They are put here by scheduler.
-    # Queue for DEBUGGING
+    # The same as above, for debugging. Keeps textual representation
+    # of jobs.
     pendingJobsDbg = []
     #---------------------------------------------------------------------------
     # message logging system
     userMsgs = []
     #---------------------------------------------------------------------------
-    # tasks scheduler instance
+    # tasks scheduler only instance
     sched = Scheduler()
+    #---------------------------------------------------------------------------
+    # Constants
+    C_SLAVE = 'slave'
+    C_HYPERV = 'hypervisor'
     #---------------------------------------------------------------------------
     def __init__(self, config):
         self.config = config
@@ -535,14 +592,28 @@ class XrdTestMaster(Runnable):
                              self.config.get('tests', 'suits_sessions_file'))
     #---------------------------------------------------------------------------
     def retrieveSuiteSession(self, suite_name):
+        '''
+        Retrieve test suite session from shelve self.suitsSessions
+        @param suite_name:
+        '''
         return self.suitsSessions[self.runningSuitsUids[suite_name]]
     #---------------------------------------------------------------------------
     def storeSuiteSession(self, test_suite_session):
+        '''
+        Save test suite session to python shelve self.suitsSessions
+        @param test_suite_session:
+        '''
         self.runningSuitsUids[test_suite_session.name] = test_suite_session.uid
         self.suitsSessions[test_suite_session.uid] = test_suite_session
         self.suitsSessions.sync()
     #---------------------------------------------------------------------------
     def fireReloadDefinitionsEvent(self, type, dirEvent):
+        '''
+        Any time something is changed in the directory with config files,
+        it puts proper event into main events queue.
+        @param type:
+        @param dirEvent:
+        '''
         evt = None
         if type == "CLUSTER":
             evt = MasterEvent(MasterEvent.M_RELOAD_CLUSTER_DEF, dirEvent)
@@ -551,6 +622,10 @@ class XrdTestMaster(Runnable):
         self.recvQueue.put((MasterEvent.PRIO_IMPORTANT, evt))
     #---------------------------------------------------------------------------
     def loadDefinitions(self):
+        '''
+        Load all definitions of clusters and test suits at once. If any 
+        definition is invalid method raise exceptions.
+        '''
         LOGGER.info("Loading definitions...")
 
         try:
@@ -571,7 +646,7 @@ class XrdTestMaster(Runnable):
         except TestSuiteException, e:
             LOGGER.error("Test Suite Exception: %s" % e)
             sys.exit()
-        
+
         # add jobs to scheduler if it's enabled
         if self.config.getint('scheduler', 'enabled') == 1:
             for ts in self.testSuits.itervalues():
@@ -590,6 +665,10 @@ class XrdTestMaster(Runnable):
                     sys.exit()
     #---------------------------------------------------------------------------
     def handleSuiteDefinitionChanged(self, dirEvent):
+        '''
+        Handle event created any time definition of test suite changes.
+        @param dirEvent: 
+        '''
         p = os.path.join(dirEvent.path, dirEvent.name)
         (modName, ext, modPath, modFile) = extractSuiteName(p)
 
@@ -638,6 +717,11 @@ class XrdTestMaster(Runnable):
                             " test suite %s") % e)
     #---------------------------------------------------------------------------
     def checkIfSuitsDefsComplete(self):
+        '''
+        Search for incompletness of test suit definitions, that may be caused
+        by e.g. lack of test case definition.
+        @param dirEvent: 
+        '''
         try:
             for ts in self.testSuits.values():
                 ts.checkIfDefComplete(self.clusters)
@@ -647,6 +731,10 @@ class XrdTestMaster(Runnable):
             LOGGER.error(("Error in test suite %s: %s") % (ts.name, e))
     #---------------------------------------------------------------------------
     def handleClusterDefinitionChanged(self, dirEvent):
+        '''
+        Handle event created any time definition of cluster changes.
+        @param dirEvent: 
+        '''
         p = os.path.join(dirEvent.path, dirEvent.name)
         (modName, ext, modPath, modFile) = extractClusterName(p)
 
@@ -681,7 +769,7 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     def slaveState(self, slave_name):
         '''
-        Get state of a slave, even if not connected.
+        Get state of a slave by its name, even if it's not connected.
         @param slave_name: equal to full hostname
         '''
         key = [k for k, v in self.slaves.iteritems() \
@@ -695,10 +783,13 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     def getSuiteSlaves(self, test_suite, slave_state=None, test_case=None):
         '''
-        Gets reference to currently connected slaves required by test_suite.
-        Optionally return only slaves with state slave_state.
+        Gets reference to currently connected slaves.
+        Optionally return only slaves associated with the given test_suite,
+         or test_case or being in given slave_state. All given parameters
+         has to accord.
         @param test_suite: test suite definition
         @param slave_state: required slave state
+        @param test_case: test case defintion
         '''
         cond_ts = lambda v: (v.hostname in test_suite.machines)
 
@@ -727,6 +818,12 @@ class XrdTestMaster(Runnable):
         return testSlaves
     #---------------------------------------------------------------------------
     def startCluster(self, clusterName, suiteName, jobGroupId):
+        '''
+        Sends message to hypervisor to start the cluster.
+        @param clusterName:
+        @param suiteName:
+        @param jobGroupId:
+        '''
         clusterFound = False
         if self.clusters.has_key(clusterName):
             if self.clusters[clusterName].name == clusterName:
@@ -763,6 +860,10 @@ class XrdTestMaster(Runnable):
             return False
     #---------------------------------------------------------------------------
     def stopCluster(self, clusterName):
+        '''
+        Sends message to hypervisor to stop the cluster.
+        @param clusterName:
+        '''
         clusterFound = False
         if self.clusters.has_key(clusterName):
             if self.clusters[clusterName].name == clusterName:
@@ -789,8 +890,9 @@ class XrdTestMaster(Runnable):
     def initializeTestSuite(self, test_suite_name, jobGroupId):
         '''
         Sends initialize message to slaves, creates TestSuite Session
-        and stores it at HDD.
+        and stores it in python shelve.
         @param test_suite_name:
+        @param jobGroupId:
         '''
         # filling test suite machines automatically if user
         # provided none
@@ -875,6 +977,7 @@ class XrdTestMaster(Runnable):
         Sends initTest message to slaves.
         @param test_suite_name:
         @param test_name:
+        @param jobGroupId:
         '''
         # Checks if we already initialized suite
         if not self.runningSuitsUids.has_key(test_suite_name):
@@ -989,6 +1092,12 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     def handleClientConnected(self, client_type, client_addr, \
                               sock_obj, client_hostname):
+        '''
+        Do the logic of client incoming connecion.
+        @param client_type:
+        @param client_addr:
+        @param client_hostname:
+        '''
         clients = self.slaves
         if client_type == self.C_HYPERV:
             clients = self.hypervisors
@@ -1017,6 +1126,11 @@ class XrdTestMaster(Runnable):
                          ', '.join(clients_str))
     #---------------------------------------------------------------------------
     def handleClientDisconnected(self, client_type, client_addr):
+        '''
+        Do the logic of client disconnection.
+        @param client_type:
+        @param client_addr:
+        '''
         clients = self.slaves
         if client_type == self.C_HYPERV:
             clients = self.hypervisors
@@ -1040,7 +1154,7 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     def executeJob(self, test_suite_name):
         '''
-        Closure for fireEnqueueJobEvent to hold the test_suite_name 
+        Closure for self.fireEnqueueJobEvent to hold the test_suite_name 
         argument for execution.
         @param test_suite_name: name of test suite
         '''
@@ -1048,7 +1162,7 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     def enqueueJob(self, test_suite_name):
         '''
-        Add job to list of running jobs and initiate its run.
+        Add job to list of jobs to run.
         @param test_suite_name:
         '''
         LOGGER.info("Enqueuing job for test suite: %s " %\
@@ -1089,6 +1203,11 @@ class XrdTestMaster(Runnable):
             self.pendingJobsDbg.append("stopCluster(%s)" % clustName)
     #---------------------------------------------------------------------------
     def isJobValid(self, job):
+        '''
+        Check is job is still possible to be executed e.g. if required 
+        definitions are complete.
+        @param job:
+        '''
         if job.job == Job.INITIALIZE_TEST_SUITE:
             if not self.testSuits.has_key(job.args):
                 return False
@@ -1106,7 +1225,8 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     def startNextJob(self):
         '''
-        Start next possible job enqueued from queue.
+        Start next possible job enqueued in pendingJobsQueue or continue 
+        without doing anything.
         @param test_suite_name:
         '''
         if len(self.pendingJobsDbg) <= 7:
@@ -1215,6 +1335,10 @@ class XrdTestMaster(Runnable):
                     self.pendingJobsDbg = self.pendingJobsDbg[1:]
     #---------------------------------------------------------------------------
     def procSlaveMsg(self, msg):
+        '''
+        Process incoming message from a slave.
+        @param msg:
+        '''
         if msg.name == XrdMessage.M_TESTSUITE_STATE:
             slave = self.slaves[msg.sender]
 

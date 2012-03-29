@@ -104,7 +104,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
     #---------------------------------------------------------------------------
     def authClient(self):
         '''
-        Check if hypervisor is authentic
+        Check if hypervisor is authentic. He provides connection passwd.
         '''
         msg = self.sockStream.recv()
         if msg == self.server.config.get('server', 'connection_passwd'):
@@ -129,24 +129,28 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                                 self.server.config.get('security', 'keyfile'),
                                           ssl_version=ssl.PROTOCOL_TLSv1)
         self.sockStream = FixedSockStream(self.sockStream)
-
+        # authenticate client
         self.authClient()
+        # whether client is slave or hypervisor
         (clientType, clientHostname) = self.sockStream.recv()
 
-        LOGGER.info(clientType.capitalize() + " [" + str(clientHostname) + \
-                                            ", " + str(self.client_address) + \
-                                            "] establishing connection...")
+        LOGGER.info(("%s [%s, %s] establishing connection...") % \
+                                (clientType.capitalize(), \
+                                 clientHostname, self.client_address))
 
         self.clientType = ThreadedTCPRequestHandler.C_SLAVE
         if clientType == ThreadedTCPRequestHandler.C_HYPERV:
             self.clientType = ThreadedTCPRequestHandler.C_HYPERV
 
+        # preparing MasterEvent and add it to main programm events queue
+        # to handle logic of event
         evt = MasterEvent(MasterEvent.M_CLIENT_CONNECTED, (self.clientType,
                             self.client_address, self.sockStream, \
                             clientHostname))
-
         self.server.recvQueue.put((MasterEvent.PRIO_IMPORTANT, evt))
 
+        # begin listening on the client's socket.
+        # emit MasterEvent in case any message comes
         while not self.stopEvent.isSet():
             try:
                 msg = self.sockStream.recv()
@@ -172,10 +176,15 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         return
 #-------------------------------------------------------------------------------
 class XrdTCPServer(SocketServer.TCPServer):
+    '''
+    Wrapper for SocketServer.TCPServer, to enable setting beneath params.
+    '''
     allow_reuse_address = True
 #-------------------------------------------------------------------------------
 class ThreadedTCPServer(SocketServer.ThreadingMixIn, XrdTCPServer):
-    pass
+    '''
+    Wrapper to create threaded TCP Server.
+    '''
 #-------------------------------------------------------------------------------
 class XrdTestMasterException(Exception):
     '''
@@ -1165,7 +1174,7 @@ class XrdTestMaster(Runnable):
         cond = lambda j: False
         cond1 = lambda j: (j.groupId == groupId)
         if jobType == Job.INITIALIZE_TEST_SUITE:
-            LOGGER.debug("Removing jobs for whole test suite group id: %s")
+            LOGGER.debug("Removing next few jobs due to suite initialize fail.")
             cond2 = lambda j: (j.job == Job.INITIALIZE_TEST_SUITE or \
                      j.job == Job.FINALIZE_TEST_SUITE or \
                      j.job == Job.INITIALIZE_TEST_CASE or \
@@ -1173,12 +1182,14 @@ class XrdTestMaster(Runnable):
                      j.job == Job.FINALIZE_TEST_CASE)
             cond = lambda j: cond1(j) and cond2(j)
         elif jobType == Job.INITIALIZE_TEST_CASE:
+            LOGGER.debug("Removing next few jobs due to test initialize fail.")
             cond2 = lambda j: (j.job == Job.INITIALIZE_TEST_CASE or \
                      j.job == Job.RUN_TEST_CASE or \
                      j.job == Job.FINALIZE_TEST_CASE)
             cond3 = lambda j: j.args[1] == testName
             cond = lambda j: cond1(j) and cond2(j) and cond3(j)
         else:
+            LOGGER.debug("Removing next few jobs due to cluster start fail.")
             cond = lambda j: cond1(j)
 
         for j in self.pendingJobs:
@@ -1202,7 +1213,6 @@ class XrdTestMaster(Runnable):
                 if j.job == removeJob.job and j.args == removeJob.args:
                     self.pendingJobs = self.pendingJobs[1:]
                     self.pendingJobsDbg = self.pendingJobsDbg[1:]
-                    LOGGER.info("Removing job %s", j.job)
     #---------------------------------------------------------------------------
     def procSlaveMsg(self, msg):
         if msg.name == XrdMessage.M_TESTSUITE_STATE:

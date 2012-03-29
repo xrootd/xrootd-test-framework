@@ -37,7 +37,7 @@ except ImportError, e:
 currentDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(currentDir)
 # Default daemon configuration
-defaultConfFile = './XrdTestHypervisor.conf'
+defaultConfFile = '/etc/XrdTest/XrdTestHypervisor.conf'
 defaultPidFile = '/var/run/XrdTestHypervisor.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestHypervisor.log'
 

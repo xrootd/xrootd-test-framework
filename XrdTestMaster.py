@@ -717,7 +717,7 @@ class XrdTestMaster(Runnable):
 
         return testSlaves
     #---------------------------------------------------------------------------
-    def startCluster(self, clusterName, jobUid):
+    def startCluster(self, clusterName, suiteName, jobGroupId):
         clusterFound = False
         if self.clusters.has_key(clusterName):
             if self.clusters[clusterName].name == clusterName:
@@ -727,7 +727,8 @@ class XrdTestMaster(Runnable):
                 if len(self.hypervisors):
                     msg = XrdMessage(XrdMessage.M_START_CLUSTER)
                     msg.clusterDef = self.clusters[clusterName]
-                    msg.jobUid = jobUid
+                    msg.jobGroupId = jobGroupId
+                    msg.suiteName = suiteName
 
                     #take random hypervisor and send him cluster def
                     hNum = random.randint(0, len(self.hypervisors)-1)
@@ -1130,7 +1131,7 @@ class XrdTestMaster(Runnable):
                         self.pendingJobs[0].state = Job.S_STARTED
                 elif j.job == Job.START_CLUSTER:
                     if self.isJobValid(j):
-                        if self.startCluster(j.args[0], j.groupId):
+                        if self.startCluster(j.args[0], j.args[1], j.groupId):
                             self.pendingJobs[0].state = Job.S_STARTED
                     else:
                         self.removeJobs(j.groupId)
@@ -1348,12 +1349,13 @@ class XrdTestMaster(Runnable):
                         self.clusters[msg.clusterName].state = msg.state
                         LOGGER.info(("Cluster state received [%s] %s") % \
                                     (msg.clusterName, str(msg.state)))
-                        if msg.state == State(Cluster.S_ACTIVE):
+                        if msg.state == Cluster.S_ACTIVE:
                             self.removeJob(Job(Job.START_CLUSTER, \
-                                               args=msg.clusterName))
-                        elif msg.state == State(Cluster.S_ERROR_START):
+                                               args=(msg.clusterName, 
+                                                     msg.suiteName)))
+                        elif msg.state == Cluster.S_ERROR_START:
                             LOGGER.error("Cluster error: %s" % msg.state)
-                            self.removeJobs(msg.jobUid)
+                            self.removeJobs(msg.jobGroupId)
                         elif msg.state == State(Cluster.S_STOPPED):
                             self.removeJob(Job(Job.STOP_CLUSTER, \
                                                args=msg.clusterName))

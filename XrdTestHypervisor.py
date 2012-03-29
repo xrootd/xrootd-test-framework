@@ -156,7 +156,8 @@ class XrdTestHypervisor(Runnable):
         '''
         resp = XrdMessage(XrdMessage.M_CLUSTER_STATE)
         resp.clusterName = msg.clusterDef.name
-        resp.jobUid = msg.jobUid
+        resp.jobGroupId = msg.jobGroupId
+        resp.suiteName = msg.suiteName
 
         # assign rest of local constants to cluster definition
         cluster = msg.clusterDef

@@ -35,9 +35,12 @@ class State(object):
     #---------------------------------------------------------------------------
     def __eq__(self, oth):
         if not isinstance(oth, State):
-            raise RuntimeError("Comparison between different types")
-
-        return oth.id == self.id
+            if not isinstance(oth, tuple) or len(oth) != 2:
+                raise RuntimeError("Comparison between non-comparable types.")
+            else:
+                return oth[0] == self.id
+        else:
+            return oth.id == self.id
     #---------------------------------------------------------------------------
     def __ne__(self, oth):
         return not self == oth

@@ -113,7 +113,8 @@ class XrdTestSlave(Runnable):
         command = command.replace("@slavename@", socket.gethostname())
         LOGGER.info("Shell script to run: " + command)
 
-        res = None
+        res = ('Nothing executed', '', '0')
+        localError = ''
         try:
             process = Popen(command, shell="None", \
                         stdout=subprocess.PIPE, \
@@ -122,9 +123,20 @@ class XrdTestSlave(Runnable):
             stdout, stderr = process.communicate()
             res = (stdout, stderr, str(process.returncode))
         except ValueError, e:
-            LOGGER.exception("Execution of shell script failed:" + str(e))
-        except OSError, e:
-            LOGGER.exception("Execution of shell script failed:" + str(e))
+            localError += str(e)
+            LOGGER.error("Execution of shell script failed: %s" % e)
+        except e:
+            localError += str(e)
+            LOGGER.error("Execution of shell script failed: %s" % e)
+        except Exception, e:
+            localError += str(e)
+            LOGGER.error("Execution of shell script failed: %s" % e)
+
+        if localError:
+            (a,b,c) = res
+            t = "\nERRORS THAT OCCURED ON TEST SLAVE:\n "
+            res = (a, b + t + str(localError), '1')
+
         return res
     #---------------------------------------------------------------------------
     def connectMaster(self, masterIp, masterPort):
@@ -175,6 +187,7 @@ class XrdTestSlave(Runnable):
         suiteName = msg.suiteName
         testName = msg.testName
         testUid = msg.testUid
+        jobGroupId = msg.jobGroupId
 
         self.cases[testUid] = copy(msg.case)
 
@@ -182,6 +195,7 @@ class XrdTestSlave(Runnable):
         msg.testUid = testUid
         msg.suiteName = suiteName
         msg.testName = testName
+        msg.jobGroupId = jobGroupId
 
         msg.result = self.executeSh(self.cases[testUid].initialize)
         msg.state = State(TestSuite.S_SLAVE_TEST_INITIALIZED)

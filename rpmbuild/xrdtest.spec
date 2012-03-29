@@ -3,7 +3,7 @@
 Name:           xrdtest
 Version:        0.0.1
 Release:        1%{?dist}
-License:	GNU/GPL
+License:	GPL3
 Summary:        Xrootd Testing Framework consists of 3 components (packages): Test Master, Test Slave and Test Hypervisor.
 Group:          Development/Tools
 Packager:	Lukasz Trzaska <ltrzaska@cern.ch>

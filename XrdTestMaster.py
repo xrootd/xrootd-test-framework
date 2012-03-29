@@ -351,12 +351,13 @@ class Slave(TCPClient):
 #-------------------------------------------------------------------------------
 class TestSuiteSession(Stateful):
     #---------------------------------------------------------------------------
-    def __init__(self, suite):
+    def __init__(self, suiteDef):
         Stateful.__init__(self)
         # name of test suite
-        self.name = suite.name
+        self.name = suiteDef.name
         # test suite definition copy
-        self.suite = deepcopy(suite)
+        self.suite = deepcopy(suiteDef)
+        self.suite.jobFun = None
         # date of initialization
         self.initDate = datetime.datetime.now()
         # references to slaves who are necessary for the test suite
@@ -859,7 +860,7 @@ class XrdTestMaster(Runnable):
 
         return True
     #---------------------------------------------------------------------------
-    def initializeTestCase(self, test_suite_name, test_name):
+    def initializeTestCase(self, test_suite_name, test_name, jobGroupId):
         '''
         Sends initTest message to slaves.
         @param test_suite_name:
@@ -886,6 +887,7 @@ class XrdTestMaster(Runnable):
         msg.testName = test_name
         msg.testUid = tc.uid
         msg.case = tc
+        msg.jobGroupId = jobGroupId
 
         testSlaves = self.getSuiteSlaves(tss.suite, test_case=tc)
 
@@ -1117,7 +1119,8 @@ class XrdTestMaster(Runnable):
                     if self.finalizeTestSuite(j.args):
                         self.pendingJobs[0].state = Job.S_STARTED
                 elif j.job == Job.INITIALIZE_TEST_CASE:
-                    if self.initializeTestCase(j.args[0], j.args[1]):
+                    if self.initializeTestCase(j.args[0], j.args[1], 
+                                               j.groupId):
                         self.pendingJobs[0].state = Job.S_STARTED
                 elif j.job == Job.RUN_TEST_CASE:
                     if self.runTestCase(j.args[0], j.args[1]):

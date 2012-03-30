@@ -4,6 +4,9 @@
 # Date:    
 # File:    XrdTestHypervisor
 # Desc:    Xroot Testing Framework Hypervisor component.
+#          * daemon to manage the virtual machines clusters and their networks
+#          * on demand of Master it starts/stops/configures virtual machines
+#          * uses libvirt to manage virtual machines
 #-------------------------------------------------------------------------------
 # Logging settings
 #-------------------------------------------------------------------------------
@@ -73,13 +76,25 @@ class XrdTestHypervisor(Runnable):
     '''
     Test Hypervisor main executable class.
     '''
+    #---------------------------------------------------------------------------
+    # Connection with the master 
     sockStream = None
+    #---------------------------------------------------------------------------
+    # Blocking queue of messages received from the master
     recvQueue = Queue.Queue()
+    #---------------------------------------------------------------------------
+    # Config read from a file
     config = None
+    #---------------------------------------------------------------------------
+    # Reference to cluster manager, which is abstraction layer to 
+    # virtualization library - in our case libvirt
     clusterManager = None
-
     #---------------------------------------------------------------------------
     def __init__(self, config):
+        '''
+        Initialize basic variables. Start and configure ClusterManager.
+        @param config:
+        '''
         self.sockStream = None
         #Blocking queue of commands received from XrdTestMaster
         self.recvQueue = Queue.Queue()
@@ -100,6 +115,11 @@ class XrdTestHypervisor(Runnable):
         self.clusterManager.disconnect()
     #---------------------------------------------------------------------------
     def connectMaster(self, masterIp, masterPort):
+        '''
+        Try to establish the connection with the test master.
+        @param masterIp:
+        @param masterPort:
+        '''
         global currentDir
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
@@ -138,7 +158,7 @@ class XrdTestHypervisor(Runnable):
             else:
                 LOGGER.info("Password authentication in master failed.")
                 return None
-
+            # send my identity information
             self.sockStream.send(("hypervisor", socket.gethostname()))
 
             return self.sockStream
@@ -152,9 +172,10 @@ class XrdTestHypervisor(Runnable):
     #---------------------------------------------------------------------------
     def handleStartCluster(self, msg):
         '''
-        Handle start cluster message.
+        Handle start cluster message from a master - start a cluster.
         '''
         resp = XrdMessage(XrdMessage.M_CLUSTER_STATE)
+        # rewrite important parameters to response message
         resp.clusterName = msg.clusterDef.name
         resp.jobGroupId = msg.jobGroupId
         resp.suiteName = msg.suiteName
@@ -184,7 +205,7 @@ class XrdTestHypervisor(Runnable):
     #---------------------------------------------------------------------------
     def handleStopCluster(self, msg):
         '''
-        Handle stop cluster message.
+        Handle stop cluster message from a master - stop a running cluster.
         '''
         resp = XrdMessage(XrdMessage.M_CLUSTER_STATE)
         resp.clusterName = msg.clusterDef.name

@@ -3,7 +3,12 @@
 # Author: Lukasz Trzaska <lukasz.trzaska@cern.ch>
 # Date:   22.08.2011
 # File:   ClusterManager module
-# Desc:   Virtual machines clusters manager.
+# Desc:   Virtual machines cluster manager. Utilizes libvirt to create and 
+#         remove virtual machines and networks.
+#         Creation of one cluster manager may be considered as a session, during
+#         which some machines and networks are created. Cluster Manager keeps
+#         information of all created clusters during the session and can remove
+#         all of them on demand - come back to state before it began.
 #-------------------------------------------------------------------------------
 # Imports
 #-------------------------------------------------------------------------------
@@ -27,11 +32,8 @@ LOGGER.debug("Running script: " + __file__)
 #-------------------------------------------------------------------------------
 class ClusterManager:
     '''
-    Virtual machines cluster's manager
-    '''                         
-                                #used only if orinal machine is to
-                                #to be reconfigured, instance is run from 
-                                #original image and it's not deleted after
+    Virtual machines clusters' manager
+    '''
     #---------------------------------------------------------------------------
     def __init__(self):
         '''
@@ -39,10 +41,11 @@ class ClusterManager:
         '''
         # holds libvirt connection of a type libvirt.virConnect
         self.virtConnection = None
-        #definitions of clusters [by name]
+        # definitions of clusters. Key: name Value: cluster definition
         self.clusters = {}
-        #dictionary of currently running hosts
+        # dictionary of currently running hosts. Key: hostObj.uname
         self.hosts = {}
+        # dictionary of currently running networks. Key: networkObj.uname
         self.nets = {}
 
         self.tmpImagesDir = "/tmp"
@@ -66,8 +69,8 @@ class ClusterManager:
     #---------------------------------------------------------------------------
     def disconnect(self):
         '''
-        Undefines and removes all virtual machines and networks and
-        disconnects from libvirt manager.
+        Undefines and removes all virtual machines and networks created
+        by this cluster manager and disconnects from libvirt manager.
         @raise ClusterManagerException: when fails
         '''
         try:
@@ -90,6 +93,12 @@ class ClusterManager:
             LOGGER.debug("libvirt manager disconnected")
     #---------------------------------------------------------------------------
     def copyImg(self, huName, safeCounter = None):
+        '''
+        Method runnable in separate threads, to separate copying of source 
+        operating system image to a temporary image.
+        @param huName: host.uname - host unique name
+        @param safeCounter: thread safe counter to signalize this run finished
+        '''
         (host, tmpFile, hostObj) = self.hosts[huName]
 
         dip = self.clusters[hostObj.clusterName].defaultHost.diskImage
@@ -126,18 +135,22 @@ class ClusterManager:
             return self.hosts[hostObj.uname][0]
 
         for h in self.hosts.itervalues():
+            # get disk image path from cluster definition
             cip = self.clusters[hostObj.clusterName].defaultHost.diskImage
+            # if machine has any disk image given?
             if h[2].runningDiskImage == hostObj.diskImage or \
                 (not hostObj.diskImage and h[2].runningDiskImage == cip):
                 return h[0]
 
         tmpFile = None
+        # machine uses copy original source image
         if not hostObj.diskImage:
             # first, copy the original disk image
             tmpFile = NamedTemporaryFile(prefix=self.tmpImagesPrefix, \
                                          dir=self.tmpImagesDir)
             hostObj.runningDiskImage = tmpFile.name
         else:
+            # machine uses ogirinal source image
             LOGGER.info(("Defining machine %s using ORIGINAL IMAGE %s") \
                         % (hostObj.uname, hostObj.diskImage))
             hostObj.runningDiskImage = hostObj.diskImage
@@ -146,11 +159,15 @@ class ClusterManager:
         try:
             conn = self.virtConnection
             host = conn.defineXML(hostObj.xmlDesc)
-
+            
+            # add host definition objects to dictionary
+            # key: host.uname - unique name
             self.hosts[hostObj.uname] = (host, tmpFile, hostObj)
             LOGGER.info("Defined machine: %s" % hostObj.uname)
         except libvirtError, e:
             try:
+                # that is possible that machine was already created
+                # if so, find it and safe the definition
                 host = conn.lookupByName(hostObj.uname)
                 self.hosts[hostObj.uname] = (host, None, hostObj)
                 LOGGER.info("Machine already defined: %s" % hostObj.uname)
@@ -164,7 +181,7 @@ class ClusterManager:
     def removeHost(self, hostUName):
         '''
         Can not be used inside loop iterating over hosts!
-        @param hostUName:
+        @param hostUName: host.uname host unique name
         '''
         try:
             h = self.hosts[hostUName][0]
@@ -266,6 +283,10 @@ class ClusterManager:
             raise ClusterManagerException(msg, ERR_CONNECTION)
     #---------------------------------------------------------------------------
     def removeDanglingHost(self, hostObj):
+        '''
+        Remove already defined host, if it has name the same as hostObj.
+        @param hostObj:
+        '''
         host = None
         try:
             conn = self.virtConnection
@@ -282,6 +303,10 @@ class ClusterManager:
             host.undefine()
     #---------------------------------------------------------------------------
     def removeDanglingNetwork(self, netObj):
+        '''
+        Remove already defined network, if it has name the same as netObj.
+        @param hostObj:
+        '''
         net = None
         try:
             conn = self.virtConnection
@@ -299,9 +324,15 @@ class ClusterManager:
 
     def createCluster(self, cluster):
         '''
-        Creates whole cluster: first network, then virtual machines - hosts.
-        @param cluster:
+        Creates cluster: first network, then virtual machines - hosts.
+        If it get request to create machine (host) that already exists (with the
+        same name) - it removes it completely. The same story regards network.
+        @param cluster: cluster definition object
         '''
+        if self.clusters.has_key(cluster.name):
+            raise ClusterManagerException(("Cluster %s seems to be already." + \
+                              " Need to be destroyed first.") % \
+                              (cluster.name))
         self.clusters[cluster.name] = cluster
         self.removeDanglingNetwork(cluster.network)
         net = self.createNetwork(cluster.network)
@@ -315,31 +346,37 @@ class ClusterManager:
         try:
             if cluster.hosts and len(cluster.hosts):
                 copyThreads = {}
-                safeCounter = SafeCounter()
+                safeCounter = SafeCounter() # thread safe counter
+                                        # to count how many machines have been
+                                        # copied by additional threads, thus
+                                        # can continue creation process
 
                 needCopy = 0    # number of machines that need additional
-                                # thread to copy
+                                # thread to copy their source images
                 waitingForCreate = []
                 for h in cluster.hosts:
                     self.removeDanglingHost(h)
                     self.defineHost(h)
                     waitingForCreate.append(h.uname)
 
+                    # machine doesn't use original image
                     if not h.diskImage:
                         LOGGER.info("Copying image %s for machine %s." %\
                                     (cluster.defaultHost.diskImage, h.uname))
                         sys.setcheckinterval(500)
                         needCopy += 1
+                        # create and start thread copying given virtual machine
+                        # image to a temporary file
                         copyThreads[h.uname] =\
                             threading.Thread(target=self.copyImg, args =\
                                              (h.uname, safeCounter))
                         copyThreads[h.uname].start()
-                    else:
+                    else: # machine uses original image
                         LOGGER.info("Using original image %s for machine %s." %\
                                     (h.diskImage, h.uname))
 
+                #wait for all threads to copy images
                 if needCopy > 0:
-                    #wait for all threads to copy images
                     n = 0
                     while(n < needCopy):
                         n = safeCounter.get()

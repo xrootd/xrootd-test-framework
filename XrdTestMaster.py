@@ -4,6 +4,11 @@
 # Date:    
 # File:    XrdTestMaster
 # Desc:    Xroot Testing Framework main module.
+#          * user entry point to the framework
+#          * supervise and synchronise all system activities
+#          * accepts connections from Slaves and Hypervisors and dispatches 
+#            commands to them
+#          * is run as a system service, configured via batch of config files
 #-------------------------------------------------------------------------------
 # Logging settings
 #-------------------------------------------------------------------------------

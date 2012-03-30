@@ -3,7 +3,12 @@
 # Author:  Lukasz Trzaska <ltrzaska@cern.ch>
 # Date:    
 # File:    XrdTestHypervisor
-# Desc:    Xroot Testing Framework Hypervisor component.
+# Desc:    Xroot Testing Framework Hypervisor component. 
+#          * the actual application which runs tests
+#          * daemon that may be run on virtual or physical machines
+#          * it receives test cases from Master and runs them synchronously 
+#            with other Slaves
+#          * creates sandbox to run shell scripts securely
 #-------------------------------------------------------------------------------
 # Logging settings
 #-------------------------------------------------------------------------------

@@ -1,0 +1,197 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module Daemon</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>Daemon</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/ltrzaska/dev/pydev-workspace/xrdtest/src/lib/Daemon.py">/home/ltrzaska/dev/pydev-workspace/xrdtest/src/lib/Daemon.py</a></font></td></tr></table>
+    <p><tt>#-------------------------------------------------------------------------------<br>
+#&nbsp;Author:&nbsp;&nbsp;Lukasz&nbsp;Trzaska&nbsp;&lt;ltrzaska@cern.ch&gt;<br>
+#&nbsp;Date:&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;File:&nbsp;&nbsp;&nbsp;&nbsp;daemonWrapper<br>
+#&nbsp;Desc:&nbsp;&nbsp;&nbsp;&nbsp;TODO<br>
+#-------------------------------------------------------------------------------</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="ConfigParser.html">ConfigParser</a><br>
+<a href="datetime.html">datetime</a><br>
+</td><td width="25%" valign=top><a href="logging.html">logging</a><br>
+<a href="os.html">os</a><br>
+</td><td width="25%" valign=top><a href="signal.html">signal</a><br>
+<a href="sys.html">sys</a><br>
+</td><td width="25%" valign=top><a href="time.html">time</a><br>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="Daemon.html#Daemon">Daemon</a>
+</font></dt><dt><font face="helvetica, arial"><a href="__builtin__.html#object">__builtin__.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="Daemon.html#Runnable">Runnable</a>
+</font></dt></dl>
+</dd>
+<dt><font face="helvetica, arial"><a href="exceptions.html#Exception">exceptions.Exception</a>(<a href="exceptions.html#BaseException">exceptions.BaseException</a>)
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="Daemon.html#DaemonException">DaemonException</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Daemon">class <strong>Daemon</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Represents&nbsp;and&nbsp;manages&nbsp;running&nbsp;daemon&nbsp;of&nbsp;a&nbsp;given&nbsp;runnable&nbsp;<a href="__builtin__.html#object">object</a>.<br>
+For&nbsp;initialization&nbsp;it&nbsp;requires&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;that&nbsp;inherits&nbsp;class&nbsp;<a href="#Runnable">Runnable</a>.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Daemon-__init__"><strong>__init__</strong></a>(self, progName, pidFile, logFile)</dt><dd><tt>Initiate&nbsp;<a href="#Daemon">Daemon</a>&nbsp;managing&nbsp;<a href="__builtin__.html#object">object</a>.<br>
+Required&nbsp;arguments&nbsp;are:&nbsp;pidFile&nbsp;and&nbsp;logFile.<br>
+@param&nbsp;pidFile:&nbsp;path&nbsp;to&nbsp;file&nbsp;where&nbsp;pid&nbsp;will&nbsp;be&nbsp;stored<br>
+@param&nbsp;logFile:&nbsp;path&nbsp;to&nbsp;file&nbsp;where&nbsp;logs&nbsp;of&nbsp;process&nbsp;will&nbsp;be&nbsp;stored<br>
+@param&nbsp;daemonProgName:&nbsp;progName&nbsp;that&nbsp;will&nbsp;be&nbsp;runned&nbsp;as&nbsp;python&nbsp;argument</tt></dd></dl>
+
+<dl><dt><a name="Daemon-check"><strong>check</strong></a>(self, pid<font color="#909090">=None</font>)</dt><dd><tt>Checks&nbsp;if&nbsp;process&nbsp;with&nbsp;given&nbsp;pid&nbsp;is&nbsp;currently&nbsp;running.<br>
+If&nbsp;no&nbsp;pid&nbsp;is&nbsp;given,&nbsp;it&nbsp;tries&nbsp;to&nbsp;retrieve&nbsp;pid&nbsp;from&nbsp;the&nbsp;pidFile&nbsp;given&nbsp;in<br>
+the&nbsp;constructor&nbsp;of&nbsp;this&nbsp;class.<br>
+@param&nbsp;pid:&nbsp;pid&nbsp;of&nbsp;process&nbsp;to&nbsp;be&nbsp;checked<br>
+@return:&nbsp;pid&nbsp;(if&nbsp;process&nbsp;runs),&nbsp;None&nbsp;(otherwise)</tt></dd></dl>
+
+<dl><dt><a name="Daemon-redirectOutput"><strong>redirectOutput</strong></a>(self)</dt><dd><tt>Redirect&nbsp;the&nbsp;stderr&nbsp;and&nbsp;stdout&nbsp;to&nbsp;a&nbsp;file</tt></dd></dl>
+
+<dl><dt><a name="Daemon-reload"><strong>reload</strong></a>(self, pid<font color="#909090">=None</font>)</dt><dd><tt>#---------------------------------------------------------------------------<br>
+#&nbsp;Reloads&nbsp;the&nbsp;daemon&nbsp;by&nbsp;sending&nbsp;SIGHUM<br>
+#---------------------------------------------------------------------------</tt></dd></dl>
+
+<dl><dt><a name="Daemon-removePidFile"><strong>removePidFile</strong></a>(self)</dt><dd><tt>Remove&nbsp;pid&nbsp;file&nbsp;if&nbsp;it&nbsp;exists</tt></dd></dl>
+
+<dl><dt><a name="Daemon-start"><strong>start</strong></a>(self, runnable)</dt><dd><tt>Starts&nbsp;the&nbsp;daemon&nbsp;as&nbsp;a&nbsp;separate&nbsp;process.<br>
+@param&nbsp;runnable:&nbsp;instance&nbsp;of&nbsp;runnable&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;(inherits&nbsp;<a href="#Runnable">Runnable</a>).</tt></dd></dl>
+
+<dl><dt><a name="Daemon-stop"><strong>stop</strong></a>(self, pid<font color="#909090">=None</font>)</dt><dd><tt>Stop&nbsp;the&nbsp;deamon</tt></dd></dl>
+
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>isDaemon</strong> = False</dl>
+
+<dl><dt><strong>logFile</strong> = None</dl>
+
+<dl><dt><strong>pidFile</strong> = None</dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="DaemonException">class <strong>DaemonException</strong></a>(<a href="exceptions.html#Exception">exceptions.Exception</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>General&nbsp;<a href="exceptions.html#Exception">Exception</a>&nbsp;raised&nbsp;by&nbsp;<a href="#Daemon">Daemon</a>.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="Daemon.html#DaemonException">DaemonException</a></dd>
+<dd><a href="exceptions.html#Exception">exceptions.Exception</a></dd>
+<dd><a href="exceptions.html#BaseException">exceptions.BaseException</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="DaemonException-__init__"><strong>__init__</strong></a>(self, desc)</dt><dd><tt>Constructs&nbsp;<a href="exceptions.html#Exception">Exception</a><br>
+@param&nbsp;desc:&nbsp;description&nbsp;of&nbsp;an&nbsp;error</tt></dd></dl>
+
+<dl><dt><a name="DaemonException-__str__"><strong>__str__</strong></a>(self)</dt><dd><tt>Returns&nbsp;textual&nbsp;representation&nbsp;of&nbsp;an&nbsp;error</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Data and other attributes inherited from <a href="exceptions.html#Exception">exceptions.Exception</a>:<br>
+<dl><dt><strong>__new__</strong> = &lt;built-in method __new__ of type object&gt;<dd><tt>T.<a href="#DaemonException-__new__">__new__</a>(S,&nbsp;...)&nbsp;-&gt;&nbsp;a&nbsp;new&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;with&nbsp;type&nbsp;S,&nbsp;a&nbsp;subtype&nbsp;of&nbsp;T</tt></dl>
+
+<hr>
+Methods inherited from <a href="exceptions.html#BaseException">exceptions.BaseException</a>:<br>
+<dl><dt><a name="DaemonException-__delattr__"><strong>__delattr__</strong></a>(...)</dt><dd><tt>x.<a href="#DaemonException-__delattr__">__delattr__</a>('name')&nbsp;&lt;==&gt;&nbsp;del&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="DaemonException-__getattribute__"><strong>__getattribute__</strong></a>(...)</dt><dd><tt>x.<a href="#DaemonException-__getattribute__">__getattribute__</a>('name')&nbsp;&lt;==&gt;&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="DaemonException-__getitem__"><strong>__getitem__</strong></a>(...)</dt><dd><tt>x.<a href="#DaemonException-__getitem__">__getitem__</a>(y)&nbsp;&lt;==&gt;&nbsp;x[y]</tt></dd></dl>
+
+<dl><dt><a name="DaemonException-__getslice__"><strong>__getslice__</strong></a>(...)</dt><dd><tt>x.<a href="#DaemonException-__getslice__">__getslice__</a>(i,&nbsp;j)&nbsp;&lt;==&gt;&nbsp;x[i:j]<br>
+&nbsp;<br>
+Use&nbsp;of&nbsp;negative&nbsp;indices&nbsp;is&nbsp;not&nbsp;supported.</tt></dd></dl>
+
+<dl><dt><a name="DaemonException-__reduce__"><strong>__reduce__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="DaemonException-__repr__"><strong>__repr__</strong></a>(...)</dt><dd><tt>x.<a href="#DaemonException-__repr__">__repr__</a>()&nbsp;&lt;==&gt;&nbsp;repr(x)</tt></dd></dl>
+
+<dl><dt><a name="DaemonException-__setattr__"><strong>__setattr__</strong></a>(...)</dt><dd><tt>x.<a href="#DaemonException-__setattr__">__setattr__</a>('name',&nbsp;value)&nbsp;&lt;==&gt;&nbsp;x.name&nbsp;=&nbsp;value</tt></dd></dl>
+
+<dl><dt><a name="DaemonException-__setstate__"><strong>__setstate__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="DaemonException-__unicode__"><strong>__unicode__</strong></a>(...)</dt></dl>
+
+<hr>
+Data descriptors inherited from <a href="exceptions.html#BaseException">exceptions.BaseException</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+</dl>
+<dl><dt><strong>args</strong></dt>
+</dl>
+<dl><dt><strong>message</strong></dt>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Runnable">class <strong>Runnable</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Abstract&nbsp;basic&nbsp;class&nbsp;for&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;to&nbsp;be&nbsp;runned&nbsp;as&nbsp;a&nbsp;daemon.<br>
+@note:&nbsp;children&nbsp;class&nbsp;it&nbsp;should&nbsp;handle&nbsp;SIGUP&nbsp;signal&nbsp;or&nbsp;it&nbsp;will&nbsp;suspend<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Runnable-run"><strong>run</strong></a>(self)</dt><dd><tt>Main&nbsp;jobs&nbsp;of&nbsp;programme.&nbsp;Has&nbsp;to&nbsp;be&nbsp;implemented.</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-readConfig"><strong>readConfig</strong></a>(confFile)</dt><dd><tt>Reads&nbsp;configuration&nbsp;from&nbsp;given&nbsp;file&nbsp;or&nbsp;from&nbsp;default&nbsp;if&nbsp;None&nbsp;given.<br>
+@param&nbsp;optsConfFile:&nbsp;file&nbsp;with&nbsp;configuration</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>LOGGER</strong> = &lt;logging.Logger object&gt;</td></tr></table>
+</body></html>

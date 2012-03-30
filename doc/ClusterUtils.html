@@ -1,0 +1,300 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module ClusterUtils</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>ClusterUtils</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/ltrzaska/dev/pydev-workspace/xrdtest/src/lib/ClusterUtils.py">/home/ltrzaska/dev/pydev-workspace/xrdtest/src/lib/ClusterUtils.py</a></font></td></tr></table>
+    <p><tt>#-------------------------------------------------------------------------------<br>
+#&nbsp;Author:&nbsp;Lukasz&nbsp;Trzaska&nbsp;&lt;lukasz.trzaska@cern.ch&gt;<br>
+#&nbsp;Date:&nbsp;&nbsp;&nbsp;22.08.2011<br>
+#&nbsp;File:&nbsp;&nbsp;&nbsp;ClusterManager&nbsp;module<br>
+#&nbsp;Desc:&nbsp;&nbsp;&nbsp;Virtual&nbsp;machines&nbsp;clusters&nbsp;manager.<br>
+#-------------------------------------------------------------------------------<br>
+#&nbsp;Imports<br>
+#-------------------------------------------------------------------------------</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="Utils.html">Utils</a><br>
+</td><td width="25%" valign=top><a href="logging.html">logging</a><br>
+</td><td width="25%" valign=top><a href="os.html">os</a><br>
+</td><td width="25%" valign=top><a href="sys.html">sys</a><br>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="Utils.html#Stateful">Utils.Stateful</a>(<a href="__builtin__.html#object">__builtin__.object</a>)
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="ClusterUtils.html#Cluster">Cluster</a>
+</font></dt></dl>
+</dd>
+<dt><font face="helvetica, arial"><a href="__builtin__.html#object">__builtin__.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="ClusterUtils.html#Host">Host</a>
+</font></dt><dt><font face="helvetica, arial"><a href="ClusterUtils.html#Network">Network</a>
+</font></dt></dl>
+</dd>
+<dt><font face="helvetica, arial"><a href="exceptions.html#Exception">exceptions.Exception</a>(<a href="exceptions.html#BaseException">exceptions.BaseException</a>)
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="ClusterUtils.html#ClusterManagerException">ClusterManagerException</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Cluster">class <strong>Cluster</strong></a>(<a href="Utils.html#Stateful">Utils.Stateful</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>#-------------------------------------------------------------------------------<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="ClusterUtils.html#Cluster">Cluster</a></dd>
+<dd><a href="Utils.html#Stateful">Utils.Stateful</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="Cluster-__init__"><strong>__init__</strong></a>(self)</dt><dd><tt>#---------------------------------------------------------------------------</tt></dd></dl>
+
+<dl><dt><a name="Cluster-addHost"><strong>addHost</strong></a>(self, host)</dt><dd><tt>#---------------------------------------------------------------------------</tt></dd></dl>
+
+<dl><dt><a name="Cluster-addHosts"><strong>addHosts</strong></a>(self, hosts)</dt><dd><tt>#---------------------------------------------------------------------------</tt></dd></dl>
+
+<dl><dt><a name="Cluster-networkGet"><strong>networkGet</strong></a>(self)</dt><dd><tt>#---------------------------------------------------------------------------</tt></dd></dl>
+
+<dl><dt><a name="Cluster-networkSet"><strong>networkSet</strong></a>(self, net)</dt><dd><tt>#---------------------------------------------------------------------------</tt></dd></dl>
+
+<dl><dt><a name="Cluster-randMac"><strong>randMac</strong></a>(self, history<font color="#909090">=[]</font>)</dt><dd><tt>#---------------------------------------------------------------------------</tt></dd></dl>
+
+<dl><dt><a name="Cluster-setEmulatorPath"><strong>setEmulatorPath</strong></a>(self, emulator_path)</dt><dd><tt>#---------------------------------------------------------------------------</tt></dd></dl>
+
+<dl><dt><a name="Cluster-validateAgainstSystem"><strong>validateAgainstSystem</strong></a>(self, clusters)</dt><dd><tt>Check&nbsp;if&nbsp;cluster&nbsp;definition&nbsp;is&nbsp;correct&nbsp;with&nbsp;other&nbsp;<br>
+clusters&nbsp;defined&nbsp;in&nbsp;the&nbsp;system.&nbsp;This&nbsp;correctness&nbsp;is&nbsp;critical&nbsp;for<br>
+cluster&nbsp;definition&nbsp;to&nbsp;be&nbsp;added.<br>
+@param&nbsp;clusters:</tt></dd></dl>
+
+<dl><dt><a name="Cluster-validateDynamic"><strong>validateDynamic</strong></a>(self)</dt><dd><tt>Check&nbsp;if&nbsp;<a href="#Cluster">Cluster</a>&nbsp;definition&nbsp;is&nbsp;semantically&nbsp;correct&nbsp;i.e.&nbsp;on&nbsp;the&nbsp;<br>
+hypervisor's&nbsp;machine&nbsp;e.g.&nbsp;if&nbsp;disk&nbsp;images&nbsp;really&nbsp;exists&nbsp;on&nbsp;<br>
+the&nbsp;machine&nbsp;it's&nbsp;to&nbsp;be&nbsp;planted.</tt></dd></dl>
+
+<dl><dt><a name="Cluster-validateStatic"><strong>validateStatic</strong></a>(self)</dt><dd><tt>Check&nbsp;if&nbsp;<a href="#Cluster">Cluster</a>&nbsp;definition&nbsp;is&nbsp;correct&nbsp;and&nbsp;sufficient<br>
+to&nbsp;create&nbsp;a&nbsp;cluster.</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>network</strong></dt>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>S_ACTIVE</strong> = (2, 'Cluster active')</dl>
+
+<dl><dt><strong>S_DEFINITION_SENT</strong> = (2, 'Cluster definition sent do hypervisor to start')</dl>
+
+<dl><dt><strong>S_ERROR</strong> = (-10, 'Cluster error')</dl>
+
+<dl><dt><strong>S_ERROR_START</strong> = (-11, 'Cluster error at start')</dl>
+
+<dl><dt><strong>S_ERROR_STOP</strong> = (-12, 'Cluster error at stop')</dl>
+
+<dl><dt><strong>S_STOPCOMMAND_SENT</strong> = (4, 'Cluster stop command sent to cluster')</dl>
+
+<dl><dt><strong>S_STOPPED</strong> = (3, 'Cluster stopped')</dl>
+
+<dl><dt><strong>S_UNKNOWN</strong> = (1, 'Cluster state unknown')</dl>
+
+<dl><dt><strong>S_UNKNOWN_NOHYPERV</strong> = (1, 'Cluster state unknown, no hypervisor to plant it on')</dl>
+
+<hr>
+Methods inherited from <a href="Utils.html#Stateful">Utils.Stateful</a>:<br>
+<dl><dt><a name="Cluster-getState"><strong>getState</strong></a>(self)</dt><dd><tt>#-----------------&nbsp;----------------------------------------------------------</tt></dd></dl>
+
+<dl><dt><a name="Cluster-setState"><strong>setState</strong></a>(self, state)</dt><dd><tt>#---------------------------------------------------------------------------</tt></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="Utils.html#Stateful">Utils.Stateful</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>state</strong></dt>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="ClusterManagerException">class <strong>ClusterManagerException</strong></a>(<a href="exceptions.html#Exception">exceptions.Exception</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>General&nbsp;<a href="exceptions.html#Exception">Exception</a>&nbsp;raised&nbsp;by&nbsp;module<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="ClusterUtils.html#ClusterManagerException">ClusterManagerException</a></dd>
+<dd><a href="exceptions.html#Exception">exceptions.Exception</a></dd>
+<dd><a href="exceptions.html#BaseException">exceptions.BaseException</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="ClusterManagerException-__init__"><strong>__init__</strong></a>(self, desc, typeFlag<font color="#909090">=1</font>)</dt><dd><tt>Constructs&nbsp;<a href="exceptions.html#Exception">Exception</a><br>
+@param&nbsp;desc:&nbsp;description&nbsp;of&nbsp;an&nbsp;error<br>
+@param&nbsp;typeFlag:&nbsp;represents&nbsp;type&nbsp;of&nbsp;an&nbsp;error,&nbsp;taken&nbsp;from&nbsp;class&nbsp;constants</tt></dd></dl>
+
+<dl><dt><a name="ClusterManagerException-__str__"><strong>__str__</strong></a>(self)</dt><dd><tt>Returns&nbsp;textual&nbsp;representation&nbsp;of&nbsp;an&nbsp;error</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Data and other attributes inherited from <a href="exceptions.html#Exception">exceptions.Exception</a>:<br>
+<dl><dt><strong>__new__</strong> = &lt;built-in method __new__ of type object&gt;<dd><tt>T.<a href="#ClusterManagerException-__new__">__new__</a>(S,&nbsp;...)&nbsp;-&gt;&nbsp;a&nbsp;new&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;with&nbsp;type&nbsp;S,&nbsp;a&nbsp;subtype&nbsp;of&nbsp;T</tt></dl>
+
+<hr>
+Methods inherited from <a href="exceptions.html#BaseException">exceptions.BaseException</a>:<br>
+<dl><dt><a name="ClusterManagerException-__delattr__"><strong>__delattr__</strong></a>(...)</dt><dd><tt>x.<a href="#ClusterManagerException-__delattr__">__delattr__</a>('name')&nbsp;&lt;==&gt;&nbsp;del&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="ClusterManagerException-__getattribute__"><strong>__getattribute__</strong></a>(...)</dt><dd><tt>x.<a href="#ClusterManagerException-__getattribute__">__getattribute__</a>('name')&nbsp;&lt;==&gt;&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="ClusterManagerException-__getitem__"><strong>__getitem__</strong></a>(...)</dt><dd><tt>x.<a href="#ClusterManagerException-__getitem__">__getitem__</a>(y)&nbsp;&lt;==&gt;&nbsp;x[y]</tt></dd></dl>
+
+<dl><dt><a name="ClusterManagerException-__getslice__"><strong>__getslice__</strong></a>(...)</dt><dd><tt>x.<a href="#ClusterManagerException-__getslice__">__getslice__</a>(i,&nbsp;j)&nbsp;&lt;==&gt;&nbsp;x[i:j]<br>
+&nbsp;<br>
+Use&nbsp;of&nbsp;negative&nbsp;indices&nbsp;is&nbsp;not&nbsp;supported.</tt></dd></dl>
+
+<dl><dt><a name="ClusterManagerException-__reduce__"><strong>__reduce__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="ClusterManagerException-__repr__"><strong>__repr__</strong></a>(...)</dt><dd><tt>x.<a href="#ClusterManagerException-__repr__">__repr__</a>()&nbsp;&lt;==&gt;&nbsp;repr(x)</tt></dd></dl>
+
+<dl><dt><a name="ClusterManagerException-__setattr__"><strong>__setattr__</strong></a>(...)</dt><dd><tt>x.<a href="#ClusterManagerException-__setattr__">__setattr__</a>('name',&nbsp;value)&nbsp;&lt;==&gt;&nbsp;x.name&nbsp;=&nbsp;value</tt></dd></dl>
+
+<dl><dt><a name="ClusterManagerException-__setstate__"><strong>__setstate__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="ClusterManagerException-__unicode__"><strong>__unicode__</strong></a>(...)</dt></dl>
+
+<hr>
+Data descriptors inherited from <a href="exceptions.html#BaseException">exceptions.BaseException</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+</dl>
+<dl><dt><strong>args</strong></dt>
+</dl>
+<dl><dt><strong>message</strong></dt>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Host">class <strong>Host</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Represents&nbsp;a&nbsp;virtual&nbsp;host&nbsp;which&nbsp;may&nbsp;be&nbsp;added&nbsp;to&nbsp;network<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Host-__init__"><strong>__init__</strong></a>(self, name<font color="#909090">=''</font>, ip<font color="#909090">=''</font>, mac<font color="#909090">=''</font>, net<font color="#909090">=''</font>, diskImage<font color="#909090">=None</font>, ramSize<font color="#909090">=''</font>, arch<font color="#909090">=''</font>, emulatorPath<font color="#909090">=''</font>, uuid<font color="#909090">=''</font>)</dt><dd><tt>#---------------------------------------------------------------------------</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>uname</strong></dt>
+<dd><tt>Return&nbsp;unique&nbsp;name&nbsp;of&nbsp;the&nbsp;machine&nbsp;within&nbsp;cluster's&nbsp;namespace.</tt></dd>
+</dl>
+<dl><dt><strong>xmlDesc</strong></dt>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>xmlDomainPattern</strong> = "<font color="#c040c0">\n</font>&lt;domain type='kvm'&gt;<font color="#c040c0">\n</font>  &lt;name&gt;%(uname)s&lt;/name&gt;<font color="#c040c0">\n</font>  ...'0x0'/&gt;<font color="#c040c0">\n</font>    &lt;/memballoon&gt;<font color="#c040c0">\n</font>  &lt;/devices&gt;<font color="#c040c0">\n</font>&lt;/domain&gt;<font color="#c040c0">\n</font>"</dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Network">class <strong>Network</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Represents&nbsp;a&nbsp;virtual&nbsp;network<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Network-__init__"><strong>__init__</strong></a>(self)</dt><dd><tt>#---------------------------------------------------------------------------</tt></dd></dl>
+
+<dl><dt><a name="Network-addDHCPHost"><strong>addDHCPHost</strong></a>(self, host)</dt><dd><tt>#---------------------------------------------------------------------------</tt></dd></dl>
+
+<dl><dt><a name="Network-addDnsHost"><strong>addDnsHost</strong></a>(self, host)</dt><dd><tt>#---------------------------------------------------------------------------</tt></dd></dl>
+
+<dl><dt><a name="Network-addHost"><strong>addHost</strong></a>(self, host)</dt><dd><tt>Add&nbsp;host&nbsp;to&nbsp;network.&nbsp;First&nbsp;to&nbsp;DHCP&nbsp;and&nbsp;then&nbsp;to&nbsp;DNS.<br>
+@param&nbsp;host:&nbsp;tuple&nbsp;(MAC&nbsp;address,&nbsp;IP&nbsp;address,&nbsp;HOST&nbsp;fqdn)</tt></dd></dl>
+
+<dl><dt><a name="Network-addHosts"><strong>addHosts</strong></a>(self, hostsList)</dt><dd><tt>Add&nbsp;hosts&nbsp;to&nbsp;network.<br>
+@param&nbsp;param:&nbsp;hostsList</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>uname</strong></dt>
+<dd><tt>Return&nbsp;unique&nbsp;name&nbsp;of&nbsp;the&nbsp;machine&nbsp;within&nbsp;cluster's&nbsp;namespace.</tt></dd>
+</dl>
+<dl><dt><strong>xmlDesc</strong></dt>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>xmlDescPattern</strong> = '<font color="#c040c0">\n</font>&lt;network&gt;<font color="#c040c0">\n</font>  &lt;name&gt;%(name)s&lt;/name&gt;<font color="#c040c0">\n</font>  &lt;dns&gt;<font color="#c040c0">\n</font>     ...<font color="#c040c0">\n</font>    %(hostsxml)s<font color="#c040c0">\n</font>    &lt;/dhcp&gt;<font color="#c040c0">\n</font>  &lt;/ip&gt;<font color="#c040c0">\n</font>&lt;/network&gt;<font color="#c040c0">\n</font>'</dl>
+
+<dl><dt><strong>xmlDnsHostPattern</strong> = '<font color="#c040c0">\n</font>&lt;host ip="%(ip)s"&gt;<font color="#c040c0">\n</font>    &lt;hostname&gt;%(hostname)s&lt;/hostname&gt;<font color="#c040c0">\n</font>&lt;/host&gt;<font color="#c040c0">\n</font>'</dl>
+
+<dl><dt><strong>xmlHostPattern</strong> = '<font color="#c040c0">\n</font>&lt;host mac="%(mac)s" name="%(name)s" ip="%(ip)s" /&gt;<font color="#c040c0">\n</font>'</dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-extractClusterName"><strong>extractClusterName</strong></a>(path)</dt><dd><tt>#-------------------------------------------------------------------------------</tt></dd></dl>
+ <dl><dt><a name="-getFileContent"><strong>getFileContent</strong></a>(filePath)</dt><dd><tt>Read&nbsp;and&nbsp;return&nbsp;whole&nbsp;file&nbsp;content&nbsp;as&nbsp;a&nbsp;string<br>
+@param&nbsp;filePath:</tt></dd></dl>
+ <dl><dt><a name="-loadClusterDef"><strong>loadClusterDef</strong></a>(fp, clusters, validateWithRest<font color="#909090">=True</font>)</dt><dd><tt>#-------------------------------------------------------------------------------</tt></dd></dl>
+ <dl><dt><a name="-loadClustersDefs"><strong>loadClustersDefs</strong></a>(path)</dt><dd><tt>Loads&nbsp;cluster&nbsp;definitions&nbsp;from&nbsp;.py&nbsp;files&nbsp;stored&nbsp;in&nbsp;path&nbsp;directory<br>
+@param&nbsp;path:&nbsp;path&nbsp;for&nbsp;.py&nbsp;files,&nbsp;storing&nbsp;cluster&nbsp;definitions</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>ERR_ADD_HOST</strong> = 4<br>
+<strong>ERR_CONNECTION</strong> = 2<br>
+<strong>ERR_CREATE_NETWORK</strong> = 8<br>
+<strong>ERR_UNKNOWN</strong> = 1<br>
+<strong>LOGGER</strong> = &lt;logging.Logger object&gt;</td></tr></table>
+</body></html>

@@ -1,0 +1,111 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module ClusterManager</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>ClusterManager</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/ltrzaska/dev/pydev-workspace/xrdtest/src/lib/ClusterManager.py">/home/ltrzaska/dev/pydev-workspace/xrdtest/src/lib/ClusterManager.py</a></font></td></tr></table>
+    <p><tt>#-------------------------------------------------------------------------------<br>
+#&nbsp;Author:&nbsp;Lukasz&nbsp;Trzaska&nbsp;&lt;lukasz.trzaska@cern.ch&gt;<br>
+#&nbsp;Date:&nbsp;&nbsp;&nbsp;22.08.2011<br>
+#&nbsp;File:&nbsp;&nbsp;&nbsp;<a href="#ClusterManager">ClusterManager</a>&nbsp;module<br>
+#&nbsp;Desc:&nbsp;&nbsp;&nbsp;Virtual&nbsp;machines&nbsp;clusters&nbsp;manager.<br>
+#-------------------------------------------------------------------------------<br>
+#&nbsp;Imports<br>
+#-------------------------------------------------------------------------------</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="libvirt.html">libvirt</a><br>
+</td><td width="25%" valign=top><a href="logging.html">logging</a><br>
+</td><td width="25%" valign=top><a href="sys.html">sys</a><br>
+</td><td width="25%" valign=top><a href="threading.html">threading</a><br>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="ClusterManager.html#ClusterManager">ClusterManager</a>
+</font></dt></dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="ClusterManager">class <strong>ClusterManager</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Virtual&nbsp;machines&nbsp;cluster's&nbsp;manager<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="ClusterManager-__init__"><strong>__init__</strong></a>(self)</dt><dd><tt>Creates&nbsp;Manager&nbsp;instance.&nbsp;Needs&nbsp;url&nbsp;to&nbsp;virtual&nbsp;virt&nbsp;domains&nbsp;manager</tt></dd></dl>
+
+<dl><dt><a name="ClusterManager-connect"><strong>connect</strong></a>(self, url<font color="#909090">='qemu:///system'</font>)</dt><dd><tt>Creates&nbsp;and&nbsp;returns&nbsp;connection&nbsp;to&nbsp;virtual&nbsp;machines&nbsp;manager<br>
+@param&nbsp;url:&nbsp;connection&nbsp;url<br>
+@raise&nbsp;ClusterManagerException:&nbsp;when&nbsp;fails&nbsp;to&nbsp;connect<br>
+@return:&nbsp;None</tt></dd></dl>
+
+<dl><dt><a name="ClusterManager-copyImg"><strong>copyImg</strong></a>(self, huName, safeCounter<font color="#909090">=None</font>)</dt><dd><tt>#---------------------------------------------------------------------------</tt></dd></dl>
+
+<dl><dt><a name="ClusterManager-createCluster"><strong>createCluster</strong></a>(self, cluster)</dt><dd><tt>Creates&nbsp;whole&nbsp;cluster:&nbsp;first&nbsp;network,&nbsp;then&nbsp;virtual&nbsp;machines&nbsp;-&nbsp;hosts.<br>
+@param&nbsp;cluster:</tt></dd></dl>
+
+<dl><dt><a name="ClusterManager-createNetwork"><strong>createNetwork</strong></a>(self, networkObj)</dt><dd><tt>Creates&nbsp;and&nbsp;starts&nbsp;cluster's&nbsp;network.&nbsp;It&nbsp;utilizes&nbsp;defineNetwork<br>
+at&nbsp;first&nbsp;and&nbsp;doesn't&nbsp;create&nbsp;network&nbsp;definition&nbsp;if&nbsp;it&nbsp;already&nbsp;exists.<br>
+@param&nbsp;networkObj:&nbsp;Network&nbsp;object<br>
+@raise&nbsp;ClusterManagerException:&nbsp;when&nbsp;fails<br>
+@return:&nbsp;None</tt></dd></dl>
+
+<dl><dt><a name="ClusterManager-defineHost"><strong>defineHost</strong></a>(self, hostObj)</dt><dd><tt>Defines&nbsp;virtual&nbsp;host&nbsp;in&nbsp;a&nbsp;cluster&nbsp;using&nbsp;given&nbsp;host&nbsp;object,&nbsp;<br>
+not&nbsp;starting&nbsp;it.&nbsp;Host&nbsp;with&nbsp;the&nbsp;given&nbsp;name&nbsp;may&nbsp;be&nbsp;defined&nbsp;once&nbsp;<br>
+in&nbsp;the&nbsp;system.&nbsp;Stores&nbsp;hosts&nbsp;objects&nbsp;in&nbsp;class&nbsp;property&nbsp;self.<strong>hosts</strong>.<br>
+@param&nbsp;hostObj:&nbsp;<a href="#ClusterManager">ClusterManager</a>.Host&nbsp;object<br>
+@raise&nbsp;ClusterManagerException:&nbsp;when&nbsp;fails<br>
+@return:&nbsp;host&nbsp;object&nbsp;from&nbsp;libvirt&nbsp;lib</tt></dd></dl>
+
+<dl><dt><a name="ClusterManager-defineNetwork"><strong>defineNetwork</strong></a>(self, netObj)</dt><dd><tt>Defines&nbsp;network&nbsp;object&nbsp;without&nbsp;starting&nbsp;it.<br>
+@param&nbsp;xml:&nbsp;libvirt&nbsp;XML&nbsp;cluster&nbsp;definition<br>
+@raise&nbsp;ClusterManagerException:&nbsp;when&nbsp;fails<br>
+@return:&nbsp;None</tt></dd></dl>
+
+<dl><dt><a name="ClusterManager-disconnect"><strong>disconnect</strong></a>(self)</dt><dd><tt>Undefines&nbsp;and&nbsp;removes&nbsp;all&nbsp;virtual&nbsp;machines&nbsp;and&nbsp;networks&nbsp;and<br>
+disconnects&nbsp;from&nbsp;libvirt&nbsp;manager.<br>
+@raise&nbsp;ClusterManagerException:&nbsp;when&nbsp;fails</tt></dd></dl>
+
+<dl><dt><a name="ClusterManager-removeCluster"><strong>removeCluster</strong></a>(self, clusterName)</dt><dd><tt>#---------------------------------------------------------------------------</tt></dd></dl>
+
+<dl><dt><a name="ClusterManager-removeDanglingHost"><strong>removeDanglingHost</strong></a>(self, hostObj)</dt><dd><tt>#---------------------------------------------------------------------------</tt></dd></dl>
+
+<dl><dt><a name="ClusterManager-removeDanglingNetwork"><strong>removeDanglingNetwork</strong></a>(self, netObj)</dt><dd><tt>#---------------------------------------------------------------------------</tt></dd></dl>
+
+<dl><dt><a name="ClusterManager-removeHost"><strong>removeHost</strong></a>(self, hostUName)</dt><dd><tt>Can&nbsp;not&nbsp;be&nbsp;used&nbsp;inside&nbsp;loop&nbsp;iterating&nbsp;over&nbsp;hosts!<br>
+@param&nbsp;hostUName:</tt></dd></dl>
+
+<dl><dt><a name="ClusterManager-removeHosts"><strong>removeHosts</strong></a>(self, hostsUnameList)</dt><dd><tt>Remove&nbsp;multiple&nbsp;hosts.<br>
+@param&nbsp;hostsUnameList:&nbsp;list&nbsp;of&nbsp;unames&nbsp;of&nbsp;defined&nbsp;hosts.</tt></dd></dl>
+
+<dl><dt><a name="ClusterManager-removeNetwork"><strong>removeNetwork</strong></a>(self, netUName)</dt><dd><tt>Can&nbsp;not&nbsp;be&nbsp;used&nbsp;inside&nbsp;loop&nbsp;iterating&nbsp;over&nbsp;networks!<br>
+@param&nbsp;hostName:</tt></dd></dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>ERR_ADD_HOST</strong> = 4<br>
+<strong>ERR_CONNECTION</strong> = 2<br>
+<strong>ERR_CREATE_NETWORK</strong> = 8<br>
+<strong>LOGGER</strong> = &lt;logging.Logger object&gt;</td></tr></table>
+</body></html>

@@ -3,8 +3,7 @@
 # Author:  Lukasz Trzaska <ltrzaska@cern.ch>
 # Date:    
 # File:    XrdTestMaster
-# Desc:    Xroot Testing Framework manager. Saves all information into logs and
-#          displays most important through web interface.
+# Desc:    Xroot Testing Framework main module.
 #-------------------------------------------------------------------------------
 # Logging settings
 #-------------------------------------------------------------------------------
@@ -266,7 +265,7 @@ class WebInterface:
                     'hostname': socket.gethostname(),
                     'testSuits': self.testMaster.testSuits,
                     'userMsgs' : self.testMaster.userMsgs,
-                    'testMaster': self.testMaster,}
+                    'testMaster': self.testMaster, }
         return self.disp("main.tmpl", tplVars)
     #---------------------------------------------------------------------------
     def suitsSessions(self):
@@ -465,8 +464,7 @@ class TestSuiteSession(Stateful):
         Retrieve test case stages for given test case unique id.
         @param test_case_uid:
         '''
-        stages = [v for v in \
-                  self.stagesResults if v[2] == test_case_uid]
+        stages = [v for v in self.stagesResults if v[2] == test_case_uid]
         return stages
 #---------------------------------------------------------------------------
 def genJobGroupId(suite_name):
@@ -486,19 +484,19 @@ class Job(object):
     '''
     #---------------------------------------------------------------------------
     # constants representing jobs states
-    S_ADDED     = (0, "Job added to jobs list.")
-    S_STARTED   = (1, "Job started. In progress.")
+    S_ADDED = (0, "Job added to jobs list.")
+    S_STARTED = (1, "Job started. In progress.")
     #---------------------------------------------------------------------------
     # constants representing jobs' types
-    INITIALIZE_TEST_SUITE   = 1
-    FINALIZE_TEST_SUITE     = 2
+    INITIALIZE_TEST_SUITE = 1
+    FINALIZE_TEST_SUITE = 2
 
-    INITIALIZE_TEST_CASE    = 3
-    RUN_TEST_CASE           = 4
-    FINALIZE_TEST_CASE      = 5
+    INITIALIZE_TEST_CASE = 3
+    RUN_TEST_CASE = 4
+    FINALIZE_TEST_CASE = 5
 
-    START_CLUSTER           = 6
-    STOP_CLUSTER            = 7
+    START_CLUSTER = 6
+    STOP_CLUSTER = 7
     #---------------------------------------------------------------------------
     def __init__(self, job, groupId="", args=None):
         self.job = job              # job type
@@ -513,10 +511,19 @@ class ClustersDefinitionsChangeHandler(ProcessEvent):
     '''
     #---------------------------------------------------------------------------
     def __init__(self, pevent=None, **kwargs):
+        '''
+        Init signature copy from base class. Created to save some callback 
+        parameter in class param.
+        @param pevent:
+        '''
         ProcessEvent.__init__(self, pevent=pevent, **kwargs)
         self.callback = kwargs['masterCallback']
     #---------------------------------------------------------------------------
     def process_default(self, event):
+        '''
+        Actual method that handle incoming dir change event.
+        @param event:
+        '''
         self.callback("CLUSTER", event)
 #-------------------------------------------------------------------------------
 class SuitsDefinitionsChangeHandler(ProcessEvent):
@@ -525,10 +532,19 @@ class SuitsDefinitionsChangeHandler(ProcessEvent):
     '''
     #---------------------------------------------------------------------------
     def __init__(self, pevent=None, **kwargs):
+        '''
+        Init signature copy from base class. Created to save some callback 
+        parameter in class param.
+        @param pevent:
+        '''
         ProcessEvent.__init__(self, pevent=pevent, **kwargs)
         self.callback = kwargs['masterCallback']
     #---------------------------------------------------------------------------
     def process_default(self, event):
+        '''
+        Actual method that handle incoming dir change event.
+        @param event:
+        '''
         self.callback("SUIT", event)
 #-------------------------------------------------------------------------------
 class XrdTestMaster(Runnable):
@@ -628,6 +644,7 @@ class XrdTestMaster(Runnable):
         '''
         LOGGER.info("Loading definitions...")
 
+        # load clusters definitions
         try:
             clusters = loadClustersDefs(\
                         self.config.get('server', 'clusters_definition_path'))
@@ -637,6 +654,7 @@ class XrdTestMaster(Runnable):
             LOGGER.error("ClusterManager Exception: %s" % e)
             sys.exit()
 
+        # load test suits definitions
         try:
             testSuits = loadTestSuitsDefs(\
                         self.config.get('server', 'testsuits_definition_path'))
@@ -650,6 +668,7 @@ class XrdTestMaster(Runnable):
         # add jobs to scheduler if it's enabled
         if self.config.getint('scheduler', 'enabled') == 1:
             for ts in self.testSuits.itervalues():
+                # if there is no scheduling expresion defined in suit, continue
                 if not ts.schedule:
                     continue
                 try:
@@ -680,26 +699,31 @@ class XrdTestMaster(Runnable):
         remMasks = ["IN_DELETE", "IN_MOVED_FROM"]
         addMasks = ["IN_CREATE", "IN_MOVED_TO"]
 
-        # if removed of modified do removal tasks
+        # if removed of modified do tasks necessary while removing job
         if dirEvent.maskname in remMasks or dirEvent.maskname == "IN_MODIFY":
             try:
                 LOGGER.info("Undefining test suite: %s" % modName)
                 if self.testSuits.has_key(modName):
+                    # unschedule job connected to this test suite
                     if self.testSuits[modName].jobFun:
                         self.sched.unschedule_func(\
                                                 self.testSuits[modName].jobFun)
+                    # remove module from imports
                     del sys.modules[modName]
+                    # remove testSuite from test suits' definitions
                     del self.testSuits[modName]
+                    # remove module name variable
                     del modName
             except TestSuiteException, e:
                 LOGGER.error("Error while undefining: %s" % str(e))
             except Exception, e:
                 LOGGER.error(("Error while defining test suite %s") % e)
 
-        #if file added or modified do adding tasks
+        #if file added or modified do tasks necessery while adding jobs 
         if dirEvent.maskname in addMasks or \
             dirEvent.maskname == "IN_MODIFY":
             try:
+                # load single test suite definition
                 suite = loadTestSuiteDef(p)
                 try:
                     if suite:
@@ -707,18 +731,20 @@ class XrdTestMaster(Runnable):
                 except TestSuiteException, e:
                     LOGGER.error("Definition warning: %s." % e)
                 if suite:
+                    # add job connected to added test suite
                     suite.jobFun = self.executeJob(suite.name)
                     self.sched.add_cron_job(suite.jobFun, **(suite.schedule))
                     self.testSuits[suite.name] = suite
             except TestSuiteException, e:
                 LOGGER.error("Error while defining: %s" % e)
             except Exception, e:
+                # in case of any exception thron e.g. from scheduler
                 LOGGER.error(("Error while defining " + \
                             " test suite %s") % e)
     #---------------------------------------------------------------------------
     def checkIfSuitsDefsComplete(self):
         '''
-        Search for incompletness of test suit definitions, that may be caused
+        Search for incompletness in test suits' definitions, that may be caused
         by e.g. lack of test case definition.
         @param dirEvent: 
         '''
@@ -746,23 +772,28 @@ class XrdTestMaster(Runnable):
         remMasks = ["IN_DELETE", "IN_MOVED_FROM"]
         addMasks = ["IN_CREATE", "IN_MOVED_TO"]
 
-        if dirEvent.maskname in remMasks or \
-            dirEvent.maskname == "IN_MODIFY":
+        # cluster definition removed or modified (same things in both cases)
+        if dirEvent.maskname in remMasks or dirEvent.maskname == "IN_MODIFY":
             try:
                 LOGGER.info("Undefining cluster: %s" % modName)
                 if self.clusters.has_key(modName):
+                    # remove module from imports
                     del sys.modules[modName]
+                    # remove cluster definition
                     del self.clusters[modName]
+                    # remove the name of cluster localy
                     del modName
+                # check if after deletion all test suits definitions are valid
                 self.checkIfSuitsDefsComplete()
             except ClusterManagerException, e:
                 LOGGER.error("Error while undefining: %s" % e)
-        if dirEvent.maskname in addMasks or \
-            dirEvent.maskname == "IN_MODIFY":
+        # cluster definition added or modified (same things in both cases)
+        if dirEvent.maskname in addMasks or dirEvent.maskname == "IN_MODIFY":
             try:
                 clu = loadClusterDef(p, self.clusters.values(), True)
                 LOGGER.info("Defining cluster: %s" % clu.name)
                 self.clusters[clu.name] = clu
+                # check if after adding some test suits definitions become valid
                 self.checkIfSuitsDefsComplete()
             except ClusterManagerException, e:
                 LOGGER.error("Error while defining: %s" % e)
@@ -770,7 +801,7 @@ class XrdTestMaster(Runnable):
     def slaveState(self, slave_name):
         '''
         Get state of a slave by its name, even if it's not connected.
-        @param slave_name: equal to full hostname
+        @param slave_name: equal to fully qualified hostname
         '''
         key = [k for k, v in self.slaves.iteritems() \
                if slave_name == v.hostname]
@@ -783,10 +814,10 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     def getSuiteSlaves(self, test_suite, slave_state=None, test_case=None):
         '''
-        Gets reference to currently connected slaves.
-        Optionally return only slaves associated with the given test_suite,
-         or test_case or being in given slave_state. All given parameters
-         has to accord.
+        Gets reference to slaves' objects representing slaves currently 
+        connected. Optionally return only slaves associated with the given 
+        test_suite or test_case 
+        or being in given slave_state. All given parameters has to accord.
         @param test_suite: test suite definition
         @param slave_state: required slave state
         @param test_case: test case defintion
@@ -823,6 +854,7 @@ class XrdTestMaster(Runnable):
         @param clusterName:
         @param suiteName:
         @param jobGroupId:
+        @return: True/False in case of Success/Failure in sending messages
         '''
         clusterFound = False
         if self.clusters.has_key(clusterName):
@@ -837,7 +869,7 @@ class XrdTestMaster(Runnable):
                     msg.suiteName = suiteName
 
                     #take random hypervisor and send him cluster def
-                    hNum = random.randint(0, len(self.hypervisors)-1)
+                    hNum = random.randint(0, len(self.hypervisors) - 1)
                     hyperv = [h for h in self.hypervisors.itervalues()][hNum]
                     hyperv.send(msg)
 
@@ -863,6 +895,7 @@ class XrdTestMaster(Runnable):
         '''
         Sends message to hypervisor to stop the cluster.
         @param clusterName:
+        @return: True/False in case of Success/Failure in sending messages
         '''
         clusterFound = False
         if self.clusters.has_key(clusterName):
@@ -893,6 +926,7 @@ class XrdTestMaster(Runnable):
         and stores it in python shelve.
         @param test_suite_name:
         @param jobGroupId:
+        @return: True/False in case of Success/Failure in sending messages
         '''
         # filling test suite machines automatically if user
         # provided none
@@ -935,6 +969,7 @@ class XrdTestMaster(Runnable):
         '''
         Sends finalization message to slaves and destroys TestSuiteSession.
         @param test_suite_name:
+        @return: True/False in case of Success/Failure in sending messages
         '''
         if not self.runningSuitsUids.has_key(test_suite_name):
             LOGGER.debug("TestSuite has not been initialized.")
@@ -978,6 +1013,7 @@ class XrdTestMaster(Runnable):
         @param test_suite_name:
         @param test_name:
         @param jobGroupId:
+        @return: True/False in case of Success/Failure in sending messages
         '''
         # Checks if we already initialized suite
         if not self.runningSuitsUids.has_key(test_suite_name):
@@ -1019,6 +1055,7 @@ class XrdTestMaster(Runnable):
         Sends runTest message to slaves.
         @param test_suite_name:
         @param test_name:
+        @return: True/False in case of Success/Failure in sending messages
         '''
         # Checks if we already initialized suite
         if not self.runningSuitsUids.has_key(test_suite_name):
@@ -1057,6 +1094,7 @@ class XrdTestMaster(Runnable):
         Sends runTest message to slaves.
         @param test_suite_name:
         @param test_name:
+        @return: True/False in case of Success/Failure in sending messages
         '''
         # Checks if we already initialized suite
         if not self.runningSuitsUids.has_key(test_suite_name):
@@ -1097,6 +1135,7 @@ class XrdTestMaster(Runnable):
         @param client_type:
         @param client_addr:
         @param client_hostname:
+        @return: None
         '''
         clients = self.slaves
         if client_type == self.C_HYPERV:
@@ -1130,6 +1169,7 @@ class XrdTestMaster(Runnable):
         Do the logic of client disconnection.
         @param client_type:
         @param client_addr:
+        @return: None
         '''
         clients = self.slaves
         if client_type == self.C_HYPERV:
@@ -1146,26 +1186,30 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     def fireEnqueueJobEvent(self, test_suite_name):
         '''
-        Add the Run Job event to main events queue of controll thread.
+        Add the Run Job event to main events queue of controll thread. 
+        Method to be used by different thread.
         @param test_suite_name:
+        @return: None
         '''
         evt = MasterEvent(MasterEvent.M_JOB_ENQUEUE, test_suite_name)
         self.recvQueue.put((MasterEvent.PRIO_NORMAL, evt))
     #---------------------------------------------------------------------------
     def executeJob(self, test_suite_name):
         '''
-        Closure for self.fireEnqueueJobEvent to hold the test_suite_name 
-        argument for execution.
+        Closure to pass the contexts of method self.fireEnqueueJobEvent:
+        argument the test_suite_name.
         @param test_suite_name: name of test suite
+        @return: lambda method with no argument
         '''
         return lambda: self.fireEnqueueJobEvent(test_suite_name)
     #---------------------------------------------------------------------------
     def enqueueJob(self, test_suite_name):
         '''
-        Add job to list of jobs to run.
+        Add job to list of jobs to run immediately after foregoing
+        jobs are finished.
         @param test_suite_name:
         '''
-        LOGGER.info("Enqueuing job for test suite: %s " %\
+        LOGGER.info("Enqueuing job for test suite: %s " % \
                      test_suite_name)
 
         groupId = genJobGroupId(test_suite_name)
@@ -1204,9 +1248,10 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     def isJobValid(self, job):
         '''
-        Check is job is still possible to be executed e.g. if required 
-        definitions are complete.
+        Check if job is still executable e.g. if required definitions 
+        are complete.
         @param job:
+        @return: True/False
         '''
         if job.job == Job.INITIALIZE_TEST_SUITE:
             if not self.testSuits.has_key(job.args):
@@ -1225,19 +1270,24 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     def startNextJob(self):
         '''
-        Start next possible job enqueued in pendingJobsQueue or continue 
-        without doing anything.
+        Start next possible job enqueued in pendingJobs list or continue 
+        without doing anything. Check if first job on a list is not already
+        started, then check if it is valid and if it is, start it and change
+        it's status to started.
         @param test_suite_name:
+        @return: None
         '''
+        # log next jobs that are pending
         if len(self.pendingJobsDbg) <= 7:
             LOGGER.info("PENDING JOBS[%s] %s " % (len(self.pendingJobs), \
                                                   self.pendingJobsDbg))
         else:
             LOGGER.info("PENDING JOBS[%s] (next 7) %s " % \
-                                                    (len(self.pendingJobs), 
+                                                    (len(self.pendingJobs),
                                                     self.pendingJobsDbg[:7]))
         if len(self.pendingJobs) > 0:
             j = self.pendingJobs[0]
+            # if job is not already started, we can start it
             if not j.state == Job.S_STARTED:
                 if j.job == Job.INITIALIZE_TEST_SUITE:
                     if self.isJobValid(j):
@@ -1249,7 +1299,7 @@ class XrdTestMaster(Runnable):
                     if self.finalizeTestSuite(j.args):
                         self.pendingJobs[0].state = Job.S_STARTED
                 elif j.job == Job.INITIALIZE_TEST_CASE:
-                    if self.initializeTestCase(j.args[0], j.args[1], 
+                    if self.initializeTestCase(j.args[0], j.args[1],
                                                j.groupId):
                         self.pendingJobs[0].state = Job.S_STARTED
                 elif j.job == Job.RUN_TEST_CASE:
@@ -1281,18 +1331,23 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     def removeJobs(self, groupId, jobType=Job.START_CLUSTER, testName=None):
         '''
-        Remove multiple jobs from enqueued jobs list. Depending of what kind
-        of job is removed, different parameters are used.
+        Remove multiple jobs from enqueued jobs list. Depending of what kind of 
+        job is removed, different parameters are used and different number of
+        jobs is removed.
         @param groupId: used for all kind of deleted jobs
         @param jobType: determines type of job that begins the chain of 
                         jobs to be removed
         @param testName: used if removed jobs concerns particular test case
+        @return: None
         '''
         newJobs = []
         newJobsDbg = []
         i = 0
+        # condition checked on every element of jobs list
+        # tell if job is to be removed 
         cond = lambda j: False
         cond1 = lambda j: (j.groupId == groupId)
+        # remove jobs if test suite initialize failed
         if jobType == Job.INITIALIZE_TEST_SUITE:
             LOGGER.debug("Removing next few jobs due to suite initialize fail.")
             cond2 = lambda j: (j.job == Job.INITIALIZE_TEST_SUITE or \
@@ -1301,6 +1356,7 @@ class XrdTestMaster(Runnable):
                      j.job == Job.RUN_TEST_CASE or \
                      j.job == Job.FINALIZE_TEST_CASE)
             cond = lambda j: cond1(j) and cond2(j)
+        # remove jobs if test case initialize failed
         elif jobType == Job.INITIALIZE_TEST_CASE:
             LOGGER.debug("Removing next few jobs due to test initialize fail.")
             cond2 = lambda j: (j.job == Job.INITIALIZE_TEST_CASE or \
@@ -1308,9 +1364,11 @@ class XrdTestMaster(Runnable):
                      j.job == Job.FINALIZE_TEST_CASE)
             cond3 = lambda j: j.args[1] == testName
             cond = lambda j: cond1(j) and cond2(j) and cond3(j)
+        # remove jobs if cluster start failed
         else:
             LOGGER.debug("Removing next few jobs due to cluster start fail.")
             cond = lambda j: cond1(j)
+
 
         for j in self.pendingJobs:
             if cond(j):
@@ -1318,30 +1376,32 @@ class XrdTestMaster(Runnable):
             else:
                 newJobs.append(j)
                 newJobsDbg.append(self.pendingJobsDbg[i])
-            i+=1
+            i += 1
         self.pendingJobs = newJobs
         self.pendingJobsDbg = newJobsDbg
     #---------------------------------------------------------------------------
-    def removeJob(self, removeJob):
+    def removeJob(self, remove_job):
         '''
-        Look through queue of jobs and start one, who have conditions.
-        @param test_suite_name:
+        Look through queue of jobs and remove one, which satisfy conditions 
+        defined by parameters of pattern job remove_job.
+        @param remove_job: pattern of a job to be removed
         '''
         if len(self.pendingJobs):
             j = self.pendingJobs[0]
             if j.state == Job.S_STARTED:
-                if j.job == removeJob.job and j.args == removeJob.args:
+                if j.job == remove_job.job and j.args == remove_job.args:
                     self.pendingJobs = self.pendingJobs[1:]
                     self.pendingJobsDbg = self.pendingJobsDbg[1:]
     #---------------------------------------------------------------------------
     def procSlaveMsg(self, msg):
         '''
-        Process incoming message from a slave.
+        Process incoming messages from a slave.
         @param msg:
         '''
         if msg.name == XrdMessage.M_TESTSUITE_STATE:
             slave = self.slaves[msg.sender]
 
+            # test suite was initialized on slave
             if msg.state == State(TestSuite.S_SLAVE_INITIALIZED):
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 tss.addStageResult(msg.state, msg.result,
@@ -1356,7 +1416,7 @@ class XrdTestMaster(Runnable):
                     # check if suite init error was already handled
                     if not suiteInError:
                         tss.state = State(TestSuite.S_INIT_ERROR)
-                        LOGGER.error("%s slave initialization error in " +\
+                        LOGGER.error("%s slave initialization error in " + \
                                      " test suite %s" % (slave, tss.name))
                         sSlaves = self.getSuiteSlaves(tss.suite)
                         for sSlave in sSlaves:
@@ -1380,6 +1440,7 @@ class XrdTestMaster(Runnable):
                         LOGGER.info("All slaves initialized in " + \
                                     " test suite %s" % tss.name)
                 self.storeSuiteSession(tss)
+            # test suite was finalized on slave
             elif msg.state == State(TestSuite.S_SLAVE_FINALIZED):
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 slave.state = State(Slave.S_CONNECTED_IDLE)
@@ -1399,6 +1460,7 @@ class XrdTestMaster(Runnable):
                 self.storeSuiteSession(tss)
                 LOGGER.info("%s finalized in test suite: %s" % \
                             (slave, tss.name))
+            # test case was initialized on slave
             elif msg.state == State(TestSuite.S_SLAVE_TEST_INITIALIZED):
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 tss.addStageResult(msg.state, msg.result, uid=msg.testUid,
@@ -1417,6 +1479,7 @@ class XrdTestMaster(Runnable):
                 self.storeSuiteSession(tss)
                 LOGGER.info("%s initialized test %s in suite %s" % \
                             (slave, msg.testName, tss.name))
+            # test case run finished
             elif msg.state == State(TestSuite.S_SLAVE_TEST_RUN_FINISHED):
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 tss.addStageResult(msg.state, msg.result,
@@ -1435,6 +1498,7 @@ class XrdTestMaster(Runnable):
                 self.storeSuiteSession(tss)
                 LOGGER.info("%s finished run test %s in suite %s" % \
                             (slave, msg.testName, tss.name))
+            # test case finitalize finished
             elif msg.state == State(TestSuite.S_SLAVE_TEST_FINALIZED):
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 tss.addStageResult(msg.state, msg.result, \
@@ -1458,20 +1522,22 @@ class XrdTestMaster(Runnable):
     #---------------------------------------------------------------------------
     def procEvents(self):
         '''
-        Main loop processing incoming MasterEvents.
+        Main loop processing incoming MasterEvents from main events queue:
+        self.recvQueue. MasterEvents with higher priority are handled first.
         '''
         while True:
             evt = self.recvQueue.get()
 
             if evt.type == MasterEvent.M_UNKNOWN:
                 msg = evt.data
-                LOGGER.debug("Received from " + str(msg.sender) \
-                             + " msg: " + msg.name)
-            #------------------------------------------------------------------- 
+                LOGGER.debug("Received from [%s] %s" % (msg.sender, msg.name))
+            #-------------------------------------------------------------------
+            # Event of client connect
             elif evt.type == MasterEvent.M_CLIENT_CONNECTED:
                 self.handleClientConnected(evt.data[0], evt.data[1], \
                                            evt.data[2], evt.data[3])
             #-------------------------------------------------------------------
+            # Event of client disconnect
             elif evt.type == MasterEvent.M_CLIENT_DISCONNECTED:
                 self.handleClientDisconnected(evt.data[0], evt.data[1])
             #-------------------------------------------------------------------
@@ -1485,7 +1551,7 @@ class XrdTestMaster(Runnable):
                                     (msg.clusterName, str(msg.state)))
                         if msg.state == Cluster.S_ACTIVE:
                             self.removeJob(Job(Job.START_CLUSTER, \
-                                               args=(msg.clusterName, 
+                                               args=(msg.clusterName,
                                                      msg.suiteName)))
                         elif msg.state == Cluster.S_ERROR_START:
                             LOGGER.error("Cluster error: %s" % msg.state)
@@ -1506,28 +1572,38 @@ class XrdTestMaster(Runnable):
             elif evt.type == MasterEvent.M_SLAVE_MSG:
                 msg = evt.data
                 self.procSlaveMsg(msg)
-            #------------------------------------------------------------------- 
+            #-------------------------------------------------------------------
+            # Messages from scheduler's threads
             elif evt.type == MasterEvent.M_JOB_ENQUEUE:
                 self.enqueueJob(evt.data)
-            #------------------------------------------------------------------- 
+            #-------------------------------------------------------------------
+            # Messages from cluster definitions directory monitoring threads 
             elif evt.type == MasterEvent.M_RELOAD_CLUSTER_DEF:
                 self.handleClusterDefinitionChanged(evt.data)
             #------------------------------------------------------------------- 
+            # Messages from test suits definitions directory monitoring threads
             elif evt.type == MasterEvent.M_RELOAD_SUIT_DEF:
                 self.handleSuiteDefinitionChanged(evt.data)
             #-------------------------------------------------------------------
+            # Incoming message is unknow
             else:
                 raise XrdTestMasterException("Unknown incoming evt type " + \
                                              str(evt.type))
+            #-------------------------------------------------------------------
+            # Event occured in the system, so an opportunity maight occur to
+            # start next job
             self.startNextJob()
     #---------------------------------------------------------------------------
     def run(self):
-        ''' 
-        Starting jobs of the program.
+        '''
+        Main method of a programme. Initializes all serving threads and starts 
+        main loop receiving MasterEvents.
         '''
         global currentDir, cherrypyConfig
         global cherrypy, tcpServer
 
+        #-------------------------------------------------------------------
+        # Start TCP server for incoming slave and hypervisors connections
         server = None
         try:
             server = ThreadedTCPServer((self.config.get('server', 'ip'), \
@@ -1554,7 +1630,7 @@ class XrdTestMaster(Runnable):
         server_thread.start()
 
         #-----------------------------------------------------------------------
-        # Start schduler if it's enabled
+        # Start schduler if it's enabled in config file
         if self.config.getint('scheduler', 'enabled') == 1:
             self.sched.start()
         else:
@@ -1562,7 +1638,8 @@ class XrdTestMaster(Runnable):
 
         self.loadDefinitions()
         #-----------------------------------------------------------------------
-        # NOTIFYING FOR DEFINITIONS CHANGE SETUP
+        # Prepare notifiers for cluster and test suite definition 
+        # directory monitoring
         wm = WatchManager()
         wm2 = WatchManager()
         # constants from /usr/src/linux/include/linux/inotify.h
@@ -1586,7 +1663,8 @@ class XrdTestMaster(Runnable):
         wdds = wm2.add_watch(self.config.get('server', \
                            'testsuits_definition_path'), \
                            mask, rec=True)
-
+        #-------------------------------------------------------------------
+        # Configure and start WWW Server - cherrypy
         cherrypyCfg = {
                     '/webpage/js': {
                      'tools.staticdir.on': True,
@@ -1616,7 +1694,8 @@ class XrdTestMaster(Runnable):
             if server:
                 server.shutdown()
             sys.exit(1)
-        #-----------------------------------------------------------------------
+        #-------------------------------------------------------------------
+        # Process events incoming to the system MasterEvents
         self.procEvents()
         #-----------------------------------------------------------------------
         # if here - program is ending
@@ -1627,7 +1706,8 @@ class XrdTestMaster(Runnable):
 #-------------------------------------------------------------------------------
 class UserInfoHandler(logging.Handler):
     '''
-    Specialized logging handler, to show logging messages in Web Interface
+    Specialized logging handler, to store logging messages in some 
+    arbitral variable.
     '''
     testMaster = None
     def __init__(self, xrdTestMaster):
@@ -1668,6 +1748,8 @@ def main():
         LOGGER.exception(e)
         sys.exit(1)
 
+    #-------------------------------------------------------------------
+    # Initialize main class of a system
     xrdTestMaster = XrdTestMaster(config)
     uih = UserInfoHandler(xrdTestMaster)
     LOGGER.addHandler(uih)
@@ -1715,4 +1797,3 @@ if __name__ == '__main__':
     except OSError, e:
         LOGGER.error("OS Error occured %s" % e)
         sys.exit(1)
-

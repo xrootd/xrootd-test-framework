@@ -44,15 +44,15 @@ LOGGER.debug("Running script: " + __file__)
 #-------------------------------------------------------------------------------
 try:
     from Cheetah.Template import Template
-    from ClusterUtils import ClusterManagerException, extractClusterName, \
+    from lib.ClusterUtils import ClusterManagerException, extractClusterName, \
     loadClusterDef, loadClustersDefs, Cluster
-    from Daemon import Runnable, Daemon, DaemonException, readConfig
-    from SocketUtils import FixedSockStream, XrdMessage, PriorityBlockingQueue, \
+    from lib.Daemon import Runnable, Daemon, DaemonException, readConfig
+    from lib.SocketUtils import FixedSockStream, XrdMessage, PriorityBlockingQueue, \
         SocketDisconnectedError
-    from TestUtils import TestSuiteException, loadTestSuiteDef, \
+    from lib.TestUtils import TestSuiteException, loadTestSuiteDef, \
     loadTestSuitsDefs, TestSuite, extractSuiteName
     from apscheduler.scheduler import Scheduler
-    from Utils import Stateful, State
+    from lib.Utils import Stateful, State
     from copy import deepcopy, copy
     from optparse import OptionParser
     import ConfigParser
@@ -77,7 +77,7 @@ except ImportError, e:
 currentDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(currentDir)
 #Default daemon configuration
-defaultConfFile = '/etc/XrdTest/XrdTestMaster.conf'
+defaultConfFile = './XrdTestMaster.conf'
 defaultPidFile = '/var/run/XrdTestMaster.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
 
@@ -204,11 +204,13 @@ class XrdTCPServer(SocketServer.TCPServer):
     '''
     allow_reuse_address = True
 #-------------------------------------------------------------------------------
+
 class ThreadedTCPServer(SocketServer.ThreadingMixIn, XrdTCPServer):
     '''
     Wrapper to create threaded TCP Server.
     '''
 #-------------------------------------------------------------------------------
+
 class XrdTestMasterException(Exception):
     '''
     General Exception raised by Daemon.
@@ -227,6 +229,7 @@ class XrdTestMasterException(Exception):
         '''
         return repr(self.desc)
 #------------------------------------------------------------------------------ 
+
 def handleCherrypyError():
         cherrypy.response.status = 500
         cherrypy.response.body = \
@@ -234,6 +237,7 @@ def handleCherrypyError():
         LOGGER.error("Cherrypy error: " + \
                      str(cherrypy._cperror.format_exc(None))) #@UndefinedVariable
 #-------------------------------------------------------------------------------
+
 class WebInterface:
     '''
     All pages and files available via Web Interface, 
@@ -350,6 +354,7 @@ class WebInterface:
     showScript.exposed = True
 
 #-------------------------------------------------------------------------------
+
 class TCPClient(Stateful):
     S_CONNECTED_IDLE = (1, "Connected")
     S_NOT_CONNECTED = (2, "Not connected")
@@ -501,6 +506,7 @@ def genJobGroupId(suite_name):
     r = r.translate(maketrans('', ''), '-:.')# remove special
     return r
 #------------------------------------------------------------------------------ 
+
 class Job(object):
     '''
     Keeps information about job, that is to be run. It's enqueued by scheduler 
@@ -1728,6 +1734,7 @@ class XrdTestMaster(Runnable):
         suitsNotifier.stop()
         xrdTestMaster.suitsSessions.close()
 #-------------------------------------------------------------------------------
+
 class UserInfoHandler(logging.Handler):
     '''
     Specialized logging handler, to store logging messages in some 
@@ -1763,7 +1770,7 @@ def main():
     try:
         confFile = ''
         if options.configFile:
-            confFile = options.confFile
+            confFile = options.configFile
         if not os.path.exists(confFile):
             confFile = defaultConfFile
         config = readConfig(confFile)

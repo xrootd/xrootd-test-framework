@@ -1,4 +1,4 @@
-from TestUtils import TestSuite, TestCase
+from lib.TestUtils import TestSuite, TestCase
 
 def getTestSuite():
     ts = TestSuite()

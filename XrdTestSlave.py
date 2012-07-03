@@ -41,10 +41,10 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
 #------------------------------------------------------------------------------ 
 try:
-    from Daemon import Daemon, readConfig, DaemonException, Runnable
-    from SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
-    from TestUtils import TestSuite
-    from Utils import State
+    from lib.Daemon import Daemon, readConfig, DaemonException, Runnable
+    from lib.SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
+    from lib.TestUtils import TestSuite
+    from lib.Utils import State
     from optparse import OptionParser
     from string import join, replace
     from copy import copy
@@ -64,7 +64,7 @@ except ImportError, e:
 currentDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(currentDir)
 #Default daemon configuration
-defaultConfFile = '/etc/XrdTest/XrdTestSlave.conf'
+defaultConfFile = './XrdTestSlave.conf'
 defaultPidFile = '/var/run/XrdTestSlave.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestSlave.log'
 #-------------------------------------------------------------------------------

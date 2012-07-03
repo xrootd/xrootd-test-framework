@@ -39,18 +39,18 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
 #------------------------------------------------------------------------------ 
 try:
-    from Daemon import Daemon, readConfig, DaemonException, Runnable
-    from SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
+    from lib.Daemon import Daemon, readConfig, DaemonException, Runnable
+    from lib.SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
     from optparse import OptionParser
-    from ClusterManager import ClusterManager
-    from ClusterUtils import ClusterManagerException, Cluster
+    from lib.ClusterManager import ClusterManager
+    from lib.ClusterUtils import ClusterManagerException, Cluster
     import ConfigParser
     import Queue
     import os
     import socket
     import ssl
     import threading
-    from Utils import State
+    from lib.Utils import State
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
@@ -59,7 +59,7 @@ except ImportError, e:
 currentDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(currentDir)
 # Default daemon configuration
-defaultConfFile = '/etc/XrdTest/XrdTestHypervisor.conf'
+defaultConfFile = './XrdTestHypervisor.conf'
 defaultPidFile = '/var/run/XrdTestHypervisor.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestHypervisor.log'
 

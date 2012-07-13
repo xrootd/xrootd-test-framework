@@ -1,0 +1,264 @@
+<html>
+<head>
+<meta http-equiv="refresh" content="url=http://${hostname}:${HTTPport}">
+<title>$title</title>
+<script type="text/javascript" src="webpage/js/jquery-1.6.2.min.js"></script>
+<script type="text/javascript" src="webpage/js/jquery-ui-1.8.16.custom.min.js"></script>
+<script type="text/javascript" src="webpage/js/jquery.nestedAccordion.js"></script>
+<link rel="stylesheet" type="text/css" href="webpage/css/jquery.css" />
+<link rel="stylesheet" type="text/css" href="webpage/css/main.css" />
+<script type="text/javascript">
+<!--//--><![CDATA[//><!--
+
+\$.fn.accordion.defaults.container = false; 
+\$(function() {
+     \$("#acc1").accordion();
+    \$("#acc2").accordion();
+    \$("#acc3").accordion();
+    \$("#acc4").accordion();
+    \$("#acc6").accordion();
+     \$("#acc7").accordion();
+});
+//--><!]]>
+</script>
+</head>
+<body>
+<p>XRootD Testing Framework</p>
+<div style="width:100%;" id="main">
+#include "webpage/main_menu.tmpl"
+<div style="display:block;width:48%;float:left;vertical-align:top;">
+<h1>Cluster definitions</h1>
+<div id="acc1" class="accordion">
+    #if $clusters and len($clusters) > 0
+        #set $cli=1
+        #for $cluster in $clusters.itervalues()
+    	<h3><a href="#">${cluster.name}
+    	<span style="color:#666666;font-weight:normal;">${cluster.state}</span></a></h3>
+    	<div class="inner">
+    	<p class="sect_title">LAST STATE <span style="font-size:11px;font-weight:normal;">${cluster.state}</span></p>
+       	<p class="sect_title">NETWORK</p>
+            <table class="desctab" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                    <th><b>Name</b></th><th><b>Bridgename</b></th>
+                    <th>IP</th><th>Netmask</th><th>DHCP range</th>
+                </tr>
+                <tr>
+                    <td>${cluster.network.name}</td><td>${cluster.network.bridgeName}</td>
+                    <td>${cluster.network.ip}</td><td>${cluster.network.netmask}</td>
+                    <td>(${cluster.network.DHCPRange[0]}, ${cluster.network.DHCPRange[1]})</td>
+                </tr>
+            </table>
+            <p class="sect_title">VIRTUAL MACHINES</p>
+            <table class="desctab" cellspacing="0" cellpadding="0" width="99%">
+                <tr><th><b>name</b></th><th>state</th><th></th></tr>
+                #if $cluster.hosts and len($cluster.hosts)>0
+                    #set $hoi=1
+                    #for $host in $cluster.hosts
+                        <tr>
+                        <td>${host.name}</td>
+                        <td>&nbsp;</td>
+                        <td style="text-align:left;">
+                        <div style="cursor:pointer;display:block;clear:both;"
+                         onClick="\$('#host${cli}a${hoi}').toggle()">show/hide description</div>
+                        </td></tr>
+                        <tr><td colspan="3">
+                        #from cgi import escape
+                            <div style="width:99%;display:none;float:left;" id="host${cli}a${hoi}">
+                            <table width="100%" class="desctab_inner" cellspacing="0" cellpadding="4">
+                            <tr>
+                            <th>name</th><th>mac address</th><th>ramsize</th>
+                            <th>diskimage</th><th>arch</th><th>uuid</th>
+                            </tr>
+                            <tr><td><%= escape(host.name) %></td>
+                            <td><%= escape(host.mac) %></td>
+                            <td><%= escape(host.ramSize) %></td>
+                            #if $host.diskImage
+                            <td><%= escape(host.diskImage) %></td>
+                            #else
+                            <td>copy from cluster definition</td>
+                            #end if
+                            <td><%= escape(host.arch) %></td><td>uuid</td>
+                            </tr>
+                            </table>
+                            </div>
+                        </td></tr>
+                        #set $hoi += 1
+                    #end for
+                    #set $cli += 1
+                #end if
+            </table>
+        </div>
+        #end for
+    #end if
+</div>
+<h1>Test suite definitions</h1>
+<div id="acc4" class="accordion">
+    #if $testSuits and len($testSuits) > 0
+    #for $ts in $testSuits.iteritems()
+        <h3>${ts[1].name}</h3>
+        <div class="inner">
+        <p class="sect_title">SCHEDULER EXPRESSION</p>
+        <table class="desctab" cellspacing="0" cellpadding="0" width="80%">
+        <tr><td style="text-align:left;background-color:#e0e0e0;">${ts[1].schedule}</td></tr>
+        </table>
+        <p class="sect_title">REQUIRED CLUSTERS</p>
+        <table class="desctab" cellspacing="0" cellpadding="0" width="80%">
+        <tr><th>Name</th><th>cluster definition state</th><th></th></tr>
+        #if $ts[1].clusters and len($ts[1].clusters) > 0
+            #for $cl in $ts[1].clusters
+                <tr><td>$cl</td><td>
+                #if $clusters.has_key($cl)
+                    loaded
+                #else
+                    <span style="color:#ff0000;">unavailable</span>
+                #end if
+                </td></tr>
+            #end for
+        #end if
+        </table>
+        <p class="sect_title">REQUIRED MACHINES</p>
+        <p>Machines were autofilled by system: ${ts[1].machinesAutoFilled}</p>
+        <table class="desctab" cellspacing="0" cellpadding="0" width="80%">
+        <tr><th>Name</th><th>State</th><th></th></tr>
+        #if $ts[1].machines and len($ts[1].machines) > 0
+            #for $machine in $ts[1].machines
+                <tr><td>$machine</td><td>${testMaster.slaveState($machine)}</td><td>&nbsp;</td></tr>
+            #end for
+        #end if
+        </table>
+        <p class="sect_title">TestCases</p>
+        <table class="desctab" cellspacing="0" cellpadding="0" width="80%">
+        <tr><th>Name</th><th>Actions</th><th></th></tr>
+        #if $ts[1].tests and len($ts[1].tests) > 0
+        #for $testname in $ts[1].tests
+            <tr><td>$testname</td><td>n/a</td></tr>
+        #end for
+        #end if
+        </table>
+        <p class="sect_title">SESSIONS</p>
+    #if $suitsSessions.has_key(ts[1].name)
+        <table class="desctab" cellspacing="0" cellpadding="0" width="80%">
+        <tr><th>Name</th><th>State</th></tr>
+        <tr><td>${suitsSessions[$ts[1].name].state}</td><td>&nbsp;</td></tr>
+        </table>
+    #end if
+        </div>
+    #end for
+    #end if
+</div>
+</div>
+<div style="display:block;width:48%;float:right;">
+    <h1>Connected hypervisors</h1>
+    <div id="acc2"  class="accordion">
+        #if $hypervisors and len($hypervisors) > 0
+            #for $hypervisor in $hypervisors.iteritems()
+            <h3><a href="#">${hypervisor[1].hostname} <span style="font-weight:normal;color:#666666;">[${hypervisor[0][0]}:${hypervisor[0][1]}]</span></a></h3>
+            <div class="inner">
+                <b>States:<br /></b>
+                #set sI = 0
+                #for $slSt in $hypervisor[1].states
+                    #set sI = sI+1
+                    #set $color = "#111111"
+                    #if $slSt.id < 0
+                        #set $color = "#dd0000"
+                    #end if
+                    <p style="color:$color;">$sI. ${slSt}</p>
+                #end for
+            </div>
+            #end for
+        #else
+        No hypervisors connected.
+        #end if
+    </div>
+    <h1>Connected slaves</h1>
+    <div id="acc3" class="accordion">
+        #if $slaves and len($slaves) > 0
+            #for $slave in $slaves.iteritems()
+            <h3><a href="#">&rsaquo; ${slave[1].hostname} <span style="font-weight:normal;color:#666666;">[${slave[0][0]}:${slave[0][1]}]</span></a></h3>
+            <div class="inner">
+                <b>States:<br /></b>
+                #set sI = 0
+                #for $slSt in $slave[1].states
+                    #set sI = sI+1
+                    #set $color = "#111111"
+                    #if $slSt.id < 0
+                        #set $color = "#dd0000"
+                    #end if
+                    <p style="color:$color;">$sI. ${slSt}</p>
+                #end for
+            </div>
+            #end for
+        #else
+        <div><p>No slaves connected.</p></div>
+        #end if
+    </div>
+    <h1>LOG MESSAGES (more recent higher)</h1>
+
+    #import copy
+    #import logging
+    #set $rUserMsgs = copy.copy($userMsgs)
+    #if $userMsgs and len($userMsgs) > 0
+    #set $iM = len($userMsgs)+1
+    #set $mLen = len($userMsgs)-16
+    ${$rUserMsgs.reverse()}
+        #set $cMsgs = 0
+        #for $userMsg in $rUserMsgs
+             #if $userMsg.levelno == logging.WARNING or $userMsg.levelno == logging.ERROR
+                #set $cMsgs+=1
+             #end if
+        #end for
+        <div id="acc6" class="accordion" style="background-color:#ffffff;background-image:none;">
+        <h3>Error messages and warnings (${cMsgs})</h3>
+        <div class="inner">
+        <div id="errorMsgs1" style="overflow:scroll;width:100%;height:400px;">
+        <table width="100%">
+        #for $userMsg in $rUserMsgs
+            #set $color = "#222222"
+            #set $iM -= 1
+            #if $userMsg.levelno == logging.WARNING
+                #set $color = "#587498"
+            #elif $userMsg.levelno == logging.ERROR
+                #set $color = "#ee0000"
+            #else
+                #continue
+            #end if
+            <tr><td valign="top">${iM}.</td><td style="color:$color;font-size:10px;"
+            title="${$userMsg.asctime[10:23]} ${$userMsg.msecs}">
+            <span style="font-size:9px;color:#555555;">${$userMsg.asctime[10:23]}</span> 
+            ${escape($userMsg.getMessage())}</td></tr>
+        #end for
+        </table>
+        </div>
+        </div>
+
+    #set $iM = len($userMsgs)+1
+    <div id="acc7" class="accordion" style="background-color:#ffffff;background-image:none;">
+        #from cgi import escape
+        <h3>All Messages (${len($userMsgs)})</h3>
+        <div class="inner">
+        <div style="overflow:scroll;width:100%;height:500px;">
+        <table width="100%">
+        #set $mLen = len($userMsgs)-16
+        #for $userMsg in $rUserMsgs
+            #set $iM -= 1
+            #set $color = "#222222"
+            #if $userMsg.levelno == logging.WARNING
+                #set $color = "#587498"
+            #end if
+            #if $userMsg.levelno == logging.ERROR
+                #set $color = "#ee0000"
+            #end if
+            <tr><td valign="top">${iM}. </td>
+            <td style="color:$color;font-size:10px;" title="${$userMsg.asctime[10:23]} ${$userMsg.msecs}">
+            <span style="font-size:9px;color:#555555;">${$userMsg.asctime[10:23]}</span>
+            ${escape($userMsg.getMessage())}</td></tr>
+        #end for
+        </table>
+        </div>
+        </div>
+    </div>
+    #end if
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,63 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:          XrdTestSlave.py application instance
+# Required-Start:    $all
+# Required-Stop:     $all
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: starts instance of XrdTestSlave.py app
+# Description:       starts instance of XrdTestSlave.py app using start-stop-daemon
+### END INIT INFO
+
+# Source Red Hat function library.
+. /etc/rc.d/init.d/functions
+
+RETVAL=0
+DESC="xrdtestslave"
+PROG=XrdTestSlave.py
+APP_PATH=/usr/sbin/
+PYTHON=/usr/bin/python
+OPTIONS=" -b "
+
+PYTHON_LIBPATH=`python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"`
+
+start() {
+        echo -n $"Starting $DESC daemon: "
+        
+	cd $APP_PATH
+	
+	export PYTHONPATH=$PYTHON_LIBPATH/XrdTest
+	$PYTHON $PROG $OPTIONS start
+	RETVAL=$?
+	return $RETVAL
+}
+stop() {
+        echo -n $"Stopping $DESC daemon: "
+
+	cd $APP_PATH
+	
+	export PYTHONPATH=$PYTHON_LIBPATH/XrdTest
+	$PYTHON $PROG $OPTIONS stop
+	echo
+}
+
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  restart)
+        stop
+        start
+        ;;
+  *)
+        N=/etc/init.d/$PROG
+        echo "Usage: $N {start|stop|restart}" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

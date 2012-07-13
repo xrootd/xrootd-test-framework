@@ -331,7 +331,7 @@ class XrdTestSlave(Runnable):
         tcpReceiveTh = TCPReceiveThread(self.sockStream, self.recvQueue)
         thTcpReceive = threading.Thread(target=tcpReceiveTh.run)
         thTcpReceive.start()
-	
+
         self.recvLoop()
 
 #-------------------------------------------------------------------------------

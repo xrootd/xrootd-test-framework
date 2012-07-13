@@ -5,14 +5,12 @@ def getTestSuite():
 
     ts.name = "testSuite_remote"
     ts.clusters = ['cluster_remote']
-    ts.machines = ["new1"]
+    ts.machines = ["slave1", "slave2", "slave3"]
     ts.tests = ['BasicInstall']
-    ts.schedule = dict(month='3')
+    ts.schedule = dict(second='1', minute='55', hour='*', day='*', month='*')
 
-    ts.initialize = "http://master.xrd.test:8080/showScript/sinit_remote.sh"
-    ts.finalize = """
-    #!/bin/bash
-    touch /tmp/testSuite_remote_finalize.txt"""
+    ts.initialize = "http://128.141.48.96:8080/showScript/ts_basic_init.sh"
+    ts.finalize = "http://128.141.48.96:8080/showScript/ts_basic_finalize.sh"
 
     return ts
 
@@ -21,9 +19,9 @@ def getTestCases():
 
     tc1 = TestCase()
     tc1.name = "BasicInstall"
-    tc1.initialize = "#!/bin/bash \ntouch /tmp/testCase_Basic_init.txt"
-    tc1.run = "#!/bin/bash \ntouch /tmp/testCase_Basic_run.txt \nls"
-    tc1.finalize = "#!/bin/bash \ntouch /tmp/testCase_Basic_final.txt"
+    tc1.initialize = "http://128.141.48.96:8080/showScript/tc_basic_init.sh"
+    tc1.run = "http://128.141.48.96:8080/showScript/tc_basic_run.sh"
+    tc1.finalize = "http://128.141.48.96:8080/showScript/tc_basic_finalize.sh"
     tcs.append(tc1)
 
     return tcs

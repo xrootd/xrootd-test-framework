@@ -300,7 +300,7 @@ def loadTestSuiteDef(path):
             if sys.modules.has_key(modName):
                 del sys.modules[modName]
             mod = __import__(modName, globals(), {}, [method])
-
+            
             fun = getattr(mod, method)
             obj = fun()
 

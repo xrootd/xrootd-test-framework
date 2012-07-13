@@ -448,3 +448,4 @@ class ClusterManager:
                                           "removal: %s" % removeErr)
         else:
             del self.clusters[clusterName]
+            

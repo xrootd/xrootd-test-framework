@@ -51,21 +51,33 @@ install -pm 755 packaging/rpm/xrdtestslaved %{buildroot}%{_initrddir}
 mkdir -p %{buildroot}%{_sysconfdir}/XrdTest
 mkdir -p %{buildroot}%{_sysconfdir}/XrdTest/test-suites
 mkdir -p %{buildroot}%{_sysconfdir}/XrdTest/clusters
+mkdir -p %{buildroot}%{_sysconfdir}/XrdTest/certs
 mkdir -p %{buildroot}%{_sbindir}
 
 install -pm 755 src/XrdTestMaster.py %{buildroot}%{_sbindir}
 install -pm 755 src/conf/XrdTestMaster.conf %{buildroot}%{_sysconfdir}/XrdTest
-
 install -pm 755 src/XrdTestHypervisor.py %{buildroot}%{_sbindir}
 install -pm 755 src/conf/XrdTestHypervisor.conf %{buildroot}%{_sysconfdir}/XrdTest
-
 install -pm 755 src/XrdTestSlave.py %{buildroot}%{_sbindir}
 install -pm 755 src/conf/XrdTestSlave.conf %{buildroot}%{_sysconfdir}/XrdTest
+
+# SSL certs
+openssl genrsa -out %{buildroot}%{_sysconfdir}/XrdTest/certs/masterkey.pem 2048
+openssl req -new -batch -x509 -key %{buildroot}%{_sysconfdir}/XrdTest/certs/masterkey.pem -out %{buildroot}%{_sysconfdir}/XrdTest/certs/mastercert.pem -days 1095
+openssl genrsa -out %{buildroot}%{_sysconfdir}/XrdTest/certs/hypervisorkey.pem 2048
+openssl req -new -batch -x509 -key %{buildroot}%{_sysconfdir}/XrdTest/certs/hypervisorkey.pem -out %{buildroot}%{_sysconfdir}/XrdTest/certs/hypervisorcert.pem -days 1095
+openssl genrsa -out %{buildroot}%{_sysconfdir}/XrdTest/certs/slavekey.pem 2048
+openssl req -new -batch -x509 -key %{buildroot}%{_sysconfdir}/XrdTest/certs/slavekey.pem -out %{buildroot}%{_sysconfdir}/XrdTest/certs/slavecert.pem -days 1095
 
 # webpage
 mkdir -p %{buildroot}%{_datadir}/XrdTest
 cp -r src/webpage %{buildroot}%{_datadir}/XrdTest
 chmod --recursive 755 %{buildroot}%{_datadir}/XrdTest/webpage
+
+# temp locations
+mkdir -p %{_tmppath}/XrdTest
+mkdir -p %{_tmppath}/XrdTest/images
+chmod --recursive 755 %{_tmppath}/XrdTest/
 
 #-------------------------------------------------------------------------------
 # XrdTestLib
@@ -100,6 +112,8 @@ Xrd Test Master is component of XrdTestFramework.
 %defattr(-,root,root,755)
 
 %{_sysconfdir}/XrdTest/XrdTestMaster.conf
+%{_sysconfdir}/XrdTest/certs/masterkey.pem
+%{_sysconfdir}/XrdTest/certs/mastercert.pem
 %{_sbindir}/XrdTestMaster.py
 %{_datadir}/XrdTest/webpage/*
 %{_initrddir}/xrdtestmasterd
@@ -120,6 +134,8 @@ Xrd Test Slave is component of XrdTestFramework. It runs tests provided by Xrd T
 %defattr(-,root,root,755)
 
 %{_sysconfdir}/XrdTest/XrdTestSlave.conf
+%{_sysconfdir}/XrdTest/certs/slavekey.pem
+%{_sysconfdir}/XrdTest/certs/slavecert.pem
 %{_sbindir}/XrdTestSlave.py
 %{_initrddir}/xrdtestslaved
 %{_localstatedir}/log/XrdTest
@@ -140,6 +156,8 @@ Xrd Test Hypervisor is component of XrdTestFramework. It manages virtual machine
 %defattr(-,root,root,755)
 
 %{_sysconfdir}/XrdTest/XrdTestHypervisor.conf
+%{_sysconfdir}/XrdTest/certs/hypervisorkey.pem
+%{_sysconfdir}/XrdTest/certs/hypervisorcert.pem
 %{_sbindir}/XrdTestHypervisor.py
 %{_initrddir}/xrdtesthypervisord
 %{_localstatedir}/log/XrdTest
@@ -147,40 +165,29 @@ Xrd Test Hypervisor is component of XrdTestFramework. It manages virtual machine
 %clean
 [ "x%{buildroot}" != "x/" ] && rm -rf %{buildroot}
 
-# ssl generation
-
 #-------------------------------------------------------------------------------
-# Install rc*.d links and generate SSL keys/certs
+# Install rc*.d links
 #-------------------------------------------------------------------------------
 %post master
 /sbin/ldconfig
 /sbin/chkconfig --add xrdtestmasterd
-openssl genrsa -out %{_sysconfdir}/XrdTest/masterkey.pem 2048
-openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/masterkey.pem -out %{_sysconfdir}/XrdTest/mastercert.pem -days 1095
 
 %postun master
 /sbin/ldconfig
-/sbin/chkconfig --del xrdtestmasterd
 
 %post slave
 /sbin/ldconfig
 /sbin/chkconfig --add xrdtestslaved
-openssl genrsa -out %{_sysconfdir}/XrdTest/slavekey.pem 2048
-openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/slavekey.pem -out %{_sysconfdir}/XrdTest/slavecert.pem -days 1095
 
 %postun slave
 /sbin/ldconfig
-/sbin/chkconfig --del xrdtestslaved
 
 %post hypervisor
 /sbin/ldconfig
 /sbin/chkconfig --add xrdtesthypervisord
-openssl genrsa -out %{_sysconfdir}/XrdTest/hypervisorkey.pem 2048
-openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/hypervisorkey.pem -out %{_sysconfdir}/XrdTest/hypervisorcert.pem -days 1095
 
 %postun hypervisor
 /sbin/ldconfig
-/sbin/chkconfig --del xrdtesthypervisord
 
 %changelog
 * Thu Jul 5 2012 Justin Salmon <jsalmon@cern.ch>

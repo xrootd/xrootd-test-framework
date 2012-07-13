@@ -36,7 +36,7 @@ import sys
 # Global variables
 #-------------------------------------------------------------------------------
 logging.basicConfig(format='%(levelname)s line %(lineno)d: %(message)s', \
-                    level=logging.INFO)
+                    level=logging.DEBUG)
 LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
 #-------------------------------------------------------------------------------
@@ -93,7 +93,7 @@ class Network(object):
   <dns>
       <txt name="xrd.test" value="Welcome to xrd testing framework domain." />
       <host ip="%(xrdTestMasterIP)s">
-          <hostname>master.xrd.test</hostname>
+          <hostname>master</hostname>
       </host>
       %(dnshostsxml)s
   </dns>
@@ -234,23 +234,17 @@ class Host(object):
     <interface type='network'>
       <mac address='%(mac)s'/>
       <source network='%(net)s'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' 
-      function='0x0'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+      <model type='virtio'/>
     </interface>
-    <console type='pty'>
-      <target port='0'/>
-    </console>
-    <console type='pty'>
-      <target type='serial' port='0'/>
-    </console>
     <input type='mouse' bus='ps2'/>
-    <!-- VIDEO SECTION - NORMALLY NOT NEEDED
-    <graphics type='vnc' port='-1' autoport='yes' keymap='en-us'/>
+    <!-- VIDEO SECTION - NORMALLY NOT NEEDED -->
+    <graphics type='vnc' port='5900' autoport='yes' keymap='en-us'/>
     <video>
     <model type='cirrus' vram='9216' heads='1' />
     <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0' />
     </video>
-    END OF VIDEO SECTION -->
+    <!-- END OF VIDEO SECTION -->
     <memballoon model='virtio'>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x04' 
       function='0x0'/>
@@ -308,7 +302,7 @@ class Cluster(Utils.Stateful):
     S_ERROR_STOP = (-12, "Cluster error at stop")
     S_UNKNOWN = (1, "Cluster state unknown")
     S_UNKNOWN_NOHYPERV = (1, "Cluster state unknown, no hypervisor to plant it on")
-    S_DEFINITION_SENT = (2, "Cluster definition sent do hypervisor to start")
+    S_DEFINITION_SENT = (2, "Cluster definition sent to hypervisor to start")
     S_ACTIVE = (2, "Cluster active")
     S_STOPPED = (3, "Cluster stopped")
     S_STOPCOMMAND_SENT = (4, "Cluster stop command sent to cluster")

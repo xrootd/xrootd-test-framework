@@ -143,7 +143,6 @@ class XrdTestHypervisor(Runnable):
         global currentDir
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            print self.config.get('security', 'certfile') + ' ' + self.config.get('security', 'keyfile')
             self.sockStream = ssl.wrap_socket(sock, server_side=False,
                                         certfile=\
                                         self.config.get('security', 'certfile'),
@@ -154,8 +153,8 @@ class XrdTestHypervisor(Runnable):
             self.sockStream.connect((masterIp, masterPort))
         except socket.error, e:
             if e[0] == 111:
-                LOGGER.info(e + " Connection from master refused: Probably " + \
-                            " wrong address or master not running.")
+                LOGGER.info("%s Connection from master refused: Probably " + \
+                            " wrong address or master not running." % e)
             else:
                 LOGGER.info("Connection with master could not be established.")
                 LOGGER.error("Socket error occured: %s" % e)
@@ -208,6 +207,7 @@ class XrdTestHypervisor(Runnable):
         cluster.network.xrdTestMasterIP = self.config.get('test_master', 'ip')
         # check if cluster definition is correct on this hypervisor
         res, msg = cluster.validateDynamic()
+
         if res:
             try:
                 LOGGER.info("Cluster definition semantically correct. " + \

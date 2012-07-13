@@ -1,2 +1,2 @@
 #!/bin/bash
-Generuj_blad
+echo 'hello'

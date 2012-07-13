@@ -4,8 +4,8 @@ def getTestSuite():
     ts = TestSuite()
 
     ts.name = "testSuite_local"
-    #fire every 10 seconds in february
-    ts.schedule = dict(month='3')
+
+    ts.schedule = dict(hour='1')
 
     ts.machines = ["luk-laptop"]
     ts.tests = ['Basic']

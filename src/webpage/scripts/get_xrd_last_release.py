@@ -121,8 +121,7 @@ def main():
     #  - Have been successful
     #  - Must be a pinned build
     url = TEAMCITY_SERVER + REST_URL
-    url += "," + ",".join([ "pinned:true",
-                      "personal:false",
+    url += "," + ",".join([ "personal:false",
                       "count:1", 
                       "status:SUCCESS" ])
 
@@ -196,7 +195,7 @@ def main():
 
         (dist, version, arch) = name.split("-")
         dist = dist.upper()[0:2] + version
-        if dist != "SL5" or arch != "i386":
+        if dist != "SL6" or arch != "x86_64":
             continue
 
         print "Filepath %s" % filepath

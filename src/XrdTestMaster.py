@@ -36,7 +36,7 @@ import sys
 
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
-                    '%(message)s', level=logging.INFO)
+                    '%(message)s', level=logging.DEBUG)
 LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
 
@@ -184,7 +184,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                 if self.clientType == self.C_HYPERV:
                     evtType = MasterEvent.M_HYPERV_MSG
 
-                LOGGER.debug("Server: Received msg from %s enqueuing evt: " + str(evtType))
+                LOGGER.debug("Server: Received msg from %s enqueuing evt: %s" % (msg.sender, str(evtType)))
                 msg.sender = self.client_address
 
                 evt = MasterEvent(evtType, msg, self.client_address)
@@ -327,14 +327,14 @@ class WebInterface:
         scripts (WEBPAGE_DIR/scripts dir) and run it.
         @param script_name:
         '''
-        from xml.sax.saxutils import quoteattr
+        #from xml.sax.saxutils import quoteattr
         p = self.config.get('webserver', 'webpage_dir') \
-                + os.sep + 'scripts' + os.sep + quoteattr(script_name)
+                + os.sep + 'scripts' + os.sep + script_name
 
         if os.path.exists(p):
             return serve_file(p , "application/x-download", "attachment")
         else:
-            return ""
+            return "%s: not found at %s" % (script_name, p)
     #--------------------------------------------------------------------------- 
     def showScript(self, script_name):
         '''
@@ -342,14 +342,14 @@ class WebInterface:
         scripts (WEBPAGE_DIR/scripts dir) and run it.
         @param script_name:
         '''
-        from xml.sax.saxutils import quoteattr
+        #from xml.sax.saxutils import quoteattr
         p = self.config.get('webserver', 'webpage_dir') \
                           + os.sep + 'scripts' + os.sep + \
-                          quoteattr(script_name)
+                          script_name
         if os.path.exists(p):
             return serve_file(p , "text/html")
         else:
-            return ""
+            return "%s: not found at %s" % (script_name, p)
 
     index.exposed = True
     suitsSessions.exposed = True
@@ -691,6 +691,7 @@ class XrdTestMaster(Runnable):
         try:
             testSuits = loadTestSuitsDefs(\
                         self.config.get('server', 'testsuits_definition_path'))
+            
             for ts in testSuits.itervalues():
                 ts.checkIfDefComplete(self.clusters)
             self.testSuits = testSuits
@@ -1196,6 +1197,9 @@ class XrdTestMaster(Runnable):
             LOGGER.info(str(client_type).title() + \
                         "s list (after handling incoming connection): " + \
                          ', '.join(clients_str))
+            
+            if len(self.pendingJobs):
+                self.startNextJob()
     #---------------------------------------------------------------------------
     def handleClientDisconnected(self, client_type, client_addr):
         '''
@@ -1249,9 +1253,10 @@ class XrdTestMaster(Runnable):
 
         ts = self.testSuits[test_suite_name]
         for clustName in ts.clusters:
-            j = Job(Job.START_CLUSTER, groupId, (clustName, test_suite_name))
-            self.pendingJobs.append(j)
-            self.pendingJobsDbg.append("startCluster(%s)" % clustName)
+            if not self.clusters[clustName].state == State(Cluster.S_ACTIVE):
+                j = Job(Job.START_CLUSTER, groupId, (clustName, test_suite_name))
+                self.pendingJobs.append(j)
+                self.pendingJobsDbg.append("startCluster(%s)" % clustName)
 
         j = Job(Job.INITIALIZE_TEST_SUITE, groupId, test_suite_name)
         self.pendingJobs.append(j)
@@ -1326,8 +1331,8 @@ class XrdTestMaster(Runnable):
                     if self.isJobValid(j):
                         if self.initializeTestSuite(j.args, j.groupId):
                             self.pendingJobs[0].state = Job.S_STARTED
-                        else:
-                            self.removeJobs(j.groupId)
+                        #else:
+                        #    self.removeJobs(j.groupId)
                 elif j.job == Job.FINALIZE_TEST_SUITE:
                     if self.finalizeTestSuite(j.args):
                         self.pendingJobs[0].state = Job.S_STARTED
@@ -1355,7 +1360,7 @@ class XrdTestMaster(Runnable):
                             nj.args == j.args:
                             self.pendingJobs = self.pendingJobs[2:]
                             self.pendingJobsDbg = self.pendingJobsDbg[2:]
-                            self.startJobs()
+                            # self.startJobs()
                             return
                     if self.stopCluster(j.args[0]):
                         self.pendingJobs[0].state = Job.S_STARTED
@@ -1722,7 +1727,7 @@ class XrdTestMaster(Runnable):
         #-----------------------------------------------------------------------
         try:
             cherrypy.server.start()
-        except cherrypy._cperror.Error, e:
+        except cherrypy._cperror.HTTPError, e:
             LOGGER.error(str(e))
             if server:
                 server.shutdown()

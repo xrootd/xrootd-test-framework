@@ -27,7 +27,7 @@
 <div style="width:100%;" id="main">
 #include "webpage/main_menu.tmpl"
 <div style="display:block;width:48%;float:left;vertical-align:top;">
-<h1>Clusters definitions</h1>
+<h1>Cluster definitions</h1>
 <div id="acc1" class="accordion">
     #if $clusters and len($clusters) > 0
         #set $cli=1
@@ -91,7 +91,7 @@
         #end for
     #end if
 </div>
-<h1>Test suits definitions</h1>
+<h1>Test suite definitions</h1>
 <div id="acc4" class="accordion">
     #if $testSuits and len($testSuits) > 0
     #for $ts in $testSuits.iteritems()

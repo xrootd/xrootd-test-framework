@@ -7,10 +7,10 @@ def getTestSuite():
     ts.clusters = ['cluster_meta1']
 
     ts.tests = ['CorrectCopy']
-    ts.schedule = dict(month='2', second='0')
+    ts.schedule = dict(hour='*/30')
 
-    ts.initialize = "http://master.xrd.test:8080/showScript/sinit_meta1.sh"
-    ts.finalize = "http://master.xrd.test:8080/showScript/sfinalize_meta1.sh"
+    ts.initialize = "http://128.141.48.96:8080/showScript/sinit_meta1.sh"
+    ts.finalize = "http://128.141.48.96:8080/showScript/sfinalize_meta1.sh"
 
     return ts
 
@@ -19,8 +19,8 @@ def getTestCases():
 
     tc1 = TestCase()
     tc1.name = "CorrectCopy"
-    tc1.initialize = "http://master.xrd.test:8080/showScript/tinit_meta1.sh"
-    tc1.run = """http://master.xrd.test:8080/showScript/trun_meta1.sh"""
+    tc1.initialize = "http://128.141.48.96:8080/showScript/tinit_meta1.sh"
+    tc1.run = """http://128.141.48.96:8080/showScript/trun_meta1.sh"""
     tc1.finalize = """#!/bin/bash
     echo "TEST FINALIZATION"
     """

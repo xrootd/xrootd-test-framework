@@ -305,6 +305,10 @@ def main():
                       help="run runnable as a daemon")
 
     (options, args) = parse.parse_args()
+    
+    # suppress output on daemon start
+    if options.backgroundMode:
+        LOGGER.setLevel(level = logging.ERROR)
 
     isConfigFileRead = False
     config = ConfigParser.ConfigParser()
@@ -354,6 +358,9 @@ def main():
         except (DaemonException, RuntimeError, ValueError, IOError), e:
             LOGGER.error("Problem in daemon operation: %s" % e)
             sys.exit(1)
+            
+    # re-up logging level for logfile
+    LOGGER.setLevel(level=logging.DEBUG)
     #--------------------------------------------------------------------------
     # run test master in standard mode. Used for debugging
     #--------------------------------------------------------------------------

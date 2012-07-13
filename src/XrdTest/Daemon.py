@@ -40,7 +40,7 @@ import time
 # Globals definitions
 #-------------------------------------------------------------------------------
 logging.basicConfig(format='%(asctime)s %(levelname)s [%(lineno)d] %(message)s',
-                     level=logging.INFO)
+                     level=logging.ERROR)
 LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
 #-------------------------------------------------------------------------------

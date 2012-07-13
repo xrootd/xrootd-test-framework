@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-        echo "usage: create_targz.sh <src_path>"
+        echo "usage: build_src_tarball.sh <src_path>"
 	exit 0
 fi
 echo "Copying files from $1"

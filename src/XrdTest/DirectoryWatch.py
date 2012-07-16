@@ -24,11 +24,7 @@
 # File:    DirectoryWatch
 # Desc:    TODO
 #-------------------------------------------------------------------------------
-# Logging settings
-#-------------------------------------------------------------------------------
 import logging
-import sys
-import types
 
 logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
@@ -36,18 +32,23 @@ logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
 LOGGER = logging.getLogger(__name__)
 LOGGER.debug("Running script: " + __file__)
 
-#-------------------------------------------------------------------------------
-# Imports
-#-------------------------------------------------------------------------------
 try:
     from pyinotify import WatchManager, ThreadedNotifier, ProcessEvent
+    from apscheduler.scheduler import Scheduler
+    
+    import sys
+    import types
+    import subprocess
+    import os
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
 
-#-------------------------------------------------------------------------------
+
 class DirectoryWatch(object):
-    
+    '''
+    Base class for monitoring directories and invoking callback on change.
+    '''
     def __init__(self, config, callback, watch_type=None):
         self.config = config
         self.callback = callback
@@ -61,40 +62,89 @@ class DirectoryWatch(object):
         
 
 def watch_remote(self):
-        pass # an implementation
+    '''
+    Monitor a remote directory by polling at a set interval.
+    '''
+    sched = Scheduler()
+    sched.start()
 
-def watch_local(self):
-        wm = WatchManager()
-        wm2 = WatchManager()
-        # constants from /usr/src/linux/include/linux/inotify.h
-        IN_MOVED = 0x00000040L | 0x00000080L     # File was moved to or from X
-        IN_CREATE = 0x00000100L     # Subfile was created
-        IN_DELETE = 0x00000200L     # was delete
-        IN_MODIFY = 0x00000002L     # was modified
-        mask = IN_DELETE | IN_CREATE | IN_MOVED | IN_MODIFY
+    sched.add_interval_job(poll_remote, seconds=10, args=[self.callback])
+    
+def poll_remote(callback):
+    '''
+
+    Need key-based SSH authentication for this method to work.
+    '''
+    
+    #TODO: refactor params into config file
+    user = 'jsalmon'
+    host = 'lxplus.cern.ch'
+    remote_repo = "~/www/personal/repos/xrootd-testsuites.git"
+    local_repo = "/var/tmp/xrootd-testsuites"
+    local_branch = 'master'
+    remote_branch = 'origin/master'
+    
+    if not os.path.exists(local_repo):
+        os.mkdir(local_repo)
+        execute('git clone %s@%s:%s %s' % (user, host, remote_repo, local_repo), local_repo)
         
-        clustersNotifier = ThreadedNotifier(wm, \
-                            ClustersDefinitionsChangeHandler(\
-                            masterCallback=self.callback))
-        suitsNotifier = ThreadedNotifier(wm2, \
-                            SuitsDefinitionsChangeHandler(\
-                            masterCallback=self.callback))
-        clustersNotifier.start()
-        suitsNotifier.start()
+    execute('git fetch', local_repo)
+    output = execute('git diff %s %s' % (local_branch, remote_branch), local_repo)
+    
+    if output != '':
+        LOGGER.info('Remote branch has changes. Pulling.')
+        execute('git pull', local_repo)
+        LOGGER.info('Triggering test suite run.')
+        callback('REMOTE', )
+    
+def execute(cmd, cwd):
+    '''
+    Execute a subprocess command.
+    '''
+    LOGGER.info('Running command: %s' % cmd)
+    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, cwd=cwd)
+    p.wait()
+    output = p.stdout.read()
+    if output == '': 
+        LOGGER.info('Command returned no output.') 
+    else: 
+        LOGGER.info('Command output: %s' % output)
+    return output
+    
+def watch_local(self):
+    '''
+    Monitor a local directory for changes.
+    '''
+    wm = WatchManager()
+    wm2 = WatchManager()
+    # constants from /usr/src/linux/include/linux/inotify.h
+    IN_MOVED  = 0x00000040L | 0x00000080L   # File was moved to or from X
+    IN_CREATE = 0x00000100L                 # Subfile was created
+    IN_DELETE = 0x00000200L                 # was delete
+    IN_MODIFY = 0x00000002L                 # was modified
+    mask = IN_DELETE | IN_CREATE | IN_MOVED | IN_MODIFY
+    
+    clustersNotifier = ThreadedNotifier(wm, \
+                        ClustersDefinitionsChangeHandler(\
+                        masterCallback=self.callback))
+    suitsNotifier = ThreadedNotifier(wm2, \
+                        SuiteDefinitionsChangeHandler(\
+                        masterCallback=self.callback))
+    clustersNotifier.start()
+    suitsNotifier.start()
 
-        wddc = wm.add_watch(self.config.get('server', \
-                           'clusters_definition_path'), \
-                           mask, rec=True)
-        wdds = wm2.add_watch(self.config.get('server', \
-                           'testsuits_definition_path'), \
-                           mask, rec=True)
+    wddc = wm.add_watch(self.config.get('local', \
+                       'clusters_definition_path'), \
+                       mask, rec=True)
+    wdds = wm2.add_watch(self.config.get('local', \
+                       'testsuits_definition_path'), \
+                       mask, rec=True)
         
 
 class ClustersDefinitionsChangeHandler(ProcessEvent):
     '''
     If cluster' definition file changes - it runs.
     '''
-    #---------------------------------------------------------------------------
     def __init__(self, pevent=None, **kwargs):
         '''
         Init signature copy from base class. Created to save some callback 
@@ -103,19 +153,18 @@ class ClustersDefinitionsChangeHandler(ProcessEvent):
         '''
         ProcessEvent.__init__(self, pevent=pevent, **kwargs)
         self.callback = kwargs['masterCallback']
-    #---------------------------------------------------------------------------
+        
     def process_default(self, event):
         '''
         Actual method that handle incoming dir change event.
         @param event:
         '''
         self.callback("CLUSTER", event)
-#-------------------------------------------------------------------------------
-class SuitsDefinitionsChangeHandler(ProcessEvent):
+
+class SuiteDefinitionsChangeHandler(ProcessEvent):
     '''
     If suit' definition file changes it runs
     '''
-    #---------------------------------------------------------------------------
     def __init__(self, pevent=None, **kwargs):
         '''
         Init signature copy from base class. Created to save some callback 
@@ -124,7 +173,7 @@ class SuitsDefinitionsChangeHandler(ProcessEvent):
         '''
         ProcessEvent.__init__(self, pevent=pevent, **kwargs)
         self.callback = kwargs['masterCallback']
-    #---------------------------------------------------------------------------
+
     def process_default(self, event):
         '''
         Actual method that handle incoming dir change event.

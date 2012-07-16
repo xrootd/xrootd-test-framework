@@ -59,7 +59,6 @@ try:
     from copy import deepcopy, copy
     from optparse import OptionParser
     from string import maketrans
-    from pyinotify import WatchManager, ThreadedNotifier, ProcessEvent
     
     import ConfigParser
     import SocketServer
@@ -105,6 +104,7 @@ class MasterEvent(object):
     M_JOB_ENQUEUE = 6
     M_RELOAD_CLUSTER_DEF = 7
     M_RELOAD_SUIT_DEF = 8
+    M_RELOAD_REMOTE_DEF = 9
     #---------------------------------------------------------------------------
     def __init__(self, e_type, e_data, msg_sender_addr=None):
         self.type = e_type
@@ -493,7 +493,7 @@ class XrdTestMaster(Runnable):
         self.suitsSessions[test_suite_session.uid] = test_suite_session
         self.suitsSessions.sync()
     #---------------------------------------------------------------------------
-    def fireReloadDefinitionsEvent(self, type, dirEvent):
+    def fireReloadDefinitionsEvent(self, type, dirEvent=None):
         '''
         Any time something is changed in the directory with config files,
         it puts proper event into main events queue.
@@ -505,6 +505,8 @@ class XrdTestMaster(Runnable):
             evt = MasterEvent(MasterEvent.M_RELOAD_CLUSTER_DEF, dirEvent)
         if type == "SUIT":
             evt = MasterEvent(MasterEvent.M_RELOAD_SUIT_DEF, dirEvent)
+        if type == "REMOTE":
+            evt = MasterEvent(MasterEvent.M_RELOAD_REMOTE_DEF, dirEvent)
         self.recvQueue.put((MasterEvent.PRIO_IMPORTANT, evt))
     #---------------------------------------------------------------------------
     def loadDefinitions(self):
@@ -517,7 +519,7 @@ class XrdTestMaster(Runnable):
         # load clusters definitions
         try:
             clusters = loadClustersDefs(\
-                        self.config.get('server', 'clusters_definition_path'))
+                        self.config.get('local', 'clusters_definition_path'))
             for clu in clusters:
                 self.clusters[clu.name] = clu
         except ClusterManagerException, e:
@@ -527,7 +529,7 @@ class XrdTestMaster(Runnable):
         # load test suits definitions
         try:
             testSuits = loadTestSuitsDefs(\
-                        self.config.get('server', 'testsuits_definition_path'))
+                        self.config.get('local', 'testsuits_definition_path'))
             
             for ts in testSuits.itervalues():
                 ts.checkIfDefComplete(self.clusters)
@@ -1459,6 +1461,10 @@ class XrdTestMaster(Runnable):
             # Messages from test suits definitions directory monitoring threads
             elif evt.type == MasterEvent.M_RELOAD_SUIT_DEF:
                 self.handleSuiteDefinitionChanged(evt.data)
+                #------------------------------------------------------------------- 
+            # Messages from remote directory monitoring threads
+            elif evt.type == MasterEvent.M_RELOAD_REMOTE_DEF:
+                self.loadDefinitions()
             #-------------------------------------------------------------------
             # Incoming message is unknow
             else:
@@ -1518,7 +1524,8 @@ class XrdTestMaster(Runnable):
         # directory monitoring (local and remote)
         dw_local = DirectoryWatch(self.config, self.fireReloadDefinitionsEvent, watch_local)
         dw_local.watch()
-        #dw_remote = DirectoryWatch(watch_remote)
+        dw_remote = DirectoryWatch(self.config, self.fireReloadDefinitionsEvent, watch_remote)
+        dw_remote.watch()
         
         #-------------------------------------------------------------------
         # Configure and start WWW Server - cherrypy

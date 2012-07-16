@@ -1,8 +1,4 @@
-<<<<<<< HEAD:testSuits/testSuite_meta1.py
-from lib.TestUtils import TestSuite, TestCase
-=======
 from XrdTest.TestUtils import TestSuite, TestCase
->>>>>>> unstable:examples/test-suites/testSuite_meta1.py
 
 def getTestSuite():
     ts = TestSuite()

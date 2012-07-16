@@ -52,18 +52,17 @@ try:
         loadTestSuitsDefs, TestSuite, extractSuiteName
     from XrdTest.Daemon import Runnable, Daemon, DaemonException, readConfig
     from XrdTest.Utils import Stateful, State
+    from XrdTest.WebInterface import WebInterface
+    from XrdTest.DirectoryWatch import DirectoryWatch, watch_local, watch_remote
     
-    from Cheetah.Template import Template
     from apscheduler.scheduler import Scheduler
     from copy import deepcopy, copy
     from optparse import OptionParser
-    from cherrypy.lib.static import serve_file
     from string import maketrans
     from pyinotify import WatchManager, ThreadedNotifier, ProcessEvent
     
     import ConfigParser
     import SocketServer
-    import cherrypy
     import random
     import os
     import socket
@@ -71,6 +70,7 @@ try:
     import threading
     import datetime
     import shelve
+    import cherrypy
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
@@ -233,128 +233,6 @@ class XrdTestMasterException(Exception):
         return repr(self.desc)
 #------------------------------------------------------------------------------ 
 
-def handleCherrypyError():
-        cherrypy.response.status = 500
-        cherrypy.response.body = \
-                        ["An error occured. Check log for details."]
-        LOGGER.error("Cherrypy error: " + \
-                     str(cherrypy._cperror.format_exc(None))) #@UndefinedVariable
-#-------------------------------------------------------------------------------
-
-class WebInterface:
-    '''
-    All pages and files available via Web Interface, 
-    defined as methods of this class.
-    '''
-    #reference to testMaster
-    testMaster = None
-    config = None
-    cp_config = {}
-
-    #---------------------------------------------------------------------------
-    def __init__(self, config, test_master_ref):
-        # reference to XrdTestMaster main object
-        self.testMaster = test_master_ref
-        # reference to loaded config
-        self.config = config
-
-        self.cp_config = {'request.error_response': handleCherrypyError,
-                          'error_page.404': \
-                          self.config.get('webserver', 'webpage_dir') + \
-                          os.sep + "page_404.tmpl"}
-    #---------------------------------------------------------------------------
-    def disp(self, tpl_file, tpl_vars):
-        '''
-        Utility method for displying tpl_file and replace tpl_vars.
-        @param tpl_file: to be displayed as HTML page
-        @param tpl_vars: vars can be used in HTML page, Cheetah style
-        '''
-        tpl = None
-        tplFile = self.config.get('webserver', 'webpage_dir') \
-                    + os.sep + tpl_file
-
-        tpl_vars['HTTPport'] = self.config.getint('webserver', 'port')
-        try:
-            tpl = Template(file=tplFile, searchList=[tpl_vars])
-        except Exception, e:
-            LOGGER.error(str(e))
-            return "An error occured. Check log for details."
-        else:
-            return tpl.respond()
-    #---------------------------------------------------------------------------
-    def index(self):
-        '''
-        Main page of web interface, shows definitions.
-        '''
-        tplVars = { 'title' : 'Xrd Test Master - Web Iface',
-                    'message' : 'Welcome and begin the tests!',
-                    'clusters' : self.testMaster.clusters,
-                    'hypervisors': self.testMaster.hypervisors,
-                    'suitsSessions' : self.testMaster.suitsSessions,
-                    'runningSuitsUids' : self.testMaster.runningSuitsUids,
-                    'slaves': self.testMaster.slaves,
-                    'hostname': socket.gethostname(),
-                    'testSuits': self.testMaster.testSuits,
-                    'userMsgs' : self.testMaster.userMsgs,
-                    'testMaster': self.testMaster, }
-        return self.disp("main.tmpl", tplVars)
-    #---------------------------------------------------------------------------
-    def suitsSessions(self):
-        '''
-        Page showing suit sessions runs.
-        '''
-        tplVars = { 'title' : 'Xrd Test Master - Web Iface',
-                    'suitsSessions' : self.testMaster.suitsSessions,
-                    'runningSuitsUids' : self.testMaster.runningSuitsUids,
-                    'slaves': self.testMaster.slaves,
-                    'hostname': socket.gethostname(),
-                    'testSuits': self.testMaster.testSuits,
-                    'testMaster': self.testMaster,
-                    'HTTPport' : self.config.getint('webserver', 'port')}
-        return self.disp("suits_sessions.tmpl", tplVars)
-    #---------------------------------------------------------------------------
-    def indexRedirect(self):
-        '''
-        Page that at once redirects user to index. Used to clear URL parameters.
-        '''
-        tplVars = { 'hostname': socket.gethostname(),
-                    'HTTPport': self.config.getint('webserver', 'port')}
-        return self.disp("index_redirect.tmpl", tplVars)
-    #--------------------------------------------------------------------------- 
-    def downloadScript(self, script_name):
-        '''
-        Enable slave to download some script as a regular FILE from masters
-        scripts (WEBPAGE_DIR/scripts dir) and run it.
-        @param script_name:
-        '''
-        #from xml.sax.saxutils import quoteattr
-        p = self.config.get('webserver', 'webpage_dir') \
-                + os.sep + 'scripts' + os.sep + script_name
-
-        if os.path.exists(p):
-            return serve_file(p , "application/x-download", "attachment")
-        else:
-            return "%s: not found at %s" % (script_name, p)
-    #--------------------------------------------------------------------------- 
-    def showScript(self, script_name):
-        '''
-        Enable slave to view some script as TEXT from masters
-        scripts (WEBPAGE_DIR/scripts dir) and run it.
-        @param script_name:
-        '''
-        #from xml.sax.saxutils import quoteattr
-        p = self.config.get('webserver', 'webpage_dir') \
-                          + os.sep + 'scripts' + os.sep + \
-                          script_name
-        if os.path.exists(p):
-            return serve_file(p , "text/html")
-        else:
-            return "%s: not found at %s" % (script_name, p)
-
-    index.exposed = True
-    suitsSessions.exposed = True
-    downloadScript.exposed = True
-    showScript.exposed = True
 
 #-------------------------------------------------------------------------------
 
@@ -537,48 +415,7 @@ class Job(object):
         self.args = args            # additional job's attributes
                                     # e.g. suite name or cluster_name
         self.groupId = groupId      # group of jobs to which this one belongs
-#-------------------------------------------------------------------------------
-class ClustersDefinitionsChangeHandler(ProcessEvent):
-    '''
-    If cluster' definition file changes - it runs.
-    '''
-    #---------------------------------------------------------------------------
-    def __init__(self, pevent=None, **kwargs):
-        '''
-        Init signature copy from base class. Created to save some callback 
-        parameter in class param.
-        @param pevent:
-        '''
-        ProcessEvent.__init__(self, pevent=pevent, **kwargs)
-        self.callback = kwargs['masterCallback']
-    #---------------------------------------------------------------------------
-    def process_default(self, event):
-        '''
-        Actual method that handle incoming dir change event.
-        @param event:
-        '''
-        self.callback("CLUSTER", event)
-#-------------------------------------------------------------------------------
-class SuitsDefinitionsChangeHandler(ProcessEvent):
-    '''
-    If suit' definition file changes it runs
-    '''
-    #---------------------------------------------------------------------------
-    def __init__(self, pevent=None, **kwargs):
-        '''
-        Init signature copy from base class. Created to save some callback 
-        parameter in class param.
-        @param pevent:
-        '''
-        ProcessEvent.__init__(self, pevent=pevent, **kwargs)
-        self.callback = kwargs['masterCallback']
-    #---------------------------------------------------------------------------
-    def process_default(self, event):
-        '''
-        Actual method that handle incoming dir change event.
-        @param event:
-        '''
-        self.callback("SUIT", event)
+
 #-------------------------------------------------------------------------------
 class XrdTestMaster(Runnable):
     '''
@@ -1631,6 +1468,7 @@ class XrdTestMaster(Runnable):
             # Event occured in the system, so an opportunity maight occur to
             # start next job
             self.startNextJob()
+
     #---------------------------------------------------------------------------
     def run(self):
         '''
@@ -1677,49 +1515,34 @@ class XrdTestMaster(Runnable):
         self.loadDefinitions()
         #-----------------------------------------------------------------------
         # Prepare notifiers for cluster and test suite definition 
-        # directory monitoring
-        wm = WatchManager()
-        wm2 = WatchManager()
-        # constants from /usr/src/linux/include/linux/inotify.h
-        IN_MOVED = 0x00000040L | 0x00000080L     # File was moved to or from X
-        IN_CREATE = 0x00000100L     # Subfile was created
-        IN_DELETE = 0x00000200L     # was delete
-        IN_MODIFY = 0x00000002L     # was modified
-        mask = IN_DELETE | IN_CREATE | IN_MOVED | IN_MODIFY
-        clustersNotifier = ThreadedNotifier(wm, \
-                            ClustersDefinitionsChangeHandler(\
-                            masterCallback=self.fireReloadDefinitionsEvent))
-        suitsNotifier = ThreadedNotifier(wm2, \
-                            SuitsDefinitionsChangeHandler(\
-                            masterCallback=self.fireReloadDefinitionsEvent))
-        clustersNotifier.start()
-        suitsNotifier.start()
-
-        wddc = wm.add_watch(self.config.get('server', \
-                           'clusters_definition_path'), \
-                           mask, rec=True)
-        wdds = wm2.add_watch(self.config.get('server', \
-                           'testsuits_definition_path'), \
-                           mask, rec=True)
+        # directory monitoring (local and remote)
+        dw_local = DirectoryWatch(self.config, self.fireReloadDefinitionsEvent, watch_local)
+        dw_local.watch()
+        #dw_remote = DirectoryWatch(watch_remote)
+        
         #-------------------------------------------------------------------
         # Configure and start WWW Server - cherrypy
         cherrypyCfg = {
-                    '/webpage/js': {
-                     'tools.staticdir.on': True,
-                     'tools.staticdir.dir' : \
-                     self.config.get('webserver', 'webpage_dir') \
-                     + "/js",
-                     },
-                  '/webpage/css': {
-                     'tools.staticdir.on': True,
-                     'tools.staticdir.dir' : \
-                     self.config.get('webserver', 'webpage_dir') \
-                     + "/css",
-                     }
-                }
+                        '/webpage/js': {
+                        'tools.staticdir.on': True,
+                        'tools.staticdir.dir' : \
+                        self.config.get('webserver', 'webpage_dir') \
+                        + "/js",
+                        },
+                        '/webpage/css': {
+                        'tools.staticdir.on': True,
+                        'tools.staticdir.dir' : \
+                        self.config.get('webserver', 'webpage_dir') \
+                        + "/css",
+                        }
+                       }
         #-----------------------------------------------------------------------
-        cherrypy.tree.mount(WebInterface(self.config, self), "/", cherrypyCfg)
-        cherrypy.config.update({'server.socket_host': '0.0.0.0',
+        webinterface = WebInterface(self.config, self)
+        
+        cherrypy.tree.mount(webinterface, "/", cherrypyCfg)
+        cherrypy.config.update(
+                            {'server.socket_host': \
+                             self.config.get('server', 'ip'),
                             'server.socket_port': \
                             self.config.getint('webserver', 'port'),
                             'server.environment': 'production'
@@ -1739,8 +1562,8 @@ class XrdTestMaster(Runnable):
         #-----------------------------------------------------------------------
         # if here - program is ending
         # synchronize suits sessions list with HDD storage and close
-        clustersNotifier.stop()
-        suitsNotifier.stop()
+        dw_local.stop()
+        #dw_remote.stop()
         xrdTestMaster.suitsSessions.close()
 #-------------------------------------------------------------------------------
 

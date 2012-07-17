@@ -21,25 +21,23 @@
 #
 #-------------------------------------------------------------------------------
 #
-# File:    DirectoryWatch
-# Desc:    TODO
+# File:  DirectoryWatch
+# Desc:  Classes to handle monitoring of both local and remote directories for
+#        changes. Local directories are monitored for general changes using 
+#        pyinotify. Remote directories are test suite repositories, and are 
+#        polled for new commits. Currently supported repository types: Git
 #-------------------------------------------------------------------------------
-import logging
+from Utils import get_logger
+LOGGER = get_logger(__name__)
 
-logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
-                    '[%(filename)s %(lineno)d] ' + \
-                    '%(message)s', level=logging.DEBUG)
-LOGGER = logging.getLogger(__name__)
-LOGGER.debug("Running script: " + __file__)
+import sys
+import types
+import subprocess
+import os
 
 try:
     from pyinotify import WatchManager, ThreadedNotifier, ProcessEvent
     from apscheduler.scheduler import Scheduler
-    
-    import sys
-    import types
-    import subprocess
-    import os
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
@@ -72,6 +70,8 @@ def watch_remote(self):
     
 def poll_remote(callback):
     '''
+    Fetch the status of a remote (git) repository for new commits. If
+    new commits, trigger a definition change event and pull the new changes.
 
     Need key-based SSH authentication for this method to work.
     '''
@@ -95,7 +95,7 @@ def poll_remote(callback):
         LOGGER.info('Remote branch has changes. Pulling.')
         execute('git pull', local_repo)
         LOGGER.info('Triggering test suite run.')
-        callback('REMOTE', )
+        callback('REMOTE')
     
 def execute(cmd, cwd):
     '''
@@ -118,36 +118,36 @@ def watch_local(self):
     wm = WatchManager()
     wm2 = WatchManager()
     # constants from /usr/src/linux/include/linux/inotify.h
-    IN_MOVED  = 0x00000040L | 0x00000080L   # File was moved to or from X
+    IN_MOVED = 0x00000040L | 0x00000080L    # File was moved to or from X
     IN_CREATE = 0x00000100L                 # Subfile was created
     IN_DELETE = 0x00000200L                 # was delete
     IN_MODIFY = 0x00000002L                 # was modified
     mask = IN_DELETE | IN_CREATE | IN_MOVED | IN_MODIFY
     
-    clustersNotifier = ThreadedNotifier(wm, \
+    clusterNotifier = ThreadedNotifier(wm, \
                         ClustersDefinitionsChangeHandler(\
                         masterCallback=self.callback))
-    suitsNotifier = ThreadedNotifier(wm2, \
+    suiteNotifier = ThreadedNotifier(wm2, \
                         SuiteDefinitionsChangeHandler(\
                         masterCallback=self.callback))
-    clustersNotifier.start()
-    suitsNotifier.start()
+    clusterNotifier.start()
+    suiteNotifier.start()
 
-    wddc = wm.add_watch(self.config.get('local', \
+    wm.add_watch(self.config.get('local', \
                        'clusters_definition_path'), \
                        mask, rec=True)
-    wdds = wm2.add_watch(self.config.get('local', \
+    wm2.add_watch(self.config.get('local', \
                        'testsuits_definition_path'), \
                        mask, rec=True)
         
 
 class ClustersDefinitionsChangeHandler(ProcessEvent):
     '''
-    If cluster' definition file changes - it runs.
+    If cluster definition file changes - it runs.
     '''
     def __init__(self, pevent=None, **kwargs):
         '''
-        Init signature copy from base class. Created to save some callback 
+        Init signature copy from base class. Created to save some callback
         parameter in class param.
         @param pevent:
         '''
@@ -163,11 +163,11 @@ class ClustersDefinitionsChangeHandler(ProcessEvent):
 
 class SuiteDefinitionsChangeHandler(ProcessEvent):
     '''
-    If suit' definition file changes it runs
+    If suite definition file changes it runs
     '''
     def __init__(self, pevent=None, **kwargs):
         '''
-        Init signature copy from base class. Created to save some callback 
+        Init signature copy from base class. Created to save some callback
         parameter in class param.
         @param pevent:
         '''

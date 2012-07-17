@@ -27,17 +27,18 @@
 #          * on demand of Master it starts/stops/configures virtual machines
 #          * uses libvirt to manage virtual machines
 #-------------------------------------------------------------------------------
-# Logging settings
-#-------------------------------------------------------------------------------
+from XrdTest.Utils import get_logger
+LOGGER = get_logger(__name__)
+
 import logging
 import sys
+import ConfigParser
+import Queue
+import os
+import socket
+import ssl
+import threading
 
-logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
-                    '[%(filename)s %(lineno)d] ' + \
-                    '%(message)s', level=logging.INFO)
-LOGGER = logging.getLogger(__name__)
-LOGGER.debug("Running script: " + __file__)
-#------------------------------------------------------------------------------ 
 try:
     from XrdTest.Daemon import Daemon, readConfig, DaemonException, Runnable
     from XrdTest.SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
@@ -45,18 +46,10 @@ try:
     from XrdTest.ClusterUtils import ClusterManagerException, Cluster
     from XrdTest.Utils import State
     from optparse import OptionParser
-        
-    import ConfigParser
-    import Queue
-    import os
-    import socket
-    import ssl
-    import threading
-
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
-#------------------------------------------------------------------------------ 
+
 # Globals and configurations
 currentDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(currentDir)
@@ -65,11 +58,15 @@ defaultConfFile = './XrdTestHypervisor.conf'
 defaultPidFile = '/var/run/XrdTestHypervisor.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestHypervisor.log'
 
-#-------------------------------------------------------------------------------
+
 class TCPReceiveThread(object):
-    #---------------------------------------------------------------------------
+    '''
+    TODO:
+    '''
     def __init__(self, sock, recvQueue):
         '''
+        TODO:
+
         @param sock:
         @param recvQueue:
         '''
@@ -77,11 +74,13 @@ class TCPReceiveThread(object):
         self.stopEvent = threading.Event()
         self.stopEvent.clear()
         self.recvQueue = recvQueue
-    #---------------------------------------------------------------------------
+
     def close(self):
+        ''' TODO: '''
         self.stopEvent.set()
-    #---------------------------------------------------------------------------
+
     def run(self):
+        ''' TODO: '''
         while not self.stopEvent.isSet():
             try:
                 msg = self.sockStream.recv()
@@ -92,35 +91,25 @@ class TCPReceiveThread(object):
                 self.recvQueue.put(msg)
                 LOGGER.info("Connection to XrdTestMaster closed.")
                 break
-#-------------------------------------------------------------------------------
+
 class XrdTestHypervisor(Runnable):
     '''
     Test Hypervisor main executable class.
     '''
-    #---------------------------------------------------------------------------
-    # Connection with the master 
-    sockStream = None
-    #---------------------------------------------------------------------------
-    # Blocking queue of messages received from the master
-    recvQueue = Queue.Queue()
-    #---------------------------------------------------------------------------
-    # Config read from a file
-    config = None
-    #---------------------------------------------------------------------------
-    # Reference to cluster manager, which is abstraction layer to 
-    # virtualization library - in our case libvirt
-    clusterManager = None
-    #---------------------------------------------------------------------------
     def __init__(self, config):
         '''
         Initialize basic variables. Start and configure ClusterManager.
         @param config:
         '''
+        # Connection with the master 
         self.sockStream = None
-        #Blocking queue of commands received from XrdTestMaster
+        # Blocking queue of commands received from XrdTestMaster
         self.recvQueue = Queue.Queue()
+        # Config read from a file
         self.config = config
         self.stopEvent = threading.Event()
+        # Reference to cluster manager, which is abstraction layer to 
+        # virtualization library - in our case libvirt
         self.clusterManager = ClusterManager()
         self.clusterManager.tmpImagesDir = \
             self.config.get('virtual_machines', 'tmp_images_dir')
@@ -131,13 +120,15 @@ class XrdTestHypervisor(Runnable):
         except ClusterManagerException, e:
             LOGGER.error("Can not connect to libvirt (-c qemu:///system): %s" \
                          % e)
-    #---------------------------------------------------------------------------
+
     def __del__(self):
+        ''' TODO: '''
         self.clusterManager.disconnect()
-    #---------------------------------------------------------------------------
+
     def connectMaster(self, masterIp, masterPort):
         '''
         Try to establish the connection with the test master.
+
         @param masterIp:
         @param masterPort:
         '''
@@ -150,7 +141,7 @@ class XrdTestHypervisor(Runnable):
                                         keyfile=\
                                         self.config.get('security', 'keyfile'),
                                         ssl_version=ssl.PROTOCOL_TLSv1)
-            #self.sockStream = sock
+
             self.sockStream.connect((masterIp, masterPort))
         except socket.error, e:
             if e[0] == 111:
@@ -163,10 +154,10 @@ class XrdTestHypervisor(Runnable):
         else:
             LOGGER.debug("Connected to master.")
         try:
-            #wrap sockStream into fixed socket implementation
+            # Wrap sockStream into fixed socket implementation
             self.sockStream = FixedSockStream(self.sockStream)
 
-            #authenticate in master
+            #Authenticate in master
             self.sockStream.send(\
                         self.config.get('test_master', 'connection_passwd'))
             msg = self.sockStream.recv()
@@ -179,7 +170,7 @@ class XrdTestHypervisor(Runnable):
             else:
                 LOGGER.info("Password authentication in master failed.")
                 return None
-            # send my identity information
+            # Send my identity information
             self.sockStream.send(("hypervisor", socket.gethostname()))
 
             return self.sockStream
@@ -190,7 +181,7 @@ class XrdTestHypervisor(Runnable):
             LOGGER.debug("Connected to master")
 
         return self.sockStream
-    #---------------------------------------------------------------------------
+
     def handleStartCluster(self, msg):
         '''
         Handle start cluster message from a master - start a cluster.
@@ -224,7 +215,7 @@ class XrdTestHypervisor(Runnable):
             LOGGER.error(m)
             resp.state = State(Cluster.S_ERROR_START, m)
         return resp
-    #---------------------------------------------------------------------------
+
     def handleStopCluster(self, msg):
         '''
         Handle stop cluster message from a master - stop a running cluster.
@@ -241,11 +232,11 @@ class XrdTestHypervisor(Runnable):
             resp.state = State(Cluster.S_ERROR_STOP, e)
 
         return resp
-    #---------------------------------------------------------------------------
+
     def recvLoop(self):
         '''
         Main loop processing messages from master. It take out jobs
-        from blocking queue of received messages, runs appropriate and 
+        from blocking queue of received messages, runs appropriate and
         return answer message.
         '''
         global LOGGER
@@ -277,7 +268,7 @@ class XrdTestHypervisor(Runnable):
                 if self.clusterManager:
                         self.clusterManager.disconnect()
                 break
-    #---------------------------------------------------------------------------
+
     def run(self):
         '''
         Main thread. Initialize TCP threads and run recvLoop().
@@ -293,7 +284,7 @@ class XrdTestHypervisor(Runnable):
 
         self.recvLoop()
 
-#-------------------------------------------------------------------------------
+
 def main():
     '''
     Program begins here.
@@ -309,13 +300,12 @@ def main():
     
     # suppress output on daemon start
     if options.backgroundMode:
-        LOGGER.setLevel(level = logging.ERROR)
+        LOGGER.setLevel(level=logging.ERROR)
 
     isConfigFileRead = False
     config = ConfigParser.ConfigParser()
-    #---------------------------------------------------------------------------
+
     # read the config file
-    #---------------------------------------------------------------------------
     global defaultConfFile
     LOGGER.info("Loading config file: %s" % options.configFile)
     try:
@@ -331,9 +321,8 @@ def main():
         sys.exit(1)
 
     testHypervisor = XrdTestHypervisor(config)
-    #--------------------------------------------------------------------------
+
     # run the daemon
-    #--------------------------------------------------------------------------
     if options.backgroundMode:
         LOGGER.info("Run in background: %s" % options.backgroundMode)
 
@@ -362,13 +351,10 @@ def main():
             
     # re-up logging level for logfile
     LOGGER.setLevel(level=logging.DEBUG)
-    #--------------------------------------------------------------------------
+
     # run test master in standard mode. Used for debugging
-    #--------------------------------------------------------------------------
     if not options.backgroundMode:
         testHypervisor.run()
-#-------------------------------------------------------------------------------
-# Start place
-#-------------------------------------------------------------------------------
+
 if __name__ == '__main__':
     main()

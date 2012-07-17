@@ -21,30 +21,35 @@
 #
 #-------------------------------------------------------------------------------
 #
-# File:   TestManager module
-# Desc:   Virtual machines network manager
+# File:   TestUtils
+# Desc:   TODO:
+# 
+#        In all the scripts mentioned below, the string @slavename@ should be 
+#        replaced with the actual machine name, so that the following statements 
+#        are possible in the scripts:
+#
+#         if [ @slavename@ == machine1 ]; then
+#           foo
+#         elif [ @slavename@ == machine2 ]; then
+#           bar
+#         else
+#           foobar
+#         fi
 #-------------------------------------------------------------------------------
-# Imports
-#---------------------------------------------------------------------------
-import logging
+from Utils import get_logger
+LOGGER = get_logger(__name__)
+
 import os
 import sys
-#-------------------------------------------------------------------------------
-# Global variables
-#-------------------------------------------------------------------------------
-logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
-                    '[%(filename)s %(lineno)d] ' + \
-                    '%(message)s', level=logging.INFO)
-LOGGER = logging.getLogger(__name__)
-LOGGER.debug("Running script: " + __file__)
-#-------------------------------------------------------------------------------
+
+
 class TestSuiteException(Exception):
     '''
     General Exception raised by module
     '''
-    ERR_UNKNOWN     = 1
-    ERR_CRITICAL    = 2
-    #---------------------------------------------------------------------------
+    ERR_UNKNOWN = 1
+    ERR_CRITICAL = 2
+
     def __init__(self, desc, typeFlag=ERR_UNKNOWN):
         '''
         Constructs Exception
@@ -53,53 +58,56 @@ class TestSuiteException(Exception):
         '''
         self.desc = desc
         self.type = typeFlag
-    #---------------------------------------------------------------------------
+
     def __str__(self):
         '''
         Returns textual representation of an error
         '''
         return repr(self.desc)
-#------------------------------------------------------------------------------ 
+
 class TestSuite:
-
-    #---------------------------------------------------------------------------
+    '''
+    TODO:
+    '''
     def __init__(self):
-        #-----------------------------------------------------------------------
-        # Defining attributes
-        self.name = ""      # name of test suite, has to the same as
-                            # the name of test suite definition file
-        self.descName = ""  # name of test suite readable for human, only
-                            # for informational need
-        self.schedule = {}  # define when the test should be run (cron style)
-                            # reference: APScheduler cronschedule
-        self.clusters = []  # a list of virtual clusters needed by 
-                            # the test to be spawned on a hypervisor
-        self.machines = []  # names of machines, including the virtual machines 
-                            # that are needed by the test
+        # Name of test suite: must be the same as the name of test suite definition 
+        # file
+        self.name = ""      
+        # Name of test suite readable for humans, only for informational need
+        self.descName = ""  
+        # Define when the test should be run (cron style). Reference: APScheduler 
+        # cronschedule
+        self.schedule = {}             
+        # A list of virtual clusters needed by the test to be spawned on a hypervisor
+        self.clusters = []  
+        # Names of machines, including the virtual machines that are needed by the 
+        # test
+        self.machines = []  
+        # A URL to a shell script (starts with http://) or  a shell script (starts 
+        # with #!) that defines the commands that need to be run on each test slave 
+        # before any test case can run. If it fails then the entire test suite should 
+        # be considered as failed.
         self.initialize = "" 
-                            # an URL to a shell script (starts with http://) or 
-                            # a shell script (starts with #!) that defines 
-                            # the commands that need to be run on each test slave 
-                            # before any test case can run if it fails then the 
-                            # entire test suit should be considered as failed
-        self.finalize = ""  # an URL to shell script or a shell script that 
-                            # defines the clean up procedures to be run after 
-                            # all the tests cases are completed
-        self.tests = []     # a list of test cases names as defined below
+        # A URL to a shell script or a shell script that defines the clean up 
+        # procedures to be run after all the tests cases are completed
+        self.finalize = ""  
+        # A list of test case names as defined below
+        self.tests = []     
 
-        #-----------------------------------------------------------------------
         # Fields beneath are filled automatically by system
-        self.defComplete = True # means that all cluster definitions that the
-                                # cluster depends on are available
-        self.jobFun = None      # handle to function that will be used
-                                # by scheduler. Has to be kept in case of
-                                # unscheduling.
-        self.machinesAutoFilled = False #if machines were empty, system has
-                                # to remember to reload them every time cluster
-                                # definition changes
-        self.testCases  = []    # filled automatically by load test suite defs.
-                                # holds Python objectsrepresenting test cases
-    #---------------------------------------------------------------------------
+        
+        # Means that all cluster definitions that the cluster depends on are available
+        self.defComplete = True 
+        # Handle to function that will be used by scheduler. Has to be kept in case of
+        # unscheduling.
+        self.jobFun = None      
+        # If machines were empty, system has to remember to reload them every time 
+        # cluster definition changes
+        self.machinesAutoFilled = False 
+        # Filled automatically by load test suite defs. Holds Python objects 
+        # representing test cases
+        self.testCases = []    
+
     def validateStatic(self):
         '''
         Method checks if definition (e.g given names) is statically correct.
@@ -132,8 +140,9 @@ class TestSuite:
                                          " in TestSuite definition") % str(t), \
                                           TestSuiteException.ERR_CRITICAL)
         return True
-    #---------------------------------------------------------------------------
+
     def checkIfDefComplete(self, clusters):
+        ''' TODO: '''
         if self.machinesAutoFilled:
             self.machines = []
 
@@ -143,7 +152,7 @@ class TestSuite:
                 raise TestSuiteException(\
                 ("Cluster %s in suite %s definition " + \
                 "doesn't exist in clusters' definitions.") % (cluN, self.name))
-        #-----------------------------------------------------------------------
+
         # check if all required machines are connected and idle
         if not len(self.machines):
             self.machinesAutoFilled = True
@@ -154,57 +163,61 @@ class TestSuite:
                             "filled automatically with %s") % \
                             (self.name, self.machines))
 
-    #---------------------------------------------------------------------------
     # Constants
-    S_IDLE                   = (10, "idle")
+    S_IDLE = (10, "idle")
 
-    S_WAIT_4_INIT            = (20, "wait for suite initialization")
-    S_SLAVE_INITIALIZED      = (21, "slave initialized")
-    S_ALL_INITIALIZED        = (22, "all machines initialized")
+    S_WAIT_4_INIT = (20, "wait for suite initialization")
+    S_SLAVE_INITIALIZED = (21, "slave initialized")
+    S_ALL_INITIALIZED = (22, "all machines initialized")
 
-    S_WAIT_4_FINALIZE        = (30, "wait for suite finalization")
-    S_SLAVE_FINALIZED        = (31, "slave finalized")
-    S_ALL_FINALIZED          = (32, "all machines initialized")
+    S_WAIT_4_FINALIZE = (30, "wait for suite finalization")
+    S_SLAVE_FINALIZED = (31, "slave finalized")
+    S_ALL_FINALIZED = (32, "all machines initialized")
 
-    S_WAIT_4_TEST_INIT       = (40, "sent test init")
+    S_WAIT_4_TEST_INIT = (40, "sent test init")
     S_SLAVE_TEST_INITIALIZED = (41, "test initialized on a slave")
-    S_ALL_TEST_INITIALIZED   = (42, "test initialized on all slaves")
+    S_ALL_TEST_INITIALIZED = (42, "test initialized on all slaves")
 
-    S_WAIT_4_TEST_RUN        = (43, "sent test to run")
-    S_SLAVE_TEST_RUN_FINISHED= (44, "test run finished on a slave")
-    S_ALL_TEST_RUN_FINISHED  = (45, "test run finished on all slaves")
+    S_WAIT_4_TEST_RUN = (43, "sent test to run")
+    S_SLAVE_TEST_RUN_FINISHED = (44, "test run finished on a slave")
+    S_ALL_TEST_RUN_FINISHED = (45, "test run finished on all slaves")
 
-    S_WAIT_4_TEST_FINALIZE   = (46, "send test to finalize")
-    S_SLAVE_TEST_FINALIZED   = (47, "test finalized on a slave")
-    S_ALL_TEST_FINALIZED     = (48, "test finalized on all slaves")
+    S_WAIT_4_TEST_FINALIZE = (46, "send test to finalize")
+    S_SLAVE_TEST_FINALIZED = (47, "test finalized on a slave")
+    S_ALL_TEST_FINALIZED = (48, "test finalized on all slaves")
 
-    S_INIT_ERROR             = (-22, "initialization error")
-#------------------------------------------------------------------------------ 
+    S_INIT_ERROR = (-22, "initialization error")
+
 class TestCase:
+    '''
+    TODO:
+    '''
     def __init__(self):
-        self.name = ""      # name of the test case
-        self.machines = []  # names of the machines that the test case 
-                            # should run on. If empty: it runs on all
-                            # machines in test suite
-        self.initialize = ""# a shell script or a link to a shell script
-                            # that should be run on each machine. The 
-                            # initialize script should be completed on
-                            # each machine before the run script can run.
-                            # initialization failure is considerd as a 
-                            # test case failure
-        self.run = ""       # a shell script that is the actual test, if
-                            # the script fails then the test case is 
-                            # considered as failed, the run scripts
-                            # have to finish running on all the mashines
-                            # before the finalize script can be invoked
-        self.finalize = ""  # a script defining the finalization procedures
-        #-----------------------------------------------------------------------
+        # Name of the test case
+        self.name = ""     
+        # Names of the machines that the test case should run on. If empty, it 
+        # runs on all machines in test suite
+        self.machines = []  
+        # A shell script or a link to a shell script that should be run on each 
+        # machine. The initialize script should be completed on each machine 
+        # before the run script can run. initialization failure is considered 
+        # as a test case failure.
+        self.initialize = ""
+        # A shell script that is the actual test. If the script fails then the 
+        # test case is considered as failed. The run scripts have to finish 
+        # running on all the machines before the finalize script can be invoked.
+        self.run = ""       
+        # A script defining the finalization procedures
+        self.finalize = "" 
+
         # Fields beneath are filled automatically by system
-        self.resultsFromMachines = {}   # keeps results of all test stages
-                                        # on those machines. Index is a machine
+        
+        # Keeps results of all test stages on machines. Index is a machine.
+        self.resultsFromMachines = {}   
         self.uid = ""
-        self.initDate = None        #filled with datetime.datetime.now()
-    #---------------------------------------------------------------------------
+        #filled with datetime.datetime.now()
+        self.initDate = None
+
     def validateStatic(self):
         '''
         Method checks if definition (e.g given names) is statically correct.
@@ -217,33 +230,22 @@ class TestCase:
                                       TestSuiteException.ERR_CRITICAL)
         return True
 
-#In all the scripts mentioned above the string @slavename@ should be replaced
-#with the actual machine name, so that the following statements are possible
-#int he scripts:
-#
-#if [ @slavename@ == machine1 ]; then
-#  foo
-#elif [ @slavename@ == machine2 ]; then
-#  bar
-#else
-#  foobar
-#fi
-#-------------------------------------------------------------------------------
+
 def extractSuiteName(path):
+    ''' TODO: '''
     (modPath, modFile) = os.path.split(path)
     modPath = os.path.abspath(modPath)
     (modName, ext) = os.path.splitext(modFile)
 
     return (modName, ext, modPath, modFile)
-#------------------------------------------------------------------------------- 
+
 def loadTestCasesDefs(filePath):
     '''
     Loads TestCases definitions from .py file. Search for getTestCases function
     in the file and expects list of testCases to be returned.
+
     @param path: path for .py files, storing cluster definitions
     '''
-    global LOGGER
-
     testCases = {}
 
     (modName, ext, modPath, modFile) = extractSuiteName(filePath)
@@ -278,15 +280,17 @@ def loadTestCasesDefs(filePath):
             raise TestSuiteException(("AttributeError during loading test" + \
                           "case definition file %s: %s") % (modFile, e))
         except ImportError:
-            raise TestSuiteException(("ImportError during loading test case"+ \
+            raise TestSuiteException(("ImportError during loading test case" + \
                           "definition file %s: %s") % (modFile, e))
         except Exception, e:
-            raise TestSuiteException(("Exception during loading test case"+ \
+            raise TestSuiteException(("Exception during loading test case" + \
                           "definition file %s: %s") % (modFile, e))
     return testCases
 
-#-------------------------------------------------------------------------------
 def loadTestSuiteDef(path):
+    '''
+    TODO:
+    '''
     fp = path
     (modName, ext, modPath, modFile) = extractSuiteName(fp)
     obj = None
@@ -334,16 +338,15 @@ def loadTestSuiteDef(path):
         raise TestSuiteException(("File %s " + \
               "seems not to be test suite definition.") % fp)
     return obj
-#------------------------------------------------------------------------------ 
+
 def loadTestSuitsDefs(path):
     '''
-    Loads TestSuits and TestCases definitions from .py files 
+    Loads TestSuits and TestCases definitions from .py files
     stored in path directory.
     @param path: path for .py files, storing cluster definitions
     '''
-    global LOGGER
-
     testSuits = {}
+    
     if os.path.exists(path):
         for f in os.listdir(path):
             fp = path + os.sep + f

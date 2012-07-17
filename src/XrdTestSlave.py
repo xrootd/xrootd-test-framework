@@ -21,47 +21,40 @@
 #
 #-------------------------------------------------------------------------------
 #
-# File:    XrdTestHypervisor
-# Desc:    Xroot Testing Framework Hypervisor component. 
-#          * the actual application which runs tests
-#          * daemon that may be run on virtual or physical machines
-#          * it receives test cases from Master and runs them synchronously 
+# File:    XrdTestSlave
+# Desc:    XRootD Testing Framework Slave component. 
+#          * The actual application which runs tests
+#          * Daemon that may be run on virtual or physical machines
+#          * Receives test cases from Master and runs them synchronously 
 #            with other Slaves
-#          * creates sandbox to run shell scripts securely
+#          * Creates sandbox to run shell scripts securely
 #-------------------------------------------------------------------------------
-# Logging settings
-#-------------------------------------------------------------------------------
+from XrdTest.Utils import get_logger
+LOGGER = get_logger(__name__)
+
 import logging
 import sys
+import ConfigParser
+import Queue
+import os
+import socket
+import ssl
+import subprocess
+import threading
 
-logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
-                    '[%(filename)s %(lineno)d] ' + \
-                    '%(message)s', level=logging.INFO)
-LOGGER = logging.getLogger(__name__)
-LOGGER.debug("Running script: " + __file__)
-#------------------------------------------------------------------------------ 
 try:
     from XrdTest.Daemon import Daemon, readConfig, DaemonException, Runnable
     from XrdTest.SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
     from XrdTest.TestUtils import TestSuite
-    from XrdTest.Utils import State
-    
+    from XrdTest.Utils import State 
     from optparse import OptionParser
     from string import join
     from copy import copy
     from subprocess import Popen
-    
-    import ConfigParser
-    import Queue
-    import os
-    import socket
-    import ssl
-    import subprocess
-    import threading
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
-#------------------------------------------------------------------------------ 
+
 # Globals and configurations
 currentDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(currentDir)
@@ -69,11 +62,13 @@ os.chdir(currentDir)
 defaultConfFile = './XrdTestSlave.conf'
 defaultPidFile = '/var/run/XrdTestSlave.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestSlave.log'
-#-------------------------------------------------------------------------------
+
 class TCPReceiveThread(object):
-    #---------------------------------------------------------------------------
+    ''' TODO: '''
     def __init__(self, sock, recvQueue):
         '''
+        TODO:
+
         @param sock:
         @param recvQueue:
         '''
@@ -81,11 +76,13 @@ class TCPReceiveThread(object):
         self.stopEvent = threading.Event()
         self.stopEvent.clear()
         self.recvQueue = recvQueue
-    #---------------------------------------------------------------------------
+
     def close(self):
+        ''' TODO: '''
         self.stopEvent.set()
-    #---------------------------------------------------------------------------
+
     def run(self):
+        ''' TODO: '''
         while not self.stopEvent.isSet():
             try:
                 msg = self.sockStream.recv()
@@ -95,27 +92,25 @@ class TCPReceiveThread(object):
                 LOGGER.info("Connection to XrdTestMaster closed.")
                 sys.exit(1)
                 break
-#-------------------------------------------------------------------------------
+
 class XrdTestSlave(Runnable):
     '''
     Test Slave main executable class.
     '''
-    #---------------------------------------------------------------------------
     def __init__(self, config):
+        ''' TODO: '''
         self.sockStream = None
         #Blocking queue of commands received from XrdTestMaster
         self.recvQueue = Queue.Queue()
         self.config = config
         self.stopEvent = threading.Event()
-        # runned test cases, indexed by test.uid
+        # Ran test cases, indexed by test.uid
         self.cases = {}
-    #---------------------------------------------------------------------------
+
     def executeSh(self, cmd):
         '''
         @param cmd:
         '''
-        global LOGGER
-
         command = ""
         cmd = cmd.strip()
 
@@ -159,13 +154,14 @@ class XrdTestSlave(Runnable):
             LOGGER.error("Execution of shell script failed: %s" % e)
 
         if localError:
-            (a,b,c) = res
+            (a, b, c) = res
             t = "\nERRORS THAT OCCURED ON TEST SLAVE:\n "
             res = (a, b + t + str(localError), '1')
 
         return res
-    #---------------------------------------------------------------------------
+
     def connectMaster(self, masterIp, masterPort):
+        ''' TODO: '''
         global currentDir
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
@@ -175,7 +171,7 @@ class XrdTestSlave(Runnable):
                                         keyfile=\
                                         self.config.get('security', 'keyfile'),
                                         ssl_version=ssl.PROTOCOL_TLSv1)
-            #self.sockStream = sock
+
             self.sockStream.connect((masterIp, masterPort))
         except socket.error, e:
             if e[0] == 111:
@@ -208,8 +204,9 @@ class XrdTestSlave(Runnable):
         self.sockStream.send(("slave", socket.gethostname()))
 
         return self.sockStream
-    #---------------------------------------------------------------------------
+
     def handleTestCaseInitialize(self, msg):
+        ''' TODO: '''
         suiteName = msg.suiteName
         testName = msg.testName
         testUid = msg.testUid
@@ -230,8 +227,9 @@ class XrdTestSlave(Runnable):
                     (testName, suiteName, msg.result))
 
         return msg
-    #---------------------------------------------------------------------------
+
     def handleTestCaseRun(self, msg):
+        ''' TODO: '''
         suiteName = msg.suiteName
         testName = msg.testName
         testUid = msg.testUid
@@ -248,8 +246,9 @@ class XrdTestSlave(Runnable):
                     (testName, suiteName, msg.result))
 
         return msg
-    #---------------------------------------------------------------------------
+
     def handleTestCaseFinalize(self, msg):
+        ''' TODO: '''
         suiteName = msg.suiteName
         testName = msg.testName
         testUid = msg.testUid
@@ -266,8 +265,9 @@ class XrdTestSlave(Runnable):
                     (testName, suiteName, msg.result))
 
         return msg
-    #---------------------------------------------------------------------------
+
     def handleTestSuiteInitialize(self, msg):
+        ''' TODO: '''
         cmd = msg.cmd
         jobGroupId = msg.jobGroupId
         suiteName = msg.suiteName
@@ -279,8 +279,9 @@ class XrdTestSlave(Runnable):
         msg.jobGroupId = jobGroupId
 
         return msg
-    #---------------------------------------------------------------------------
+
     def handleTestSuiteFinalize(self, msg):
+        ''' TODO: '''
         cmd = msg.cmd
         suiteName = msg.suiteName
         
@@ -290,9 +291,9 @@ class XrdTestSlave(Runnable):
         msg.state = State(TestSuite.S_SLAVE_FINALIZED)
 
         return msg
-    #---------------------------------------------------------------------------
+
     def recvLoop(self):
-        global LOGGER
+        ''' TODO: '''
         while not self.stopEvent.isSet():
             try:
                 #receive msg from master
@@ -321,8 +322,9 @@ class XrdTestSlave(Runnable):
                 LOGGER.info("Connection to XrdTestMaster closed.")
                 sys.exit()
                 break
-    #---------------------------------------------------------------------------
+
     def run(self):
+        ''' TODO: '''
         sock = self.connectMaster(self.config.get('test_master', 'ip'),
                            self.config.getint('test_master', 'port'))
         if not sock:
@@ -334,7 +336,7 @@ class XrdTestSlave(Runnable):
 
         self.recvLoop()
 
-#-------------------------------------------------------------------------------
+
 def main():
     '''
     Program begins here.
@@ -350,13 +352,12 @@ def main():
     
     # suppress output on daemon start
     if options.backgroundMode:
-        LOGGER.setLevel(level = logging.ERROR)
+        LOGGER.setLevel(level=logging.ERROR)
 
     isConfigFileRead = False
     config = ConfigParser.ConfigParser()
-    #---------------------------------------------------------------------------
+
     # read the config file
-    #---------------------------------------------------------------------------
     global defaultConfFile
     LOGGER.info("Loading config file: %s" % options.configFile)
     try:
@@ -372,9 +373,8 @@ def main():
         sys.exit(1)
 
     testSlave = XrdTestSlave(config)
-    #--------------------------------------------------------------------------
+
     # run the daemon
-    #--------------------------------------------------------------------------
     if options.backgroundMode:
         LOGGER.info("Run in background: %s" % options.backgroundMode)
 
@@ -403,13 +403,11 @@ def main():
     
     # re-up logging level for logfile
     LOGGER.setLevel(level=logging.DEBUG)
-    #--------------------------------------------------------------------------
+
     # run test master in standard mode. Used for debugging
-    #--------------------------------------------------------------------------
     if not options.backgroundMode:
         testSlave.run()
-#-------------------------------------------------------------------------------
-# Start place
-#-------------------------------------------------------------------------------
+
+
 if __name__ == '__main__':
     main()

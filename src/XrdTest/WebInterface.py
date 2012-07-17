@@ -22,45 +22,29 @@
 #-------------------------------------------------------------------------------
 #
 # File:    WebInterface
-# Desc:    TODO
+# Desc:    TODO:
 #-------------------------------------------------------------------------------
-# Logging settings
-#-------------------------------------------------------------------------------
-import logging
+from Utils import get_logger
+LOGGER = get_logger(__name__)
+
 import sys
+import os
+import socket
 
-logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
-                    '[%(filename)s %(lineno)d] ' + \
-                    '%(message)s', level=logging.DEBUG)
-LOGGER = logging.getLogger(__name__)
-LOGGER.debug("Running script: " + __file__)
-
-#-------------------------------------------------------------------------------
-# Imports
-#-------------------------------------------------------------------------------
 try:
+    import cherrypy
     from Cheetah.Template import Template
     from cherrypy.lib.static import serve_file
-    
-    import cherrypy
-    import os
-    import socket
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
 
-#-------------------------------------------------------------------------------
+
 class WebInterface:
     '''
-    All pages and files available via Web Interface, 
+    All pages and files available via Web Interface,
     defined as methods of this class.
     '''
-    #reference to testMaster
-    testMaster = None
-    config = None
-    cp_config = {}
-
-    #---------------------------------------------------------------------------
     def __init__(self, config, test_master_ref):
         # reference to XrdTestMaster main object
         self.testMaster = test_master_ref
@@ -71,10 +55,11 @@ class WebInterface:
                           'error_page.404': \
                           self.config.get('webserver', 'webpage_dir') + \
                           os.sep + "page_404.tmpl"}
-    #---------------------------------------------------------------------------
+
     def disp(self, tpl_file, tpl_vars):
         '''
         Utility method for displying tpl_file and replace tpl_vars.
+
         @param tpl_file: to be displayed as HTML page
         @param tpl_vars: vars can be used in HTML page, Cheetah style
         '''
@@ -90,38 +75,38 @@ class WebInterface:
             return "An error occured. Check log for details."
         else:
             return tpl.respond()
-    #---------------------------------------------------------------------------
+
     def index(self):
         '''
         Main page of web interface, shows definitions.
         '''
-        tplVars = { 'title' : 'Xrd Test Master - Web Iface',
+        tplVars = { 'title' : 'Xrd Test Master - Web Interface',
                     'message' : 'Welcome and begin the tests!',
                     'clusters' : self.testMaster.clusters,
                     'hypervisors': self.testMaster.hypervisors,
-                    'suitsSessions' : self.testMaster.suitsSessions,
-                    'runningSuitsUids' : self.testMaster.runningSuitsUids,
+                    'suitsSessions' : self.testMaster.suiteSessions,
+                    'runningSuitsUids' : self.testMaster.runningSuiteUids,
                     'slaves': self.testMaster.slaves,
                     'hostname': socket.gethostname(),
-                    'testSuits': self.testMaster.testSuits,
+                    'testSuits': self.testMaster.testSuites,
                     'userMsgs' : self.testMaster.userMsgs,
                     'testMaster': self.testMaster, }
         return self.disp("main.tmpl", tplVars)
-    #---------------------------------------------------------------------------
-    def suitsSessions(self):
+
+    def suiteSessions(self):
         '''
         Page showing suit sessions runs.
         '''
         tplVars = { 'title' : 'Xrd Test Master - Web Iface',
-                    'suitsSessions' : self.testMaster.suitsSessions,
-                    'runningSuitsUids' : self.testMaster.runningSuitsUids,
+                    'suitsSessions' : self.testMaster.suiteSessions,
+                    'runningSuitsUids' : self.testMaster.runningSuiteUids,
                     'slaves': self.testMaster.slaves,
                     'hostname': socket.gethostname(),
-                    'testSuits': self.testMaster.testSuits,
+                    'testSuits': self.testMaster.testSuites,
                     'testMaster': self.testMaster,
                     'HTTPport' : self.config.getint('webserver', 'port')}
         return self.disp("suits_sessions.tmpl", tplVars)
-    #---------------------------------------------------------------------------
+
     def indexRedirect(self):
         '''
         Page that at once redirects user to index. Used to clear URL parameters.
@@ -129,7 +114,7 @@ class WebInterface:
         tplVars = { 'hostname': socket.gethostname(),
                     'HTTPport': self.config.getint('webserver', 'port')}
         return self.disp("index_redirect.tmpl", tplVars)
-    #--------------------------------------------------------------------------- 
+
     def downloadScript(self, script_name):
         '''
         Enable slave to download some script as a regular FILE from masters
@@ -144,7 +129,7 @@ class WebInterface:
             return serve_file(p , "application/x-download", "attachment")
         else:
             return "%s: not found at %s" % (script_name, p)
-    #--------------------------------------------------------------------------- 
+
     def showScript(self, script_name):
         '''
         Enable slave to view some script as TEXT from masters
@@ -162,11 +147,11 @@ class WebInterface:
         
 
     index.exposed = True
-    suitsSessions.exposed = True
+    suiteSessions.exposed = True
     downloadScript.exposed = True
     showScript.exposed = True
     
-#-------------------------------------------------------------------------------
+
 def handleCherrypyError():
         cherrypy.response.status = 500
         cherrypy.response.body = \

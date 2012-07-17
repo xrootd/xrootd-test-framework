@@ -24,34 +24,27 @@
 # File:   ClusterManager module
 # Desc:   Virtual machines clusters manager.
 #-------------------------------------------------------------------------------
-# Imports
-#-------------------------------------------------------------------------------
-from Utils import State
-from string import join
+from Utils import get_logger
+LOGGER = get_logger(__name__)
+
 import Utils
 import logging
 import os
 import sys
-#-------------------------------------------------------------------------------
-# Global variables
-#-------------------------------------------------------------------------------
-logging.basicConfig(format='%(levelname)s line %(lineno)d: %(message)s', \
-                    level=logging.DEBUG)
-LOGGER = logging.getLogger(__name__)
-LOGGER.debug("Running script: " + __file__)
-#-------------------------------------------------------------------------------
+
+from Utils import State
+from string import join
+
 # Global error types
-#-------------------------------------------------------------------------------
-ERR_UNKNOWN         = 1
-ERR_CONNECTION      = 2
-ERR_ADD_HOST        = 4
-ERR_CREATE_NETWORK  = 8
-#-------------------------------------------------------------------------------
+ERR_UNKNOWN = 1
+ERR_CONNECTION = 2
+ERR_ADD_HOST = 4
+ERR_CREATE_NETWORK = 8
+
 class ClusterManagerException(Exception):
     '''
     General Exception raised by module
     '''
-    #---------------------------------------------------------------------------
     def __init__(self, desc, typeFlag=ERR_UNKNOWN):
         '''
         Constructs Exception
@@ -60,13 +53,13 @@ class ClusterManagerException(Exception):
         '''
         self.desc = desc
         self.type = typeFlag
-    #---------------------------------------------------------------------------
+
     def __str__(self):
         '''
         Returns textual representation of an error
         '''
         return repr(self.desc)
-#-------------------------------------------------------------------------------
+
 def getFileContent(filePath):
     '''
     Read and return whole file content as a string
@@ -81,24 +74,24 @@ def getFileContent(filePath):
         logging.info("File %s is empty." % file)
 
     return xmlDesc
-#-------------------------------------------------------------------------------
+
 class Network(object):
     '''
     Represents a virtual network
     '''
-# XML pattern representing XML configuration of libvirt network
+    # XML pattern representing XML configuration of libvirt network
     xmlDescPattern = """
 <network>
   <name>%(name)s</name>
   <dns>
       <txt name="xrd.test" value="Welcome to xrd testing framework domain." />
       <host ip="%(xrdTestMasterIP)s">
-          <hostname>master</hostname>
+          <hostname>master.xrd.test</hostname>
       </host>
       %(dnshostsxml)s
   </dns>
   <bridge name="%(bridgename)s" />
-  <forward/>
+  <forward mode='nat'/>
   <ip address="%(ip)s" netmask="%(netmask)s">
     <dhcp>
       <range start="%(rangestart)s" end="%(rangeend)s" />
@@ -115,7 +108,7 @@ class Network(object):
     <hostname>%(hostname)s</hostname>
 </host>
 """
-    #---------------------------------------------------------------------------
+
     def __init__(self):
         self.name = ""
         self.bridgeName = ""
@@ -127,15 +120,15 @@ class Network(object):
 
         #fields beneath filled automatically by hypervisor
         self.xrdTestMasterIP = ""
-    #---------------------------------------------------------------------------
+
     def addDnsHost(self, host):
         hostup = (host.ip, host.name)
         self.DnsHosts.append(hostup)
-    #---------------------------------------------------------------------------
+
     def addDHCPHost(self, host):
         hostup = (host.mac, host.ip, host.name)
         self.DHCPHosts.append(hostup)
-    #---------------------------------------------------------------------------
+
     def addHost(self, host):
         '''
         Add host to network. First to DHCP and then to DNS.
@@ -143,7 +136,7 @@ class Network(object):
         '''
         self.addDHCPHost(host)
         self.addDnsHost(host)
-    #---------------------------------------------------------------------------
+
     def addHosts(self, hostsList):
         '''
         Add hosts to network.
@@ -151,7 +144,7 @@ class Network(object):
         '''
         for h in hostsList:
             self.addHost(h)
-    #---------------------------------------------------------------------------
+
     @property
     def uname(self):
         '''
@@ -162,7 +155,7 @@ class Network(object):
                                           " clusterName property not " + \
                                           "defined for host ") % self.name)
         return self.clusterName + "_" + self.name
-    #---------------------------------------------------------------------------
+
     @property
     def xmlDesc(self):
         hostsXML = ""
@@ -189,12 +182,12 @@ class Network(object):
         self.__xmlDesc = Network.xmlDescPattern % values
         LOGGER.debug(self.__xmlDesc)
         return self.__xmlDesc
-#-------------------------------------------------------------------------------
+
 class Host(object):
     '''
     Represents a virtual host which may be added to network
     '''
-# XML pattern representing XML configuration of libvirt domain
+    # XML pattern representing XML configuration of libvirt domain
     xmlDomainPattern = """
 <domain type='kvm'>
   <name>%(uname)s</name>
@@ -228,7 +221,7 @@ class Host(object):
       <address type='drive' controller='0' bus='1' unit='0'/>
     </disk>
     <controller type='ide' index='0'>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' 
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x01'
       function='0x1'/>
     </controller>
     <interface type='network'>
@@ -246,13 +239,13 @@ class Host(object):
     </video>
     <!-- END OF VIDEO SECTION -->
     <memballoon model='virtio'>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x04' 
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x04'
       function='0x0'/>
     </memballoon>
   </devices>
 </domain>
 """
-    #---------------------------------------------------------------------------
+
     def __init__(self, name="", ip="", mac="", net="", \
                  diskImage=None, ramSize="", arch="", \
                  emulatorPath="", uuid=""):
@@ -272,7 +265,7 @@ class Host(object):
 
         # private properties
         self.__xmlDesc = ""
-    #---------------------------------------------------------------------------
+
     @property
     def uname(self):
         '''
@@ -283,7 +276,7 @@ class Host(object):
                                           " clusterName property not " + \
                                           "defined for host ") % self.name)
         return self.clusterName + "_" + self.name
-    #---------------------------------------------------------------------------
+
     @property
     def xmlDesc(self):
         values = self.__dict__
@@ -292,10 +285,9 @@ class Host(object):
         self.__xmlDesc = self.xmlDomainPattern % values
 
         return self.__xmlDesc
-#-------------------------------------------------------------------------------
+
 class Cluster(Utils.Stateful):
 
-    #---------------------------------------------------------------------------
     S_ACTIVE = (10, "Cluster active")
     S_ERROR = (-10, "Cluster error")
     S_ERROR_START = (-11, "Cluster error at start")
@@ -309,14 +301,14 @@ class Cluster(Utils.Stateful):
     '''
     Represents a cluster comprised of hosts connected through network.
     '''
-    #---------------------------------------------------------------------------
+
     def randMac(self, history=[]):
         import random
 
         history.append(':'.join(map(lambda x: "%02x" % x, \
                             [ 0x00, 0x16, 0x3E, random.randint(0x00, 0x7F), \
                              random.randint(0x00, 0xFF), random.randint(0x00, 0xFF) ])))
-    #---------------------------------------------------------------------------
+
     def __init__(self):
         Utils.Stateful.__init__(self)
         self.hosts = []
@@ -330,7 +322,7 @@ class Cluster(Utils.Stateful):
         self.defaultHost.net = None
         
         self.__network = None
-    #---------------------------------------------------------------------------
+
     def addHost(self, host):
         from uuid import uuid1
 
@@ -353,25 +345,25 @@ class Cluster(Utils.Stateful):
                                           'defined') % (host.name, self.name))
         host.clusterName = self.name
         self.hosts.append(host)
-    #---------------------------------------------------------------------------
+
     def addHosts(self, hosts):
         for h in hosts:
             self.addHost(h)
-    #---------------------------------------------------------------------------
+
     def networkSet(self, net):
         net.clusterName = self.name
         self.defaultHost.net = net.name
         self.__network = net
-    #---------------------------------------------------------------------------
+
     def networkGet(self):
         return self.__network
     network = property(networkGet, networkSet)
-    #---------------------------------------------------------------------------
+
     def setEmulatorPath(self, emulator_path):
         if len(self.hosts):
             for h in self.hosts:
                 h.emulatorPath = emulator_path
-    #---------------------------------------------------------------------------
+
     def validateStatic(self):
         '''
         Check if Cluster definition is correct and sufficient
@@ -405,10 +397,10 @@ class Cluster(Utils.Stateful):
                                            ' first address') \
                                           % (self.network.name, \
                                              self.definitionFile))
-    #---------------------------------------------------------------------------
+
     def validateAgainstSystem(self, clusters):
         '''
-        Check if cluster definition is correct with other 
+        Check if cluster definition is correct with other
         clusters defined in the system. This correctness is critical for
         cluster definition to be added.
         @param clusters:
@@ -422,11 +414,11 @@ class Cluster(Utils.Stateful):
             raise ClusterManagerException(
                     ("Cluster's %s some network's %s parameters doubled" + \
                     " in %s") % (self.name, self.network.name, ",".join(n)))
-    #---------------------------------------------------------------------------
+
     def validateDynamic(self):
         '''
-        Check if Cluster definition is semantically correct i.e. on the 
-        hypervisor's machine e.g. if disk images really exists on 
+        Check if Cluster definition is semantically correct i.e. on the
+        hypervisor's machine e.g. if disk images really exists on
         the machine it's to be planted.
         '''
         if self.hosts:
@@ -435,19 +427,19 @@ class Cluster(Utils.Stateful):
                 c2 = (self.defaultHost.diskImage and \
                       not os.path.exists(self.defaultHost.diskImage))
                 if c1 or c2:
-                    return (False, ("One of disk images %s, %s" +\
+                    return (False, ("One of disk images %s, %s" + \
                                     "has to exist") % \
                                     (h.diskImage, self.defaultHost.diskImage))
 
         return (True, "")
-#-------------------------------------------------------------------------------
+
 def extractClusterName(path):
     (modPath, modFile) = os.path.split(path)
     modPath = os.path.abspath(modPath)
     (modName, ext) = os.path.splitext(modFile)
     return (modName, ext, modPath, modFile)
-#-------------------------------------------------------------------------------
-def loadClusterDef(fp, clusters, validateWithRest = True):
+
+def loadClusterDef(fp, clusters, validateWithRest=True):
     (modName, ext, modPath, modFile) = extractClusterName(fp)
 
     cl = None
@@ -476,11 +468,11 @@ def loadClusterDef(fp, clusters, validateWithRest = True):
             raise ClusterManagerException("AttributeError in cluster defini" + \
                   "tion file %s: %s" % (modFile, e))
         except ImportError, e:
-            raise ClusterManagerException("Can't import %s: %s." %\
+            raise ClusterManagerException("Can't import %s: %s." % \
                                            (modName, e))
         except NameError, e:
             raise ClusterManagerException("Name error while " + \
-                                          "cluster  %s import: %s." %\
+                                          "cluster  %s import: %s." % \
                                            (modName, e))
         except Exception, e:
             raise ClusterManagerException("Error during" + \
@@ -488,10 +480,10 @@ def loadClusterDef(fp, clusters, validateWithRest = True):
     elif ext == ".pyc":
         return None
     else:
-        raise ClusterManagerException("%s is not cluster definition." %\
+        raise ClusterManagerException("%s is not cluster definition." % \
                                        (modFile))
     return cl
-#---------------------------------------------------------------------------
+
 def loadClustersDefs(path):
     '''
     Loads cluster definitions from .py files stored in path directory

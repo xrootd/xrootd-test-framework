@@ -29,31 +29,25 @@
 #         information of all created clusters during the session and can remove
 #         all of them on demand - come back to state before it began.
 #-------------------------------------------------------------------------------
-# Imports
-#-------------------------------------------------------------------------------
-from ClusterUtils import ClusterManagerException, \
-    ERR_CONNECTION, ERR_ADD_HOST, ERR_CREATE_NETWORK
-from Utils import SafeCounter
-from copy import deepcopy
-from tempfile import NamedTemporaryFile
-import logging
+from XrdTest.Utils import get_logger
+LOGGER = get_logger(__name__)
+
 import sys
 import threading
 import libvirt
+
+from ClusterUtils import ClusterManagerException
+from ClusterUtils import ERR_CONNECTION, ERR_ADD_HOST, ERR_CREATE_NETWORK
+from Utils import SafeCounter
+from copy import deepcopy
+from tempfile import NamedTemporaryFile
 from libvirt import libvirtError
-#-------------------------------------------------------------------------------
-# Global variables
-#-------------------------------------------------------------------------------
-logging.basicConfig(format='%(levelname)s line %(lineno)d: %(message)s', \
-                    level=logging.INFO)
-LOGGER = logging.getLogger(__name__)
-LOGGER.debug("Running script: " + __file__)
-#-------------------------------------------------------------------------------
+
+
 class ClusterManager:
     '''
     Virtual machines clusters' manager
     '''
-    #---------------------------------------------------------------------------
     def __init__(self):
         '''
         Creates Manager instance. Needs url to virtual virt domains manager
@@ -69,7 +63,7 @@ class ClusterManager:
 
         self.tmpImagesDir = "/tmp"
         self.tmpImagesPrefix = "tmpxrdim_"
-    #---------------------------------------------------------------------------
+
     def connect(self, url="qemu:///system"):
         '''
         Creates and returns connection to virtual machines manager
@@ -85,7 +79,7 @@ class ClusterManager:
             raise ClusterManagerException(msg, ERR_CONNECTION)
         else:
             LOGGER.debug("Connected to libvirt manager.")
-    #---------------------------------------------------------------------------
+
     def disconnect(self):
         '''
         Undefines and removes all virtual machines and networks created
@@ -110,10 +104,10 @@ class ClusterManager:
             raise ClusterManagerException(msg, ERR_CONNECTION)
         else:
             LOGGER.debug("libvirt manager disconnected")
-    #---------------------------------------------------------------------------
-    def copyImg(self, huName, safeCounter = None):
+
+    def copyImg(self, huName, safeCounter=None):
         '''
-        Method runnable in separate threads, to separate copying of source 
+        Method runnable in separate threads, to separate copying of source
         operating system image to a temporary image.
         @param huName: host.uname - host unique name
         @param safeCounter: thread safe counter to signalize this run finished
@@ -126,7 +120,7 @@ class ClusterManager:
         try:
             f = open(dip , "r")
             #buffsize = 52428800 #read 50 MB at a time
-            buffsize = (1024 ** 3) /2  #read/write 512 MB at a time
+            buffsize = (1024 ** 3) / 2  #read/write 512 MB at a time
             buff = f.read(buffsize)
             while buff:
                 tmpFile.file.write(buff)
@@ -140,11 +134,11 @@ class ClusterManager:
                         % (dip, hostObj.name, tmpFile.name))
             if safeCounter:
                 safeCounter.inc()
-    #---------------------------------------------------------------------------
+
     def defineHost(self, hostObj):
         '''
-        Defines virtual host in a cluster using given host object, 
-        not starting it. Host with the given name may be defined once 
+        Defines virtual host in a cluster using given host object,
+        not starting it. Host with the given name may be defined once
         in the system. Stores hosts objects in class property self.hosts.
         @param hostObj: ClusterManager.Host object
         @raise ClusterManagerException: when fails
@@ -196,7 +190,7 @@ class ClusterManager:
                         (hostObj.uname, hostObj.runningDiskImage, e)
                 raise ClusterManagerException(msg, ERR_ADD_HOST)
         return self.hosts[hostObj.uname]
-    #---------------------------------------------------------------------------
+
     def removeHost(self, hostUName):
         '''
         Can not be used inside loop iterating over hosts!
@@ -214,7 +208,7 @@ class ClusterManager:
             msg = "Could not remove virtual machine: %s" % e
             LOGGER.error(msg)
             raise ClusterManagerException(msg, ERR_CONNECTION)
-    #---------------------------------------------------------------------------
+
     def removeHosts(self, hostsUnameList):
         '''
         Remove multiple hosts.
@@ -232,7 +226,7 @@ class ClusterManager:
         errMsg = ', '.join(errMsgs)
 
         return errMsg
-    #---------------------------------------------------------------------------
+
     def defineNetwork(self, netObj):
         '''
         Defines network object without starting it.
@@ -258,7 +252,7 @@ class ClusterManager:
                 raise ClusterManagerException(msg, ERR_CREATE_NETWORK)
 
         return self.nets[netObj.uname]
-    #---------------------------------------------------------------------------
+
     def createNetwork(self, networkObj):
         '''
         Creates and starts cluster's network. It utilizes defineNetwork
@@ -283,7 +277,7 @@ class ClusterManager:
             LOGGER.info("Network %s created and active." % (networkObj.uname))
 
         return net
-    #---------------------------------------------------------------------------
+
     def removeNetwork(self, netUName):
         '''
         Can not be used inside loop iterating over networks!
@@ -300,7 +294,7 @@ class ClusterManager:
             msg = "Could not destroy network from libvirt: %s" % e
             LOGGER.error(msg)
             raise ClusterManagerException(msg, ERR_CONNECTION)
-    #---------------------------------------------------------------------------
+
     def removeDanglingHost(self, hostObj):
         '''
         Remove already defined host, if it has name the same as hostObj.
@@ -320,7 +314,7 @@ class ClusterManager:
             if host.isActive():
                 host.destroy()
             host.undefine()
-    #---------------------------------------------------------------------------
+
     def removeDanglingNetwork(self, netObj):
         '''
         Remove already defined network, if it has name the same as netObj.
@@ -380,18 +374,18 @@ class ClusterManager:
 
                     # machine doesn't use original image
                     if not h.diskImage:
-                        LOGGER.info("Copying image %s for machine %s." %\
+                        LOGGER.info("Copying image %s for machine %s." % \
                                     (cluster.defaultHost.diskImage, h.uname))
                         sys.setcheckinterval(500)
                         needCopy += 1
                         # create and start thread copying given virtual machine
                         # image to a temporary file
-                        copyThreads[h.uname] =\
-                            threading.Thread(target=self.copyImg, args =\
+                        copyThreads[h.uname] = \
+                            threading.Thread(target=self.copyImg, args=\
                                              (h.uname, safeCounter))
                         copyThreads[h.uname].start()
                     else: # machine uses original image
-                        LOGGER.info("Using original image %s for machine %s." %\
+                        LOGGER.info("Using original image %s for machine %s." % \
                                     (h.diskImage, h.uname))
 
                 #wait for all threads to copy images
@@ -399,7 +393,7 @@ class ClusterManager:
                     n = 0
                     while(n < needCopy):
                         n = safeCounter.get()
-                        LOGGER.info("Machines images copied: %s of %s" %\
+                        LOGGER.info("Machines images copied: %s of %s" % \
                                     (n, needCopy))
                     sys.setcheckinterval(100)
                 # remember locally domains created correctly to remove them
@@ -415,18 +409,18 @@ class ClusterManager:
                 except libvirtError, e:
                     LOGGER.info("Error occured. Undefining created machines.")
                     innerErrMsg = self.removeHosts(hostsCreated)
-                    raise ClusterManagerException("Error during "+ \
-                          "creation of machine %s: %s. %s" %\
+                    raise ClusterManagerException("Error during " + \
+                          "creation of machine %s: %s. %s" % \
                           (h.uname, e, innerErrMsg))
             else:
                 LOGGER.info("No hosts in cluster defined.")
         except ClusterManagerException, e:
             self.removeNetwork(cluster.network.uname)
             raise e
-    #---------------------------------------------------------------------------
+
     def removeCluster(self, clusterName):
         if not self.clusters.has_key(clusterName):
-            raise ClusterManagerException(("No cluster %s defined " +\
+            raise ClusterManagerException(("No cluster %s defined " + \
                                           " via cluster manager.") \
                                           % clusterName)
         LOGGER.info("Removing cluster %s." % clusterName)
@@ -444,7 +438,7 @@ class ClusterManager:
                 removeErr += str(e)
 
         if removeErr:
-            raise ClusterManagerException("Errors during cluster " +\
+            raise ClusterManagerException("Errors during cluster " + \
                                           "removal: %s" % removeErr)
         else:
             del self.clusters[clusterName]

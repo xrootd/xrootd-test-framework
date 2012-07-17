@@ -50,11 +50,12 @@ try:
     from XrdTest.SocketUtils import FixedSockStream, XrdMessage, PriorityBlockingQueue, \
         SocketDisconnectedError
     from XrdTest.TestUtils import TestSuiteException, loadTestSuiteDef, \
-        loadTestSuitsDefs, TestSuite, extractSuiteName
+        loadTestSuiteDefs, TestSuite, extractSuiteName
     from XrdTest.Daemon import Runnable, Daemon, DaemonException, readConfig
     from XrdTest.Utils import Stateful, State
+    from XrdTest.GitUtils import sync_remote_git
     from XrdTest.WebInterface import WebInterface
-    from XrdTest.DirectoryWatch import DirectoryWatch, watch_local, watch_remote
+    from XrdTest.DirectoryWatch import DirectoryWatch
     from apscheduler.scheduler import Scheduler
     from copy import deepcopy, copy
     from optparse import OptionParser
@@ -258,16 +259,16 @@ class Slave(TCPClient):
     Wrapper for any slave connection established.
     '''
     # constants representing states of slave
-    S_SUITINIT_SENT = (10, "Test suite init sent to slave")
-    S_SUIT_INITIALIZED = (11, "Test suite initialized")
-    S_SUITFINALIZE_SENT = (12, "Test suite finalize sent to slave")
+    S_SUITE_INIT_SENT = (10, "Test suite init sent to slave")
+    S_SUITE_INITIALIZED = (11, "Test suite initialized")
+    S_SUITE_FINALIZE_SENT = (12, "Test suite finalize sent to slave")
 
     S_TEST_INIT_SENT = (21, "Sent test case init to slave")
     S_TEST_INITIALIZED = (22, "Test case initialized")
     S_TEST_RUN_SENT = (23, "Sent test case run to slave")
     S_TEST_RUN_FINISHED = (24, "Test case run finished")
     S_TEST_FINALIZE_SENT = (25, "Sent test case finalize to slave")
-    #S_TEST_FINALIZED        = Slave.S_SUIT_INITIALIZED
+    #S_TEST_FINALIZED        = Slave.S_SUITE_INITIALIZED
 
     def __str__(self):
         return "Slave %s [%s]" % (self.hostname, self.address)
@@ -434,7 +435,7 @@ class XrdTestMaster(Runnable):
     def __init__(self, config):
         self.config = config
         self.suiteSessions = shelve.open(\
-                             self.config.get('tests', 'suits_sessions_file'))
+                             self.config.get('tests', 'suite_sessions_file'))
 
     def retrieveSuiteSession(self, suite_name):
         '''
@@ -462,37 +463,36 @@ class XrdTestMaster(Runnable):
         evt = None
         if type == "CLUSTER":
             evt = MasterEvent(MasterEvent.M_RELOAD_CLUSTER_DEF, dirEvent)
-        if type == "SUIT":
-            evt = MasterEvent(MasterEvent.M_RELOAD_SUIT_DEF, dirEvent)
+        if type == "SUITE":
+            evt = MasterEvent(MasterEvent.M_RELOAD_SUITE_DEF, dirEvent)
         if type == "REMOTE":
             evt = MasterEvent(MasterEvent.M_RELOAD_REMOTE_DEF, dirEvent)
         self.recvQueue.put((MasterEvent.PRIO_IMPORTANT, evt))
 
-    def loadDefinitions(self):
+    def loadExampleDefinitions(self):
         '''
-        Load all definitions of clusters and test suits at once. If any
-        definition is invalid method raise exceptions.
+        Load all definitions of example clusters and test suits at once. 
+        If any definition is invalid, raise exceptions.
         '''
-        LOGGER.info("Loading definitions...")
+        LOGGER.info("Loading example definitions...")
 
-        # load clusters definitions
         try:
+            # load example cluster definitions
             clusters = loadClustersDefs(\
-                        self.config.get('local', 'clusters_definition_path'))
+                        self.config.get('local_example_defs', 'cluster_defs_path'))
             for clu in clusters:
                 self.clusters[clu.name] = clu
         except ClusterManagerException, e:
             LOGGER.error("ClusterManager Exception: %s" % e)
             sys.exit()
 
-        # load test suits definitions
         try:
-            testSuits = loadTestSuitsDefs(\
-                        self.config.get('local', 'testsuits_definition_path'))
-            
-            for ts in testSuits.itervalues():
+            # load example test suite definitions
+            testSuites = loadTestSuiteDefs(\
+                        self.config.get('local_example_defs', 'suite_defs_path'))
+            for ts in testSuites:
                 ts.checkIfDefComplete(self.clusters)
-            self.testSuites = testSuits
+                self.testSuites[ts.name] = ts
         except TestSuiteException, e:
             LOGGER.error("Test Suite Exception: %s" % e)
             sys.exit()
@@ -500,7 +500,7 @@ class XrdTestMaster(Runnable):
         # add jobs to scheduler if it's enabled
         if self.config.getint('scheduler', 'enabled') == 1:
             for ts in self.testSuites.itervalues():
-                # if there is no scheduling expresion defined in suit, continue
+                # if there is no scheduling expression defined in suite, continue
                 if not ts.schedule:
                     continue
                 try:
@@ -515,6 +515,55 @@ class XrdTestMaster(Runnable):
                                "for test suite %s: %s") % (ts.name, e))
                     sys.exit()
 
+    def loadRemoteDefinitions(self):
+        '''
+        Load all definitions of remote clusters and test suits at once. 
+        If any definition is invalid, raise exceptions.
+        '''
+        LOGGER.info("Loading remote definitions...")
+
+        # Pull remote git repo
+        sync_remote_git(self.config)
+
+        try:      
+            # load remote cluster definitions from git repo
+            clusters = loadClustersDefs(\
+                        self.config.get('remote_git_defs', 'cluster_defs_path'))
+            for clu in clusters:
+                self.clusters[clu.name] = clu    
+        except ClusterManagerException, e:
+            LOGGER.error("ClusterManager Exception: %s" % e)
+            sys.exit()
+
+        try:           
+            # load remote test suite definitions from git repo
+            testSuites = loadTestSuiteDefs(\
+                        self.config.get('remote_git_defs', 'suite_defs_path'))
+            for ts in testSuites:
+                ts.checkIfDefComplete(self.clusters)
+                self.testSuites[ts.name] = ts
+        except TestSuiteException, e:
+            LOGGER.error("Test Suite Exception: %s" % e)
+            sys.exit()
+
+        # add jobs to scheduler if it's enabled
+        if self.config.getint('scheduler', 'enabled') == 1:
+            for ts in self.testSuites.itervalues():
+                # if there is no scheduling expression defined in suite, continue
+                if not ts.schedule:
+                    continue
+                try:
+                    ts.jobFun = self.executeJob(ts.name)
+                    self.sched.add_cron_job(ts.jobFun, \
+                                             **(ts.schedule))
+
+                    LOGGER.info("Adding scheduler job for test suite %s at %s" % \
+                                (ts.name, str(ts.schedule)))
+                except Exception, e:
+                    LOGGER.error(("Error while scheduling job " + \
+                               "for test suite %s: %s") % (ts.name, e))
+                    sys.exit()
+    
     def handleSuiteDefinitionChanged(self, dirEvent):
         '''
         Handle event created any time definition of test suite changes.
@@ -664,7 +713,7 @@ class XrdTestMaster(Runnable):
         cond_state = lambda v: True
         if not slave_state:
             pass
-        elif slave_state == State(Slave.S_SUIT_INITIALIZED):
+        elif slave_state == State(Slave.S_SUITE_INITIALIZED):
             cond_state = lambda v: \
                         (self.slaveState(v.hostname) == slave_state and \
                          v.state.suiteName == test_suite.name)
@@ -796,7 +845,7 @@ class XrdTestMaster(Runnable):
         for sl in testSlaves:
             LOGGER.info("Sending Test Suite initialize to %s" % sl)
             sl.send(msg)
-            sl.state = State(Slave.S_SUITINIT_SENT)
+            sl.state = State(Slave.S_SUITE_INIT_SENT)
 
         return True
 
@@ -819,7 +868,7 @@ class XrdTestMaster(Runnable):
 
         unreadyMachines = []
         for m in tss.suite.machines:
-            if self.slaveState(m) != State(Slave.S_SUIT_INITIALIZED):
+            if self.slaveState(m) != State(Slave.S_SUITE_INITIALIZED):
                 unreadyMachines.append(m)
                 LOGGER.debug(m + " state " + str(self.slaveState(m)))
 
@@ -836,7 +885,7 @@ class XrdTestMaster(Runnable):
         for sl in tSlaves:
             LOGGER.debug("Sending Test Suite finalize to %s" % sl)
             sl.send(msg)
-            sl.state = State(Slave.S_SUITFINALIZE_SENT)
+            sl.state = State(Slave.S_SUITE_FINALIZE_SENT)
             sl.state.sessUid = tss.uid
 
         tss.state = State(TestSuite.S_WAIT_4_FINALIZE)
@@ -1276,12 +1325,12 @@ class XrdTestMaster(Runnable):
                         self.removeJobs(msg.jobGroupId, \
                                         Job.INITIALIZE_TEST_SUITE)
                 else:
-                    slave.state = State(Slave.S_SUIT_INITIALIZED)
+                    slave.state = State(Slave.S_SUITE_INITIALIZED)
                     slave.state.suiteName = msg.suiteName
 
                     #update SuiteStatus if all slaves are inited
                     iSlaves = self.getSuiteSlaves(tss.suite,
-                                            State(Slave.S_SUIT_INITIALIZED))
+                                            State(Slave.S_SUITE_INITIALIZED))
                     LOGGER.info("%s initialized in test suite %s" % \
                                 (slave, tss.name))
                     if len(iSlaves) == len(tss.suite.machines):
@@ -1355,13 +1404,13 @@ class XrdTestMaster(Runnable):
                 tss.addStageResult(msg.state, msg.result, \
                                    slave_name=slave.hostname, \
                                    uid=msg.testUid)
-                slave.state = State(Slave.S_SUIT_INITIALIZED)
+                slave.state = State(Slave.S_SUITE_INITIALIZED)
                 slave.state.suiteName = msg.suiteName
 
                 tc = tss.cases[msg.testUid]
                 waitSlaves = self.getSuiteSlaves(tss.suite, test_case=tc)
                 readySlaves = self.getSuiteSlaves(tss.suite, \
-                                            State(Slave.S_SUIT_INITIALIZED),
+                                            State(Slave.S_SUITE_INITIALIZED),
                                             test_case=tc)
                 if len(waitSlaves) == len(readySlaves):
                     tss.state = State(TestSuite.S_ALL_INITIALIZED)
@@ -1433,12 +1482,12 @@ class XrdTestMaster(Runnable):
                 self.handleClusterDefinitionChanged(evt.data)
 
             # Messages from test suits definitions directory monitoring threads
-            elif evt.type == MasterEvent.M_RELOAD_SUIT_DEF:
+            elif evt.type == MasterEvent.M_RELOAD_SUITE_DEF:
                 self.handleSuiteDefinitionChanged(evt.data)
 
             # Messages from remote directory monitoring threads
             elif evt.type == MasterEvent.M_RELOAD_REMOTE_DEF:
-                self.loadDefinitions()
+                self.handleRemoteDefinitionChanged()
 
             # Incoming message is unknown
             else:
@@ -1489,13 +1538,16 @@ class XrdTestMaster(Runnable):
         else:
             LOGGER.info("SCHEDULER is disabled.")
 
-        self.loadDefinitions()
+        self.loadExampleDefinitions()
+        self.loadRemoteDefinitions()
 
         # Prepare notifiers for cluster and test suite definition 
         # directory monitoring (local and remote)
-        dw_local = DirectoryWatch(self.config, self.fireReloadDefinitionsEvent, watch_local)
+        dw_local = DirectoryWatch(self.config, self.fireReloadDefinitionsEvent, \
+                                  DirectoryWatch.watch_local)
         dw_local.watch()
-        dw_remote = DirectoryWatch(self.config, self.fireReloadDefinitionsEvent, watch_remote)
+        dw_remote = DirectoryWatch(self.config, self.fireReloadDefinitionsEvent, \
+                                  DirectoryWatch.watch_remote_git)
         dw_remote.watch()
         
         # Configure and start WWW Server - cherrypy

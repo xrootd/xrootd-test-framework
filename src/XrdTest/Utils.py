@@ -22,6 +22,7 @@
 #-------------------------------------------------------------------------------
 import logging
 import datetime
+import subprocess
 
 from copy import copy
 from threading import Lock, Condition
@@ -108,6 +109,19 @@ class SafeCounter(object):
         self.criticalSection.release()
         return num
 
+def execute(cmd, cwd):
+    '''
+    Execute a subprocess command.
+    '''
+    LOGGER.info('Running command: %s' % cmd)
+    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, cwd=cwd)
+    p.wait()
+    output = p.stdout.read()
+    if output == '': 
+        LOGGER.info('Command returned no output.') 
+    else: 
+        LOGGER.info('Command output: %s' % output)
+    return output
     
 def get_logger(filename):
     '''

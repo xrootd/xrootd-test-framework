@@ -489,11 +489,11 @@ def loadClustersDefs(path):
     Loads cluster definitions from .py files stored in path directory
     @param path: path for .py files, storing cluster definitions
     '''
-    global LOGGER
-
     clusters = []
     if os.path.exists(path):
         for f in os.listdir(path):
+            if not f.startswith('cluster'):
+                continue
             fp = path + os.sep + f
             try:
                 clu = loadClusterDef(fp, clusters)

@@ -339,22 +339,22 @@ def loadTestSuiteDef(path):
               "seems not to be test suite definition.") % fp)
     return obj
 
-def loadTestSuitsDefs(path):
+def loadTestSuiteDefs(path):
     '''
-    Loads TestSuits and TestCases definitions from .py files
+    Loads TestSuite and TestCase definitions from .py files
     stored in path directory.
     @param path: path for .py files, storing cluster definitions
     '''
-    testSuits = {}
+    testSuites = []
     
     if os.path.exists(path):
         for f in os.listdir(path):
-            fp = path + os.sep + f
+            fp = path + os.sep + f + os.sep + f + '.py'
             try:
                 ts = loadTestSuiteDef(fp)
                 if ts:
-                    testSuits[ts.name] = ts
+                    testSuites.append(ts)
             except TestSuiteException, e:
                 raise e
 
-    return testSuits
+    return testSuites

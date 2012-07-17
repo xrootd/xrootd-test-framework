@@ -22,7 +22,7 @@
 #-------------------------------------------------------------------------------
 #
 # File:   TestUtils
-# Desc:   TODO:
+# Desc:   General utilities for test suites and test cases.
 # 
 #        In all the scripts mentioned below, the string @slavename@ should be 
 #        replaced with the actual machine name, so that the following statements 
@@ -35,6 +35,7 @@
 #         else
 #           foobar
 #         fi
+#
 #-------------------------------------------------------------------------------
 from Utils import get_logger
 LOGGER = get_logger(__name__)
@@ -45,14 +46,13 @@ import sys
 
 class TestSuiteException(Exception):
     '''
-    General Exception raised by module
+    General exception raised by module.
     '''
     ERR_UNKNOWN = 1
     ERR_CRITICAL = 2
 
     def __init__(self, desc, typeFlag=ERR_UNKNOWN):
         '''
-        Constructs Exception
         @param desc: description of an error
         @param typeFlag: represents type of an error, taken from class constants
         '''
@@ -67,8 +67,32 @@ class TestSuiteException(Exception):
 
 class TestSuite:
     '''
-    TODO:
+    Represents a single test suite object.
     '''
+    S_IDLE = (10, "idle")
+
+    S_WAIT_4_INIT = (20, "wait for suite initialization")
+    S_SLAVE_INITIALIZED = (21, "slave initialized")
+    S_ALL_INITIALIZED = (22, "all machines initialized")
+
+    S_WAIT_4_FINALIZE = (30, "wait for suite finalization")
+    S_SLAVE_FINALIZED = (31, "slave finalized")
+    S_ALL_FINALIZED = (32, "all machines initialized")
+
+    S_WAIT_4_TEST_INIT = (40, "sent test init")
+    S_SLAVE_TEST_INITIALIZED = (41, "test initialized on a slave")
+    S_ALL_TEST_INITIALIZED = (42, "test initialized on all slaves")
+
+    S_WAIT_4_TEST_RUN = (43, "sent test to run")
+    S_SLAVE_TEST_RUN_FINISHED = (44, "test run finished on a slave")
+    S_ALL_TEST_RUN_FINISHED = (45, "test run finished on all slaves")
+
+    S_WAIT_4_TEST_FINALIZE = (46, "send test to finalize")
+    S_SLAVE_TEST_FINALIZED = (47, "test finalized on a slave")
+    S_ALL_TEST_FINALIZED = (48, "test finalized on all slaves")
+
+    S_INIT_ERROR = (-22, "initialization error")
+    
     def __init__(self):
         # Name of test suite: must be the same as the name of test suite definition 
         # file
@@ -110,9 +134,8 @@ class TestSuite:
 
     def validateStatic(self):
         '''
-        Method checks if definition (e.g given names) is statically correct.
+        Checks if definition (e.g given names) is statically correct.
         '''
-        #@todo: finish it
         if not self.name or " " in self.name:
             raise TestSuiteException(("No name given in TestSuite " + \
                                       "definition or the name %s have " + \
@@ -142,16 +165,20 @@ class TestSuite:
         return True
 
     def checkIfDefComplete(self, clusters):
-        ''' TODO: '''
+        '''
+        Makes sure all cluster definitions are complete.
+        
+        @param clusters: all currently defined clusters.
+        '''
         if self.machinesAutoFilled:
             self.machines = []
 
-        for cluN in self.clusters:
-            if not cluN in clusters:
+        for cl in self.clusters:
+            if not cl in clusters:
                 self.defEnabled = False
                 raise TestSuiteException(\
                 ("Cluster %s in suite %s definition " + \
-                "doesn't exist in clusters' definitions.") % (cluN, self.name))
+                "doesn't exist in clusters' definitions.") % (cl, self.name))
 
         # check if all required machines are connected and idle
         if not len(self.machines):
@@ -163,34 +190,9 @@ class TestSuite:
                             "filled automatically with %s") % \
                             (self.name, self.machines))
 
-    # Constants
-    S_IDLE = (10, "idle")
-
-    S_WAIT_4_INIT = (20, "wait for suite initialization")
-    S_SLAVE_INITIALIZED = (21, "slave initialized")
-    S_ALL_INITIALIZED = (22, "all machines initialized")
-
-    S_WAIT_4_FINALIZE = (30, "wait for suite finalization")
-    S_SLAVE_FINALIZED = (31, "slave finalized")
-    S_ALL_FINALIZED = (32, "all machines initialized")
-
-    S_WAIT_4_TEST_INIT = (40, "sent test init")
-    S_SLAVE_TEST_INITIALIZED = (41, "test initialized on a slave")
-    S_ALL_TEST_INITIALIZED = (42, "test initialized on all slaves")
-
-    S_WAIT_4_TEST_RUN = (43, "sent test to run")
-    S_SLAVE_TEST_RUN_FINISHED = (44, "test run finished on a slave")
-    S_ALL_TEST_RUN_FINISHED = (45, "test run finished on all slaves")
-
-    S_WAIT_4_TEST_FINALIZE = (46, "send test to finalize")
-    S_SLAVE_TEST_FINALIZED = (47, "test finalized on a slave")
-    S_ALL_TEST_FINALIZED = (48, "test finalized on all slaves")
-
-    S_INIT_ERROR = (-22, "initialization error")
-
 class TestCase:
     '''
-    TODO:
+    Represents a single test case object.
     '''
     def __init__(self):
         # Name of the test case
@@ -220,7 +222,7 @@ class TestCase:
 
     def validateStatic(self):
         '''
-        Method checks if definition (e.g given names) is statically correct.
+        Return whether or not definition (e.g given names) is statically correct.
         '''
         if not self.name or " " in self.name:
             raise TestSuiteException(("No name given in TestCase " + \
@@ -232,7 +234,9 @@ class TestCase:
 
 
 def extractSuiteName(path):
-    ''' TODO: '''
+    '''
+    Return the suite name from the given path.
+    '''
     (modPath, modFile) = os.path.split(path)
     modPath = os.path.abspath(modPath)
     (modName, ext) = os.path.splitext(modFile)
@@ -241,10 +245,10 @@ def extractSuiteName(path):
 
 def loadTestCasesDefs(filePath):
     '''
-    Loads TestCases definitions from .py file. Search for getTestCases function
+    Loads TestCase definitions from .py file. Search for getTestCases function
     in the file and expects list of testCases to be returned.
 
-    @param path: path for .py files, storing cluster definitions
+    @param filePath: path for .py files, storing cluster definitions
     '''
     testCases = {}
 
@@ -289,7 +293,9 @@ def loadTestCasesDefs(filePath):
 
 def loadTestSuiteDef(path):
     '''
-    TODO:
+    Load a single test suite definition.
+    
+    @param path: path to the suite definition to be loaded.
     '''
     fp = path
     (modName, ext, modPath, modFile) = extractSuiteName(fp)
@@ -343,6 +349,7 @@ def loadTestSuiteDefs(path):
     '''
     Loads TestSuite and TestCase definitions from .py files
     stored in path directory.
+    
     @param path: path for .py files, storing cluster definitions
     '''
     testSuites = []

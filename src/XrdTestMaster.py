@@ -94,7 +94,6 @@ class MasterEvent(object):
     M_JOB_ENQUEUE = 6
     M_RELOAD_CLUSTER_DEF = 7
     M_RELOAD_SUIT_DEF = 8
-    M_RELOAD_REMOTE_DEF = 9
 
     def __init__(self, e_type, e_data, msg_sender_addr=None):
         self.type = e_type
@@ -465,8 +464,6 @@ class XrdTestMaster(Runnable):
             evt = MasterEvent(MasterEvent.M_RELOAD_CLUSTER_DEF, dirEvent)
         if type == "SUITE":
             evt = MasterEvent(MasterEvent.M_RELOAD_SUITE_DEF, dirEvent)
-        if type == "REMOTE":
-            evt = MasterEvent(MasterEvent.M_RELOAD_REMOTE_DEF, dirEvent)
         self.recvQueue.put((MasterEvent.PRIO_IMPORTANT, evt))
 
     def loadExampleDefinitions(self):
@@ -840,8 +837,8 @@ class XrdTestMaster(Runnable):
         msg.cmd = tss.suite.initialize
         msg.jobGroupId = jobGroupId
 
-        # TODO:  if sending to some machines fails 
-        #        initialization on rest should be reversed
+        # TODO:  if sending to some machines fails,
+        # initialization on rest should be reversed
         for sl in testSlaves:
             LOGGER.info("Sending Test Suite initialize to %s" % sl)
             sl.send(msg)
@@ -1484,10 +1481,6 @@ class XrdTestMaster(Runnable):
             # Messages from test suits definitions directory monitoring threads
             elif evt.type == MasterEvent.M_RELOAD_SUITE_DEF:
                 self.handleSuiteDefinitionChanged(evt.data)
-
-            # Messages from remote directory monitoring threads
-            elif evt.type == MasterEvent.M_RELOAD_REMOTE_DEF:
-                self.handleRemoteDefinitionChanged()
 
             # Incoming message is unknown
             else:

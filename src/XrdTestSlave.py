@@ -67,7 +67,7 @@ class TCPReceiveThread(object):
     ''' TODO: '''
     def __init__(self, sock, recvQueue):
         '''
-        TODO:
+        TODO: 
 
         @param sock:
         @param recvQueue:

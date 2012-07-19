@@ -36,6 +36,8 @@ install -pm 755 src/XrdTest/Daemon.py %{libs_path}
 install -pm 755 src/XrdTest/TestUtils.py %{libs_path}
 install -pm 755 src/XrdTest/ClusterManager.py %{libs_path}
 install -pm 755 src/XrdTest/ClusterUtils.py %{libs_path}
+install -pm 755 src/XrdTest/GitUtils.py %{libs_path}
+install -pm 755 src/XrdTest/WebInterface.py %{libs_path}
 
 # logs
 mkdir -p %{buildroot}%{_localstatedir}/log/XrdTest

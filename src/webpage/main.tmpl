@@ -93,8 +93,8 @@
 </div>
 <h1>Test suite definitions</h1>
 <div id="acc4" class="accordion">
-    #if $testSuits and len($testSuits) > 0
-    #for $ts in $testSuits.iteritems()
+    #if $testSuites and len($testSuites) > 0
+    #for $ts in $testSuites.iteritems()
         <h3>${ts[1].name}</h3>
         <div class="inner">
         <p class="sect_title">SCHEDULER EXPRESSION</p>
@@ -136,10 +136,10 @@
         #end if
         </table>
         <p class="sect_title">SESSIONS</p>
-    #if $suitsSessions.has_key(ts[1].name)
+    #if $suiteSessions.has_key(ts[1].name)
         <table class="desctab" cellspacing="0" cellpadding="0" width="80%">
         <tr><th>Name</th><th>State</th></tr>
-        <tr><td>${suitsSessions[$ts[1].name].state}</td><td>&nbsp;</td></tr>
+        <tr><td>${suiteSessions[$ts[1].name].state}</td><td>&nbsp;</td></tr>
         </table>
     #end if
         </div>

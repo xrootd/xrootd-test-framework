@@ -54,7 +54,7 @@ except ImportError, e:
 currentDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(currentDir)
 # Default daemon configuration
-defaultConfFile = './XrdTestHypervisor.conf'
+defaultConfFile = '/etc/XrdTest/XrdTestHypervisor.conf'
 defaultPidFile = '/var/run/XrdTestHypervisor.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestHypervisor.log'
 
@@ -125,11 +125,11 @@ class XrdTestHypervisor(Runnable):
         ''' TODO: '''
         self.clusterManager.disconnect()
 
-    def connectMaster(self, masterIp, masterPort):
+    def connectMaster(self, masterName, masterPort):
         '''
         Try to establish the connection with the test master.
 
-        @param masterIp:
+        @param masterName:
         @param masterPort:
         '''
         global currentDir
@@ -142,7 +142,7 @@ class XrdTestHypervisor(Runnable):
                                         self.config.get('security', 'keyfile'),
                                         ssl_version=ssl.PROTOCOL_TLSv1)
 
-            self.sockStream.connect((masterIp, masterPort))
+            self.sockStream.connect((socket.gethostbyname(masterName), masterPort))
         except socket.error, e:
             if e[0] == 111:
                 LOGGER.info("%s Connection from master refused: Probably " + \
@@ -196,7 +196,8 @@ class XrdTestHypervisor(Runnable):
         cluster = msg.clusterDef
         cluster.setEmulatorPath(self.config.get('virtual_machines',
                                                 'emulator_path'))
-        cluster.network.xrdTestMasterIP = self.config.get('test_master', 'ip')
+        cluster.network.xrdTestMasterIP = socket.gethostbyname( \
+                                        self.config.get('test_master', 'ip'))
         # check if cluster definition is correct on this hypervisor
         res, msg = cluster.validateDynamic()
 

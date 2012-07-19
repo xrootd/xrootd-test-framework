@@ -84,11 +84,11 @@ class WebInterface:
                     'message' : 'Welcome and begin the tests!',
                     'clusters' : self.testMaster.clusters,
                     'hypervisors': self.testMaster.hypervisors,
-                    'suitsSessions' : self.testMaster.suiteSessions,
-                    'runningSuitsUids' : self.testMaster.runningSuiteUids,
+                    'suiteSessions' : self.testMaster.suiteSessions,
+                    'runningSuiteUids' : self.testMaster.runningSuiteUids,
                     'slaves': self.testMaster.slaves,
                     'hostname': socket.gethostname(),
-                    'testSuits': self.testMaster.testSuites,
+                    'testSuites': self.testMaster.testSuites,
                     'userMsgs' : self.testMaster.userMsgs,
                     'testMaster': self.testMaster, }
         return self.disp("main.tmpl", tplVars)
@@ -97,15 +97,15 @@ class WebInterface:
         '''
         Page showing suit sessions runs.
         '''
-        tplVars = { 'title' : 'Xrd Test Master - Web Iface',
-                    'suitsSessions' : self.testMaster.suiteSessions,
-                    'runningSuitsUids' : self.testMaster.runningSuiteUids,
+        tplVars = { 'title' : 'Xrd Test Master - Web Interface',
+                    'suiteSessions' : self.testMaster.suiteSessions,
+                    'runningSuiteUids' : self.testMaster.runningSuiteUids,
                     'slaves': self.testMaster.slaves,
                     'hostname': socket.gethostname(),
-                    'testSuits': self.testMaster.testSuites,
+                    'testSuites': self.testMaster.testSuites,
                     'testMaster': self.testMaster,
                     'HTTPport' : self.config.getint('webserver', 'port')}
-        return self.disp("suits_sessions.tmpl", tplVars)
+        return self.disp("suite_sessions.tmpl", tplVars)
 
     def indexRedirect(self):
         '''
@@ -117,29 +117,33 @@ class WebInterface:
 
     def downloadScript(self, script_name):
         '''
-        Enable slave to download some script as a regular FILE from masters
-        scripts (WEBPAGE_DIR/scripts dir) and run it.
+        Enable slave to download some script as a regular file from master and 
+        run it.
+        
         @param script_name:
         '''
-        #from xml.sax.saxutils import quoteattr
-        p = self.config.get('webserver', 'webpage_dir') \
-                + os.sep + 'scripts' + os.sep + script_name
+        p = self.config.get('test-repo-remote', 'suite_defs_path')
+        
+        for i in xrange(0, len(script_name)):
+            p += os.sep + script_name[i]
 
         if os.path.exists(p):
             return serve_file(p , "application/x-download", "attachment")
         else:
             return "%s: not found at %s" % (script_name, p)
 
-    def showScript(self, script_name):
+    def showScript(self, *script_name):
         '''
-        Enable slave to view some script as TEXT from masters
-        scripts (WEBPAGE_DIR/scripts dir) and run it.
+        Enable slave to view some script as text from master and 
+        run it.
+        
         @param script_name:
-        '''
-        #from xml.sax.saxutils import quoteattr
-        p = self.config.get('webserver', 'webpage_dir') \
-                          + os.sep + 'scripts' + os.sep + \
-                          script_name
+        '''        
+        p = self.config.get('test-repo-remote', 'suite_defs_path')
+        
+        for i in xrange(0, len(script_name)):
+            p += os.sep + script_name[i]
+                          
         if os.path.exists(p):
             return serve_file(p , "text/html")
         else:

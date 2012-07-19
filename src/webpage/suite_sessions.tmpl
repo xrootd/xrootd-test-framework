@@ -12,8 +12,8 @@
 
 \$.fn.accordion.defaults.container = false;
 \$(function() {
-     #if $suitsSessions and len($suitsSessions) > 0
-        #set $testSessionsNum = len($suitsSessions)
+     #if $suiteSessions and len($suiteSessions) > 0
+        #set $testSessionsNum = len($suiteSessions)
         #for $i in range($testSessionsNum):
              #set $j = $i + 1
              \$("#acc5${j}").accordion({
@@ -32,25 +32,25 @@
 #set $testSessionsNum = 1
 #set $testCasesNum = 1
 <div style="display:block;width:95%;float:left;">
-    <h1>SUITS SESSIONS [by date]</h1>
-    #if $suitsSessions and len($suitsSessions) > 0
+    <h1>SUITE SESSIONS [by date]</h1>
+    #if $suiteSessions and len($suiteSessions) > 0
     #import copy
-    #set $revKeys = copy.copy($suitsSessions.keys())
-    #set $revKeys = sorted($revKeys, cmp=lambda x,y: cmp($suitsSessions[$y].initDate, $suitsSessions[$x].initDate))
+    #set $revKeys = copy.copy($suiteSessions.keys())
+    #set $revKeys = sorted($revKeys, cmp=lambda x,y: cmp($suiteSessions[$y].initDate, $suiteSessions[$x].initDate))
     #for $key in $revKeys
-        #set $suitSess = $suitsSessions[$key]
-        #set $htmlSuitColor = "111111"
-        #if $runningSuitsUids.has_key($suitSess.name)
-            #if $runningSuitsUids[$suitSess.name] == $suitSess.uid
-                #set $htmlSuitColor = "00bb00"
+        #set $suiteSess = $suiteSessions[$key]
+        #set $htmlSuiteColor = "111111"
+        #if $runningSuiteUids.has_key($suiteSess.name)
+            #if $runningSuiteUids[$suiteSess.name] == $suiteSess.uid
+                #set $htmlSuiteColor = "00bb00"
             #end if
         #end if
-        #if hasattr($suitSess, 'failed') and $suitSess.failed
-            #set $htmlSuitColor = "ee0000"
+        #if hasattr($suiteSess, 'failed') and $suiteSess.failed
+            #set $htmlSuiteColor = "ee0000"
         #end if
         <div id="acc5${testSessionsNum}" class="accordion">
-        <h3><a href="#" style="color:#${htmlSuitColor};">${suitSess.name} 
-        <span style="font-weight:normal;">[inited at: ${suitSess.initDate.strftime("%a %d-%m-%Y %H:%M:%S")}]</span></a></h3>
+        <h3><a href="#" style="color:#${htmlSuiteColor};">${suiteSess.name} 
+        <span style="font-weight:normal;">[inited at: ${suiteSess.initDate.strftime("%a %d-%m-%Y %H:%M:%S")}]</span></a></h3>
         <div class="inner">
 #from string import replace
 #def stageDetailsDiv($div_id, $stage)
@@ -69,13 +69,13 @@
     </table>
     </div>
 #end def
-        #if $suitSess.cases and len($suitSess.cases) > 0
+        #if $suiteSess.cases and len($suiteSess.cases) > 0
             #set $iS = 1
-            #set $init_stages=$suitSess.getTestCaseStages("suite_inited")
+            #set $init_stages=$suiteSess.getTestCaseStages("suite_inited")
             #if $init_stages and len($init_stages)
 
             <h4><a href="#"><span style="font-weight:normal;">Suite initialization</span> 
-            <span style='font-weight:normal'>[run at: ${suitSess.initDate.strftime("%H:%M:%S")}]</span></a></h4>
+            <span style='font-weight:normal'>[run at: ${suiteSess.initDate.strftime("%H:%M:%S")}]</span></a></h4>
             <div class="inner">
             #for $stage in $init_stages
                 #set $color = "#222222"
@@ -83,12 +83,12 @@
                     #set $color = "#dd0000"
                 #end if
                 <p style="color:$color;"><span style="font-size:9px;color;#000000;">${stage[3]}</span> ${stage[0]}
-                #set $div_id = "%s_ist%s_details" % ($suitSess.uid, $iS)
-                <a href="#" id="${suitSess.uid}_ist${iS}_button">see details</a></p>
+                #set $div_id = "%s_ist%s_details" % ($suiteSess.uid, $iS)
+                <a href="#" id="${suiteSess.uid}_ist${iS}_button">see details</a></p>
                 $stageDetailsDiv($div_id, $stage)
                 <script style="display:none;">
-                \$( "#${suitSess.uid}_ist${iS}_button" ).click(function() {
-                    \$( "#${suitSess.uid}_ist${iS}_details" ).dialog({
+                \$( "#${suiteSess.uid}_ist${iS}_button" ).click(function() {
+                    \$( "#${suiteSess.uid}_ist${iS}_details" ).dialog({
                         height: 900, width: \$(document).width()-50,  modal: true
                     });
                 });
@@ -97,8 +97,8 @@
             #end for
             </div>
             #end if
-        #for $tC in $suitSess.cases.itervalues()
-            #set $stages=$suitSess.getTestCaseStages($tC.uid)
+        #for $tC in $suiteSess.cases.itervalues()
+            #set $stages=$suiteSess.getTestCaseStages($tC.uid)
             <h4><a href="#"><span style="font-weight:normal;">Test Case</span> <i>${tC.name}</i> 
             <span style='font-weight:normal'>[run at: ${tC.initDate.strftime("%H:%M:%S")}]</span></a></h4>
             <div class="inner">
@@ -127,10 +127,10 @@
             </div>
             #set $testCasesNum += 1
         #end for
-            #set $final_stages=$suitSess.getTestCaseStages("suite_finalized")
+            #set $final_stages=$suiteSess.getTestCaseStages("suite_finalized")
             #if $final_stages and len($final_stages)
                 <h4><a href="#"><span style="font-weight:normal;">Suite finalization</span> 
-                <span style='font-weight:normal'>[run at: ${suitSess.initDate.strftime("%H:%M:%S")}]</span></a></h4>
+                <span style='font-weight:normal'>[run at: ${suiteSess.initDate.strftime("%H:%M:%S")}]</span></a></h4>
                 <div class="inner">
             #for $stage in $final_stages
                 #set $color = "#222222"
@@ -138,12 +138,12 @@
                     #set $color = "#dd0000"
                 #end if
                 <p style="color:$color;"><span style="font-size:9px;color;#000000;">${stage[3]}</span> ${stage[0]}
-                #set $div_id = "%s_ist%s_details" % ($suitSess.uid, $iS)
-                <a href="#" id="${suitSess.uid}_ist${iS}_button">see details</a></p>
+                #set $div_id = "%s_ist%s_details" % ($suiteSess.uid, $iS)
+                <a href="#" id="${suiteSess.uid}_ist${iS}_button">see details</a></p>
                 $stageDetailsDiv($div_id, $stage)
                 <script style="display:none;">
-                \$( "#${suitSess.uid}_ist${iS}_button" ).click(function() {
-                    \$( "#${suitSess.uid}_ist${iS}_details" ).dialog({
+                \$( "#${suiteSess.uid}_ist${iS}_button" ).click(function() {
+                    \$( "#${suiteSess.uid}_ist${iS}_details" ).dialog({
                         height: 900, width: 1152,  modal: true
                     });
                 });

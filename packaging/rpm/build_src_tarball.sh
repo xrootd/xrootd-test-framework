@@ -32,7 +32,7 @@ done
 cp $CP_OPTS ${SRC}/src/webpage ${DEST}/src
 
 cp $CP_OPTS ${SRC}/examples/clusters/*.py ${DEST}/examples/clusters
-cp $CP_OPTS ${SRC}/examples/test-suites/*.py ${DEST}/examples/test-suites
+cp -R $CP_OPTS ${SRC}/examples/test-suites/ ${DEST}/examples/test-suites
 
 cp $CP_OPTS ${SRC}/src/XrdTest/ ${DEST}/src
 

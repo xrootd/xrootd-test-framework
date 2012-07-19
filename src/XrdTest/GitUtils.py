@@ -32,7 +32,7 @@ LOGGER = get_logger(__name__)
 import os
 from Utils import execute
 
-def sync_remote_git(config):
+def sync_remote_git(repo, config):
     '''
     Fetch the status of a remote git repository for new commits. If
     new commits, pull the new changes.
@@ -40,14 +40,15 @@ def sync_remote_git(config):
     Need key-based SSH authentication for this method to work. Also, on AFS
     systems like lxplus, a valid kerberos ticket is needed.
     
+    @param repo: 
     @param config: configuration file containing repository information
     '''
-    user = config.get('remote_git_defs', 'user')
-    host = config.get('remote_git_defs', 'host')
-    remote_repo = config.get('remote_git_defs', 'remote_repo')
-    local_repo = config.get('remote_git_defs', 'local_repo')
-    local_branch = config.get('remote_git_defs', 'local_branch')
-    remote_branch = config.get('remote_git_defs', 'remote_branch')
+    user = config.get(repo, 'user')
+    host = config.get(repo, 'host')
+    remote_repo = config.get(repo, 'remote_repo')
+    local_repo = config.get(repo, 'local_repo')
+    local_branch = config.get(repo, 'local_branch')
+    remote_branch = config.get(repo, 'remote_branch')
     
     # Clone the repo if we don't have it yet.
     if not os.path.exists(local_repo):
@@ -99,8 +100,8 @@ def git_clone(user, host, remote_repo, local_repo, cwd):
     
     @param user: the username of the owner of the repository to clone.
     @param host: the name/address of the remote host.
-    @param remote_repo: the repository path on the remote host. 
-    @param local_repo: the local path in which to clone the new repo.
+    @param remote_repo: the repository repo on the remote host. 
+    @param local_repo: the local repo in which to clone the new repo.
     @param cwd: the working directory in which to execute.
     '''
     os.mkdir(local_repo)

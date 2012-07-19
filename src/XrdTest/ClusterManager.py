@@ -29,7 +29,7 @@
 #         information of all created clusters during the session and can remove
 #         all of them on demand - come back to state before it began.
 #-------------------------------------------------------------------------------
-from XrdTest.Utils import get_logger
+from Utils import get_logger
 LOGGER = get_logger(__name__)
 
 import sys

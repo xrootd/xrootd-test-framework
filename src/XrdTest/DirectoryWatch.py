@@ -55,7 +55,11 @@ class DirectoryWatch(object):
     IN_MODIFY = 0x00000002L                 # was modified
     mask = IN_DELETE | IN_CREATE | IN_MOVED | IN_MODIFY
     
-    def __init__(self, config, callback, watch_type=None):
+    def __init__(self, repo, config, callback, watch_type=None):
+        '''
+        TODO:
+        '''
+        self.repo = repo
         self.config = config
         self.callback = callback
         self.watch_type = watch_type
@@ -66,7 +70,7 @@ class DirectoryWatch(object):
     def watch(self):
         self.watch_type()
         
-    def watch_local(self):
+    def watch_localfs(self):
         '''
         Monitor a local directory for changes.
         '''
@@ -82,10 +86,10 @@ class DirectoryWatch(object):
         clusterNotifier.start()
         suiteNotifier.start()
     
-        wm.add_watch(self.config.get('local_example_defs', \
+        wm.add_watch(self.config.get(self.repo, \
                            'cluster_defs_path'), \
                            self.mask, rec=True)
-        wm2.add_watch(self.config.get('local_example_defs', \
+        wm2.add_watch(self.config.get(self.repo, \
                            'suite_defs_path'), \
                            self.mask, rec=True)
         
@@ -95,7 +99,7 @@ class DirectoryWatch(object):
         '''
         sched = Scheduler()
         sched.start()
-        sched.add_interval_job(sync_remote_git, seconds=30, args=[self.config])
+        sched.add_interval_job(sync_remote_git, seconds=30, args=[self.repo, self.config])
         
         wm = WatchManager()
         wm2 = WatchManager()
@@ -109,10 +113,10 @@ class DirectoryWatch(object):
         clusterNotifier.start()
         suiteNotifier.start()
     
-        wm.add_watch(self.config.get('remote_git_defs', \
+        wm.add_watch(self.config.get(self.repo, \
                            'cluster_defs_path'), \
                            self.mask, rec=True)
-        wm2.add_watch(self.config.get('remote_git_defs', \
+        wm2.add_watch(self.config.get(self.repo, \
                            'suite_defs_path'), \
                            self.mask, rec=True)
 

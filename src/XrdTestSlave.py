@@ -59,7 +59,7 @@ except ImportError, e:
 currentDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(currentDir)
 #Default daemon configuration
-defaultConfFile = './XrdTestSlave.conf'
+defaultConfFile = '/etc/XrdTest/XrdTestSlave.conf'
 defaultPidFile = '/var/run/XrdTestSlave.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestSlave.log'
 
@@ -160,7 +160,7 @@ class XrdTestSlave(Runnable):
 
         return res
 
-    def connectMaster(self, masterIp, masterPort):
+    def connectMaster(self, masterName, masterPort):
         ''' TODO: '''
         global currentDir
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -172,7 +172,8 @@ class XrdTestSlave(Runnable):
                                         self.config.get('security', 'keyfile'),
                                         ssl_version=ssl.PROTOCOL_TLSv1)
 
-            self.sockStream.connect((masterIp, masterPort))
+            LOGGER.info('Connecting to master: %s' % masterName)
+            self.sockStream.connect((socket.gethostbyname(masterName), masterPort))
         except socket.error, e:
             if e[0] == 111:
                 LOGGER.info("Connection from master refused.")
@@ -325,6 +326,9 @@ class XrdTestSlave(Runnable):
 
     def run(self):
         ''' TODO: '''
+        # re-up logging level for logfile
+        LOGGER.setLevel(level=logging.DEBUG)
+    
         sock = self.connectMaster(self.config.get('test_master', 'ip'),
                            self.config.getint('test_master', 'port'))
         if not sock:
@@ -400,9 +404,6 @@ def main():
         except (DaemonException, RuntimeError, ValueError, IOError), e:
             LOGGER.error(str(e))
             sys.exit(1)
-    
-    # re-up logging level for logfile
-    LOGGER.setLevel(level=logging.DEBUG)
 
     # run test master in standard mode. Used for debugging
     if not options.backgroundMode:

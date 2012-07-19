@@ -28,6 +28,7 @@
 #          * accepts connections from Slaves and Hypervisors and dispatches 
 #            commands to them
 #          * is run as a system service, configured via batch of config files
+#
 #-------------------------------------------------------------------------------
 from XrdTest.Utils import get_logger
 LOGGER = get_logger(__name__)
@@ -69,7 +70,7 @@ except ImportError, e:
 currentDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(currentDir)
 # Default daemon configuration
-defaultConfFile = './XrdTestMaster.conf'
+defaultConfFile = '/etc/XrdTest/XrdTestMaster.conf'
 defaultPidFile = '/var/run/XrdTestMaster.pid'
 defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
 
@@ -93,7 +94,7 @@ class MasterEvent(object):
     M_SLAVE_MSG = 5
     M_JOB_ENQUEUE = 6
     M_RELOAD_CLUSTER_DEF = 7
-    M_RELOAD_SUIT_DEF = 8
+    M_RELOAD_SUITE_DEF = 8
 
     def __init__(self, e_type, e_data, msg_sender_addr=None):
         self.type = e_type
@@ -134,8 +135,6 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         '''
         Handle new incoming connection and keep it to receive messages.
         '''
-        global LOGGER
-
         self.sockStream = ssl.wrap_socket(self.request, server_side=True,
                                           certfile=\
                                 self.server.config.get('security', 'certfile'),
@@ -398,7 +397,7 @@ class XrdTestMaster(Runnable):
     # Global configuration for master
     config = None
     # Priority queue (locking) with incoming events, i.a. incoming messages
-    # Refered to as: main events queue.
+    # Referred to as: main events queue.
     recvQueue = PriorityBlockingQueue()
     # Connected hypervisors, keys: address tuple, values: Hypervisor object
     hypervisors = {}
@@ -416,12 +415,13 @@ class XrdTestMaster(Runnable):
     # object
     clustersHypervisor = {}
     # Definitions of test suits loaded from file. Key: testSuite.name 
-    # Value: testSuite.definition. Refreshed any time definitions chage.
+    # Value: testSuite.definition. Refreshed any time definitions chagne.
     testSuites = {}
+    # Definitions of all directories being monitored for changes.
+    watchedDirectories = {}
     # Jobs to run immediately if possible. They are put here by scheduler.
     pendingJobs = []
-    # The same as above, for debugging. Keeps textual representation
-    # of jobs.
+    # The same as above, for debugging. Keeps textual representation of jobs.
     pendingJobsDbg = []
     # message logging system
     userMsgs = []
@@ -434,7 +434,7 @@ class XrdTestMaster(Runnable):
     def __init__(self, config):
         self.config = config
         self.suiteSessions = shelve.open(\
-                             self.config.get('tests', 'suite_sessions_file'))
+                             self.config.get('general', 'suite_sessions_file'))
 
     def retrieveSuiteSession(self, suite_name):
         '''
@@ -466,100 +466,58 @@ class XrdTestMaster(Runnable):
             evt = MasterEvent(MasterEvent.M_RELOAD_SUITE_DEF, dirEvent)
         self.recvQueue.put((MasterEvent.PRIO_IMPORTANT, evt))
 
-    def loadExampleDefinitions(self):
+    def loadDefinitions(self):
         '''
-        Load all definitions of example clusters and test suits at once. 
-        If any definition is invalid, raise exceptions.
+        Load all definitions of example clusters and test suites at once. 
+        If any definitions are invalid, raise exceptions.
         '''
-        LOGGER.info("Loading example definitions...")
+        LOGGER.info("Loading definitions...")
 
-        try:
-            # load example cluster definitions
-            clusters = loadClustersDefs(\
-                        self.config.get('local_example_defs', 'cluster_defs_path'))
-            for clu in clusters:
-                self.clusters[clu.name] = clu
-        except ClusterManagerException, e:
-            LOGGER.error("ClusterManager Exception: %s" % e)
-            sys.exit()
-
-        try:
-            # load example test suite definitions
-            testSuites = loadTestSuiteDefs(\
-                        self.config.get('local_example_defs', 'suite_defs_path'))
-            for ts in testSuites:
-                ts.checkIfDefComplete(self.clusters)
-                self.testSuites[ts.name] = ts
-        except TestSuiteException, e:
-            LOGGER.error("Test Suite Exception: %s" % e)
-            sys.exit()
-
-        # add jobs to scheduler if it's enabled
-        if self.config.getint('scheduler', 'enabled') == 1:
-            for ts in self.testSuites.itervalues():
-                # if there is no scheduling expression defined in suite, continue
-                if not ts.schedule:
-                    continue
-                try:
-                    ts.jobFun = self.executeJob(ts.name)
-                    self.sched.add_cron_job(ts.jobFun, \
-                                             **(ts.schedule))
-
-                    LOGGER.info("Adding scheduler job for test suite %s at %s" % \
-                                (ts.name, str(ts.schedule)))
-                except Exception, e:
-                    LOGGER.error(("Error while scheduling job " + \
-                               "for test suite %s: %s") % (ts.name, e))
-                    sys.exit()
-
-    def loadRemoteDefinitions(self):
-        '''
-        Load all definitions of remote clusters and test suits at once. 
-        If any definition is invalid, raise exceptions.
-        '''
-        LOGGER.info("Loading remote definitions...")
-
-        # Pull remote git repo
-        sync_remote_git(self.config)
-
-        try:      
-            # load remote cluster definitions from git repo
-            clusters = loadClustersDefs(\
-                        self.config.get('remote_git_defs', 'cluster_defs_path'))
-            for clu in clusters:
-                self.clusters[clu.name] = clu    
-        except ClusterManagerException, e:
-            LOGGER.error("ClusterManager Exception: %s" % e)
-            sys.exit()
-
-        try:           
-            # load remote test suite definitions from git repo
-            testSuites = loadTestSuiteDefs(\
-                        self.config.get('remote_git_defs', 'suite_defs_path'))
-            for ts in testSuites:
-                ts.checkIfDefComplete(self.clusters)
-                self.testSuites[ts.name] = ts
-        except TestSuiteException, e:
-            LOGGER.error("Test Suite Exception: %s" % e)
-            sys.exit()
-
-        # add jobs to scheduler if it's enabled
-        if self.config.getint('scheduler', 'enabled') == 1:
-            for ts in self.testSuites.itervalues():
-                # if there is no scheduling expression defined in suite, continue
-                if not ts.schedule:
-                    continue
-                try:
-                    ts.jobFun = self.executeJob(ts.name)
-                    self.sched.add_cron_job(ts.jobFun, \
-                                             **(ts.schedule))
-
-                    LOGGER.info("Adding scheduler job for test suite %s at %s" % \
-                                (ts.name, str(ts.schedule)))
-                except Exception, e:
-                    LOGGER.error(("Error while scheduling job " + \
-                               "for test suite %s: %s") % (ts.name, e))
-                    sys.exit()
+        for repo in self.config.get('general', 'test-repos').split(','): 
+            repo = 'test-repo-' + repo
+            
+            # Pull remote git repo if necessary
+            if self.config.get(repo, 'type') == 'git':
+                sync_remote_git(repo, self.config)
+            
+            try:
+                # load example cluster definitions
+                clusters = loadClustersDefs(\
+                            self.config.get(repo, 'cluster_defs_path'))
+                for clu in clusters:
+                    self.clusters[clu.name] = clu
+            except ClusterManagerException, e:
+                LOGGER.error("ClusterManager Exception: %s" % e)
+                sys.exit()
+    
+            try:
+                # load example test suite definitions
+                testSuites = loadTestSuiteDefs(\
+                            self.config.get(repo, 'suite_defs_path'))
+                for ts in testSuites:
+                    ts.checkIfDefComplete(self.clusters)
+                    self.testSuites[ts.name] = ts
+            except TestSuiteException, e:
+                LOGGER.error("Test Suite Exception: %s" % e)
+                sys.exit()
+    
+            # add jobs to scheduler if it's enabled
+            if self.config.getint('scheduler', 'enabled') == 1:
+                for ts in self.testSuites.itervalues():
+                    # if there is no scheduling expression defined in suite, continue
+                    if not ts.schedule:
+                        continue
+                    try:
+                        ts.jobFun = self.executeJob(ts.name)
+                        self.sched.add_cron_job(ts.jobFun, \
+                                                 **(ts.schedule))
+    
+                        LOGGER.info("Adding scheduler job for test suite %s at %s" % \
+                                    (ts.name, str(ts.schedule)))
+                    except Exception, e:
+                        LOGGER.error(("Error while scheduling job " + \
+                                   "for test suite %s: %s") % (ts.name, e))
+                        sys.exit()
     
     def handleSuiteDefinitionChanged(self, dirEvent):
         '''
@@ -1136,7 +1094,7 @@ class XrdTestMaster(Runnable):
         self.pendingJobsDbg.append("finalizeSuite(%s)" % test_suite_name)
 
         for clustName in ts.clusters:
-            j = Job(Job.STOP_CLUSTER, groupId, (clustName, test_suite_name))
+            j = Job(Job.STOP_CLUSTER, groupId, clustName)
             self.pendingJobs.append(j)
             self.pendingJobsDbg.append("stopCluster(%s)" % clustName)
 
@@ -1220,7 +1178,7 @@ class XrdTestMaster(Runnable):
                             self.pendingJobsDbg = self.pendingJobsDbg[2:]
                             # self.startJobs()
                             return
-                    if self.stopCluster(j.args[0]):
+                    if self.stopCluster(j.args):
                         self.pendingJobs[0].state = Job.S_STARTED
                 else:
                     LOGGER.error("Job %s unrecognized" % j.job)
@@ -1525,24 +1483,12 @@ class XrdTestMaster(Runnable):
         server_thread.daemon = True
         server_thread.start()
 
-        # Start schduler if it's enabled in config file
+        # Start scheduler if it's enabled in config file
         if self.config.getint('scheduler', 'enabled') == 1:
             self.sched.start()
         else:
             LOGGER.info("SCHEDULER is disabled.")
-
-        self.loadExampleDefinitions()
-        self.loadRemoteDefinitions()
-
-        # Prepare notifiers for cluster and test suite definition 
-        # directory monitoring (local and remote)
-        dw_local = DirectoryWatch(self.config, self.fireReloadDefinitionsEvent, \
-                                  DirectoryWatch.watch_local)
-        dw_local.watch()
-        dw_remote = DirectoryWatch(self.config, self.fireReloadDefinitionsEvent, \
-                                  DirectoryWatch.watch_remote_git)
-        dw_remote.watch()
-        
+            
         # Configure and start WWW Server - cherrypy
         cherrypyCfg = {
                         '/webpage/js': {
@@ -1577,14 +1523,31 @@ class XrdTestMaster(Runnable):
             if server:
                 server.shutdown()
             sys.exit(1)
+            
+        # Load cluster and test suite definitions
+        self.loadDefinitions()
+
+        # Prepare notifiers for cluster and test suite definition 
+        # directory monitoring (local and remote)
+        for repo in self.config.get('general', 'test-repos').split(','):
+            repo = 'test-repo-' + repo
+            
+            if self.config.get(repo, 'type') == 'localfs':
+                self.watchedDirectories[repo] = DirectoryWatch(repo, self.config, \
+                        self.fireReloadDefinitionsEvent, DirectoryWatch.watch_localfs)
+            elif self.config.get(repo, 'type') == 'git':
+                self.watchedDirectories[repo] = DirectoryWatch(repo, self.config, \
+                        self.fireReloadDefinitionsEvent, DirectoryWatch.watch_remote_git)
+            
+            self.watchedDirectories[repo].watch()
 
         # Process events incoming to the system MasterEvents
         self.procEvents()
 
         # if here - program is ending
+        for wd in self.watchedDirectories:
+            wd.stop()
         # synchronize suits sessions list with HDD storage and close
-        dw_local.stop()
-        #dw_remote.stop()
         xrdTestMaster.suiteSessions.close()
 
 class UserInfoHandler(logging.Handler):

@@ -86,12 +86,12 @@ class Network(object):
   <dns>
       <txt name="xrd.test" value="Welcome to xrd testing framework domain." />
       <host ip="%(xrdTestMasterIP)s">
-          <hostname>master.xrd.test</hostname>
+          <hostname>vagabond.cern.ch</hostname>
       </host>
       %(dnshostsxml)s
   </dns>
   <bridge name="%(bridgename)s" />
-  <forward mode='nat'/>
+  <forward />
   <ip address="%(ip)s" netmask="%(netmask)s">
     <dhcp>
       <range start="%(rangestart)s" end="%(rangeend)s" />

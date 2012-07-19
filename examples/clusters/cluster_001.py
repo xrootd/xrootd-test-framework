@@ -7,7 +7,7 @@ def getCluster():
     # Used commonly in network definition and hosts definition
     #---------------------------------------------------------------------------
     cluster.name = 'cluster_001' 
-    network_name = 'net_001' 
+    network_name = 'net_001'
     
     #---------------------------------------------------------------------------
     # Network definition

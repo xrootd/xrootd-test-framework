@@ -42,6 +42,7 @@ LOGGER = get_logger(__name__)
 
 import os
 import sys
+import urllib2
 
 
 class TestSuiteException(Exception):
@@ -243,18 +244,18 @@ def extractSuiteName(path):
 
     return (modName, ext, modPath, modFile)
 
-def loadTestCasesDefs(filePath):
+def loadTestCasesDefs(path):
     '''
     Loads TestCase definitions from .py file. Search for getTestCases function
     in the file and expects list of testCases to be returned.
 
-    @param filePath: path for .py files, storing cluster definitions
+    @param path: path for .py files, storing cluster definitions
     '''
     testCases = {}
 
-    (modName, ext, modPath, modFile) = extractSuiteName(filePath)
+    (modName, ext, modPath, modFile) = extractSuiteName(path)
 
-    if os.path.isfile(filePath) and ext == '.py':
+    if os.path.isfile(path) and ext == '.py':
         mod = None
         try:
             if not modPath in sys.path:
@@ -270,7 +271,14 @@ def loadTestCasesDefs(filePath):
             if objs and getattr(objs, '__iter__', False):
                 for obj in objs:
                     obj.definitionFile = modFile
-                    #after load, check if cluster definition is correct
+                    
+                    # Resolve script URLs into actual text
+                    root_path = '/'.join(path.split(os.sep)[:-1])
+                    obj.initialize = resolveScript(obj.initialize, root_path) 
+                    obj.run = resolveScript(obj.run, root_path) 
+                    obj.finalize = resolveScript(obj.finalize, root_path)
+            
+                    #after load, check if definition is correct
                     obj.validateStatic()
                 testCases[obj.name] = obj
             else:
@@ -319,6 +327,12 @@ def loadTestSuiteDef(path):
                   " is not the same as filename <test_suite_name>.py") % \
                                          (obj.name, modFile))
             obj.definitionFile = modFile
+            
+            # Resolve script URLs into actual text
+            root_path = '/'.join(path.split(os.sep)[:-1])
+            obj.initialize = resolveScript(obj.initialize, root_path) 
+            obj.finalize = resolveScript(obj.finalize, root_path)
+            
             #load TestCases
             obj.testCases = loadTestCasesDefs(fp)
             #after load, check if testSuite definition is correct
@@ -365,3 +379,27 @@ def loadTestSuiteDefs(path):
                 raise e
 
     return testSuites
+
+def resolveScript(definition, root_path):
+    '''
+    TODO:
+    '''
+    # If already a bash script, nothing to do
+    if definition.startswith('#!/bin/bash'):
+        return
+    # Absolute file path
+    elif definition.startswith('file:///'):
+        with open(definition[7:], 'r') as f:
+            return f.read()
+    # Relative file path
+    elif definition.startswith('file://'):
+        with open(root_path + os.sep + definition[7:], 'r') as f:
+            return f.read()
+    # URL
+    elif definition.startswith('http://'):
+        return urllib2.urlopen(definition).read()
+    
+    else:
+        raise TestSuiteException("Unknown script definition type: %s" % definition)
+
+

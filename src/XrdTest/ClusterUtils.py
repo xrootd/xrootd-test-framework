@@ -244,17 +244,20 @@ class Host(object):
     </memballoon>
   </devices>
 </domain>
+
 """
 
     def __init__(self, name="", ip="", mac="", net="", \
                  diskImage=None, ramSize="", arch="", \
-                 emulatorPath="", uuid=""):
+                 emulatorPath="", uuid="", blockSize="", blockCount=""):
         self.uuid = uuid
         self.name = name
         self.ip = ip
         self.mac = mac
         self.diskImage = diskImage
         self.ramSize = ramSize
+        self.blockSize = blockSize
+        self.blockCount = blockCount
         self.arch = arch
         self.net = net
         self.emulatorPath = emulatorPath

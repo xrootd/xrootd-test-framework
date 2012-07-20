@@ -38,7 +38,7 @@ import libvirt
 
 from ClusterUtils import ClusterManagerException
 from ClusterUtils import ERR_CONNECTION, ERR_ADD_HOST, ERR_CREATE_NETWORK
-from Utils import SafeCounter
+from Utils import SafeCounter, execute
 from copy import deepcopy
 from tempfile import NamedTemporaryFile
 from libvirt import libvirtError
@@ -140,6 +140,7 @@ class ClusterManager:
         Defines virtual host in a cluster using given host object,
         not starting it. Host with the given name may be defined once
         in the system. Stores hosts objects in class property self.hosts.
+        
         @param hostObj: ClusterManager.Host object
         @raise ClusterManagerException: when fails
         @return: host object from libvirt lib
@@ -172,7 +173,7 @@ class ClusterManager:
         try:
             conn = self.virtConnection
             host = conn.defineXML(hostObj.xmlDesc)
-            
+
             # add host definition objects to dictionary
             # key: host.uname - unique name
             self.hosts[hostObj.uname] = (host, tmpFile, hostObj)
@@ -412,6 +413,14 @@ class ClusterManager:
                     raise ClusterManagerException("Error during " + \
                           "creation of machine %s: %s. %s" % \
                           (h.uname, e, innerErrMsg))
+                    
+                try:
+                    for host in cluster.hosts:
+                        LOGGER.info('Attaching storage disk to machine %s' % host.uname)
+                        self.attachDisk(host.uname, host.blockSize, host.blockCount)
+                        LOGGER.info('Attached storage disk.')
+                except ClusterManagerException, e:
+                    LOGGER.error(e)
             else:
                 LOGGER.info("No hosts in cluster defined.")
         except ClusterManagerException, e:
@@ -443,3 +452,13 @@ class ClusterManager:
         else:
             del self.clusters[clusterName]
             
+    def attachDisk(self, host, blockSize, blockCount):
+        execute('dd if=/dev/zero of=/data/XrdTest/images/%s bs=%s count=%s' % 
+                (host + '_disk', blockSize, blockCount), '/data/XrdTest/images')
+        execute('mkfs.ext4 -F /data/XrdTest/images/%s' % host + '_disk', '/data/XrdTest/images')
+        output = execute('virsh attach-disk %s /data/XrdTest/images/%s vdb' % 
+                (host, host + '_disk'), '/data/XrdTest/images')
+        if 'error' in output:
+            raise ClusterManagerException('Attaching disk failed: %s' % output)
+        
+    

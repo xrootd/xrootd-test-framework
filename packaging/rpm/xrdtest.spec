@@ -77,9 +77,9 @@ cp -r src/webpage %{buildroot}%{_datadir}/XrdTest
 chmod --recursive 755 %{buildroot}%{_datadir}/XrdTest/webpage
 
 # temp locations
-mkdir -p %{_tmppath}/XrdTest
-mkdir -p %{_tmppath}/XrdTest/images
-chmod --recursive 755 %{_tmppath}/XrdTest/
+mkdir -p %{buildroot}/data/XrdTest
+mkdir -p %{buildroot}/data/XrdTest/images
+chmod --recursive 777 %{buildroot}/data/XrdTest/
 
 #-------------------------------------------------------------------------------
 # XrdTestLib
@@ -163,6 +163,7 @@ Xrd Test Hypervisor is component of XrdTestFramework. It manages virtual machine
 %{_sbindir}/XrdTestHypervisor.py
 %{_initrddir}/xrdtesthypervisord
 %{_localstatedir}/log/XrdTest
+/data/XrdTest/images
 
 %clean
 [ "x%{buildroot}" != "x/" ] && rm -rf %{buildroot}

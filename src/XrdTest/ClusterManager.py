@@ -115,7 +115,7 @@ class ClusterManager:
         '''
         (host, cacheImg, hostObj) = self.hosts[huName]
 
-        dip = self.clusters[hostObj.clusterName].defaultHost.diskImage
+        dip = self.clusters[hostObj.clusterName].defaultHost.bootImage
         LOGGER.info(("Start copying %s (for %s) to cache image %s") \
                     % (dip, hostObj.uname, cacheImg))
         try:
@@ -153,22 +153,22 @@ class ClusterManager:
 
         for h in self.hosts.itervalues():
             # get disk image path from cluster definition
-            cip = self.clusters[host.clusterName].defaultHost.diskImage
+            cip = self.clusters[host.clusterName].defaultHost.bootImage
             # if machine has any disk image given?
-            if h[2].runningDiskImage == host.diskImage or \
-                (not host.diskImage and h[2].runningDiskImage == cip):
+            if h[2].runningDiskImage == host.bootImage or \
+                (not host.bootImage and h[2].runningDiskImage == cip):
                 return h[0]
 
         cacheImg = None
-        if not host.diskImage:
+        if not host.bootImage:
             # first, copy the original disk image
             cacheImg = '%s/%s.img.cache' % (self.cacheImagesDir, host.uname)
             host.runningDiskImage = cacheImg
         else:
             # machine uses ogirinal source image
             LOGGER.info(("Defining machine %s using ORIGINAL IMAGE %s") \
-                        % (host.uname, host.diskImage))
-            host.runningDiskImage = host.diskImage
+                        % (host.uname, host.bootImage))
+            host.runningDiskImage = host.bootImage
 
         self.hosts[host.uname] = None
         try:
@@ -374,18 +374,18 @@ class ClusterManager:
                     self.defineHost(h)
                     waitingForCreate.append(h.uname)
 
-                    if h.diskImage:
+                    if h.bootImage:
                         # machine uses original image
                         LOGGER.info("Using original image %s for machine %s." % \
-                                    (h.diskImage, h.uname))
-                    elif h.cacheImg:
+                                    (h.bootImage, h.uname))
+                    elif h.cacheBootImage:
                         # machine uses cached image
                         LOGGER.info("Using cached image for machine %s." % \
                                     (h.uname))
                         if not os.path.exists(self.cacheImagesDir + os.sep + h.uname + '.img.cache'):
                             # make a copy from original image
                             LOGGER.info("No cached image exists for machine %s. Copying from %s" % \
-                                        (h.uname, cluster.defaultHost.diskImage))
+                                        (h.uname, cluster.defaultHost.bootImage))
                             sys.setcheckinterval(500)
                             needCopy += 1
                             # create and start thread copying given virtual machine
@@ -397,7 +397,7 @@ class ClusterManager:
                     else:
                         # make a copy from original image
                         LOGGER.info("Copying image %s for machine %s." % \
-                                    (cluster.defaultHost.diskImage, h.uname))
+                                    (cluster.defaultHost.bootImage, h.uname))
                         sys.setcheckinterval(500)
                         needCopy += 1
                         # create and start thread copying given virtual machine
@@ -434,9 +434,7 @@ class ClusterManager:
                     
                 try:
                     for host in cluster.hosts:
-                        LOGGER.info('Attaching storage disk to machine %s' % host.uname)
-                        self.attachDisk(host.uname, host.storageSize)
-                        LOGGER.info('Attached storage disk.')
+                        self.attachDisks(host)
                 except ClusterManagerException, e:
                     LOGGER.error(e)
             else:
@@ -470,7 +468,18 @@ class ClusterManager:
         else:
             del self.clusters[clusterName]
             
-    def attachDisk(self, host, diskSize):
+    def attachDisks(self, host):
+
+        if len(host.disks):
+            LOGGER.info('Attaching storage disks to machine %s' % host.uname)
+            for disk in host.disks:
+                try:
+                    self.attachDisk(host.uname, disk.name, disk.size, disk.cache)
+                    LOGGER.info('Attached storage disk.')
+                except ClusterManagerException, e:
+                    LOGGER.error(e)
+            
+    def attachDisk(self, host, diskName, diskSize, cache):
         ''' 
         TODO:
         '''
@@ -478,14 +487,18 @@ class ClusterManager:
 #                (host + '_disk', blockSize, blockCount), '/data/XrdTest/images')
 
         root = '/var/lib/libvirt/images/XrdTest'
-
-        with open('%s/%s_disk' % (root, host), 'w') as f:
-            f.truncate(int(diskSize))
         
-        execute('mkfs.ext4 -F %s/%s' % (root, host) + '_disk', root)
-        output = execute('virsh attach-disk %s %s/%s vdb' % 
-                (host, root, host + '_disk'), root)
-        if 'error' in output:
-            raise ClusterManagerException('Attaching disk failed: %s' % output)
+        if not cache or not os.path.exists('%s/%s_%s' % (root, host, diskName)):
+            LOGGER.info('Creating storage disk %s_%s' % (host, diskName))
+            with open('%s/%s_%s' % (root, host, diskName), 'w') as f:
+                f.truncate(int(diskSize))
+            execute('mkfs.ext4 -F %s/%s_%s' % (root, host, diskName), root)
+        else:   
+            output = execute('virsh attach-disk %s %s/%s_%s vdb' % 
+                    (host, root, host, diskName), root)
+            if 'error' in output:
+                raise ClusterManagerException('Attaching disk failed: %s' % output)
+
+            
         
     

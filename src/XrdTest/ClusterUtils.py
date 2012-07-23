@@ -247,23 +247,22 @@ class Host(object):
 
 """
 
-    def __init__(self, name="", ip="", mac="", net="", \
-                 diskImage=None, ramSize="", arch="", \
-                 emulatorPath="", uuid="", storageSize='', cacheImg=True):
+    def __init__(self, name="", ip="", mac="", net="", ramSize="", arch="", \
+                 bootImage=None, cacheBootImage=True, emulatorPath="", uuid=""):
         self.uuid = uuid
         self.name = name
         self.ip = ip
         self.mac = mac
-        self.diskImage = diskImage
         self.ramSize = ramSize
-        self.storageSize = storageSize
-        self.cacheImg = cacheImg
         self.arch = arch
+        self.bootImage = bootImage
+        self.cacheBootImage = cacheBootImage
         self.net = net
         self.emulatorPath = emulatorPath
 
         #filled automatically
         self.clusterName = ""
+        self.disks = {}
         self.runningDiskImage = ""
 
         # private properties
@@ -288,6 +287,13 @@ class Host(object):
         self.__xmlDesc = self.xmlDomainPattern % values
 
         return self.__xmlDesc
+
+class Disk(object):
+    
+    def __init__(self, name, size, cache=True):
+        self.name = name
+        self.size = size
+        self.cache = cache
 
 class Cluster(Utils.Stateful):
 
@@ -319,11 +325,6 @@ class Cluster(Utils.Stateful):
         self.info = None
 
         self.defaultHost = Host()
-        self.defaultHost.diskImage = None
-        self.defaultHost.arch = 'x86_64'
-        self.defaultHost.ramSize = '524288'
-        self.defaultHost.net = None
-        self.defaultHost.storageSize='59055800320'
         
         self.__network = None
 
@@ -342,11 +343,9 @@ class Cluster(Utils.Stateful):
             host.ramSize = self.defaultHost.ramSize
         if not hasattr(host, "net") or not host.net:
             host.net = self.defaultHost.net
-        if not hasattr(host, "storageSize") or not host.storageSize:
-            host.storageSize = self.defaultHost.storageSize
-        if not (hasattr(host, "diskImage") or host.diskImage) \
-            or not (hasattr(host, "diskImage") or self.defaultHost.diskImage):
-            raise ClusterManagerException(('Nor machine %s definition nor ' + \
+        if not (hasattr(host, "bootImage") or host.bootImage) \
+            or not (hasattr(host, "bootImage") or self.defaultHost.bootImage):
+            raise ClusterManagerException(('Machine %s definition nor ' + \
                                            'cluster %s has disk image ' + \
                                           'defined') % (host.name, self.name))
         host.clusterName = self.name
@@ -429,13 +428,13 @@ class Cluster(Utils.Stateful):
         '''
         if self.hosts:
             for h in self.hosts:
-                c1 = (h.diskImage and not os.path.exists(h.diskImage))
-                c2 = (self.defaultHost.diskImage and \
-                      not os.path.exists(self.defaultHost.diskImage))
+                c1 = (h.bootImage and not os.path.exists(h.bootImage))
+                c2 = (self.defaultHost.bootImage and \
+                      not os.path.exists(self.defaultHost.bootImage))
                 if c1 or c2:
                     return (False, ("One of disk images %s, %s" + \
                                     "has to exist") % \
-                                    (h.diskImage, self.defaultHost.diskImage))
+                                    (h.bootImage, self.defaultHost.bootImage))
 
         return (True, "")
 

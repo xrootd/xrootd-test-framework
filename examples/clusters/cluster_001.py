@@ -20,13 +20,14 @@ def getCluster():
     net.DHCPRange = ('192.168.127.2', '192.168.127.254')
 
     h1 = Host('slave1', '192.168.127.3', "52:54:00:65:44:65", ramSize='1048576', 
-              arch='x86_64', net="net_001", blockSize="100M", blockCount="50")
+              arch='x86_64', net="net_001", storageSize='59055800320')
     h2 = Host('slave2', '192.168.127.4', "52:54:00:65:44:66", ramSize='1048576', 
-              arch='x86_64', net="net_001", blockSize="100M", blockCount="50")
+              arch='x86_64', net="net_001", storageSize='59055800320')
     h3 = Host('slave3', '192.168.127.5', "52:54:00:65:44:67", ramSize='1048576', 
-              arch='x86_64', net="net_001", blockSize="100M", blockCount="50")
+              arch='x86_64', net="net_001", storageSize='59055800320', cacheImg=False)
+    
  
-    hosts = [h1, h2, h3]
+    hosts = [h1]
     net.addHosts(hosts)
     
     cluster.network = net

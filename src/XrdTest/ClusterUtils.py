@@ -249,15 +249,15 @@ class Host(object):
 
     def __init__(self, name="", ip="", mac="", net="", \
                  diskImage=None, ramSize="", arch="", \
-                 emulatorPath="", uuid="", blockSize="", blockCount=""):
+                 emulatorPath="", uuid="", storageSize='', cacheImg=True):
         self.uuid = uuid
         self.name = name
         self.ip = ip
         self.mac = mac
         self.diskImage = diskImage
         self.ramSize = ramSize
-        self.blockSize = blockSize
-        self.blockCount = blockCount
+        self.storageSize = storageSize
+        self.cacheImg = cacheImg
         self.arch = arch
         self.net = net
         self.emulatorPath = emulatorPath
@@ -323,6 +323,7 @@ class Cluster(Utils.Stateful):
         self.defaultHost.arch = 'x86_64'
         self.defaultHost.ramSize = '524288'
         self.defaultHost.net = None
+        self.defaultHost.storageSize='59055800320'
         
         self.__network = None
 
@@ -341,6 +342,8 @@ class Cluster(Utils.Stateful):
             host.ramSize = self.defaultHost.ramSize
         if not hasattr(host, "net") or not host.net:
             host.net = self.defaultHost.net
+        if not hasattr(host, "storageSize") or not host.storageSize:
+            host.storageSize = self.defaultHost.storageSize
         if not (hasattr(host, "diskImage") or host.diskImage) \
             or not (hasattr(host, "diskImage") or self.defaultHost.diskImage):
             raise ClusterManagerException(('Nor machine %s definition nor ' + \

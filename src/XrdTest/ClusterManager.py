@@ -33,6 +33,7 @@ from Utils import get_logger
 LOGGER = get_logger(__name__)
 
 import sys
+import os
 import threading
 import libvirt
 
@@ -60,9 +61,8 @@ class ClusterManager:
         self.hosts = {}
         # dictionary of currently running networks. Key: networkObj.uname
         self.nets = {}
-
-        self.tmpImagesDir = "/tmp"
-        self.tmpImagesPrefix = "tmpxrdim_"
+        
+        self.cacheImagesDir = ''
 
     def connect(self, url="qemu:///system"):
         '''
@@ -109,88 +109,89 @@ class ClusterManager:
         '''
         Method runnable in separate threads, to separate copying of source
         operating system image to a temporary image.
+        
         @param huName: host.uname - host unique name
         @param safeCounter: thread safe counter to signalize this run finished
         '''
-        (host, tmpFile, hostObj) = self.hosts[huName]
+        (host, cacheImg, hostObj) = self.hosts[huName]
 
         dip = self.clusters[hostObj.clusterName].defaultHost.diskImage
-        LOGGER.info(("Start copying %s (for %s) to tmp img %s") \
-                    % (dip, hostObj.uname, tmpFile.name))
+        LOGGER.info(("Start copying %s (for %s) to cache image %s") \
+                    % (dip, hostObj.uname, cacheImg))
         try:
             f = open(dip , "r")
+            cacheImgFile = open(cacheImg, 'w')
             #buffsize = 52428800 #read 50 MB at a time
             buffsize = (1024 ** 3) / 2  #read/write 512 MB at a time
             buff = f.read(buffsize)
             while buff:
-                tmpFile.file.write(buff)
+                cacheImgFile.write(buff)
                 buff = f.read(buffsize)
             f.close()
+            cacheImgFile.close()
         except IOError, e:
             msg = "Can't open %s. %s" % (dip, e)
             raise ClusterManagerException(msg)
         else:
-            LOGGER.info(("Disk image %s  (for %s) copied to temp file %s") \
-                        % (dip, hostObj.name, tmpFile.name))
+            LOGGER.info(("Disk image %s  (for %s) copied to cache file %s") \
+                        % (dip, hostObj.name, cacheImg))
             if safeCounter:
                 safeCounter.inc()
 
-    def defineHost(self, hostObj):
+    def defineHost(self, host):
         '''
         Defines virtual host in a cluster using given host object,
         not starting it. Host with the given name may be defined once
         in the system. Stores hosts objects in class property self.hosts.
         
-        @param hostObj: ClusterManager.Host object
+        @param host: ClusterManager.Host object
         @raise ClusterManagerException: when fails
         @return: host object from libvirt lib
         '''
-        if self.hosts.has_key(hostObj.uname):
-            return self.hosts[hostObj.uname][0]
+        if self.hosts.has_key(host.uname):
+            return self.hosts[host.uname][0]
 
         for h in self.hosts.itervalues():
             # get disk image path from cluster definition
-            cip = self.clusters[hostObj.clusterName].defaultHost.diskImage
+            cip = self.clusters[host.clusterName].defaultHost.diskImage
             # if machine has any disk image given?
-            if h[2].runningDiskImage == hostObj.diskImage or \
-                (not hostObj.diskImage and h[2].runningDiskImage == cip):
+            if h[2].runningDiskImage == host.diskImage or \
+                (not host.diskImage and h[2].runningDiskImage == cip):
                 return h[0]
 
-        tmpFile = None
-        # machine uses copy original source image
-        if not hostObj.diskImage:
+        cacheImg = None
+        if not host.diskImage:
             # first, copy the original disk image
-            tmpFile = NamedTemporaryFile(prefix=self.tmpImagesPrefix, \
-                                         dir=self.tmpImagesDir)
-            hostObj.runningDiskImage = tmpFile.name
+            cacheImg = '%s/%s.img.cache' % (self.cacheImagesDir, host.uname)
+            host.runningDiskImage = cacheImg
         else:
             # machine uses ogirinal source image
             LOGGER.info(("Defining machine %s using ORIGINAL IMAGE %s") \
-                        % (hostObj.uname, hostObj.diskImage))
-            hostObj.runningDiskImage = hostObj.diskImage
+                        % (host.uname, host.diskImage))
+            host.runningDiskImage = host.diskImage
 
-        self.hosts[hostObj.uname] = None
+        self.hosts[host.uname] = None
         try:
             conn = self.virtConnection
-            host = conn.defineXML(hostObj.xmlDesc)
+            hostdef = conn.defineXML(host.xmlDesc)
 
             # add host definition objects to dictionary
             # key: host.uname - unique name
-            self.hosts[hostObj.uname] = (host, tmpFile, hostObj)
-            LOGGER.info("Defined machine: %s" % hostObj.uname)
+            self.hosts[host.uname] = (hostdef, cacheImg, host)
+            LOGGER.info("Defined machine: %s" % host.uname)
         except libvirtError, e:
             try:
                 # that is possible that machine was already created
                 # if so, find it and safe the definition
-                host = conn.lookupByName(hostObj.uname)
-                self.hosts[hostObj.uname] = (host, None, hostObj)
-                LOGGER.info("Machine already defined: %s" % hostObj.uname)
+                hostdef = conn.lookupByName(host.uname)
+                self.hosts[host.uname] = (hostdef, None, host)
+                LOGGER.info("Machine already defined: %s" % host.uname)
             except libvirtError, e:
                 msg = ("Can't define machine %s on image %s neither " + \
                         "obtain machine definition: %s") % \
-                        (hostObj.uname, hostObj.runningDiskImage, e)
+                        (host.uname, host.runningDiskImage, e)
                 raise ClusterManagerException(msg, ERR_ADD_HOST)
-        return self.hosts[hostObj.uname]
+        return self.hosts[host.uname]
 
     def removeHost(self, hostUName):
         '''
@@ -325,7 +326,7 @@ class ClusterManager:
         try:
             conn = self.virtConnection
             net = conn.networkLookupByName(netObj.uname)
-            LOGGER.info("Machine already defined: %s" % netObj.uname)
+            LOGGER.info("Network already defined: %s" % netObj.uname)
         except libvirtError, e:
             return
 
@@ -373,8 +374,28 @@ class ClusterManager:
                     self.defineHost(h)
                     waitingForCreate.append(h.uname)
 
-                    # machine doesn't use original image
-                    if not h.diskImage:
+                    if h.diskImage:
+                        # machine uses original image
+                        LOGGER.info("Using original image %s for machine %s." % \
+                                    (h.diskImage, h.uname))
+                    elif h.cacheImg:
+                        # machine uses cached image
+                        LOGGER.info("Using cached image for machine %s." % \
+                                    (h.uname))
+                        if not os.path.exists(self.cacheImagesDir + os.sep + h.uname + '.img.cache'):
+                            # make a copy from original image
+                            LOGGER.info("No cached image exists for machine %s. Copying from %s" % \
+                                        (h.uname, cluster.defaultHost.diskImage))
+                            sys.setcheckinterval(500)
+                            needCopy += 1
+                            # create and start thread copying given virtual machine
+                            # image to a temporary file
+                            copyThreads[h.uname] = \
+                                threading.Thread(target=self.copyImg, args=\
+                                                 (h.uname, safeCounter))
+                            copyThreads[h.uname].start()
+                    else:
+                        # make a copy from original image
                         LOGGER.info("Copying image %s for machine %s." % \
                                     (cluster.defaultHost.diskImage, h.uname))
                         sys.setcheckinterval(500)
@@ -385,9 +406,6 @@ class ClusterManager:
                             threading.Thread(target=self.copyImg, args=\
                                              (h.uname, safeCounter))
                         copyThreads[h.uname].start()
-                    else: # machine uses original image
-                        LOGGER.info("Using original image %s for machine %s." % \
-                                    (h.diskImage, h.uname))
 
                 #wait for all threads to copy images
                 if needCopy > 0:
@@ -417,7 +435,7 @@ class ClusterManager:
                 try:
                     for host in cluster.hosts:
                         LOGGER.info('Attaching storage disk to machine %s' % host.uname)
-                        self.attachDisk(host.uname, host.blockSize, host.blockCount)
+                        self.attachDisk(host.uname, host.storageSize)
                         LOGGER.info('Attached storage disk.')
                 except ClusterManagerException, e:
                     LOGGER.error(e)
@@ -452,12 +470,21 @@ class ClusterManager:
         else:
             del self.clusters[clusterName]
             
-    def attachDisk(self, host, blockSize, blockCount):
-        execute('dd if=/dev/zero of=/data/XrdTest/images/%s bs=%s count=%s' % 
-                (host + '_disk', blockSize, blockCount), '/data/XrdTest/images')
-        execute('mkfs.ext4 -F /data/XrdTest/images/%s' % host + '_disk', '/data/XrdTest/images')
-        output = execute('virsh attach-disk %s /data/XrdTest/images/%s vdb' % 
-                (host, host + '_disk'), '/data/XrdTest/images')
+    def attachDisk(self, host, diskSize):
+        ''' 
+        TODO:
+        '''
+#        execute('dd if=/dev/zero of=/data/XrdTest/images/%s bs=%s count=%s' % 
+#                (host + '_disk', blockSize, blockCount), '/data/XrdTest/images')
+
+        root = '/var/lib/libvirt/images/XrdTest'
+
+        with open('%s/%s_disk' % (root, host), 'w') as f:
+            f.truncate(int(diskSize))
+        
+        execute('mkfs.ext4 -F %s/%s' % (root, host) + '_disk', root)
+        output = execute('virsh attach-disk %s %s/%s vdb' % 
+                (host, root, host + '_disk'), root)
         if 'error' in output:
             raise ClusterManagerException('Attaching disk failed: %s' % output)
         

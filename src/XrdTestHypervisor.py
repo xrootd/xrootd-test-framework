@@ -111,10 +111,9 @@ class XrdTestHypervisor(Runnable):
         # Reference to cluster manager, which is abstraction layer to 
         # virtualization library - in our case libvirt
         self.clusterManager = ClusterManager()
-        self.clusterManager.tmpImagesDir = \
-            self.config.get('virtual_machines', 'tmp_images_dir')
-        self.clusterManager.tmpImagesPrefix = \
-            self.config.get('virtual_machines', 'tmp_images_prefix')
+        self.clusterManager.cacheImagesDir = \
+            self.config.get('virtual_machines', 'cache_images_dir')
+
         try:
             self.clusterManager.connect("qemu:///system")
         except ClusterManagerException, e:

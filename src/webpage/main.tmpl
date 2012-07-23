@@ -72,7 +72,7 @@
                             <tr><td><%= escape(host.name) %></td>
                             <td><%= escape(host.mac) %></td>
                             <td><%= escape(host.ramSize) %></td>
-                            #if $host.diskImage
+                            #if $host.bootImage
                             <td><%= escape(host.bootImage) %></td>
                             #else
                             <td>copy from cluster definition</td>

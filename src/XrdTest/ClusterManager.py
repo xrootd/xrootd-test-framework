@@ -34,6 +34,7 @@ LOGGER = get_logger(__name__)
 
 import sys
 import os
+import re
 import threading
 import libvirt
 
@@ -488,7 +489,7 @@ class ClusterManager:
 
         root = '/var/lib/libvirt/images/XrdTest'
         
-        if not cache or not os.path.exists('%s/%s_%s' % (root, host, diskName)):
+        if not os.path.exists('%s/%s_%s' % (root, host, diskName)) or not cache:
             LOGGER.info('Creating storage disk %s_%s' % (host, diskName))
             with open('%s/%s_%s' % (root, host, diskName), 'w') as f:
                 f.truncate(int(diskSize))
@@ -496,7 +497,7 @@ class ClusterManager:
         else:   
             output = execute('virsh attach-disk %s %s/%s_%s vdb' % 
                     (host, root, host, diskName), root)
-            if 'error' in output:
+            if re.match('error', output):
                 raise ClusterManagerException('Attaching disk failed: %s' % output)
 
             

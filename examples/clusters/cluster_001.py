@@ -34,7 +34,7 @@ def getCluster():
     h2 = Host('slave2', '192.168.127.4', "52:54:00:65:44:66", ramSize='1048576', 
               arch='x86_64', net="net_001")
     h3 = Host('slave3', '192.168.127.5', "52:54:00:65:44:67", ramSize='1048576', 
-              arch='x86_64', net="net_001", cacheBootImage=False)
+              arch='x86_64', net="net_001")
     
     #---------------------------------------------------------------------------
     # Additional host disk definitions

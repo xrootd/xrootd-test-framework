@@ -2,7 +2,7 @@
 mkdir -p tmp_initsh
 rm -rf tmpinitsh/*
 cd tmp_initsh
-wget "http://master.xrd.test:8080/getGetXrdLastReleaseScript" -O getXrdLastReleaseScript.py
+wget "http://vagabond.cern.ch:8080/getGetXrdLastReleaseScript" -O getXrdLastReleaseScript.py
 chmod 755 getXrdLastReleaseScript.py
 rm -rf xrd_rpms
 python getXrdLastReleaseScript.py

@@ -4,12 +4,13 @@ def getCluster():
     cluster = Cluster()
     #---------------------------------------------------------------------------
     # Global names
-    # Used commonly in network and host definitions
     #---------------------------------------------------------------------------
     cluster.name = 'cluster_001' 
     network_name = 'net_001'
     
+    #---------------------------------------------------------------------------
     # Cluster defaults
+    #---------------------------------------------------------------------------
     cluster.defaultHost.bootImage = '/var/lib/libvirt/images/xrd_testslave_ref.img'
     cluster.defaultHost.cacheBootImage = True
     cluster.defaultHost.arch = 'x86_64'
@@ -29,30 +30,30 @@ def getCluster():
     #---------------------------------------------------------------------------
     # Host definitions
     #---------------------------------------------------------------------------
-    h1 = Host('slave1', '192.168.127.3', "52:54:00:65:44:65", ramSize='1048576', 
-              arch='x86_64', net="net_001")
-    h2 = Host('slave2', '192.168.127.4', "52:54:00:65:44:66", ramSize='1048576', 
-              arch='x86_64', net="net_001")
-    h3 = Host('slave3', '192.168.127.5', "52:54:00:65:44:67", ramSize='1048576', 
-              arch='x86_64', net="net_001")
+    
+    metamanager1 = Host('metamanager1', '192.168.127.3', "52:54:00:65:44:65",  net="net_001")
+    manager1 = Host('manager1', '192.168.127.4', "52:54:00:65:44:66", net="net_001")
+    manager2 = Host('manager2', '192.168.127.5', "52:54:00:65:44:67", net="net_001")
+    ds1 = Host('ds1', '192.168.127.6', "52:54:00:65:44:68", net="net_001")
+    ds2 = Host('ds2', '192.168.127.7', "52:54:00:65:44:69", net="net_001")
+    ds3 = Host('ds3', '192.168.127.8', "52:54:00:65:44:70", net="net_001")
+    ds4 = Host('ds4', '192.168.127.9', "52:54:00:65:44:71", net="net_001")
+    client1 = Host('client1', '192.168.127.10', "52:54:00:65:44:72", net="net_001")
     
     #---------------------------------------------------------------------------
     # Additional host disk definitions
     #---------------------------------------------------------------------------
-    h1.disks =  [
-                 Disk('disk1', size='59055800320'),
-                 Disk('disk2', size='59055800320')
-                ]
-    h2.disks =  [
-                 Disk('disk1', size='59055800320')
-                ]
-    h3.disks =  [
-                 Disk('disk1', size='59055800320', cache=False),
-                 Disk('disk2', size='59055800320', cache=False)
-                ]
+    metamanager1.disks =  [Disk('disk1', size='59055800320')]
+    manager1.disks =  [Disk('disk1', size='59055800320')]
+    manager2.disks =  [Disk('disk1', size='59055800320')]
+    ds1.disks =  [Disk('disk1', size='59055800320')]
+    ds2.disks =  [Disk('disk1', size='59055800320')]
+    ds3.disks =  [Disk('disk1', size='59055800320')]
+    ds4.disks =  [Disk('disk1', size='59055800320')]
+    client1.disks =  [Disk('disk1', size='59055800320')]
  
     # Hosts to be included in the cluster
-    hosts = [h1, h2, h3]
+    hosts = [metamanager1, manager1, manager2, ds1, ds2, ds3, ds4, client1]
 
 
     net.addHosts(hosts)

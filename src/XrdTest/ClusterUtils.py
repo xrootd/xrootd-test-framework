@@ -86,12 +86,11 @@ class Network(object):
   <dns>
       <txt name="xrd.test" value="Welcome to xrd testing framework domain." />
       <host ip="%(xrdTestMasterIP)s">
-          <hostname>vagabond.cern.ch</hostname>
+          <hostname>master.xrd.test</hostname>
       </host>
       %(dnshostsxml)s
   </dns>
   <bridge name="%(bridgename)s" />
-  <forward />
   <ip address="%(ip)s" netmask="%(netmask)s">
     <dhcp>
       <range start="%(rangestart)s" end="%(rangeend)s" />
@@ -101,12 +100,12 @@ class Network(object):
 </network>
 """
     xmlHostPattern = """
-<host mac="%(mac)s" name="%(name)s" ip="%(ip)s" />
+      <host mac="%(mac)s" name="%(name)s" ip="%(ip)s" />
 """
     xmlDnsHostPattern = """
-<host ip="%(ip)s">
-    <hostname>%(hostname)s</hostname>
-</host>
+      <host ip="%(ip)s">
+          <hostname>%(hostname)s</hostname>
+      </host>
 """
 
     def __init__(self):
@@ -119,7 +118,7 @@ class Network(object):
         self.DnsHosts = []
 
         #fields beneath filled automatically by hypervisor
-        self.xrdTestMasterIP = ""
+        self.xrdTestMasterIP = "vagabond.cern.ch"
 
     def addDnsHost(self, host):
         hostup = (host.ip, host.name)

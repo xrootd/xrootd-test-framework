@@ -115,14 +115,14 @@ class WebInterface:
                     'HTTPport': self.config.getint('webserver', 'port')}
         return self.disp("index_redirect.tmpl", tplVars)
 
-    def downloadScript(self, script_name):
+    def downloadScript(self, *script_name):
         '''
         Enable slave to download some script as a regular file from master and 
         run it.
         
         @param script_name:
         '''
-        p = self.config.get('test-repo-remote', 'suite_defs_path')
+        p = self.config.get('test-repo-remote', 'local_repo')
         
         for i in xrange(0, len(script_name)):
             p += os.sep + script_name[i]
@@ -139,7 +139,7 @@ class WebInterface:
         
         @param script_name:
         '''        
-        p = self.config.get('test-repo-remote', 'suite_defs_path')
+        p = self.config.get('test-repo-remote', 'local_repo')
         
         for i in xrange(0, len(script_name)):
             p += os.sep + script_name[i]

@@ -5,7 +5,7 @@ def getTestSuite():
 
     ts.name = "ts_001"
     ts.clusters = ['cluster_001']
-    ts.machines = ["slave1", "slave2", "slave3"]
+    ts.machines = ['metamanager1', 'manager1', 'manager2', 'ds1', 'ds2', 'ds3', 'ds4', 'client1']
     ts.tests = ['basic']
     ts.schedule = dict(second='33', minute='29', hour='*', day='*', month='*')
 

@@ -1,54 +1,53 @@
-#sciezka plikow ktore system servuje
 all.export /tmp
 xrootd.chksum adler32 /usr/bin/xrdadler32
 
-if named meta
+if named metamanager1
 all.role meta manager
-xrd.host meta.xrd.test
+xrd.host metamanager1.xrd.test
 xrd.port 1094 if exec xrootd
 xrd.port 2094 if exec cmsd
-all.manager meta meta.xrd.test 2094
+all.manager metamanager1 metamanager1.xrd.test 2094
 
-else if named man1
+else if named manager1
 all.role manager
 xrd.port 1095 if exec xrootd
 xrd.port 2095 if exec cmsd
-all.manager meta meta.xrd.test 2094
-all.manager man1.xrd.test 2095
+all.manager metamanager1 metamanager1.xrd.test 2094
+all.manager manager1.xrd.test 2095
 
-else if named man2
+else if named manager2
 all.role manager
 xrd.port 1096 if exec xrootd
 xrd.port 2096 if exec cmsd
-all.manager meta meta.xrd.test 2094
-all.manager man2.xrd.test 2096
+all.manager metamanager1 metamanager1.xrd.test 2094
+all.manager manager2.xrd.test 2096
 
-else if named srv1
+else if named ds1
 all.role server
 xrd.port 1097 if exec xrootd
 xrd.port 2097 if exec cmsd
-all.manager man1.xrd.test 2095
-all.manager meta meta.xrd.test 2094
+all.manager manager1.xrd.test 2095
+all.manager metamanager1 metamanager1.xrd.test 2094
 
-#else if named srv2
+#else if named ds2
 #all.role server
 #xrd.port 1098 if exec xrootd
 #xrd.port 2098 if exec cmsd
-#all.manager man1.xrd.test 2095
-#all.manager meta meta.xrd.test 2094
+#all.manager manager1.xrd.test 2095
+#all.manager metamanager1 metamanager1.xrd.test 2094
 
-else if named srv3
+else if named ds3
 all.role server
 xrd.port 1099 if exec xrootd
 xrd.port 2099 if exec cmsd
-all.manager man2.xrd.test 2096
-all.manager meta meta.xrd.test 2094
+all.manager manager2.xrd.test 2096
+all.manager metamanager1 metamanager1.xrd.test 2094
 
-#else if named srv4
+#else if named ds4
 #all.role server
 #xrd.port 1100 if exec xrootd
 #xrd.port 2100 if exec cmsd
-#all.manager man2.xrd.test 2096
-#all.manager meta meta.xrd.test 2094
+#all.manager manager2.xrd.test 2096
+#all.manager metamanager1 metamanager1.xrd.test 2094
 fi
 

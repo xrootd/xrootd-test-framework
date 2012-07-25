@@ -91,6 +91,7 @@ class Network(object):
       </host>
       %(dnshostsxml)s
   </dns>
+  <forward mode="nat"/>
   <bridge name="%(bridgename)s" />
   <ip address="%(ip)s" netmask="%(netmask)s">
     <dhcp>

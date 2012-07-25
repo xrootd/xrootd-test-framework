@@ -7,7 +7,7 @@ def getTestSuite():
     ts.clusters = ['cluster_001']
     ts.machines = ['metamanager1', 'manager1', 'manager2', 'ds1', 'ds2', 'ds3', 'ds4', 'client1']
     ts.tests = ['basic']
-    ts.schedule = dict(second='08', minute='27', hour='*', day='*', month='*')
+    ts.schedule = dict(second='36', minute='34', hour='*', day='*', month='*')
 
     ts.initialize = "file://tc/ts_basic_init.sh"
     ts.finalize = "file://tc/ts_basic_finalize.sh"

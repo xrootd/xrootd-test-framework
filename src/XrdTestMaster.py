@@ -752,6 +752,10 @@ class XrdTestMaster(Runnable):
                     State(Cluster.S_STOPCOMMAND_SENT)
 
                 LOGGER.info("Cluster stop command sent to %s", hyperv)
+                
+                # Cluster was stopped - remove all slaves.
+                self.slaves = {}
+                
                 return True
             return False
         if not clusterFound:

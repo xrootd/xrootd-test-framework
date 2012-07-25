@@ -475,12 +475,13 @@ class ClusterManager:
             LOGGER.info('Attaching storage disks to machine %s' % host.uname)
             for disk in host.disks:
                 try:
-                    self.attachDisk(host.uname, disk.name, disk.size, disk.cache)
+                    self.attachDisk(host.uname, disk.name, disk.size, disk.cache, \
+                                     disk.mountPoint)
                     LOGGER.info('Attached storage disk.')
                 except ClusterManagerException, e:
                     LOGGER.error(e)
             
-    def attachDisk(self, host, diskName, diskSize, cache):
+    def attachDisk(self, host, diskName, diskSize, cache, mountPoint):
         ''' 
         TODO:
         '''
@@ -494,11 +495,11 @@ class ClusterManager:
             with open('%s/%s_%s' % (root, host, diskName), 'w') as f:
                 f.truncate(int(diskSize))
             execute('mkfs.ext4 -F %s/%s_%s' % (root, host, diskName), root)
-        else:   
-            output = execute('virsh attach-disk %s %s/%s_%s vdb' % 
-                    (host, root, host, diskName), root)
-            if re.match('error', output):
-                raise ClusterManagerException('Attaching disk failed: %s' % output)
+  
+        output = execute('virsh attach-disk %s %s/%s_%s %s' % 
+                (host, root, host, diskName, mountPoint), root)
+        if re.match('error', output):
+            raise ClusterManagerException('Attaching disk failed: %s' % output)
 
             
         

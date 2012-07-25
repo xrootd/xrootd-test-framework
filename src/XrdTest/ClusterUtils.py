@@ -31,6 +31,7 @@ import Utils
 import logging
 import os
 import sys
+import socket
 
 from Utils import State
 from string import join
@@ -117,8 +118,7 @@ class Network(object):
         self.DHCPHosts = []
         self.DnsHosts = []
 
-        #fields beneath filled automatically by hypervisor
-        self.xrdTestMasterIP = "vagabond.cern.ch"
+        self.xrdTestMasterIP = socket.gethostbyname(socket.gethostname())
 
     def addDnsHost(self, host):
         hostup = (host.ip, host.name)
@@ -289,9 +289,10 @@ class Host(object):
 
 class Disk(object):
     
-    def __init__(self, name, size, cache=True):
+    def __init__(self, name, size, mountPoint, cache=True):
         self.name = name
         self.size = size
+        self.mountPoint = mountPoint
         self.cache = cache
 
 class Cluster(Utils.Stateful):

@@ -31,26 +31,26 @@ def getCluster():
     # Host definitions
     #---------------------------------------------------------------------------
     
-    metamanager1 = Host('metamanager1', '192.168.127.3', "52:54:00:65:44:65",  net="net_001")
-    manager1 = Host('manager1', '192.168.127.4', "52:54:00:65:44:66", net="net_001")
-    manager2 = Host('manager2', '192.168.127.5', "52:54:00:65:44:67", net="net_001")
-    ds1 = Host('ds1', '192.168.127.6', "52:54:00:65:44:68", net="net_001")
-    ds2 = Host('ds2', '192.168.127.7', "52:54:00:65:44:69", net="net_001")
-    ds3 = Host('ds3', '192.168.127.8', "52:54:00:65:44:70", net="net_001")
-    ds4 = Host('ds4', '192.168.127.9', "52:54:00:65:44:71", net="net_001")
-    client1 = Host('client1', '192.168.127.10', "52:54:00:65:44:72", net="net_001")
+    metamanager1 = Host('metamanager1', '192.168.127.3', "52:54:00:65:44:65")
+    manager1 = Host('manager1', '192.168.127.4', "52:54:00:65:44:66")
+    manager2 = Host('manager2', '192.168.127.5', "52:54:00:65:44:67")
+    ds1 = Host('ds1', '192.168.127.6', "52:54:00:65:44:68")
+    ds2 = Host('ds2', '192.168.127.7', "52:54:00:65:44:69")
+    ds3 = Host('ds3', '192.168.127.8', "52:54:00:65:44:70")
+    ds4 = Host('ds4', '192.168.127.9', "52:54:00:65:44:71")
+    client1 = Host('client1', '192.168.127.10', "52:54:00:65:44:72")
     
     #---------------------------------------------------------------------------
     # Additional host disk definitions
     #---------------------------------------------------------------------------
-    metamanager1.disks =  [Disk('disk1', size='59055800320')]
-    manager1.disks =  [Disk('disk1', size='59055800320')]
-    manager2.disks =  [Disk('disk1', size='59055800320')]
-    ds1.disks =  [Disk('disk1', size='59055800320')]
-    ds2.disks =  [Disk('disk1', size='59055800320')]
-    ds3.disks =  [Disk('disk1', size='59055800320')]
-    ds4.disks =  [Disk('disk1', size='59055800320')]
-    client1.disks =  [Disk('disk1', size='59055800320')]
+    metamanager1.disks =  [Disk('disk1', '59055800320', 'vdb')]
+    manager1.disks =  [Disk('disk1', '59055800320', 'vdb')]
+    manager2.disks =  [Disk('disk1', '59055800320', 'vdb')]
+    ds1.disks =  [Disk('disk1', '59055800320', 'vdb')]
+    ds2.disks =  [Disk('disk1', '59055800320', 'vdb')]
+    ds3.disks =  [Disk('disk1', '59055800320', 'vdb')]
+    ds4.disks =  [Disk('disk1', '59055800320', 'vdb')]
+    client1.disks =  [Disk('disk1', '59055800320', 'vdb')]
  
     # Hosts to be included in the cluster
     hosts = [metamanager1, manager1, manager2, ds1, ds2, ds3, ds4, client1]

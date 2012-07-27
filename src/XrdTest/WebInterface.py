@@ -89,6 +89,8 @@ class WebInterface:
                     'slaves': self.testMaster.slaves,
                     'hostname': socket.gethostname(),
                     'testSuites': self.testMaster.testSuites,
+                    'pendingJobs': self.testMaster.pendingJobs,
+                    'pendingJobsDbg': self.testMaster.pendingJobsDbg,
                     'userMsgs' : self.testMaster.userMsgs,
                     'testMaster': self.testMaster, }
         return self.disp("main.tmpl", tplVars)

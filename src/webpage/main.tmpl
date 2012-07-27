@@ -12,12 +12,13 @@
 
 \$.fn.accordion.defaults.container = false; 
 \$(function() {
-     \$("#acc1").accordion();
+    \$("#acc1").accordion();
     \$("#acc2").accordion();
     \$("#acc3").accordion();
     \$("#acc4").accordion();
     \$("#acc6").accordion();
-     \$("#acc7").accordion();
+    \$("#acc7").accordion();
+    \$("#acc8").accordion();
 });
 //--><!]]>
 </script>
@@ -190,6 +191,16 @@
             #end for
         #else
         <div><p>No slaves connected.</p></div>
+        #end if
+    </div>
+    <h1>Pending jobs</h1>
+    <div id="acc8" class="accordion">
+        #if $pendingJobs and len($pendingJobs) > 0
+            #for $job in $pendingJobs
+            <h3><a href="#">&rsaquo; ${pendingJobsDbg[$pendingJobs.index($job)]} <span style="font-weight:normal;color:#666666;">${job.state[1]}</span></a></h3>
+            #end for
+        #else
+        <div><p>No jobs.</p></div>
         #end if
     </div>
     <h1>LOG MESSAGES (more recent higher)</h1>

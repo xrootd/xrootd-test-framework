@@ -371,6 +371,8 @@ class Job(object):
     S_ADDED = (0, "Job added to jobs list.")
     S_STARTED = (1, "Job started. In progress.")
     # constants representing jobs' types
+    TEST_JOB = 0
+    
     INITIALIZE_TEST_SUITE = 1
     FINALIZE_TEST_SUITE = 2
 

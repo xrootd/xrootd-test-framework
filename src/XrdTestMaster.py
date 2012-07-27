@@ -1071,7 +1071,12 @@ class XrdTestMaster(Runnable):
 
         groupId = genJobGroupId(test_suite_name)
 
-        ts = self.testSuites[test_suite_name]
+        try:
+            ts = self.testSuites[test_suite_name]
+        except KeyError, e:
+            LOGGER.error('KeyError: %s is not a known test suite' % e)
+            
+        
         for clustName in ts.clusters:
             if not self.clusters[clustName].state == State(Cluster.S_ACTIVE):
                 j = Job(Job.START_CLUSTER, groupId, (clustName, test_suite_name))

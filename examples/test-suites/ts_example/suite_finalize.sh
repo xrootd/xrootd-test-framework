@@ -1,3 +1,3 @@
 #!/bin/bash
 
-echo -ne `date` `hostname` "Finalizing test suite\n"
+echo -ne `date` @slavename@ "Finalizing test suite\n"

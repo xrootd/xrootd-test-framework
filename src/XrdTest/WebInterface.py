@@ -124,15 +124,19 @@ class WebInterface:
         
         @param script_name:
         '''
-        p = self.config.get('test-repo-remote', 'local_repo')
+        local_path = os.path.abspath(self.config.get('test-repo-local', 'repo_path'))
+        remote_path = self.config.get('test-repo-remote', 'local_repo')
         
         for i in xrange(0, len(script_name)):
-            p += os.sep + script_name[i]
+            local_path += os.sep + script_name[i]
+            remote_path += os.sep + script_name[i]
 
-        if os.path.exists(p):
-            return serve_file(p , "application/x-download", "attachment")
+        if os.path.exists(local_path):
+            return serve_file(local_path , "application/x-download", "attachment")
+        elif os.path.exists(remote_path):
+            return serve_file(remote_path , "application/x-download", "attachment")
         else:
-            return "%s: not found at %s" % (script_name, p)
+            return "%s: not found in any repository" % script_name[-1]
 
     def showScript(self, *script_name):
         '''
@@ -141,15 +145,19 @@ class WebInterface:
         
         @param script_name:
         '''        
-        p = self.config.get('test-repo-remote', 'local_repo')
+        local_path = os.path.abspath(self.config.get('test-repo-local', 'repo_path'))
+        remote_path = self.config.get('test-repo-remote', 'local_repo')
         
         for i in xrange(0, len(script_name)):
-            p += os.sep + script_name[i]
-                          
-        if os.path.exists(p):
-            return serve_file(p , "text/html")
+            local_path += os.sep + script_name[i]
+            remote_path += os.sep + script_name[i]
+
+        if os.path.exists(local_path):
+            return serve_file(local_path , "text/html")
+        elif os.path.exists(remote_path):
+            return serve_file(remote_path , "text/html")
         else:
-            return "%s: not found at %s" % (script_name, p)
+            return "%s: not found in any repository" % script_name[-1]
         
 
     index.exposed = True

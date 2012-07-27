@@ -51,6 +51,7 @@ rm $CONFIG_PATH
 wget "http://master.xrd.test:8080/downloadScript/clusters/${CLUSTER_NAME}/${CONFIG_FILE}" -O $CONFIG_FILE
 mv $CONFIG_FILE $CONFIG_PATH
 
+cat $CONFIG_PATH
 # extracting machine name from hostname
 arr=($(echo @slavename@ | tr "." " "))
 NAME=${arr[0]}

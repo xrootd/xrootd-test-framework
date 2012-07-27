@@ -6,7 +6,7 @@ cd /tmp
 if [ @slavename@ == "client1" ]; then
   
   rm testreceive
-  xrdcp xroot://metamanager1.xrd.test:1094//tmp/testfile testreceive
+  xrdcp xroot://metamanager1.xrd.test:1094//data/testfile testreceive
   ls -al
 
 else

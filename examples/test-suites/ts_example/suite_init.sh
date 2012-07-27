@@ -41,7 +41,7 @@ rpm -iv --force xrd_rpms/slc-6-x86_64/xrootd-server-*.rpm
 cd ..
 
 #---------------------------------------------------------------------------------------------------------
-section "# Downloading xrootd config file ${CONFIG_FILE}"
+section "# Downloading xrootd config file ${CONFIG_FILE} ..."
 
 mkdir -p tmp_inittest
 rm -rf tmp_inittest/*
@@ -51,7 +51,6 @@ rm $CONFIG_PATH
 wget "http://master.xrd.test:8080/downloadScript/clusters/${CLUSTER_NAME}/${CONFIG_FILE}" -O $CONFIG_FILE
 mv $CONFIG_FILE $CONFIG_PATH
 
-cat $CONFIG_PATH
 # extracting machine name from hostname
 arr=($(echo @slavename@ | tr "." " "))
 NAME=${arr[0]}
@@ -80,7 +79,14 @@ XFRD_INSTANCES=\"${NAME}\"
 " > $SERVICE_CONFIG_FILE
 
 #---------------------------------------------------------------------------------------------------------
-section "# Starting xrootd and cmsd for machine $NAME"
+section "# Mointing storage disks for machine $NAME ..."
+
+mkdir /data
+mount -t ext4 -o user_xattr /dev/vda /data
+ls -al /data
+
+#---------------------------------------------------------------------------------------------------------
+section "# Starting xrootd and cmsd for machine $NAME ..."
 
 echo "Config file: $CONFIG_PATH"
 mkdir -p /var/log/xrootd

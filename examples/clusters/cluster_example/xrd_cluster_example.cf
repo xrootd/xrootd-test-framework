@@ -1,4 +1,4 @@
-all.export /tmp
+all.export /data
 
 xrd.port 1094 if exec xrootd
 xrd.port 2094 if exec cmsd

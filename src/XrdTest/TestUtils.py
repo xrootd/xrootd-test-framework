@@ -280,7 +280,7 @@ def loadTestCasesDefs(path):
             
                     #after load, check if definition is correct
                     obj.validateStatic()
-                testCases[obj.name] = obj
+                    testCases[obj.name] = obj
             else:
                 raise TestSuiteException("Method " + method + \
                   " doesn't return list of objects in " + \

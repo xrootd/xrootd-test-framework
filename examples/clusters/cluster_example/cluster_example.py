@@ -5,8 +5,8 @@ def getCluster():
     #---------------------------------------------------------------------------
     # Global names
     #---------------------------------------------------------------------------
-    cluster.name = 'cluster_001' 
-    network_name = 'net_001'
+    cluster.name = 'cluster_example' 
+    network_name = 'net'
     
     #---------------------------------------------------------------------------
     # Cluster defaults
@@ -21,7 +21,7 @@ def getCluster():
     # Network definition
     #---------------------------------------------------------------------------
     net = Network()
-    net.bridgeName = 'virbr_001'
+    net.bridgeName = 'virbr_example'
     net.name = network_name
     net.ip = '192.168.127.1'
     net.netmask = '255.255.255.0'

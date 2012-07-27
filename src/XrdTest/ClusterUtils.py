@@ -501,11 +501,16 @@ def loadClustersDefs(path):
             if not f.startswith('cluster'):
                 continue
             fp = path + os.sep + f
-            try:
-                clu = loadClusterDef(fp, clusters)
-                if clu:
-                    clusters.append(clu)
-            except ClusterManagerException, e:
-                raise e
+            
+            for c in os.listdir(fp):
+                if not c.startswith('cluster'):
+                    continue
+                cp = fp + os.sep + c
+                try:
+                    clu = loadClusterDef(cp, clusters)
+                    if clu:
+                        clusters.append(clu)
+                except ClusterManagerException, e:
+                    raise e
 
     return clusters

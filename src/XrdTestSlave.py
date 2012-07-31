@@ -43,7 +43,7 @@ try:
     import subprocess
     import threading
 
-    from XrdTest.Daemon import Daemon, readConfig, DaemonException, Runnable
+    from XrdTest.Daemon import Daemon, DaemonException, Runnable
     from XrdTest.TCPClient import TCPReceiveThread
     from XrdTest.SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
     from XrdTest.TestUtils import TestSuite
@@ -56,6 +56,23 @@ except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
 
+
+class XrdTestSlaveException(Exception):
+    '''
+    General Exception raised by XrdTestSlaveException.
+    '''
+    def __init__(self, desc):
+        '''
+        Constructs Exception
+        @param desc: description of an error
+        '''
+        self.desc = desc
+        
+    def __str__(self):
+        '''
+        Returns textual representation of an error
+        '''
+        return repr(self.desc)
 
 class XrdTestSlave(Runnable):
     '''
@@ -309,7 +326,25 @@ class XrdTestSlave(Runnable):
 
         self.recvLoop()
 
-
+def readConfig(self, confFile):
+        '''
+        Reads configuration from given file or from default if None given.
+        @param confFile: file with configuration
+        '''
+        LOGGER.info("Reading config file % s", str(confFile))
+    
+        config = ConfigParser.ConfigParser()
+        if os.path.exists(confFile):
+            try:
+                fp = file(confFile, 'r')
+                config.readfp(fp)
+                fp.close()
+            except IOError, e:
+                LOGGER.exception(e)
+        else:
+            raise XrdTestSlaveException("Config file could not be read")
+        return config
+    
 def main():
     '''
     Program begins here.

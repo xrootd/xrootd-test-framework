@@ -28,7 +28,6 @@ from Utils import Logger
 LOGGER = Logger(__name__).setup()
 
 try:
-    import ConfigParser
     import os
     import signal
     import sys
@@ -53,25 +52,6 @@ class DaemonException(Exception):
         Returns textual representation of an error
         '''
         return str(self.desc)
-
-def readConfig(confFile):
-    '''
-    Reads configuration from given file or from default if None given.
-    @param optsConfFile: file with configuration
-    '''
-    LOGGER.info("Reading config file % s", str(confFile))
-
-    config = ConfigParser.ConfigParser()
-    if os.path.exists(confFile):
-        try:
-            fp = file(confFile, 'r')
-            config.readfp(fp)
-            fp.close()
-        except IOError, e:
-            LOGGER.exception(e)
-    else:
-        raise DaemonException("Config file could not be read")
-    return config
 
 class Runnable(object):
     '''

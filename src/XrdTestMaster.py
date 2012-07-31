@@ -53,7 +53,7 @@ try:
     from XrdTest.TestUtils import TestSuiteException, TestSuite, TestSuiteSession, \
         loadTestSuiteDef, loadTestSuiteDefs, extractSuiteName
     from XrdTest.Job import Job
-    from XrdTest.Daemon import Runnable, Daemon, DaemonException, readConfig
+    from XrdTest.Daemon import Runnable, Daemon, DaemonException
     from XrdTest.Utils import State, UserInfoHandler
     from XrdTest.GitUtils import sync_remote_git
     from XrdTest.WebInterface import WebInterface
@@ -68,7 +68,7 @@ except ImportError, e:
 
 class XrdTestMasterException(Exception):
     '''
-    General Exception raised by Daemon.
+    General Exception raised by XrdTestMaster.
     '''
     def __init__(self, desc):
         '''
@@ -1235,7 +1235,7 @@ class XrdTestMaster(Runnable):
                         self.fireReloadDefinitionsEvent, DirectoryWatch.watch_remote_git)
             
             self.watchedDirectories[repo].watch()
-        
+
     def run(self):
         '''
         Main method of a programme. Initializes all serving threads and starts
@@ -1269,6 +1269,25 @@ class XrdTestMaster(Runnable):
         # synchronize suits sessions list with HDD storage and close
         xrdTestMaster.suiteSessions.close()
 
+def readConfig(self, confFile):
+        '''
+        Reads configuration from given file or from default if None given.
+        @param confFile: file with configuration
+        '''
+        LOGGER.info("Reading config file % s", str(confFile))
+    
+        config = ConfigParser.ConfigParser()
+        if os.path.exists(confFile):
+            try:
+                fp = file(confFile, 'r')
+                config.readfp(fp)
+                fp.close()
+            except IOError, e:
+                LOGGER.exception(e)
+        else:
+            raise XrdTestMasterException("Config file could not be read")
+        return config
+    
 def main():
     '''
     Program begins here.

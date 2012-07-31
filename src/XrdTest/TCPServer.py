@@ -27,11 +27,15 @@
 from Utils import Logger
 LOGGER = Logger(__name__).setup()
 
-import ssl 
-import threading
-import SocketServer
-
-from XrdTest.SocketUtils import FixedSockStream, SocketDisconnectedError
+try:
+    import ssl 
+    import threading
+    import SocketServer
+    
+    from XrdTest.SocketUtils import FixedSockStream, SocketDisconnectedError
+except ImportError, e:
+    LOGGER.error(str(e))
+    sys.exit(1)
 
 
 class XrdTCPServer(SocketServer.TCPServer):

@@ -40,14 +40,18 @@
 from Utils import Logger
 LOGGER = Logger(__name__).setup()
 
-import os
-import sys
-import urllib2
-import datetime
-
-from Utils import Stateful
-from string import maketrans 
-from copy import deepcopy   
+try:
+    import os
+    import sys
+    import urllib2
+    import datetime
+    
+    from Utils import Stateful
+    from string import maketrans 
+    from copy import deepcopy
+except ImportError, e:
+    LOGGER.error(str(e))
+    sys.exit(1)
 
 class TestSuiteException(Exception):
     '''

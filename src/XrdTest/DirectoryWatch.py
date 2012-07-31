@@ -30,10 +30,10 @@
 from Utils import Logger
 LOGGER = Logger(__name__).setup()
 
-import sys
-import types
-
 try:
+    import sys
+    import types
+    
     from pyinotify import WatchManager, ThreadedNotifier, ProcessEvent
     from apscheduler.scheduler import Scheduler
     from GitUtils import sync_remote_git

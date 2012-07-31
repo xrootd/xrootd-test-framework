@@ -27,8 +27,16 @@
 from XrdTest.Utils import Logger
 LOGGER = Logger(__name__).setup()
 
-from XrdTest.SocketUtils import SocketDisconnectedError
-from XrdTest.Utils import Stateful
+try:
+    import threading
+    import sys
+    
+    from XrdTest.SocketUtils import SocketDisconnectedError
+    from XrdTest.Utils import Stateful
+except ImportError, e:
+    LOGGER.error(str(e))
+    sys.exit(1)
+    
 
 class TCPClient(Stateful):
     '''
@@ -54,6 +62,36 @@ class TCPClient(Stateful):
         except SocketDisconnectedError, e:
             LOGGER.error("Socket to client %s[%s] closed during send." % \
                          (self.hostname, str(self.address)))
+            
+class TCPReceiveThread(object):
+    ''' TODO: '''
+    def __init__(self, sock, recvQueue):
+        '''
+        TODO: 
+
+        @param sock:
+        @param recvQueue:
+        '''
+        self.sockStream = sock
+        self.stopEvent = threading.Event()
+        self.stopEvent.clear()
+        self.recvQueue = recvQueue
+
+    def close(self):
+        ''' TODO: '''
+        self.stopEvent.set()
+
+    def run(self):
+        ''' TODO: '''
+        while not self.stopEvent.isSet():
+            try:
+                msg = self.sockStream.recv()
+                LOGGER.debug("Received raw: " + str(msg))
+                self.recvQueue.put(msg)
+            except SocketDisconnectedError, e:
+                LOGGER.info("Connection to XrdTestMaster closed.")
+                sys.exit(1)
+                break
 
 class Hypervisor(TCPClient):
     '''

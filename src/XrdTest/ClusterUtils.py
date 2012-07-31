@@ -27,14 +27,19 @@
 from Utils import Logger
 LOGGER = Logger(__name__).setup()
 
-import Utils
-import logging
-import os
-import sys
-import socket
-
-from Utils import State
-from string import join
+try:
+    import Utils
+    import logging
+    import os
+    import sys
+    import socket
+    
+    from Utils import State
+    from string import join
+except ImportError, e:
+    LOGGER.error(str(e))
+    sys.exit(1)
+    
 
 # Global error types
 ERR_UNKNOWN = 1

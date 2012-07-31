@@ -30,17 +30,18 @@
 from XrdTest.Utils import Logger
 LOGGER = Logger(__name__).setup()
 
-import logging
-import sys
-import ConfigParser
-import Queue
-import os
-import socket
-import ssl
-import threading
-
 try:
+    import logging
+    import sys
+    import ConfigParser
+    import Queue
+    import os
+    import socket
+    import ssl
+    import threading
+
     from XrdTest.Daemon import Daemon, readConfig, DaemonException, Runnable
+    from XrdTest.TCPClient import TCPReceiveThread
     from XrdTest.SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
     from XrdTest.ClusterManager import ClusterManager
     from XrdTest.ClusterUtils import ClusterManagerException, Cluster
@@ -50,39 +51,6 @@ except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
 
-
-class TCPReceiveThread(object):
-    '''
-    TODO:
-    '''
-    def __init__(self, sock, recvQueue):
-        '''
-        TODO:
-
-        @param sock:
-        @param recvQueue:
-        '''
-        self.sockStream = sock
-        self.stopEvent = threading.Event()
-        self.stopEvent.clear()
-        self.recvQueue = recvQueue
-
-    def close(self):
-        ''' TODO: '''
-        self.stopEvent.set()
-
-    def run(self):
-        ''' TODO: '''
-        while not self.stopEvent.isSet():
-            try:
-                msg = self.sockStream.recv()
-                LOGGER.debug("Received raw: " + str(msg))
-                self.recvQueue.put(msg)
-            except SocketDisconnectedError, e:
-                msg = XrdMessage(XrdMessage.M_DISCONNECT)
-                self.recvQueue.put(msg)
-                LOGGER.info("Connection to XrdTestMaster closed.")
-                break
 
 class XrdTestHypervisor(Runnable):
     '''

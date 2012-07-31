@@ -32,17 +32,21 @@
 from Utils import Logger
 LOGGER = Logger(__name__).setup()
 
-import sys
-import os
-import re
-import threading
-import libvirt
-
-from ClusterUtils import ClusterManagerException
-from ClusterUtils import ERR_CONNECTION, ERR_ADD_HOST, ERR_CREATE_NETWORK
-from Utils import SafeCounter, Command
-from copy import deepcopy
-from libvirt import libvirtError
+try:
+    import sys
+    import os
+    import re
+    import threading
+    import libvirt
+    
+    from ClusterUtils import ClusterManagerException
+    from ClusterUtils import ERR_CONNECTION, ERR_ADD_HOST, ERR_CREATE_NETWORK
+    from Utils import SafeCounter, Command
+    from copy import deepcopy
+    from libvirt import libvirtError
+except ImportError, e:
+    LOGGER.error(str(e))
+    sys.exit(1)
 
 
 class ClusterManager:
@@ -484,9 +488,6 @@ class ClusterManager:
         ''' 
         TODO:
         '''
-#        Command('dd if=/dev/zero of=/data/XrdTest/images/%s bs=%s count=%s' % 
-#                (host + '_disk', blockSize, blockCount), '/data/XrdTest/images').execute()
-
         root = '/var/lib/libvirt/images/XrdTest'
         
         if not os.path.exists('%s/%s_%s' % (root, host, diskName)) or not cache:

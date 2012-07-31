@@ -33,16 +33,17 @@
 from XrdTest.Utils import Logger
 LOGGER = Logger(__name__).setup()
 
-import logging
-import sys
-import ConfigParser
-import random
-import os
-import socket
-import threading
-import shelve
-
 try:
+    import logging
+    import sys
+    import ConfigParser
+    import random
+    import os
+    import socket
+    import threading
+    import shelve
+    import cherrypy
+    
     from XrdTest.ClusterUtils import ClusterManagerException, extractClusterName, \
         loadClusterDef, loadClustersDefs, Cluster 
     from XrdTest.SocketUtils import XrdMessage, PriorityBlockingQueue
@@ -60,7 +61,6 @@ try:
     from apscheduler.scheduler import Scheduler
     from copy import deepcopy, copy
     from optparse import OptionParser
-    import cherrypy  
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
@@ -128,8 +128,8 @@ class XrdTestMaster(Runnable):
         # tasks scheduler only instance
         self.sched = Scheduler()
         # Constants
-        C_SLAVE = 'slave'
-        C_HYPERV = 'hypervisor'
+        self.C_SLAVE = 'slave'
+        self.C_HYPERV = 'hypervisor'
         
         self.config = config
         self.suiteSessions = shelve.open(\
@@ -1157,16 +1157,10 @@ class XrdTestMaster(Runnable):
             # start next job
             self.startNextJob()
 
-    def run(self):
+    def startTCPServer(self):
+        ''' 
+        TODO: 
         '''
-        Main method of a programme. Initializes all serving threads and starts
-        main loop receiving MasterEvents.
-        '''
-        global currentDir, cherrypyConfig
-        global cherrypy, tcpServer
-
-        # Start TCP server for incoming slave and hypervisors connections
-        server = None
         try:
             server = ThreadedTCPServer((self.config.get('server', 'ip'), \
                                         self.config.getint('server', 'port')),
@@ -1178,7 +1172,6 @@ class XrdTestMaster(Runnable):
                 LOGGER.exception(e)
             sys.exit(1)
 
-        tcpServer = server
         server.testMaster = self
         server.config = self.config
         server.recvQueue = self.recvQueue
@@ -1190,14 +1183,11 @@ class XrdTestMaster(Runnable):
         server_thread = threading.Thread(target=server.serve_forever)
         server_thread.daemon = True
         server_thread.start()
-
-        # Start scheduler if it's enabled in config file
-        if self.config.getint('scheduler', 'enabled') == 1:
-            self.sched.start()
-        else:
-            LOGGER.info("SCHEDULER is disabled.")
-            
-        # Configure and start WWW Server - cherrypy
+    
+    def startWebInterface(self):
+        '''
+        TODO:
+        '''
         cherrypyCfg = {
                         '/webpage/js': {
                         'tools.staticdir.on': True,
@@ -1228,15 +1218,12 @@ class XrdTestMaster(Runnable):
             cherrypy.server.start()
         except cherrypy._cperror.HTTPError, e:
             LOGGER.error(str(e))
-            if server:
-                server.shutdown()
             sys.exit(1)
-            
-        # Load cluster and test suite definitions
-        self.loadDefinitions()
-
-        # Prepare notifiers for cluster and test suite definition 
-        # directory monitoring (local and remote)
+    
+    def watchDirectories(self):
+        '''
+        TODO:
+        '''
         for repo in self.config.get('general', 'test-repos').split(','):
             repo = 'test-repo-' + repo
             
@@ -1248,6 +1235,30 @@ class XrdTestMaster(Runnable):
                         self.fireReloadDefinitionsEvent, DirectoryWatch.watch_remote_git)
             
             self.watchedDirectories[repo].watch()
+        
+    def run(self):
+        '''
+        Main method of a programme. Initializes all serving threads and starts
+        main loop receiving MasterEvents.
+        '''
+        # Start TCP server for incoming slave and hypervisors connections
+        self.startTCPServer()
+
+        # Start scheduler if it's enabled in config file
+        if self.config.getint('scheduler', 'enabled') == 1:
+            self.sched.start()
+        else:
+            LOGGER.info("SCHEDULER is disabled.")
+            
+        # Configure and start WWW Server - cherrypy
+        self.startWebInterface()
+            
+        # Load cluster and test suite definitions
+        self.loadDefinitions()
+
+        # Prepare notifiers for cluster and test suite definition 
+        # directory monitoring (local and remote)
+        self.watchDirectories()
 
         # Process events incoming to the system MasterEvents
         self.procEvents()

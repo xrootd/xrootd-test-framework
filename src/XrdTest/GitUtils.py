@@ -29,8 +29,14 @@
 from Utils import Logger
 LOGGER = Logger(__name__).setup()
 
-import os
-from Utils import Command
+try:
+    import sys
+    import os
+    from Utils import Command
+except ImportError, e:
+    LOGGER.error(str(e))
+    sys.exit(1)
+    
 
 def sync_remote_git(repo, config):
     '''

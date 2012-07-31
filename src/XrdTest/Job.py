@@ -24,9 +24,17 @@
 # File:   Job
 # Desc:   TODO:
 #-------------------------------------------------------------------------------
-import datetime
-from string import maketrans
+from Utils import Logger
+LOGGER = Logger(__name__).setup()
 
+try:
+    import sys
+    import datetime
+    from string import maketrans
+except ImportError, e:
+    LOGGER.error(str(e))
+    sys.exit(1)
+    
 
 class Job(object):
     '''

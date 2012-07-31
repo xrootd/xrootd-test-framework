@@ -27,12 +27,12 @@
 from Utils import Logger
 LOGGER = Logger(__name__).setup()
 
-import sys
-import os
-import socket
-
 try:
+    import sys
+    import os
+    import socket
     import cherrypy
+    
     from Cheetah.Template import Template
     from cherrypy.lib.static import serve_file
 except ImportError, e:

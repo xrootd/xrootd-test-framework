@@ -23,12 +23,17 @@
 from Utils import Logger
 LOGGER = Logger(__name__).setup()
 
-import pickle
-import socket
-
-from heapq import heappush, heappop
-from string import zfill
-from threading import Condition, Lock
+try:
+    import sys
+    import pickle
+    import socket
+    
+    from heapq import heappush, heappop
+    from string import zfill
+    from threading import Condition, Lock
+except ImportError, e:
+    LOGGER.error(str(e))
+    sys.exit(1)
 
 
 class PriorityBlockingQueue(object):

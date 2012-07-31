@@ -27,11 +27,15 @@
 from Utils import Logger
 LOGGER = Logger(__name__).setup()
 
-import ConfigParser
-import os
-import signal
-import sys
-
+try:
+    import ConfigParser
+    import os
+    import signal
+    import sys
+except ImportError, e:
+    LOGGER.error(str(e))
+    sys.exit(1)
+    
 
 class DaemonException(Exception):
     '''

@@ -27,8 +27,8 @@
 #          * on demand of Master it starts/stops/configures virtual machines
 #          * uses libvirt to manage virtual machines
 #-------------------------------------------------------------------------------
-from XrdTest.Utils import get_logger
-LOGGER = get_logger(__name__)
+from XrdTest.Utils import Logger
+LOGGER = Logger(__name__).setup()
 
 import logging
 import sys
@@ -49,14 +49,6 @@ try:
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
-
-# Globals and configurations
-currentDir = os.path.dirname(os.path.abspath(__file__))
-os.chdir(currentDir)
-# Default daemon configuration
-defaultConfFile = '/etc/XrdTest/XrdTestHypervisor.conf'
-defaultPidFile = '/var/run/XrdTestHypervisor.pid'
-defaultLogFile = '/var/log/XrdTest/XrdTestHypervisor.log'
 
 
 class TCPReceiveThread(object):
@@ -101,6 +93,10 @@ class XrdTestHypervisor(Runnable):
         Initialize basic variables. Start and configure ClusterManager.
         @param config:
         '''
+        # Default daemon configuration
+        self.defaultConfFile = '/etc/XrdTest/XrdTestHypervisor.conf'
+        self.defaultPidFile = '/var/run/XrdTestHypervisor.pid'
+        self.defaultLogFile = '/var/log/XrdTest/XrdTestHypervisor.log'
         # Connection with the master 
         self.sockStream = None
         # Blocking queue of commands received from XrdTestMaster
@@ -326,8 +322,8 @@ def main():
     if options.backgroundMode:
         LOGGER.info("Run in background: %s" % options.backgroundMode)
 
-        pidFile = defaultPidFile
-        logFile = defaultLogFile
+        pidFile = testHypervisor.defaultPidFile
+        logFile = testHypervisor.defaultLogFile
         if isConfigFileRead:
             pidFile = config.get('daemon', 'pid_file_path')
             logFile = config.get('daemon', 'log_file_path')

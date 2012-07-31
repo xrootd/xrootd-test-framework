@@ -29,8 +29,8 @@
 #            with other Slaves
 #          * Creates sandbox to run shell scripts securely
 #-------------------------------------------------------------------------------
-from XrdTest.Utils import get_logger
-LOGGER = get_logger(__name__)
+from XrdTest.Utils import Logger
+LOGGER = Logger(__name__).setup()
 
 import logging
 import sys
@@ -55,13 +55,6 @@ except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
 
-# Globals and configurations
-currentDir = os.path.dirname(os.path.abspath(__file__))
-os.chdir(currentDir)
-#Default daemon configuration
-defaultConfFile = '/etc/XrdTest/XrdTestSlave.conf'
-defaultPidFile = '/var/run/XrdTestSlave.pid'
-defaultLogFile = '/var/log/XrdTest/XrdTestSlave.log'
 
 class TCPReceiveThread(object):
     ''' TODO: '''
@@ -99,6 +92,11 @@ class XrdTestSlave(Runnable):
     '''
     def __init__(self, config):
         ''' TODO: '''
+        #Default daemon configuration
+        self.defaultConfFile = '/etc/XrdTest/XrdTestSlave.conf'
+        self.defaultPidFile = '/var/run/XrdTestSlave.pid'
+        self.defaultLogFile = '/var/log/XrdTest/XrdTestSlave.log'
+
         self.sockStream = None
         #Blocking queue of commands received from XrdTestMaster
         self.recvQueue = Queue.Queue()
@@ -382,8 +380,8 @@ def main():
     if options.backgroundMode:
         LOGGER.info("Run in background: %s" % options.backgroundMode)
 
-        pidFile = defaultPidFile
-        logFile = defaultLogFile
+        pidFile = testSlave.defaultPidFile
+        logFile = testSlave.defaultLogFile
         if isConfigFileRead:
             pidFile = config.get('daemon', 'pid_file_path')
             logFile = config.get('daemon', 'log_file_path')

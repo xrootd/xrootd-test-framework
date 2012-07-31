@@ -65,16 +65,6 @@ except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
 
-# Globals and configurations
-currentDir = os.path.dirname(os.path.abspath(__file__))
-os.chdir(currentDir)
-# Default daemon configuration
-defaultConfFile = '/etc/XrdTest/XrdTestMaster.conf'
-defaultPidFile = '/var/run/XrdTestMaster.pid'
-defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
-
-tcpServer = None
-xrdTestMaster = None
 
 class XrdTestMasterException(Exception):
     '''
@@ -99,44 +89,48 @@ class XrdTestMaster(Runnable):
     Main class of module, only one instance can exist in the system,
     it's runnable as a daemon.
     '''
-    # Global configuration for master
-    config = None
-    # Priority queue (locking) with incoming events, i.a. incoming messages
-    # Referred to as: main events queue.
-    recvQueue = PriorityBlockingQueue()
-    # Connected hypervisors, keys: address tuple, values: Hypervisor object
-    hypervisors = {}
-    # Connected slaves, keys: address tuple, values: Slave object
-    slaves = {}
-    # TestSuites that have ever run, synchronized with a HDD, key is session.uid
-    suiteSessions = None
-    # Mapping from names to uids of running test suits. For retrieval of 
-    # TestSuiteSessions saved in suiteSessions python shelve. 
-    runningSuiteUids = {}
-    # Definitions of clusters loaded from a file, key is cluster.name
-    # Refreshed any time definitions change.
-    clusters = {}
-    # Which hypervisor run given cluster. Key: cluster.name Value: Hypervisor
-    # object
-    clustersHypervisor = {}
-    # Definitions of test suits loaded from file. Key: testSuite.name 
-    # Value: testSuite.definition. Refreshed any time definitions chagne.
-    testSuites = {}
-    # Definitions of all directories being monitored for changes.
-    watchedDirectories = {}
-    # Jobs to run immediately if possible. They are put here by scheduler.
-    pendingJobs = []
-    # The same as above, for debugging. Keeps textual representation of jobs.
-    pendingJobsDbg = []
-    # message logging system
-    userMsgs = []
-    # tasks scheduler only instance
-    sched = Scheduler()
-    # Constants
-    C_SLAVE = 'slave'
-    C_HYPERV = 'hypervisor'
-
     def __init__(self, config):
+        # Global configuration for master
+        self.config = None 
+        # Default daemon configuration
+        self.defaultConfFile = '/etc/XrdTest/XrdTestMaster.conf'
+        self.defaultPidFile = '/var/run/XrdTestMaster.pid'
+        self.defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
+        # Priority queue (locking) with incoming events, i.a. incoming messages
+        # Referred to as: main events queue.
+        self.recvQueue = PriorityBlockingQueue()
+        # Connected hypervisors, keys: address tuple, values: Hypervisor object
+        self.hypervisors = {}
+        # Connected slaves, keys: address tuple, values: Slave object
+        self.slaves = {}
+        # TestSuites that have ever run, synchronized with a HDD, key is session.uid
+        self.suiteSessions = None
+        # Mapping from names to uids of running test suits. For retrieval of 
+        # TestSuiteSessions saved in suiteSessions python shelve. 
+        self.runningSuiteUids = {}
+        # Definitions of clusters loaded from a file, key is cluster.name
+        # Refreshed any time definitions change.
+        self.clusters = {}
+        # Which hypervisor run given cluster. Key: cluster.name Value: Hypervisor
+        # object
+        self.clustersHypervisor = {}
+        # Definitions of test suits loaded from file. Key: testSuite.name 
+        # Value: testSuite.definition. Refreshed any time definitions chagne.
+        self.testSuites = {}
+        # Definitions of all directories being monitored for changes.
+        self.watchedDirectories = {}
+        # Jobs to run immediately if possible. They are put here by scheduler.
+        self.pendingJobs = []
+        # The same as above, for debugging. Keeps textual representation of jobs.
+        self.pendingJobsDbg = []
+        # message logging system
+        self.userMsgs = []
+        # tasks scheduler only instance
+        self.sched = Scheduler()
+        # Constants
+        C_SLAVE = 'slave'
+        C_HYPERV = 'hypervisor'
+        
         self.config = config
         self.suiteSessions = shelve.open(\
                              self.config.get('general', 'suite_sessions_file'))
@@ -1308,8 +1302,8 @@ def main():
     if options.backgroundMode:
         LOGGER.info("Run in background: %s" % options.backgroundMode)
 
-        pidFile = defaultPidFile
-        logFile = defaultLogFile
+        pidFile = xrdTestMaster.defaultPidFile
+        logFile = xrdTestMaster.defaultLogFile
         if isConfigFileRead:
             pidFile = config.get('daemon', 'pid_file_path')
             logFile = config.get('daemon', 'log_file_path')

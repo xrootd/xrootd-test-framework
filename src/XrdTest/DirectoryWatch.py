@@ -27,8 +27,8 @@
 #        pyinotify. Remote directories are test suite repositories, and are 
 #        polled for new commits. Currently supported repository types: Git
 #-------------------------------------------------------------------------------
-from Utils import get_logger
-LOGGER = get_logger(__name__)
+from Utils import Logger
+LOGGER = Logger(__name__).setup()
 
 import sys
 import types

@@ -30,38 +30,37 @@
 #          * is run as a system service, configured via batch of config files
 #
 #-------------------------------------------------------------------------------
-from XrdTest.Utils import get_logger
-LOGGER = get_logger(__name__)
+from XrdTest.Utils import Logger
+LOGGER = Logger(__name__).setup()
 
 import logging
 import sys
 import ConfigParser
-import SocketServer
 import random
 import os
 import socket
-import ssl 
 import threading
-import datetime
 import shelve
 
 try:
     from XrdTest.ClusterUtils import ClusterManagerException, extractClusterName, \
         loadClusterDef, loadClustersDefs, Cluster 
-    from XrdTest.SocketUtils import FixedSockStream, XrdMessage, PriorityBlockingQueue, \
-        SocketDisconnectedError
-    from XrdTest.TestUtils import TestSuiteException, loadTestSuiteDef, \
-        loadTestSuiteDefs, TestSuite, extractSuiteName
+    from XrdTest.SocketUtils import XrdMessage, PriorityBlockingQueue
+    from XrdTest.TCPServer import MasterEvent, ThreadedTCPRequestHandler, \
+        ThreadedTCPServer
+    from XrdTest.TCPClient import TCPClient, Hypervisor, Slave
+    from XrdTest.TestUtils import TestSuiteException, TestSuite, TestSuiteSession, \
+        loadTestSuiteDef, loadTestSuiteDefs, extractSuiteName
+    from XrdTest.Job import Job
     from XrdTest.Daemon import Runnable, Daemon, DaemonException, readConfig
-    from XrdTest.Utils import Stateful, State
+    from XrdTest.Utils import State, UserInfoHandler
     from XrdTest.GitUtils import sync_remote_git
     from XrdTest.WebInterface import WebInterface
     from XrdTest.DirectoryWatch import DirectoryWatch
     from apscheduler.scheduler import Scheduler
     from copy import deepcopy, copy
     from optparse import OptionParser
-    from string import maketrans    
-    import cherrypy
+    import cherrypy  
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
@@ -76,128 +75,6 @@ defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
 
 tcpServer = None
 xrdTestMaster = None
-
-class MasterEvent(object):
-    '''
-    Wrapper for all events that comes to XrdTestMaster. MasterEvent can
-    be message from slave or hypervisor, system event like socket disconnection,
-    cluster or test suite definition file change or scheduler job initiation.
-    It has priorities. PRIO_IMPORTANT is processed before PRIO_NORMAL.
-    '''
-    PRIO_NORMAL = 9
-    PRIO_IMPORTANT = 1
-
-    M_UNKNOWN = 1
-    M_CLIENT_CONNECTED = 2
-    M_CLIENT_DISCONNECTED = 3
-    M_HYPERV_MSG = 4
-    M_SLAVE_MSG = 5
-    M_JOB_ENQUEUE = 6
-    M_RELOAD_CLUSTER_DEF = 7
-    M_RELOAD_SUITE_DEF = 8
-
-    def __init__(self, e_type, e_data, msg_sender_addr=None):
-        self.type = e_type
-        self.data = e_data
-        self.sender = msg_sender_addr
-
-class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
-    """
-    Client's TCP request handler.
-    """
-    C_SLAVE = "slave"
-    C_HYPERV = "hypervisor"
-
-    def setup(self):
-        '''
-        Initiate class properties
-        '''
-        self.stopEvent = threading.Event()
-        self.stopEvent.clear()
-        self.sockStream = None
-        self.clientType = ThreadedTCPRequestHandler.C_SLAVE
-
-    def authClient(self):
-        '''
-        Check if hypervisor is authentic. He provides connection passwd.
-        '''
-        msg = self.sockStream.recv()
-        if msg == self.server.config.get('server', 'connection_passwd'):
-            self.sockStream.send('PASSWD_OK')
-        else:
-            self.sockStream.send('PASSWD_WRONG')
-            LOGGER.info("Incoming hypervisor connection rejected. " + \
-                        "It didn't provide correct password")
-            return
-        return True
-
-    def handle(self):
-        '''
-        Handle new incoming connection and keep it to receive messages.
-        '''
-        self.sockStream = ssl.wrap_socket(self.request, server_side=True,
-                                          certfile=\
-                                self.server.config.get('security', 'certfile'),
-                                          keyfile=\
-                                self.server.config.get('security', 'keyfile'),
-                                          ssl_version=ssl.PROTOCOL_TLSv1)
-        self.sockStream = FixedSockStream(self.sockStream)
-        # authenticate client
-        self.authClient()
-        # whether client is slave or hypervisor
-        (clientType, clientHostname) = self.sockStream.recv()
-
-        LOGGER.info(("%s [%s, %s] establishing connection...") % \
-                                (clientType.capitalize(), \
-                                 clientHostname, self.client_address))
-
-        self.clientType = ThreadedTCPRequestHandler.C_SLAVE
-        if clientType == ThreadedTCPRequestHandler.C_HYPERV:
-            self.clientType = ThreadedTCPRequestHandler.C_HYPERV
-
-        # preparing MasterEvent and add it to main programm events queue
-        # to handle logic of event
-        evt = MasterEvent(MasterEvent.M_CLIENT_CONNECTED, (self.clientType,
-                            self.client_address, self.sockStream, \
-                            clientHostname))
-        self.server.recvQueue.put((MasterEvent.PRIO_IMPORTANT, evt))
-
-        # begin listening on the client's socket.
-        # emit MasterEvent in case any message comes
-        while not self.stopEvent.isSet():
-            try:
-                msg = self.sockStream.recv()
-                evtType = MasterEvent.M_SLAVE_MSG
-                if self.clientType == self.C_HYPERV:
-                    evtType = MasterEvent.M_HYPERV_MSG
-
-                LOGGER.debug("Server: Received msg from %s enqueuing evt: %s" % (msg.sender, str(evtType)))
-                msg.sender = self.client_address
-
-                evt = MasterEvent(evtType, msg, self.client_address)
-                self.server.recvQueue.put((MasterEvent.PRIO_NORMAL, evt))
-            except SocketDisconnectedError, e:
-                evt = MasterEvent(MasterEvent.M_CLIENT_DISCONNECTED, \
-                                  (self.clientType, self.client_address))
-                self.server.recvQueue.put((MasterEvent.PRIO_IMPORTANT, evt))
-                break
-
-        LOGGER.info("Server: Closing connection with %s [%s]" % \
-                                    (clientHostname, self.client_address))
-        self.sockStream.close()
-        self.stopEvent.clear()
-        return
-
-class XrdTCPServer(SocketServer.TCPServer):
-    '''
-    Wrapper for SocketServer.TCPServer, to enable setting beneath params.
-    '''
-    allow_reuse_address = True
-
-class ThreadedTCPServer(SocketServer.ThreadingMixIn, XrdTCPServer):
-    '''
-    Wrapper to create threaded TCP Server.
-    '''
 
 class XrdTestMasterException(Exception):
     '''
@@ -215,180 +92,6 @@ class XrdTestMasterException(Exception):
         Returns textual representation of an error
         '''
         return repr(self.desc)
-
-class TCPClient(Stateful):
-    '''
-    Represents any type of TCP client that connects to XrdTestMaster. Base
-    class for Hypervisor and Slave.
-    '''
-    # states of a client
-    S_CONNECTED_IDLE = (1, "Connected")
-    S_NOT_CONNECTED = (2, "Not connected")
-    
-    def __init__(self, socket, hostname, address, state):
-        Stateful.__init__(self)
-        self.socket = socket
-        self.hostname = hostname
-        self.state = state
-        self.address = address
-
-    def send(self, msg):
-        try:
-            LOGGER.debug('Sending: %s to %s[%s]' % \
-                        (msg.name, self.hostname, str(self.address)))
-            self.socket.send(msg)
-        except SocketDisconnectedError, e:
-            LOGGER.error("Socket to client %s[%s] closed during send." % \
-                         (self.hostname, str(self.address)))
-
-class Hypervisor(TCPClient):
-    '''
-    Wrapper for any hypervisor connection established.
-    '''
-    def __init__(self, socket, hostname, address, state):
-        TCPClient.__init__(self, socket, hostname, address, state)
-        self.runningClusterDefs = {}
-
-    def __str__(self):
-        return "Hypervisor %s [%s]" % (self.hostname, self.address)
-
-class Slave(TCPClient):
-    '''
-    Wrapper for any slave connection established.
-    '''
-    # constants representing states of slave
-    S_SUITE_INIT_SENT = (10, "Test suite init sent to slave")
-    S_SUITE_INITIALIZED = (11, "Test suite initialized")
-    S_SUITE_FINALIZE_SENT = (12, "Test suite finalize sent to slave")
-
-    S_TEST_INIT_SENT = (21, "Sent test case init to slave")
-    S_TEST_INITIALIZED = (22, "Test case initialized")
-    S_TEST_RUN_SENT = (23, "Sent test case run to slave")
-    S_TEST_RUN_FINISHED = (24, "Test case run finished")
-    S_TEST_FINALIZE_SENT = (25, "Sent test case finalize to slave")
-    #S_TEST_FINALIZED        = Slave.S_SUITE_INITIALIZED
-
-    def __str__(self):
-        return "Slave %s [%s]" % (self.hostname, self.address)
-
-class TestSuiteSession(Stateful):
-    '''
-    Represents run of Test Suite from the moment of its initialization.
-    It stores all information required for test suite to be run as well as
-    results of test stages. It has unique id (uid parameter) for recognition,
-    because there will be for sure many test suites with the same name.
-    '''
-    def __init__(self, suiteDef):
-        Stateful.__init__(self)
-        # name of test suite
-        self.name = suiteDef.name
-        # test suite definition copy
-        self.suite = deepcopy(suiteDef)
-        self.suite.jobFun = None
-        # date of initialization
-        self.initDate = datetime.datetime.now()
-        # references to slaves who are necessary for the test suite
-        self.slaves = []
-        # keeps the results of each stage.
-        self.stagesResults = []
-        # unique identifier of test suite
-        self.uid = self.suite.name + '-' + self.initDate.isoformat()
-        # remove special chars from uid
-        self.uid = self.uid.translate(maketrans('', ''), '-:.')
-        # test cases loaded to run in this session, key is testCase.uid
-        self.cases = {}
-        # uid of last run test case with given name 
-        self.caseUidByName = {}
-        # if result of any stage i.a. init, test case stages or finalize
-        # ended with non-zero status code 
-        self.failed = False
-
-    def addCaseRun(self, tc):
-        '''
-        Registers run of test case. Gives unique id (uid) for started
-        test case, because one test case can be run many time within test
-        suite session.
-        @param tc: TestCase definition object
-        '''
-        tc.uid = tc.name + '-' + datetime.datetime.now().isoformat()
-        tc.uid = tc.uid.translate(maketrans('', ''), '-:.') # remove special
-                                                            # chars from uid
-        tc.initDate = datetime.datetime.now()
-
-        self.cases[tc.uid] = tc
-        self.caseUidByName[tc.name] = tc.uid
-
-    def addStageResult(self, state, result, uid=None, slave_name=None):
-        '''
-        Adds all information about stage that has finished to test suite session
-        object. Stage are e.g.: initialize suite on some slave, run test case
-        on some slave etc.
-        @param state: state that happened
-        @param result: result of test run (code, stdout, stderr)
-        @param uid: uid of test case or test suite init/finalize
-        @param slave_name: where stage ended
-        '''
-        state.time = state.datetime.strftime("%H:%M:%S, %d-%m-%Y")
-
-        LOGGER.info("New stage result %s (ret code %s)" % \
-                     (state, result[2]))
-        LOGGER.debug("New stage result %s: (code %s) %s" % \
-                    (state, result[2], result[0]))
-
-        if result[2] != '0':
-            self.failed = True
-
-        if result[1] == None:
-            result = (result[0], "", result[2])
-
-        self.stagesResults.append((state, result, uid, slave_name))
-
-    def getTestCaseStages(self, test_case_uid):
-        '''
-        Retrieve test case stages for given test case unique id.
-        @param test_case_uid:
-        '''
-        stages = [v for v in self.stagesResults if v[2] == test_case_uid]
-        return stages
-
-def genJobGroupId(suite_name):
-    '''
-    Utility function to create unique name for group of jobs.
-    @param suite_name:
-    '''
-    d = datetime.datetime.now()
-    r = "%s-%s" % (suite_name, d.isoformat())
-    r = r.translate(maketrans('', ''), '-:.')# remove special
-    return r
-
-
-class Job(object):
-    '''
-    Keeps information about job, that is to be run. It's enqueued by scheduler
-    and dequeued if fore coming job was handled.
-    '''
-    # constants representing jobs states
-    S_ADDED = (0, "Job added to jobs list.")
-    S_STARTED = (1, "Job started. In progress.")
-    # constants representing jobs' types
-    TEST_JOB = 0
-    
-    INITIALIZE_TEST_SUITE = 1
-    FINALIZE_TEST_SUITE = 2
-
-    INITIALIZE_TEST_CASE = 3
-    RUN_TEST_CASE = 4
-    FINALIZE_TEST_CASE = 5
-
-    START_CLUSTER = 6
-    STOP_CLUSTER = 7
-
-    def __init__(self, job, groupId="", args=None):
-        self.job = job              # job type
-        self.state = Job.S_ADDED    # initial job state
-        self.args = args            # additional job's attributes
-                                    # e.g. suite name or cluster_name
-        self.groupId = groupId      # group of jobs to which this one belongs
 
 
 class XrdTestMaster(Runnable):
@@ -1069,13 +772,13 @@ class XrdTestMaster(Runnable):
         LOGGER.info("Enqueuing job for test suite: %s " % \
                      test_suite_name)
 
-        groupId = genJobGroupId(test_suite_name)
+        groupId = Job.genJobGroupId(test_suite_name)
 
         try:
             ts = self.testSuites[test_suite_name]
         except KeyError, e:
             LOGGER.error('KeyError: %s is not a known test suite' % e)
-            
+            return 
         
         for clustName in ts.clusters:
             if not self.clusters[clustName].state == State(Cluster.S_ACTIVE):
@@ -1560,18 +1263,6 @@ class XrdTestMaster(Runnable):
             wd.stop()
         # synchronize suits sessions list with HDD storage and close
         xrdTestMaster.suiteSessions.close()
-
-class UserInfoHandler(logging.Handler):
-    '''
-    Specialized logging handler, to store logging messages in some
-    arbitral variable.
-    '''
-    testMaster = None
-    def __init__(self, xrdTestMaster):
-            logging.Handler.__init__(self)
-            self.testMaster = xrdTestMaster
-    def emit(self, record):
-        self.testMaster.userMsgs.append(record)
 
 def main():
     '''

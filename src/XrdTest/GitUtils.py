@@ -26,11 +26,11 @@
 #            TODO: add more error handling.
 #
 #-------------------------------------------------------------------------------
-from Utils import get_logger
-LOGGER = get_logger(__name__)
+from Utils import Logger
+LOGGER = Logger(__name__).setup()
 
 import os
-from Utils import execute
+from Utils import Command
 
 def sync_remote_git(repo, config):
     '''
@@ -73,7 +73,7 @@ def git_diff(local_branch, remote_branch, cwd):
     @param remote_branch: the remote branch name.
     @param cwd: the working directory in which to execute.
     '''
-    return execute('git diff %s %s' % (local_branch, remote_branch), cwd)
+    return Command('git diff %s %s' % (local_branch, remote_branch), cwd).execute()
 
 def git_fetch(cwd):
     '''
@@ -81,7 +81,7 @@ def git_fetch(cwd):
     
     @param cwd: the working directory in which to execute.
     '''
-    return execute('git fetch', cwd)
+    return Command('git fetch', cwd).execute()
 
 def git_pull(cwd):
     '''
@@ -89,7 +89,7 @@ def git_pull(cwd):
     
     @param cwd: the working directory in which to execute.
     '''
-    return execute('git pull', cwd)
+    return Command('git pull', cwd).execute()
 
 def git_clone(user, host, remote_repo, local_repo, cwd):
     '''
@@ -105,6 +105,6 @@ def git_clone(user, host, remote_repo, local_repo, cwd):
     @param cwd: the working directory in which to execute.
     '''
     os.mkdir(local_repo)
-    execute('git clone %s@%s:%s %s' % (user, host, remote_repo, local_repo), cwd)
+    Command('git clone %s@%s:%s %s' % (user, host, remote_repo, local_repo), cwd).execute()
     
     

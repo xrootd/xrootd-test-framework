@@ -1,12 +1,13 @@
 #!/bin/bash
-echo -ne `date` @slavename@ "Initializing test case\n"
+echo -ne `date` @slavename@ "Initializing test case ...\n\n"
 
-cd /tmp
+cd /data
 
 if [[ @slavename@ =~ ds ]]; then
   
   rm testfile
   truncate --size=50M testfile
+  chown daemon.daemon testfile
   ls -al
 
 else

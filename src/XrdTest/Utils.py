@@ -2,7 +2,7 @@
 #-------------------------------------------------------------------------------
 #
 # Copyright (c) 2011-2012 by European Organization for Nuclear Research (CERN)
-# Author: Lukasz Trzaska <ltrzaska@cern.ch>
+# Author: Justin Salmon <jsalmon@cern.ch>
 #
 # This file is part of XrdTest.
 #
@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with XrdTest.  If not, see <http://www.gnu.org/licenses/>.
 #
+#-------------------------------------------------------------------------------
+#
+# File:   Utils
+# Desc:   TODO:
 #-------------------------------------------------------------------------------
 import logging
 import datetime
@@ -87,7 +91,7 @@ class Stateful(object):
 
 class SafeCounter(object):
     '''
-    TODO
+    TODO:
     '''
     def __init__(self):
         self.lock = Lock()
@@ -109,28 +113,48 @@ class SafeCounter(object):
         self.criticalSection.release()
         return num
 
-def execute(cmd, cwd):
+class Command(object):
     '''
     Execute a subprocess command.
     '''
-    LOGGER.info('Running command: %s' % cmd)
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, cwd=cwd)
-    p.wait()
-    output = p.stdout.read()
-    if output == '': 
-        LOGGER.info('Command returned no output.') 
-    else: 
-        LOGGER.info('Command output: %s' % output)
-    return output
+    def __init__(self, cmd, cwd):
+        self.cmd = cmd
+        self.cwd = cwd
     
-def get_logger(filename):
+    def execute(self):
+        LOGGER.info('Running command: %s' % self.cmd)
+        (stdout, stderr) = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE,
+                                             cwd=self.cwd).communicate()
+        output = stdout
+        if output == '': 
+            LOGGER.info('Command returned no output.') 
+        else: 
+            LOGGER.info('Command output: \n%s' % output)
+        return output
+    
+class Logger(object):
     '''
-    Generic logger for all!
+    Generic logging class
     '''
-    logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
-                '[%(filename)s %(lineno)d] ' + \
-                '%(message)s', level=logging.DEBUG)
-    return logging.getLogger(filename)
+    def __init__(self, filename):
+        self.filename = filename
+    
+    def setup(self):
+        logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
+                    '[%(filename)s %(lineno)d] ' + \
+                    '%(message)s', level=logging.DEBUG)
+        return logging.getLogger(self.filename)
 
-LOGGER = get_logger(__name__)
+class UserInfoHandler(logging.Handler):
+    '''
+    Specialized logging handler, to store logging messages in some
+    arbitral variable.
+    '''
+    def __init__(self, xrdTestMaster):
+            logging.Handler.__init__(self)
+            self.testMaster = xrdTestMaster
+    def emit(self, record):
+        self.testMaster.userMsgs.append(record)
+
+LOGGER = Logger(__name__).setup()
     

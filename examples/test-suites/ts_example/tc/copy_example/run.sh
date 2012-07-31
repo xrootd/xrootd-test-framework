@@ -1,7 +1,7 @@
 #!/bin/bash
-echo -ne `date` @slavename@ "Running test case\n\n"
+echo -ne `date` @slavename@ "Running test case ...\n\n"
 
-cd /tmp
+cd /data
 
 if [ @slavename@ == "client1" ]; then
   

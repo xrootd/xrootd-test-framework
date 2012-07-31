@@ -14,7 +14,7 @@ function hr {
 }
 
 function section () {
-	hr; echo $@; hr
+	hr; echo `date +'%D %T'` $@; hr
 }
 
 #---------------------------------------------------------------------------------------------------------
@@ -79,10 +79,11 @@ XFRD_INSTANCES=\"${NAME}\"
 " > $SERVICE_CONFIG_FILE
 
 #---------------------------------------------------------------------------------------------------------
-section "# Mointing storage disks for machine $NAME ..."
+section "# Mounting storage disks for machine $NAME ..."
 
 mkdir /data
 mount -t ext4 -o user_xattr /dev/vda /data
+chown daemon.daemon /data
 ls -al /data
 
 #---------------------------------------------------------------------------------------------------------

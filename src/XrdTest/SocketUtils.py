@@ -20,8 +20,8 @@
 # along with XrdTest.  If not, see <http://www.gnu.org/licenses/>.
 #
 #-------------------------------------------------------------------------------
-from Utils import get_logger
-LOGGER = get_logger(__name__)
+from Utils import Logger
+LOGGER = Logger(__name__).setup()
 
 import pickle
 import socket

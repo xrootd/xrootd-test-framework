@@ -37,13 +37,17 @@
 #         fi
 #
 #-------------------------------------------------------------------------------
-from Utils import get_logger
-LOGGER = get_logger(__name__)
+from Utils import Logger
+LOGGER = Logger(__name__).setup()
 
 import os
 import sys
 import urllib2
+import datetime
 
+from Utils import Stateful
+from string import maketrans 
+from copy import deepcopy   
 
 class TestSuiteException(Exception):
     '''
@@ -233,6 +237,87 @@ class TestCase:
                                       TestSuiteException.ERR_CRITICAL)
         return True
 
+
+class TestSuiteSession(Stateful):
+    '''
+    Represents run of Test Suite from the moment of its initialization.
+    It stores all information required for test suite to be run as well as
+    results of test stages. It has unique id (uid parameter) for recognition,
+    because there will be for sure many test suites with the same name.
+    '''
+    def __init__(self, suiteDef):
+        Stateful.__init__(self)
+        # name of test suite
+        self.name = suiteDef.name
+        # test suite definition copy
+        self.suite = deepcopy(suiteDef)
+        self.suite.jobFun = None
+        # date of initialization
+        self.initDate = datetime.datetime.now()
+        # references to slaves who are necessary for the test suite
+        self.slaves = []
+        # keeps the results of each stage.
+        self.stagesResults = []
+        # unique identifier of test suite
+        self.uid = self.suite.name + '-' + self.initDate.isoformat()
+        # remove special chars from uid
+        self.uid = self.uid.translate(maketrans('', ''), '-:.')
+        # test cases loaded to run in this session, key is testCase.uid
+        self.cases = {}
+        # uid of last run test case with given name 
+        self.caseUidByName = {}
+        # if result of any stage i.a. init, test case stages or finalize
+        # ended with non-zero status code 
+        self.failed = False
+
+    def addCaseRun(self, tc):
+        '''
+        Registers run of test case. Gives unique id (uid) for started
+        test case, because one test case can be run many time within test
+        suite session.
+        @param tc: TestCase definition object
+        '''
+        tc.uid = tc.name + '-' + datetime.datetime.now().isoformat()
+        tc.uid = tc.uid.translate(maketrans('', ''), '-:.') # remove special
+                                                            # chars from uid
+        tc.initDate = datetime.datetime.now()
+
+        self.cases[tc.uid] = tc
+        self.caseUidByName[tc.name] = tc.uid
+
+    def addStageResult(self, state, result, uid=None, slave_name=None):
+        '''
+        Adds all information about stage that has finished to test suite session
+        object. Stage are e.g.: initialize suite on some slave, run test case
+        on some slave etc.
+        @param state: state that happened
+        @param result: result of test run (code, stdout, stderr)
+        @param uid: uid of test case or test suite init/finalize
+        @param slave_name: where stage ended
+        '''
+        state.time = state.datetime.strftime("%H:%M:%S, %d-%m-%Y")
+
+        LOGGER.info("New stage result %s (ret code %s)" % \
+                     (state, result[2]))
+        LOGGER.debug("New stage result %s: (code %s) %s" % \
+                    (state, result[2], result[0]))
+
+        if result[2] != '0':
+            self.failed = True
+
+        if result[1] == None:
+            result = (result[0], "", result[2])
+
+        self.stagesResults.append((state, result, uid, slave_name))
+
+    def getTestCaseStages(self, test_case_uid):
+        '''
+        Retrieve test case stages for given test case unique id.
+        @param test_case_uid:
+        '''
+        stages = [v for v in self.stagesResults if v[2] == test_case_uid]
+        return stages
+    
 
 def extractSuiteName(path):
     '''

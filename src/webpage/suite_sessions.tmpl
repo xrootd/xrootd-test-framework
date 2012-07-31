@@ -61,7 +61,7 @@
         <tr><td style="background:#ffffff;font-size:12px;font-weight:bold;">slave: <span style="font-weight:normal;">${stage[3]}</span></td></tr>
         <tr><td style="background:#ffffff;font-size:12px;font-weight:bold;">return code: <span style="font-weight:normal;">${stage[1][2].replace('\n', '<br />')}</span></td></tr>
         <tr><td style="background:#ffffff;font-size:12px;font-weight:bold;">stdout</td></tr>
-        <tr><td style="font-size:12px;font-family:monospace !important;">${stage[1][0].replace('\n', '<br />')}</td></tr>
+        <tr><td style="font-size:12px;font-family:monospace !important;">${stage[1][0].replace('\n', '<br />').replace('[xrootd]', '<br />[xrootd]').decode('utf-8')}</td></tr>
         #if $stage[1][1]
             <tr><td style="background:#ffffff;font-weight:bold;">stderr</td></tr>
             <tr><td style="font-size:12px;font-family:monospace !important;">${stage[1][1].replace('\n', '<br />')}</td></tr>
@@ -153,7 +153,7 @@
             </div>
             #end if
         #else
-           <p>No test cases has been run in this session.</p>
+           <p>No test cases have been run in this session.</p>
         #end if
         </div>
         </div>

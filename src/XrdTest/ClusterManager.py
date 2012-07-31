@@ -29,8 +29,8 @@
 #         information of all created clusters during the session and can remove
 #         all of them on demand - come back to state before it began.
 #-------------------------------------------------------------------------------
-from Utils import get_logger
-LOGGER = get_logger(__name__)
+from Utils import Logger
+LOGGER = Logger(__name__).setup()
 
 import sys
 import os
@@ -40,9 +40,8 @@ import libvirt
 
 from ClusterUtils import ClusterManagerException
 from ClusterUtils import ERR_CONNECTION, ERR_ADD_HOST, ERR_CREATE_NETWORK
-from Utils import SafeCounter, execute
+from Utils import SafeCounter, Command
 from copy import deepcopy
-from tempfile import NamedTemporaryFile
 from libvirt import libvirtError
 
 
@@ -485,8 +484,8 @@ class ClusterManager:
         ''' 
         TODO:
         '''
-#        execute('dd if=/dev/zero of=/data/XrdTest/images/%s bs=%s count=%s' % 
-#                (host + '_disk', blockSize, blockCount), '/data/XrdTest/images')
+#        Command('dd if=/dev/zero of=/data/XrdTest/images/%s bs=%s count=%s' % 
+#                (host + '_disk', blockSize, blockCount), '/data/XrdTest/images').execute()
 
         root = '/var/lib/libvirt/images/XrdTest'
         
@@ -494,10 +493,10 @@ class ClusterManager:
             LOGGER.info('Creating storage disk %s_%s' % (host, diskName))
             with open('%s/%s_%s' % (root, host, diskName), 'w') as f:
                 f.truncate(int(diskSize))
-            execute('mkfs.ext4 -F %s/%s_%s' % (root, host, diskName), root)
+            Command('mkfs.ext4 -F %s/%s_%s' % (root, host, diskName), root).execute()
   
-        output = execute('virsh attach-disk %s %s/%s_%s %s' % 
-                (host, root, host, diskName, mountPoint), root)
+        output = Command('virsh attach-disk %s %s/%s_%s %s' % 
+                (host, root, host, diskName, mountPoint), root).execute()
         if re.match('error', output):
             raise ClusterManagerException('Attaching disk failed: %s' % output)
 

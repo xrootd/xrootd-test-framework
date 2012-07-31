@@ -1,3 +1,0 @@
-#!/bin/sh
-echo 'SUITE FINALIZE STAGE SCRIPT SHELL SCRIPT'
-suite_FINAL_gen_err

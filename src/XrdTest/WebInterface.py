@@ -24,8 +24,8 @@
 # File:    WebInterface
 # Desc:    TODO:
 #-------------------------------------------------------------------------------
-from Utils import get_logger
-LOGGER = get_logger(__name__)
+from Utils import Logger
+LOGGER = Logger(__name__).setup()
 
 import sys
 import os

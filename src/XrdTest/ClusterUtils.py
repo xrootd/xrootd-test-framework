@@ -24,8 +24,8 @@
 # File:   ClusterManager module
 # Desc:   Virtual machines clusters manager.
 #-------------------------------------------------------------------------------
-from Utils import get_logger
-LOGGER = get_logger(__name__)
+from Utils import Logger
+LOGGER = Logger(__name__).setup()
 
 import Utils
 import logging

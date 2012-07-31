@@ -1,2 +1,2 @@
 #!/bin/bash
-echo -ne `date` @slavename@ "Finalizing test case\n\n"
+echo -ne `date` @slavename@ "Finalizing test case ...\n\n"

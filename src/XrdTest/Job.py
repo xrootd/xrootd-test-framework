@@ -65,7 +65,8 @@ class Job(object):
         self.groupId = groupId      # group of jobs to which this one belongs
 
 
-    def genJobGroupId(self, suite_name):
+    @staticmethod
+    def genJobGroupId(suite_name):
         '''
         Utility function to create unique name for group of jobs.
         @param suite_name:

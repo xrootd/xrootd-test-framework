@@ -31,6 +31,7 @@
 #
 #-------------------------------------------------------------------------------
 from XrdTest.Utils import Logger
+from XrdTestSlave import readConfig
 LOGGER = Logger(__name__).setup()
 
 try:
@@ -89,7 +90,7 @@ class XrdTestMaster(Runnable):
     Main class of module, only one instance can exist in the system,
     it's runnable as a daemon.
     '''
-    def __init__(self, config):
+    def __init__(self, configFile):
         # Global configuration for master
         self.config = None 
         # Default daemon configuration
@@ -131,7 +132,11 @@ class XrdTestMaster(Runnable):
         self.C_SLAVE = 'slave'
         self.C_HYPERV = 'hypervisor'
         
-        self.config = config
+        if configFile:
+            self.config = self.readConfig(configFile)
+        else:
+            self.config = self.readConfig(self.defaultConfFile)
+        
         self.suiteSessions = shelve.open(\
                              self.config.get('general', 'suite_sessions_file'))
 
@@ -167,7 +172,7 @@ class XrdTestMaster(Runnable):
 
     def loadDefinitions(self):
         '''
-        Load all definitions of example clusters and test suites at once. 
+        Load all definitions of example clusters and test suites at once.
         If any definitions are invalid, raise exceptions.
         '''
         LOGGER.info("Loading definitions...")
@@ -1158,8 +1163,8 @@ class XrdTestMaster(Runnable):
             self.startNextJob()
 
     def startTCPServer(self):
-        ''' 
-        TODO: 
+        '''
+        TODO:
         '''
         try:
             server = ThreadedTCPServer((self.config.get('server', 'ip'), \
@@ -1267,26 +1272,26 @@ class XrdTestMaster(Runnable):
         for wd in self.watchedDirectories:
             wd.stop()
         # synchronize suits sessions list with HDD storage and close
-        xrdTestMaster.suiteSessions.close()
+        self.suiteSessions.close()
 
-def readConfig(self, confFile):
-        '''
-        Reads configuration from given file or from default if None given.
-        @param confFile: file with configuration
-        '''
-        LOGGER.info("Reading config file % s", str(confFile))
-    
-        config = ConfigParser.ConfigParser()
-        if os.path.exists(confFile):
-            try:
-                fp = file(confFile, 'r')
-                config.readfp(fp)
-                fp.close()
-            except IOError, e:
-                LOGGER.exception(e)
-        else:
-            raise XrdTestMasterException("Config file could not be read")
-        return config
+    def readConfig(self, confFile):
+            '''
+            Reads configuration from given file or from default if None given.
+            @param confFile: file with configuration
+            '''
+            LOGGER.info("Reading config file % s", str(confFile))
+        
+            config = ConfigParser.ConfigParser()
+            if os.path.exists(confFile):
+                try:
+                    fp = file(confFile, 'r')
+                    config.readfp(fp)
+                    fp.close()
+                except IOError, e:
+                    LOGGER.exception(e)
+            else:
+                raise XrdTestMasterException("Config file could not be read")
+            return config
     
 def main():
     '''
@@ -1304,27 +1309,16 @@ def main():
     # suppress output on daemon start
     if options.backgroundMode:
         LOGGER.setLevel(level=logging.ERROR)
+        
+    if options.configFile:
+        LOGGER.info("Using config file: %s" % options.configFile)
+        configFile = options.configFile
+    else:
+        configFile = None
 
-    isConfigFileRead = False
-    config = ConfigParser.ConfigParser()
-
-    # read the config file
-    global xrdTestMaster, defaultConfFile
-    LOGGER.info("Loading config file: %s" % options.configFile)
-    try:
-        confFile = ''
-        if options.configFile:
-            confFile = options.configFile
-        if not os.path.exists(confFile):
-            confFile = defaultConfFile
-        config = readConfig(confFile)
-        isConfigFileRead = True
-    except (RuntimeError, ValueError, IOError), e:
-        LOGGER.exception(e)
-        sys.exit(1)
-
-    # Initialize main class of a system
-    xrdTestMaster = XrdTestMaster(config)
+    # Initialize main class of the system
+    xrdTestMaster = XrdTestMaster(configFile)
+    
     uih = UserInfoHandler(xrdTestMaster)
     LOGGER.addHandler(uih)
 
@@ -1332,11 +1326,8 @@ def main():
     if options.backgroundMode:
         LOGGER.info("Run in background: %s" % options.backgroundMode)
 
-        pidFile = xrdTestMaster.defaultPidFile
-        logFile = xrdTestMaster.defaultLogFile
-        if isConfigFileRead:
-            pidFile = config.get('daemon', 'pid_file_path')
-            logFile = config.get('daemon', 'log_file_path')
+        pidFile = xrdTestMaster.config.get('daemon', 'pid_file_path')
+        logFile = xrdTestMaster.config.get('daemon', 'log_file_path')
 
         dm = Daemon("XrdTestMaster.py", pidFile, logFile)
 

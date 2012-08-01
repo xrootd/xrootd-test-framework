@@ -1,0 +1,35 @@
+div.content {
+	display: block;
+	width: 95%;
+	float: left;
+}
+
+div.stage-details {
+	display: none;
+	width: 100%;
+}
+
+.stage-details table {
+	width: 99%;
+}
+
+.stage-details td {
+	background: #ffffff;
+	font-size: 12px;
+	font-weight: bold;
+}
+
+.stage-details span.state {
+	font-weight: normal;
+	color: #05b;
+}
+
+.stage-details td.stdout {
+	font-size: 12px;
+	font-family: monospace !important;
+	font-weight: normal;
+}
+
+.stage-details span {
+	font-weight: normal;
+}

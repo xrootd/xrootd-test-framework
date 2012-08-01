@@ -59,7 +59,7 @@ except ImportError, e:
 
 class XrdTestSlaveException(Exception):
     '''
-    General Exception raised by XrdTestSlaveException.
+    General Exception raised by XrdTestSlave.
     '''
     def __init__(self, desc):
         '''
@@ -78,17 +78,21 @@ class XrdTestSlave(Runnable):
     '''
     Test Slave main executable class.
     '''
-    def __init__(self, config):
+    def __init__(self, configFile):
         ''' TODO: '''
         #Default daemon configuration
         self.defaultConfFile = '/etc/XrdTest/XrdTestSlave.conf'
         self.defaultPidFile = '/var/run/XrdTestSlave.pid'
         self.defaultLogFile = '/var/log/XrdTest/XrdTestSlave.log'
 
+        if os.path.exists(configFile):
+            self.config = self.readConfig(configFile)
+        else:
+            self.config = self.readConfig(self.defaultConfFile)
+            
         self.sockStream = None
         #Blocking queue of commands received from XrdTestMaster
         self.recvQueue = Queue.Queue()
-        self.config = config
         self.stopEvent = threading.Event()
         # Ran test cases, indexed by test.uid
         self.cases = {}
@@ -326,7 +330,7 @@ class XrdTestSlave(Runnable):
 
         self.recvLoop()
 
-def readConfig(self, confFile):
+def readConfig(confFile):
         '''
         Reads configuration from given file or from default if None given.
         @param confFile: file with configuration
@@ -362,35 +366,20 @@ def main():
     if options.backgroundMode:
         LOGGER.setLevel(level=logging.ERROR)
 
-    isConfigFileRead = False
-    config = ConfigParser.ConfigParser()
-
-    # read the config file
-    global defaultConfFile
-    LOGGER.info("Loading config file: %s" % options.configFile)
-    try:
-        confFile = ''
-        if options.configFile:
-            confFile = options.configFile
-        if not os.path.exists(confFile):
-            confFile = defaultConfFile
-        config = readConfig(confFile)
-        isConfigFileRead = True
-    except (RuntimeError, ValueError, IOError), e:
-        LOGGER.exception()
-        sys.exit(1)
-
-    testSlave = XrdTestSlave(config)
+    configFile = None
+    if options.configFile:
+        configFile = options.configFile    
+        LOGGER.info("Using config file: %s" % configFile)
+    
+    # Initialize the slave
+    testSlave = XrdTestSlave(configFile)
 
     # run the daemon
     if options.backgroundMode:
         LOGGER.info("Run in background: %s" % options.backgroundMode)
 
-        pidFile = testSlave.defaultPidFile
-        logFile = testSlave.defaultLogFile
-        if isConfigFileRead:
-            pidFile = config.get('daemon', 'pid_file_path')
-            logFile = config.get('daemon', 'log_file_path')
+        pidFile = testSlave.config.get('daemon', 'pid_file_path')
+        logFile = testSlave.config.get('daemon', 'log_file_path')
 
         dm = Daemon("XrdTestSlave.py", pidFile, logFile)
         try:

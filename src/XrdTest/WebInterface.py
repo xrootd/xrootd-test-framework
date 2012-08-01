@@ -119,45 +119,50 @@ class WebInterface:
 
     def downloadScript(self, *script_name):
         '''
-        Enable slave to download some script as a regular file from master and 
+        Enable slave to download some script as a regular file from master and
         run it.
-        
+
         @param script_name:
         '''
-        local_path = os.path.abspath(self.config.get('test-repo-local', 'repo_path'))
-        remote_path = self.config.get('test-repo-remote', 'local_repo')
         
-        for i in xrange(0, len(script_name)):
-            local_path += os.sep + script_name[i]
-            remote_path += os.sep + script_name[i]
+        for repo in self.config.get('general', 'test-repos').split(','):
+            repo = 'test-repo-' + repo
+            
+            if self.config.get(repo, 'type') == 'localfs':
+                path = os.path.abspath(self.config.get(repo, 'repo_path'))
+            elif self.config.get(repo, 'type') == 'git':
+                path = self.config.get(repo, 'local_repo')     
 
-        if os.path.exists(local_path):
-            return serve_file(local_path , "application/x-download", "attachment")
-        elif os.path.exists(remote_path):
-            return serve_file(remote_path , "application/x-download", "attachment")
-        else:
-            return "%s: not found in any repository" % script_name[-1]
+            for i in xrange(0, len(script_name)):
+                path += os.sep + script_name[i]
+    
+            if os.path.exists(path):
+                return serve_file(path , "application/x-download", "attachment")
+            else:
+                return "%s: not found in any repository" % path
 
     def showScript(self, *script_name):
         '''
-        Enable slave to view some script as text from master and 
+        Enable slave to view some script as text from master and
         run it.
-        
+
         @param script_name:
         '''        
-        local_path = os.path.abspath(self.config.get('test-repo-local', 'repo_path'))
-        remote_path = self.config.get('test-repo-remote', 'local_repo')
-        
-        for i in xrange(0, len(script_name)):
-            local_path += os.sep + script_name[i]
-            remote_path += os.sep + script_name[i]
-
-        if os.path.exists(local_path):
-            return serve_file(local_path , "text/html")
-        elif os.path.exists(remote_path):
-            return serve_file(remote_path , "text/html")
-        else:
-            return "%s: not found in any repository" % script_name[-1]
+        for repo in self.config.get('general', 'test-repos').split(','):
+            repo = 'test-repo-' + repo
+            
+            if self.config.get(repo, 'type') == 'localfs':
+                path = os.path.abspath(self.config.get(repo, 'repo_path'))
+            elif self.config.get(repo, 'type') == 'git':
+                path = self.config.get(repo, 'local_repo')
+            
+            for i in xrange(0, len(script_name)):
+                path += os.sep + script_name[i]
+    
+            if os.path.exists(path):
+                return serve_file(path , "text/html")
+            else:
+                return "%s: not found in any repository" % path
         
 
     index.exposed = True

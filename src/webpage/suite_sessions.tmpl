@@ -1,167 +1,260 @@
+<!DOCTYPE html>
 <html>
-<head>
-<meta http-equiv="refresh" content="url=http://${hostname}:${HTTPport}">
-<title>$title</title>
-<script type="text/javascript" src="webpage/js/jquery-1.6.2.min.js"></script>
-<script type="text/javascript" src="webpage/js/jquery-ui-1.8.16.custom.min.js"></script>
-<script type="text/javascript" src="webpage/js/jquery.nestedAccordion.js"></script>
-<link rel="stylesheet" type="text/css" href="webpage/css/jquery.css" />
-<link rel="stylesheet" type="text/css" href="webpage/css/main.css" />
-<script type="text/javascript">
-<!--//--><![CDATA[//><!--
+	<head>
+		<title>$title</title>
+			
+		<meta http-equiv="refresh" content="url=http://${hostname}:${HTTPport}" />
 
-\$.fn.accordion.defaults.container = false;
-\$(function() {
-     #if $suiteSessions and len($suiteSessions) > 0
-        #set $testSessionsNum = len($suiteSessions)
-        #for $i in range($testSessionsNum):
-             #set $j = $i + 1
-             \$("#acc5${j}").accordion({
-              wrapper: "div", 
-              });
-        #end for
-       #end if
-});
-//--><!]]>
-</script>
-</head>
-<body>
-<p>XRootD Testing Framework</p>
-<div style="width:100%;" id="main">
-#include "webpage/main_menu.tmpl"
-#set $testSessionsNum = 1
-#set $testCasesNum = 1
-<div style="display:block;width:95%;float:left;">
-    <h1>Suite sessions [by date]</h1>
-    #if $suiteSessions and len($suiteSessions) > 0
-    #import copy
-    #set $revKeys = copy.copy($suiteSessions.keys())
-    #set $revKeys = sorted($revKeys, cmp=lambda x,y: cmp($suiteSessions[$y].initDate, $suiteSessions[$x].initDate))
-    #for $key in $revKeys
-        #set $suiteSess = $suiteSessions[$key]
-        #set $htmlSuiteColor = "111111"
-        #if $runningSuiteUids.has_key($suiteSess.name)
-            #if $runningSuiteUids[$suiteSess.name] == $suiteSess.uid
-                #set $htmlSuiteColor = "00bb00"
-            #end if
-        #end if
-        #if hasattr($suiteSess, 'failed') and $suiteSess.failed
-            #set $htmlSuiteColor = "ee0000"
-        #end if
-        <div id="acc5${testSessionsNum}" class="accordion">
-        <h3><a href="#" style="color:#${htmlSuiteColor};">${suiteSess.name} 
-        <span style="font-weight:normal;">[inited at: ${suiteSess.initDate.strftime("%a %d-%m-%Y %H:%M:%S")}]</span></a></h3>
-        <div class="inner">
-#from string import replace
-#def stageDetailsDiv($div_id, $stage)
-    <div id="$div_id" style="display:none;width:100%;"
-    title="Details of test result stage at slave <b>${stage[3]}</b>">
-    <table width="99%">
-        <tr><td style="background:#ffffff;font-size:12px;font-weight:bold;">state: <span style="font-weight:normal;color:#05b;">${stage[0]}</span></td></tr>
-        <tr><td style="background:#ffffff;font-size:12px;font-weight:bold;">slave: <span style="font-weight:normal;">${stage[3]}</span></td></tr>
-        <tr><td style="background:#ffffff;font-size:12px;font-weight:bold;">return code: <span style="font-weight:normal;">${stage[1][2].replace('\n', '<br />')}</span></td></tr>
-        <tr><td style="background:#ffffff;font-size:12px;font-weight:bold;">stdout</td></tr>
-        <tr><td style="font-size:12px;font-family:monospace !important;">${stage[1][0].replace('\n', '<br />').replace('[xrootd]', '<br />[xrootd]').decode('utf-8')}</td></tr>
-        #if $stage[1][1]
-            <tr><td style="background:#ffffff;font-weight:bold;">stderr</td></tr>
-            <tr><td style="font-size:12px;font-family:monospace !important;">${stage[1][1].replace('\n', '<br />')}</td></tr>
-        #end if
-    </table>
-    </div>
-#end def
-        #if $suiteSess.cases and len($suiteSess.cases) > 0
-            #set $iS = 1
-            #set $init_stages=$suiteSess.getTestCaseStages("suite_inited")
-            #if $init_stages and len($init_stages)
+		<script type="text/javascript" src="webpage/js/jquery-1.6.2.min.js"></script>
+		<script type="text/javascript" src="webpage/js/jquery-ui-1.8.16.custom.min.js"></script>
+		<script type="text/javascript" src="webpage/js/jquery.nestedAccordion.js"></script>
+		<link rel="stylesheet" type="text/css" href="webpage/css/jquery.css" />
+		<link rel="stylesheet" type="text/css" href="webpage/css/main.css" />
+		<link rel="stylesheet" type="text/css" href="webpage/css/suite_sessions.css" />
+		<script type="text/javascript">
+			<!--// --><![CDATA[//><!--
 
-            <h4><a href="#"><span style="font-weight:normal;">Suite initialization</span> 
-            <span style='font-weight:normal'>[run at: ${suiteSess.initDate.strftime("%H:%M:%S")}]</span></a></h4>
-            <div class="inner">
-            #for $stage in $init_stages
-                #set $color = "#222222"
-                #if $stage[1][2] != "0":
-                    #set $color = "#dd0000"
-                #end if
-                <p style="color:$color;"><span style="font-size:9px;color;#000000;">${stage[3]}</span> ${stage[0]}
-                #set $div_id = "%s_ist%s_details" % ($suiteSess.uid, $iS)
-                <a href="#" id="${suiteSess.uid}_ist${iS}_button">see details</a></p>
-                $stageDetailsDiv($div_id, $stage)
-                <script style="display:none;">
-                \$( "#${suiteSess.uid}_ist${iS}_button" ).click(function() {
-                    \$( "#${suiteSess.uid}_ist${iS}_details" ).dialog({
-                        height: 900, width: \$(document).width()-50,  modal: true
-                    });
-                });
-                </script>
-                #set $iS += 1
-            #end for
-            </div>
-            #end if
-        #for $tC in $suiteSess.cases.itervalues()
-            #set $stages=$suiteSess.getTestCaseStages($tC.uid)
-            <h4><a href="#"><span style="font-weight:normal;">Test Case</span> <i>${tC.name}</i> 
-            <span style='font-weight:normal'>[run at: ${tC.initDate.strftime("%H:%M:%S")}]</span></a></h4>
-            <div class="inner">
-                #if $stages and len($stages)
-                #for $stage in $stages
-                    #set $color = "#222222"
-                    #if $stage[1][2] != "0":
-                        #set $color = "#dd0000"
-                    #end if
-                    <p style="color:$color;"><span style="font-size:9px;color;#000000;">${stage[3]}</span> ${stage[0]}
-                    #set $div_id = "%s_st%s_details" % ($tC.uid, $iS)
-                    <a href="#" id="${tC.uid}_st${iS}_button">see details</a></p>
-                    $stageDetailsDiv($div_id, $stage)
-                    <script style="display:none;">
-                    \$( "#${tC.uid}_st${iS}_button" ).click(function() {
-                        \$( "#${tC.uid}_st${iS}_details" ).dialog({
-                            height: 900,
-                            width: 1152,
-                            modal: true
-                        });
-                    });
-                    </script>
-                    #set $iS += 1
-                #end for
-                #end if
-            </div>
-            #set $testCasesNum += 1
-        #end for
-            #set $final_stages=$suiteSess.getTestCaseStages("suite_finalized")
-            #if $final_stages and len($final_stages)
-                <h4><a href="#"><span style="font-weight:normal;">Suite finalization</span> 
-                <span style='font-weight:normal'>[run at: ${suiteSess.initDate.strftime("%H:%M:%S")}]</span></a></h4>
-                <div class="inner">
-            #for $stage in $final_stages
-                #set $color = "#222222"
-                #if $stage[1][2] != "0":
-                    #set $color = "#dd0000"
-                #end if
-                <p style="color:$color;"><span style="font-size:9px;color;#000000;">${stage[3]}</span> ${stage[0]}
-                #set $div_id = "%s_ist%s_details" % ($suiteSess.uid, $iS)
-                <a href="#" id="${suiteSess.uid}_ist${iS}_button">see details</a></p>
-                $stageDetailsDiv($div_id, $stage)
-                <script style="display:none;">
-                \$( "#${suiteSess.uid}_ist${iS}_button" ).click(function() {
-                    \$( "#${suiteSess.uid}_ist${iS}_details" ).dialog({
-                        height: 900, width: 1152,  modal: true
-                    });
-                });
-                </script>
-                #set $iS += 1
-            #end for
-            </div>
-            #end if
-        #else
-           <p>No test cases have been run in this session.</p>
-        #end if
-        </div>
-        </div>
-        #set $testSessionsNum += 1
-    #end for
-    #end if
-    </div>
-</div>
-</div>
-</body>
+				\$.fn.accordion.defaults.container = false;
+				\$(function() {
+				     #if $suiteSessions and len($suiteSessions) > 0
+				        #set $testSessionsNum = len($suiteSessions)
+				        #for $i in range($testSessionsNum):
+				             #set $j = $i + 1
+				             \$("#acc5${j}").accordion({
+				              	wrapper: "div", 
+				              });
+				        #end for
+				     #end if
+				});
+			
+			//--><!]]>
+		</script>
+	</head>
+	<body>
+		<p>XRootD Testing Framework</p>
+		<div id="main">
+		
+			#include "webpage/main_menu.tmpl"
+			
+			#set $testSessionsNum = 1 
+			#set $testCasesNum = 1
+			
+			<div class="content">
+				<h1>Suite sessions [by date]</h1>
+				#if $suiteSessions and len($suiteSessions) > 0 
+					#import copy 
+					#set $revKeys = copy.copy($suiteSessions.keys()) 
+					#set $revKeys =	sorted($revKeys, cmp=lambda x,y: cmp($suiteSessions[$y].initDate, $suiteSessions[$x].initDate)) 
+					
+					#for $key in $revKeys 
+						#set $suiteSess = $suiteSessions[$key] 
+						#set $htmlSuiteColor = "111111" 
+						
+						#if	$runningSuiteUids.has_key($suiteSess.name) 
+							#if	$runningSuiteUids[$suiteSess.name] == $suiteSess.uid 
+								#set $htmlSuiteColor = "00bb00" 
+							#end if 
+						#end if 
+						
+						#if	hasattr($suiteSess,	'failed') and $suiteSess.failed 
+							#set $htmlSuiteColor = "ee0000" 
+						#end if
+						<div id="acc5${testSessionsNum}" class="accordion">
+							<h3>
+								<a href="#" style="color: #${htmlSuiteColor};">
+									${suiteSess.name}
+									<span style="font-weight: normal;">
+										[initialized at: ${suiteSess.initDate.strftime("%a %d-%m-%Y %H:%M:%S")}]
+									</span>
+								</a>
+							</h3>
+							<div class="inner">
+								#from string import replace 
+								
+								#def stageDetailsDiv($div_id, $stage)
+									<div id="$div_id" class="stage-details"
+										title="Details of test result stage at slave ${stage[3]}">
+										<table>
+											<tr>
+												<td>
+													state:
+													<span class="state">${stage[0]}</span>
+												</td>
+											</tr>
+											<tr>
+												<td>
+													slave:
+													<span>${stage[3]}</span>
+												</td>
+											</tr>
+											<tr>
+												<td>
+													return code:
+													<span>
+														${stage[1][2].replace('\n', '<br />')}
+													</span>
+												</td>
+											</tr>
+											<tr>
+												<td>stdout</td>
+											</tr>
+											<tr>
+												<td class="stdout">
+													${stage[1][0].replace('\n','<br />').replace('[xrootd]', '<br />[xrootd]').decode('utf-8')}
+												</td>
+											</tr>
+											#if $stage[1][1]
+												<tr>
+													<td>stderr</td>
+												</tr>
+												<tr>
+													<td class="stdout">
+														${stage[1][1].replace('\n','<br />')}
+													</td>
+												</tr>
+											#end if
+										</table>
+									</div>
+								#end def 
+								
+								#if $suiteSess.cases and len($suiteSess.cases) > 0 
+									#set $iS = 1 
+									#set $init_stages=$suiteSess.getTestCaseStages("suite_inited") 
+								
+									#if $init_stages and len($init_stages)
+										<h4>
+											<a href="#">
+												<span style="font-weight: normal;">Suite initialization</span>
+												<span style='font-weight: normal'>[run at: ${suiteSess.initDate.strftime("%H:%M:%S")}]</span>
+											</a>
+										</h4>
+										<div class="inner">
+										#for $stage in $init_stages 
+											#set $color = "#222222" 
+											
+											#if $stage[1][2] != "0": 
+												#set $color = "#dd0000" 
+											#end if
+											
+											<p style="color: $ color;">
+												<span style="font-size: 9px;">${stage[3]}</span>
+												${stage[0]} 
+												
+												#set $div_id = "%s_ist%s_details" % ($suiteSess.uid, $iS)
+												<a href="#" id="${suiteSess.uid}_ist${iS}_button">see details</a>
+											</p>
+											
+											$stageDetailsDiv($div_id, $stage)
+											<script style="display: none;">
+												\$( "#${suiteSess.uid}_ist${iS}_button").click(function() {
+													\$( "#${suiteSess.uid}_ist${iS}_details").dialog({
+														height: 900, 
+														width: \$(document).width()-50, 
+														modal: true
+													});
+												});
+											</script>
+											#set $iS += 1 
+										#end for
+									</div>
+									#end if 
+									
+									#for $tC in $suiteSess.cases.itervalues() 
+										#set $stages=$suiteSess.getTestCaseStages($tC.uid)
+										
+										<h4>
+											<a href="#">
+												<span style="font-weight: normal;">Test Case</span>
+												<i>${tC.name}</i>
+												<span style='font-weight: normal'>[run at: ${tC.initDate.strftime("%H:%M:%S")}]
+												</span>
+											</a>
+										</h4>
+										<div class="inner">
+											#if $stages and len($stages) 
+											
+												#for $stage in $stages 
+													#set $color = "#222222" 
+													
+													#if $stage[1][2] != "0": 
+														#set $color = "#dd0000" 
+													#end if
+													<p style="color: $ color;">
+														<span style="font-size: 9px;">${stage[3]}</span>
+														${stage[0]} 
+														#set $div_id = "%s_st%s_details" % ($tC.uid, $iS)
+														<a href="#" id="${tC.uid}_st${iS}_button">
+															see details
+														</a>
+													</p>
+													
+													$stageDetailsDiv($div_id, $stage)
+													<script style="display: none;">
+														\$("#${tC.uid}_st${iS}_button").click(function() {
+															\$( "#${tC.uid}_st${iS}_details" ).dialog({
+																height: 900,
+																width: 1152,
+																modal: true
+															});
+														});
+													</script>
+													#set $iS += 1 
+											
+												#end for 
+											#end if
+										</div>
+										#set $testCasesNum += 1 
+									#end for 
+									
+									#set $final_stages=$suiteSess.getTestCaseStages("suite_finalized") 
+									
+									#if $final_stages and len($final_stages)
+										<h4>
+											<a href="#">
+												<span style="font-weight: normal;">Suite finalization</span>
+												<span style='font-weight: normal'>[run at: ${suiteSess.initDate.strftime("%H:%M:%S")}]</span>
+											</a>
+										</h4>
+										<div class="inner">
+										#for $stage in $final_stages 
+											#set $color = "#222222" 
+											
+											#if $stage[1][2] != "0": 
+												#set $color = "#dd0000" 
+											#end if
+											
+											<p style="color: $ color;">
+												<span style="font-size: 9px;">${stage[3]}</span>
+												${stage[0]} 
+												#set $div_id = "%s_ist%s_details" % ($suiteSess.uid, $iS)
+												<a href="#" id="${suiteSess.uid}_ist${iS}_button">see details</a>
+											</p>
+											
+											$stageDetailsDiv($div_id, $stage)
+											<script style="display: none;">
+												\$( "#${suiteSess.uid}_ist${iS}_button").click(function() {
+													\$( "#${suiteSess.uid}_ist${iS}_details").dialog({
+														height: 900, 
+														width: 1152, 
+														modal: true
+													});
+												});
+											</script>
+											
+											#set $iS += 1 
+										#end for
+									</div>
+									#end if 
+									
+								#else
+								<p>No test cases have been run in this session.</p>
+								#end if
+							</div>
+						</div>
+						#set $testSessionsNum += 1 
+					#end for 
+				#end if
+			</div>
+		</div>
+	</body>
 </html>

@@ -54,7 +54,7 @@ except ImportError, e:
 
 class XrdTestHypervisorException(Exception):
     '''
-    General Exception raised by XrdTestHypervisorException.
+    General Exception raised by XrdTestHypervisor.
     '''
     def __init__(self, desc):
         '''
@@ -73,21 +73,25 @@ class XrdTestHypervisor(Runnable):
     '''
     Test Hypervisor main executable class.
     '''
-    def __init__(self, config):
+    def __init__(self, configFile):
         '''
         Initialize basic variables. Start and configure ClusterManager.
-        @param config:
+        @param configFile:
         '''
         # Default daemon configuration
         self.defaultConfFile = '/etc/XrdTest/XrdTestHypervisor.conf'
         self.defaultPidFile = '/var/run/XrdTestHypervisor.pid'
         self.defaultLogFile = '/var/log/XrdTest/XrdTestHypervisor.log'
+        
+        if configFile:
+            self.config = self.readConfig(configFile)
+        else:
+            self.config = self.readConfig(self.defaultConfFile)
+        
         # Connection with the master 
         self.sockStream = None
         # Blocking queue of commands received from XrdTestMaster
         self.recvQueue = Queue.Queue()
-        # Config read from a file
-        self.config = config
         self.stopEvent = threading.Event()
         # Reference to cluster manager, which is abstraction layer to 
         # virtualization library - in our case libvirt
@@ -265,24 +269,24 @@ class XrdTestHypervisor(Runnable):
 
         self.recvLoop()
 
-def readConfig(self, confFile):
-        '''
-        Reads configuration from given file or from default if None given.
-        @param confFile: file with configuration
-        '''
-        LOGGER.info("Reading config file % s", str(confFile))
-    
-        config = ConfigParser.ConfigParser()
-        if os.path.exists(confFile):
-            try:
-                fp = file(confFile, 'r')
-                config.readfp(fp)
-                fp.close()
-            except IOError, e:
-                LOGGER.exception(e)
-        else:
-            raise XrdTestHypervisorException("Config file could not be read")
-        return config
+    def readConfig(self, confFile):
+            '''
+            Reads configuration from given file or from default if None given.
+            @param confFile: file with configuration
+            '''
+            LOGGER.info("Reading config file % s", str(confFile))
+        
+            config = ConfigParser.ConfigParser()
+            if os.path.exists(confFile):
+                try:
+                    fp = file(confFile, 'r')
+                    config.readfp(fp)
+                    fp.close()
+                except IOError, e:
+                    LOGGER.exception(e)
+            else:
+                raise XrdTestHypervisorException("Config file could not be read")
+            return config
 
 def main():
     '''
@@ -300,36 +304,21 @@ def main():
     # suppress output on daemon start
     if options.backgroundMode:
         LOGGER.setLevel(level=logging.ERROR)
-
-    isConfigFileRead = False
-    config = ConfigParser.ConfigParser()
-
-    # read the config file
-    global defaultConfFile
-    LOGGER.info("Loading config file: %s" % options.configFile)
-    try:
-        confFile = ''
-        if options.configFile:
-            confFile = options.configFile
-        if not os.path.exists(confFile):
-            confFile = defaultConfFile
-        config = readConfig(confFile)
-        isConfigFileRead = True
-    except (RuntimeError, ValueError, IOError), e:
-        LOGGER.error("Problem in reading config: %s" % e)
-        sys.exit(1)
-
-    testHypervisor = XrdTestHypervisor(config)
+        
+    configFile = None
+    if options.configFile:
+        configFile = options.configFile    
+        LOGGER.info("Using config file: %s" % configFile)
+    
+    # Initialize the hypervisor
+    testHypervisor = XrdTestHypervisor(configFile)
 
     # run the daemon
     if options.backgroundMode:
         LOGGER.info("Run in background: %s" % options.backgroundMode)
 
-        pidFile = testHypervisor.defaultPidFile
-        logFile = testHypervisor.defaultLogFile
-        if isConfigFileRead:
-            pidFile = config.get('daemon', 'pid_file_path')
-            logFile = config.get('daemon', 'log_file_path')
+        pidFile = testHypervisor.config.get('daemon', 'pid_file_path')
+        logFile = testHypervisor.config.get('daemon', 'log_file_path')
 
         dm = Daemon("XrdTestHypervisor.py", pidFile, logFile)
         try:

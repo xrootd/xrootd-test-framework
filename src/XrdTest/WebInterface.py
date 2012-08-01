@@ -138,8 +138,8 @@ class WebInterface:
     
             if os.path.exists(path):
                 return serve_file(path , "application/x-download", "attachment")
-            else:
-                return "%s: not found in any repository" % path
+
+        return "%s: not found in any repository" % path
 
     def showScript(self, *script_name):
         '''
@@ -161,8 +161,8 @@ class WebInterface:
     
             if os.path.exists(path):
                 return serve_file(path , "text/html")
-            else:
-                return "%s: not found in any repository" % path
+
+        return "%s: not found in any repository" % path
         
 
     index.exposed = True

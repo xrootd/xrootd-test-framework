@@ -100,7 +100,12 @@
 											</tr>
 											<tr>
 												<td class="stdout">
-													${stage[1][0].replace('\n','<br />').replace('[xrootd]', '<br />[xrootd]').decode('utf-8')}
+													${stage[1][0].replace('\n','<br />')\
+														.replace('[xrootd]', '<br />[xrootd]')\
+														.decode('utf-8')\
+														.replace('[FAILED]', '<span class="error">[FAILED]</span>')\
+														.replace('failed', '<span class="error">FAILED</span>')\
+														.replace('[  OK  ]', '<span class="success">[  OK  ]</span>')}
 												</td>
 											</tr>
 											#if $stage[1][1]
@@ -130,15 +135,19 @@
 										</h4>
 										<div class="inner">
 										#for $stage in $init_stages 
-											#set $color = "#222222" 
+											#set $linkclass = "normal" 
 											
 											#if $stage[1][2] != "0": 
-												#set $color = "#dd0000" 
+												#set $linkclass = "error" 
 											#end if
 											
-											<span style="color: ${color};">	
+											<span class="${linkclass}">	
 												#set $div_id = "%s_ist%s_details" % ($suiteSess.uid, $iS)
-												<a href="#" id="${suiteSess.uid}_ist${iS}_button"><span>${stage[3]}</span>[i]</a>
+												
+												<span>${stage[3]}</span>
+												<a class="${linkclass}" href="#" id="${suiteSess.uid}_ist${iS}_button">
+													&nbsp;[ i ]
+												</a>
 											</span>
 											
 											$stageDetailsDiv($div_id, $stage)
@@ -153,6 +162,7 @@
 												});
 											</script>
 											#set $iS += 1 
+											&nbsp;
 										#end for
 									</div>
 									#end if 
@@ -186,20 +196,20 @@
 													<span>$slave</span>
 														#for $stage in $ss
 															
-															#set $color = "#222222" 
+															#set $linkclass = "normal" 
 															#if $stage[1][2] != "0": 
-																#set $color = "#dd0000" 
+																#set $linkclass = "error" 
 															#end if
 															
-															<span style="color: ${color};">
+															<span class="${linkclass}">
 																#set $div_id = "%s_st%s_details" % ($tC.uid, $iS)
-																<a href="#" id="${tC.uid}_st${iS}_button">
+																<a class="${linkclass}" href="#" id="${tC.uid}_st${iS}_button">
 																	#if $stage[0].id == 41
-																		&nbsp;[i]
+																		&nbsp;[ i ]
 																	#elif $stage[0].id == 44
-																		&nbsp;[r]
+																		&nbsp;[ r ]
 																	#elif $stage[0].id == 47
-																		&nbsp;[f]
+																		&nbsp;[ f ]
 																	#end if
 																</a>
 															</span>
@@ -236,16 +246,20 @@
 										</h4>
 										<div class="inner">
 										#for $stage in $final_stages 
-											#set $color = "#222222" 
+											#set $linkclass = "normal" 
 											
 											#if $stage[1][2] != "0": 
-												#set $color = "#dd0000" 
+												#set $linkclass = "error" 
 											#end if
 											
-											<p style="color: ${color};">												
+											<span class="${linkclass}">												
 												#set $div_id = "%s_ist%s_details" % ($suiteSess.uid, $iS)
-												<a href="#" id="${suiteSess.uid}_ist${iS}_button"><span>${stage[3]}</span>[f]</a>
-											</p>
+												
+												<span>${stage[3]}</span>
+												<a class="${linkclass}" href="#" id="${suiteSess.uid}_ist${iS}_button">
+													&nbsp;[ f ]
+												</a>
+											</span>
 											
 											$stageDetailsDiv($div_id, $stage)
 											<script style="display: none;">
@@ -257,7 +271,7 @@
 													});
 												});
 											</script>
-											
+											&nbsp;
 											#set $iS += 1 
 										#end for
 									</div>

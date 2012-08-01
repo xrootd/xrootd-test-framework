@@ -1,5 +1,6 @@
 #!/bin/bash
-echo -ne `date` @slavename@ "Initializing test suite ...\n\n"
+echo -ne `date +['%T']` @slavename@ "Initializing test suite ...\n\n"
+set -e
 
 #---------------------------------------------------------------------------------------------------------
 # Important parameters
@@ -10,20 +11,20 @@ CONFIG_PATH=/etc/xrootd/${CONFIG_FILE}
 #---------------------------------------------------------------------------------------------------------
 
 function hr {
-	echo -n "#"; for i in {1..150}; do echo -ne "-"; done; echo -e
+	for i in {1..150}; do echo -ne "-"; done; echo -e
 }
 
-function section () {
-	hr; echo `date +'%D %T'` $@; hr
+function log () {
+	echo `date +['%T']` $@
 }
 
 #---------------------------------------------------------------------------------------------------------
-section "# Fetching latest xrootd build ..."
+log "Fetching latest xrootd build ..."
 
 mkdir -p tmp_initsh
 rm -rf tmpinitsh/*
 cd tmp_initsh
-wget "http://master.xrd.test:8080/showScript/lib/get_xrd_latest.py" -O get_xrd_latest.py
+wget -q "http://master.xrd.test:8080/showScript/lib/get_xrd_latest.py" -O get_xrd_latest.py
 chmod 755 get_xrd_latest.py
 rm -rf xrd_rpms
 python get_xrd_latest.py
@@ -31,24 +32,24 @@ rm -rf xrd_rpms/slc-6-x86_64/xrootd-*.src.*.rpm
 rm -rf xrd_rpms/slc-6-x86_64/xrootd-*-devel-*.rpm
 
 #---------------------------------------------------------------------------------------------------------
-section "# Installing xrootd packages ..."
+log "Installing xrootd packages ..."
 
-rpm -iv --force xrd_rpms/slc-6-x86_64/xrootd-libs-*.rpm
-rpm -iv --force xrd_rpms/slc-6-x86_64/xrootd-client-*.rpm
-rpm -iv --force xrd_rpms/slc-6-x86_64/xrootd-client-admin-perl-*.rpm
-rpm -iv --force xrd_rpms/slc-6-x86_64/xrootd-fuse-*.rpm
-rpm -iv --force xrd_rpms/slc-6-x86_64/xrootd-server-*.rpm
+rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-libs-*.rpm
+rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-client-*.rpm
+rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-client-admin-perl-*.rpm
+rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-fuse-*.rpm
+rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-server-*.rpm
 cd ..
 
 #---------------------------------------------------------------------------------------------------------
-section "# Downloading xrootd config file ${CONFIG_FILE} ..."
+log "Downloading xrootd config file ${CONFIG_FILE} ..."
 
 mkdir -p tmp_inittest
 rm -rf tmp_inittest/*
 cd tmp_inittest
 
 rm $CONFIG_PATH
-wget "http://master.xrd.test:8080/downloadScript/clusters/${CLUSTER_NAME}/${CONFIG_FILE}" -O $CONFIG_FILE
+wget -q "http://master.xrd.test:8080/downloadScript/clusters/${CLUSTER_NAME}/${CONFIG_FILE}" -O $CONFIG_FILE
 mv $CONFIG_FILE $CONFIG_PATH
 
 # extracting machine name from hostname
@@ -56,7 +57,7 @@ arr=($(echo @slavename@ | tr "." " "))
 NAME=${arr[0]}
 
 #---------------------------------------------------------------------------------------------------------
-section "# Creating service config file etc/sysconfig/xrootd ..."
+log "Creating service config file etc/sysconfig/xrootd ..."
 
 SERVICE_CONFIG_FILE=/etc/sysconfig/xrootd
 rm -rf $SERVICE_CONFIG_FILE
@@ -79,17 +80,16 @@ XFRD_INSTANCES=\"${NAME}\"
 " > $SERVICE_CONFIG_FILE
 
 #---------------------------------------------------------------------------------------------------------
-section "# Mounting storage disks for machine $NAME ..."
+log "Mounting storage disks for machine $NAME ..."
 
-mkdir /data
+if [ ! -d /data ]; then mkdir /data; fi
 mount -t ext4 -o user_xattr /dev/vda /data
 chown daemon.daemon /data
-ls -al /data
 
 #---------------------------------------------------------------------------------------------------------
-section "# Starting xrootd and cmsd for machine $NAME ..."
+log "Starting xrootd and cmsd for machine $NAME ..."
+log "Config file: $CONFIG_PATH"
 
-echo "Config file: $CONFIG_PATH"
 mkdir -p /var/log/xrootd
 mkdir -p /root/xrdfilesystem
 
@@ -98,11 +98,11 @@ service xrootd start
 service cmsd start
 
 #---------------------------------------------------------------------------------------------------------
-section "# xrootd /var/log/xrootd/${NAME}/xrootd.log file:"
-tail --lines=100 /var/log/xrootd/${NAME}/xrootd.log
+log "xrootd /var/log/xrootd/${NAME}/xrootd.log file:"
+tail --lines=20 /var/log/xrootd/${NAME}/xrootd.log
 
 #---------------------------------------------------------------------------------------------------------
-section "# cmsd /var/log/xrootd/${NAME}/cmsd.log file:"
-tail --lines=100 /var/log/xrootd/${NAME}/cmsd.log
+log "cmsd /var/log/xrootd/${NAME}/cmsd.log file:"
+tail --lines=20 /var/log/xrootd/${NAME}/cmsd.log
 
-section "# Suite initialization complete."
+log "Suite initialization complete."

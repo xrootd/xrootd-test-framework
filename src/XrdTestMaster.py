@@ -31,7 +31,6 @@
 #
 #-------------------------------------------------------------------------------
 from XrdTest.Utils import Logger
-from XrdTestSlave import readConfig
 LOGGER = Logger(__name__).setup()
 
 try:
@@ -984,8 +983,9 @@ class XrdTestMaster(Runnable):
                     # check if suite init error was already handled
                     if not suiteInError:
                         tss.state = State(TestSuite.S_INIT_ERROR)
-                        LOGGER.error("%s slave initialization error in " + \
-                                     " test suite %s" % (slave, tss.name))
+                        print slave.hostname, tss.name
+                        LOGGER.error("%s slave initialization error in test suite %s" \
+                                     % (slave.hostname, tss.name))
                         sSlaves = self.getSuiteSlaves(tss.suite)
                         for sSlave in sSlaves:
                             sSlave.state = State(Slave.S_CONNECTED_IDLE)

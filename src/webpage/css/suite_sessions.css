@@ -33,3 +33,11 @@ div.stage-details {
 .stage-details span {
 	font-weight: normal;
 }
+
+.error {
+	color: #dd0000
+}
+
+.success {
+	color: #00bb00;
+}

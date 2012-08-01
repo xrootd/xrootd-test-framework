@@ -330,24 +330,24 @@ class XrdTestSlave(Runnable):
 
         self.recvLoop()
 
-def readConfig(confFile):
-        '''
-        Reads configuration from given file or from default if None given.
-        @param confFile: file with configuration
-        '''
-        LOGGER.info("Reading config file % s", str(confFile))
-    
-        config = ConfigParser.ConfigParser()
-        if os.path.exists(confFile):
-            try:
-                fp = file(confFile, 'r')
-                config.readfp(fp)
-                fp.close()
-            except IOError, e:
-                LOGGER.exception(e)
-        else:
-            raise XrdTestSlaveException("Config file could not be read")
-        return config
+    def readConfig(self, confFile):
+            '''
+            Reads configuration from given file or from default if None given.
+            @param confFile: file with configuration
+            '''
+            LOGGER.info("Reading config file % s", str(confFile))
+        
+            config = ConfigParser.ConfigParser()
+            if os.path.exists(confFile):
+                try:
+                    fp = file(confFile, 'r')
+                    config.readfp(fp)
+                    fp.close()
+                except IOError, e:
+                    LOGGER.exception(e)
+            else:
+                raise XrdTestSlaveException("Config file could not be read")
+            return config
     
 def main():
     '''

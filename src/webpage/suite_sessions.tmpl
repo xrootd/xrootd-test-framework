@@ -136,15 +136,13 @@
 												#set $color = "#dd0000" 
 											#end if
 											
-											<p style="color: $ color;">
-												<span style="font-size: 9px;">${stage[3]}</span>
-												${stage[0]} 
-												
+											<span style="color: ${color};">	
 												#set $div_id = "%s_ist%s_details" % ($suiteSess.uid, $iS)
-												<a href="#" id="${suiteSess.uid}_ist${iS}_button">see details</a>
-											</p>
+												<a href="#" id="${suiteSess.uid}_ist${iS}_button"><span>${stage[3]}</span>[i]</a>
+											</span>
 											
 											$stageDetailsDiv($div_id, $stage)
+											
 											<script style="display: none;">
 												\$( "#${suiteSess.uid}_ist${iS}_button").click(function() {
 													\$( "#${suiteSess.uid}_ist${iS}_details").dialog({
@@ -173,34 +171,55 @@
 										<div class="inner">
 											#if $stages and len($stages) 
 											
-												#for $stage in $stages 
-													#set $color = "#222222" 
-													
-													#if $stage[1][2] != "0": 
-														#set $color = "#dd0000" 
+												#set $slaveStages = {}
+												
+												#for $stage in $stages
+													#if $slaveStages.has_key($stage[3])
+														$slaveStages[$stage[3]].append($stage)
+													#else
+														#set $slaveStages[$stage[3]] = [$stage]
 													#end if
-													<p style="color: $ color;">
-														<span style="font-size: 9px;">${stage[3]}</span>
-														${stage[0]} 
-														#set $div_id = "%s_st%s_details" % ($tC.uid, $iS)
-														<a href="#" id="${tC.uid}_st${iS}_button">
-															see details
-														</a>
-													</p>
+												#end for
+
+												#for $slave, $ss in $slaveStages.items()
 													
-													$stageDetailsDiv($div_id, $stage)
-													<script style="display: none;">
-														\$("#${tC.uid}_st${iS}_button").click(function() {
-															\$( "#${tC.uid}_st${iS}_details" ).dialog({
-																height: 900,
-																width: 1152,
-																modal: true
-															});
-														});
-													</script>
-													#set $iS += 1 
-											
-												#end for 
+													<span>$slave</span>
+														#for $stage in $ss
+															
+															#set $color = "#222222" 
+															#if $stage[1][2] != "0": 
+																#set $color = "#dd0000" 
+															#end if
+															
+															<span style="color: ${color};">
+																#set $div_id = "%s_st%s_details" % ($tC.uid, $iS)
+																<a href="#" id="${tC.uid}_st${iS}_button">
+																	#if $stage[0].id == 41
+																		&nbsp;[i]
+																	#elif $stage[0].id == 44
+																		&nbsp;[r]
+																	#elif $stage[0].id == 47
+																		&nbsp;[f]
+																	#end if
+																</a>
+															</span>
+	
+															$stageDetailsDiv($div_id, $stage)
+															
+															<script style="display: none;">
+																\$("#${tC.uid}_st${iS}_button").click(function() {
+																	\$( "#${tC.uid}_st${iS}_details" ).dialog({
+																		height: 900,
+																		width: 1152,
+																		modal: true
+																	});
+																});
+															</script>
+															#set $iS += 1 
+															
+														#end for
+													&nbsp;&nbsp;
+												#end for
 											#end if
 										</div>
 										#set $testCasesNum += 1 
@@ -223,11 +242,9 @@
 												#set $color = "#dd0000" 
 											#end if
 											
-											<p style="color: $ color;">
-												<span style="font-size: 9px;">${stage[3]}</span>
-												${stage[0]} 
+											<p style="color: ${color};">												
 												#set $div_id = "%s_ist%s_details" % ($suiteSess.uid, $iS)
-												<a href="#" id="${suiteSess.uid}_ist${iS}_button">see details</a>
+												<a href="#" id="${suiteSess.uid}_ist${iS}_button"><span>${stage[3]}</span>[f]</a>
 											</p>
 											
 											$stageDetailsDiv($div_id, $stage)

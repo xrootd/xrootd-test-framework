@@ -171,19 +171,23 @@
 										</h4>
 										<div class="inner">
 										#for $stage in $init_stages 
-											#set $linkclass = "normal" 
+											#set $linkclass = "success" 
 											
 											#if $stage[1][2] != "0": 
 												#set $linkclass = "error" 
 											#end if
 											
-											<span class="${linkclass}">	
+											<span>	
 												#set $div_id = "%s_ist%s_details" % ($suiteSess.uid, $iS)
 												
-												<span>${stage[3]}</span>
-												<a class="${linkclass}" href="#" id="${suiteSess.uid}_ist${iS}_button">
-													&nbsp;[ i ]
-												</a>
+												#import re
+												
+												#if not re.search('.*Nothing to.*', $stage[1][0])
+													&nbsp;<span>${stage[3]}</span>
+													<a class="${linkclass}" href="#" id="${suiteSess.uid}_ist${iS}_button">
+														&nbsp;[ i ]
+													</a>
+												#end if
 											</span>
 											
 											$stageDetailsDiv($div_id, $stage)
@@ -200,7 +204,6 @@
 												});
 											</script>
 											#set $iS += 1 
-											&nbsp;
 										#end for
 									</div>
 									#end if 
@@ -231,18 +234,20 @@
 
 												#for $slave, $ss in $slaveStages.items()
 													
-													<span>$slave</span>
+													#import re
+													#if not len(re.findall('.*Nothing to.*', ''.join([$s[1][0] for $s in $ss]))) >= 3
+														&nbsp;&nbsp;<span>$slave</span>
+													#end if
 														#for $stage in $ss
 															
-															#set $linkclass = "normal" 
+															#set $linkclass = "success" 
 															#if $stage[1][2] != "0": 
 																#set $linkclass = "error" 
 															#end if
 															
-															<span class="${linkclass}">
+															<span>
 																#set $div_id = "%s_st%s_details" % ($tC.uid, $iS)
 																<a class="${linkclass}" href="#" id="${tC.uid}_st${iS}_button">
-																#import re
 																
 																#if not re.search('.*Nothing to.*', $stage[1][0])
 																	#if $stage[0].id == 41
@@ -272,7 +277,6 @@
 															#set $iS += 1 
 															
 														#end for
-													&nbsp;&nbsp;
 												#end for
 											#end if
 										</div>
@@ -290,19 +294,19 @@
 										</h4>
 										<div class="inner">
 										#for $stage in $final_stages 
-											#set $linkclass = "normal" 
+											#set $linkclass = "success" 
 											
 											#if $stage[1][2] != "0": 
 												#set $linkclass = "error" 
 											#end if
 											
-											<span class="${linkclass}">												
+											<span>												
 												#set $div_id = "%s_ist%s_details" % ($suiteSess.uid, $iS)
 												
-												<span>${stage[3]}</span>
 												#import re
 																
 												#if not re.search('.*Nothing to.*', $stage[1][0])
+													&nbsp;<span>${stage[3]}</span>
 													<a class="${linkclass}" href="#" id="${suiteSess.uid}_ist${iS}_button">
 														&nbsp;[ f ]
 													</a>
@@ -321,7 +325,6 @@
 													});
 												});
 											</script>
-											&nbsp;
 											#set $iS += 1 
 										#end for
 									</div>

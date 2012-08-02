@@ -129,7 +129,7 @@ class Command(object):
         if output == '': 
             LOGGER.info('Command returned no output.') 
         else: 
-            LOGGER.info('Command output: \n%s' % output)
+            LOGGER.info('Command output: \n%s' % output.rstrip('\n'))
         return output
     
 class Logger(object):

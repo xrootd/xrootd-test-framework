@@ -1,15 +1,23 @@
 #!/bin/bash
-echo -ne `date` @slavename@ "Initializing test case ...\n\n"
+set -e
+
+function log () {
+	echo `date +['%T']` $@
+}
+
+log "Initializing test case on slave" @slavename@ "..."
 
 cd /data
 
 if [[ @slavename@ =~ ds ]]; then
   
-  rm testfile
-  truncate --size=50M testfile
-  chown daemon.daemon testfile
-  ls -al
+	if [ -f testfile ]; then
+		rm testfile
+	fi
+	
+	truncate --size=50M testfile
+	chown daemon.daemon testfile
 
 else
-  echo "Nothing to initialize." 
+	log "Nothing to initialize." 
 fi

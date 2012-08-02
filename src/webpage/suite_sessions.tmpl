@@ -115,11 +115,8 @@
 											</tr>
 											<tr class="all">
 												#import re		
-												#set $stdout = $stage[1][0]
-												#set $important = []
-												
-												#set $stdout = $stdout.decode('utf-8')\
-														.replace('[xrootd]', '<br />[xrootd]')								
+												#set $stdout = $stage[1][0].decode('utf-8')	
+												#set $important = []				
 												
 												#for $match in re.finditer(r'\n(.*\[\s*ok\s*\])', $stdout, re.I)
 													$important.append(($match.group(1), 'success'))
@@ -193,6 +190,8 @@
 											
 											<script style="display: none;">
 												\$( "#${suiteSess.uid}_ist${iS}_button").click(function() {
+													\$('tr.important').hide()
+													\$('tr.all').show()
 													\$( "#${suiteSess.uid}_ist${iS}_details").dialog({
 														height: 900, 
 														width: \$(document).width()-50, 
@@ -243,6 +242,9 @@
 															<span class="${linkclass}">
 																#set $div_id = "%s_st%s_details" % ($tC.uid, $iS)
 																<a class="${linkclass}" href="#" id="${tC.uid}_st${iS}_button">
+																#import re
+																
+																#if not re.search('.*Nothing to.*', $stage[1][0])
 																	#if $stage[0].id == 41
 																		&nbsp;[ i ]
 																	#elif $stage[0].id == 44
@@ -250,6 +252,7 @@
 																	#elif $stage[0].id == 47
 																		&nbsp;[ f ]
 																	#end if
+																#end if
 																</a>
 															</span>
 	
@@ -257,6 +260,8 @@
 															
 															<script style="display: none;">
 																\$("#${tC.uid}_st${iS}_button").click(function() {
+																	\$('tr.important').hide()
+																	\$('tr.all').show()
 																	\$( "#${tC.uid}_st${iS}_details" ).dialog({
 																		height: 900,
 																		width: 1152,
@@ -295,14 +300,20 @@
 												#set $div_id = "%s_ist%s_details" % ($suiteSess.uid, $iS)
 												
 												<span>${stage[3]}</span>
-												<a class="${linkclass}" href="#" id="${suiteSess.uid}_ist${iS}_button">
-													&nbsp;[ f ]
-												</a>
+												#import re
+																
+												#if not re.search('.*Nothing to.*', $stage[1][0])
+													<a class="${linkclass}" href="#" id="${suiteSess.uid}_ist${iS}_button">
+														&nbsp;[ f ]
+													</a>
+												#end if
 											</span>
 											
 											$stageDetailsDiv($div_id, $stage)
 											<script style="display: none;">
 												\$( "#${suiteSess.uid}_ist${iS}_button").click(function() {
+													\$('tr.important').hide()
+													\$('tr.all').show()
 													\$( "#${suiteSess.uid}_ist${iS}_details").dialog({
 														height: 900, 
 														width: 1152, 

@@ -1,2 +1,10 @@
 #!/bin/bash
-echo -ne `date` @slavename@ "Finalizing test case ...\n\n"
+set -e
+
+function log () {
+	echo `date +['%T']` $@
+}
+
+log "Finalizing test case on slave" @slavename@ "..."
+
+log "Nothing to finalize."

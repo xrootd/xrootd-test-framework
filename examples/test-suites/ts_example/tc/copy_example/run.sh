@@ -1,15 +1,23 @@
 #!/bin/bash
-echo -ne `date` @slavename@ "Running test case ...\n\n"
+set -e
+
+function log () {
+	echo `date +['%T']` $@
+}
+
+log "Running test case on slave" @slavename@ "..."
 
 cd /data
 
 if [ @slavename@ == "client1" ]; then
   
-  rm testreceive
-  xrdcp xroot://metamanager1.xrd.test:1094//data/testfile testreceive
-  ls -al
+	if [ -f testreceive ]; then
+		rm testreceive
+	fi
+	
+	xrdcp xroot://metamanager1.xrd.test:1094//data/testfile testreceive
 
 else
-  echo "nothing to do this time" 
+	log "Nothing to do this time." 
 fi
 

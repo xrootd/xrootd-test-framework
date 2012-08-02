@@ -13,6 +13,10 @@ div.stage-details {
 	width: 99%;
 }
 
+.stage-details a {
+	color: #05B
+}
+
 .stage-details td {
 	background: #ffffff;
 	font-size: 12px;
@@ -26,7 +30,15 @@ div.stage-details {
 
 .stage-details td.stdout {
 	font-size: 12px;
-	font-family: monospace !important;
+	font-family: 'Menlo', 'Bitstream Vera Sans Mono', 'Courier New', 'Courier', monospace;
+	font-weight: normal;
+	white-space: pre;
+	color: #3f3f3f;
+}
+
+.stage-details tr.important {
+	font-size: 12px;
+	font-family: 'Menlo', 'Bitstream Vera Sans Mono', 'Courier New', 'Courier', monospace;
 	font-weight: normal;
 }
 
@@ -40,4 +52,8 @@ div.stage-details {
 
 .success {
 	color: #00bb00;
+}
+
+.info {
+	color: #C47003;
 }

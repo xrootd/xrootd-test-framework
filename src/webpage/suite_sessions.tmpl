@@ -26,6 +26,19 @@
 				        #end for
 				     #end if
 				});
+				
+				\$(document).ready(function(){
+				    \$("tr.important").hide();
+				    
+				    \$("a.all").click(function () {
+				    	\$("tr.important").hide();
+				    	\$("tr.all").show();
+					});
+					\$("a.important").click(function () {
+				    	\$("tr.all").hide();
+				    	\$("tr.important").show();
+					});
+				});
 			
 			//--><!]]>
 		</script>
@@ -77,37 +90,63 @@
 										<table>
 											<tr>
 												<td>
-													state:
+													State:
 													<span class="state">${stage[0]}</span>
 												</td>
 											</tr>
 											<tr>
 												<td>
-													slave:
+													Slave:
 													<span>${stage[3]}</span>
 												</td>
 											</tr>
 											<tr>
 												<td>
-													return code:
+													Return code:
 													<span>
 														${stage[1][2].replace('\n', '<br />')}
 													</span>
 												</td>
 											</tr>
 											<tr>
-												<td>stdout</td>
+												<td>Log messages: 
+																<a href="#" class="all">All messages</a>
+																| <a href="#" class="important">Important</a> </td>
 											</tr>
-											<tr>
-												<td class="stdout">
-													${stage[1][0].replace('\n','<br />')\
-														.replace('[xrootd]', '<br />[xrootd]')\
-														.decode('utf-8')\
-														.replace('[FAILED]', '<span class="error">[FAILED]</span>')\
-														.replace('failed', '<span class="error">FAILED</span>')\
-														.replace('[  OK  ]', '<span class="success">[  OK  ]</span>')}
+											<tr class="all">
+												#import re		
+												#set $stdout = $stage[1][0]
+												#set $important = []
+												
+												#set $stdout = $stdout.decode('utf-8')\
+														.replace('[xrootd]', '<br />[xrootd]')								
+												
+												#for $match in re.finditer(r'\n(.*\[\s*ok\s*\])', $stdout, re.I)
+													$important.append(($match.group(1), 'success'))
+													#set $stdout = $stdout.replace($match.group(1), '<span class="success">' + $match.group(1) + '</span>')
+												#end for
+												
+												#for $match in re.finditer(r'\n(.*\[\s*failed\s*\])', $stdout, re.I)
+													$important.append(($match.group(1), 'error'))
+													#set $stdout = $stdout.replace($match.group(1), '<span class="error">' + $match.group(1) + '</span>')
+												#end for
+												
+												#for $match in re.finditer(r'\n(.*error.*)\n', $stdout, re.I)
+													$important.append(($match.group(1), 'error'))
+													#set $stdout = $stdout.replace($match.group(1), '<span class="error">' + $match.group(1) + '</span>')
+												#end for
+														
+												<td class="stdout">$stdout</td>
+											</tr>
+
+											<tr class="important">
+												<td>
+													#for $m in $important 
+														<span class="${m[1]}">$m[0]</span><br />
+													#end for
 												</td>
 											</tr>
+											
 											#if $stage[1][1]
 												<tr>
 													<td>stderr</td>

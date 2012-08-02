@@ -1,24 +1,23 @@
 #!/bin/bash
-echo -ne `date +['%T']` @slavename@ "Initializing test suite ...\n\n"
 set -e
-
-#---------------------------------------------------------------------------------------------------------
-# Important parameters
-
-CLUSTER_NAME=cluster_example
-CONFIG_FILE=xrd_cluster_example.cf
-CONFIG_PATH=/etc/xrootd/${CONFIG_FILE}
-#---------------------------------------------------------------------------------------------------------
-
-function hr {
-	for i in {1..150}; do echo -ne "-"; done; echo -e
-}
 
 function log () {
 	echo `date +['%T']` $@
 }
 
+function stamp () {
+	$@ | perl -p -MPOSIX -e 'BEGIN {$!=1} $_ = strftime("[%T]", localtime) . "\t" . $_'
+}
+
 #---------------------------------------------------------------------------------------------------------
+log "Initializing test suite on slave" @slavename@ "..."
+
+# Important parameters
+
+CLUSTER_NAME=cluster_example
+CONFIG_FILE=xrd_cluster_example.cf
+CONFIG_PATH=/etc/xrootd/${CONFIG_FILE}
+
 log "Fetching latest xrootd build ..."
 
 mkdir -p tmp_initsh
@@ -93,16 +92,17 @@ log "Config file: $CONFIG_PATH"
 mkdir -p /var/log/xrootd
 mkdir -p /root/xrdfilesystem
 
-service xrootd setup
-service xrootd start
-service cmsd start
+stamp service xrootd setup
+stamp service xrootd start
+stamp service cmsd start
 
 #---------------------------------------------------------------------------------------------------------
-log "xrootd /var/log/xrootd/${NAME}/xrootd.log file:"
-tail --lines=20 /var/log/xrootd/${NAME}/xrootd.log
+N=5
+log "Last ${N} lines of xrootd /var/log/xrootd/${NAME}/xrootd.log file:"
+stamp tail --lines=$N /var/log/xrootd/${NAME}/xrootd.log
 
 #---------------------------------------------------------------------------------------------------------
-log "cmsd /var/log/xrootd/${NAME}/cmsd.log file:"
-tail --lines=20 /var/log/xrootd/${NAME}/cmsd.log
+log "Last ${N} lines of cmsd /var/log/xrootd/${NAME}/cmsd.log file:"
+stamp tail --lines=$N /var/log/xrootd/${NAME}/cmsd.log
 
 log "Suite initialization complete."

@@ -85,7 +85,7 @@ class XrdTestSlave(Runnable):
         self.defaultPidFile = '/var/run/XrdTestSlave.pid'
         self.defaultLogFile = '/var/log/XrdTest/XrdTestSlave.log'
 
-        if os.path.exists(configFile):
+        if configFile and os.path.exists(configFile):
             self.config = self.readConfig(configFile)
         else:
             self.config = self.readConfig(self.defaultConfFile)

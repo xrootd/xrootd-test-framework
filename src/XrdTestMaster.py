@@ -967,6 +967,10 @@ class XrdTestMaster(Runnable):
         @param msg:
         '''
         if msg.name == XrdMessage.M_TESTSUITE_STATE:
+            
+            if not self.slaves.has_key(msg.sender):
+                return
+            
             slave = self.slaves[msg.sender]
 
             # test suite was initialized on slave
@@ -977,7 +981,7 @@ class XrdTestMaster(Runnable):
                                    slave_name=slave.hostname)
                 suiteInError = (tss.state == TestSuite.S_INIT_ERROR)
 
-                # check if any error occured during init, 
+                # check if any errors occurred during init, 
                 # if so release all slaves and remove proper pending jobs
                 if msg.result[2] != "0":
                     # check if suite init error was already handled
@@ -1066,7 +1070,7 @@ class XrdTestMaster(Runnable):
                 self.storeSuiteSession(tss)
                 LOGGER.info("%s finished run test %s in suite %s" % \
                             (slave, msg.testName, tss.name))
-            # test case finitalize finished
+            # test case finalize finished
             elif msg.state == State(TestSuite.S_SLAVE_TEST_FINALIZED):
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 tss.addStageResult(msg.state, msg.result, \

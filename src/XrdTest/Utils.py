@@ -127,9 +127,9 @@ class Command(object):
                                              cwd=self.cwd).communicate()
         output = stdout
         if output == '': 
-            LOGGER.info('Command returned no output.') 
+            LOGGER.debug('Command returned no output.') 
         else: 
-            LOGGER.info('Command output: \n%s' % output.rstrip('\n'))
+            LOGGER.debug('Command output: \n%s' % output.rstrip('\n'))
         return output
     
 class Logger(object):

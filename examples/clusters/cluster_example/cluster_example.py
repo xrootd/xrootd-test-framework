@@ -11,7 +11,7 @@ def getCluster():
     #---------------------------------------------------------------------------
     # Cluster defaults
     #---------------------------------------------------------------------------
-    cluster.defaultHost.bootImage = '/var/lib/libvirt/images/xrd_testslave_ref.img'
+    cluster.defaultHost.bootImage = '/var/lib/libvirt/images/slc6_testslave_ref.img'
     cluster.defaultHost.cacheBootImage = True
     cluster.defaultHost.arch = 'x86_64'
     cluster.defaultHost.ramSize = '1048576'
@@ -43,14 +43,14 @@ def getCluster():
     #---------------------------------------------------------------------------
     # Additional host disk definitions
     #---------------------------------------------------------------------------
-    metamanager1.disks =  [Disk('disk1', '59055800320', 'vdb')]
-    manager1.disks =  [Disk('disk1', '59055800320', 'vdb')]
-    manager2.disks =  [Disk('disk1', '59055800320', 'vdb')]
-    ds1.disks =  [Disk('disk1', '59055800320', 'vdb')]
-    ds2.disks =  [Disk('disk1', '59055800320', 'vdb')]
-    ds3.disks =  [Disk('disk1', '59055800320', 'vdb')]
-    ds4.disks =  [Disk('disk1', '59055800320', 'vdb')]
-    client1.disks =  [Disk('disk1', '59055800320', 'vdb')]
+    metamanager1.disks =  [Disk('disk1', '50G', 'vdb')]
+    manager1.disks =  [Disk('disk1', '50G', 'vdb')]
+    manager2.disks =  [Disk('disk1', '50G', 'vdb')]
+    ds1.disks =  [Disk('disk1', '50G', 'vdb')]
+    ds2.disks =  [Disk('disk1', '50G', 'vdb')]
+    ds3.disks =  [Disk('disk1', '50G', 'vdb')]
+    ds4.disks =  [Disk('disk1', '50G', 'vdb')]
+    client1.disks =  [Disk('disk1', '50G', 'vdb')]
  
     # Hosts to be included in the cluster
     hosts = [metamanager1, manager1, manager2, ds1, ds2, ds3, ds4, client1]

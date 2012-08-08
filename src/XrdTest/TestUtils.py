@@ -465,7 +465,7 @@ def loadTestSuiteDefs(path):
                 if ts:
                     testSuites.append(ts)
             except TestSuiteException, e:
-                raise e
+                continue
 
     return testSuites
 

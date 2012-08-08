@@ -33,6 +33,10 @@ rm -rf xrd_rpms/slc-6-x86_64/xrootd-*-devel-*.rpm
 #---------------------------------------------------------------------------------------------------------
 log "Installing xrootd packages ..."
 
+# Fix for when RPM breaks it's own db...
+rm -rf /var/lib/rpm/__db*
+rpm --rebuilddb
+
 rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-libs-*.rpm
 rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-client-*.rpm
 rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-client-admin-perl-*.rpm
@@ -47,7 +51,9 @@ mkdir -p tmp_inittest
 rm -rf tmp_inittest/*
 cd tmp_inittest
 
-rm $CONFIG_PATH
+if [ -f $CONFIG_PATH ]; then
+	rm $CONFIG_PATH
+fi
 wget -q "http://master.xrd.test:8080/downloadScript/clusters/${CLUSTER_NAME}/${CONFIG_FILE}" -O $CONFIG_FILE
 mv $CONFIG_FILE $CONFIG_PATH
 

@@ -477,6 +477,7 @@ class ClusterManager:
         if len(host.disks):
             LOGGER.info('Attaching storage disks to machine %s' % host.uname)
             for disk in host.disks:
+
                 try:
                     self.attachDisk(host.uname, disk.name, disk.size, disk.cache, \
                                      disk.mountPoint)

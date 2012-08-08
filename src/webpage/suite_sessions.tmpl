@@ -186,7 +186,7 @@
 													&nbsp;<span>${stage[3]}</span>
 													<a class="${linkclass}" href="#" id="${suiteSess.uid}_ist${iS}_button">
 														&nbsp;[ i ]
-													</a>
+													</a>&nbsp;
 												#end if
 											</span>
 											
@@ -244,12 +244,13 @@
 															#if $stage[1][2] != "0": 
 																#set $linkclass = "error" 
 															#end if
-															
+							
+															#if not re.search('.*Nothing to.*', $stage[1][0])								
 															<span>
 																#set $div_id = "%s_st%s_details" % ($tC.uid, $iS)
 																<a class="${linkclass}" href="#" id="${tC.uid}_st${iS}_button">
 																
-																#if not re.search('.*Nothing to.*', $stage[1][0])
+
 																	#if $stage[0].id == 41
 																		&nbsp;[ i ]
 																	#elif $stage[0].id == 44
@@ -257,9 +258,10 @@
 																	#elif $stage[0].id == 47
 																		&nbsp;[ f ]
 																	#end if
-																#end if
 																</a>
 															</span>
+															&nbsp;
+															#end if											
 	
 															$stageDetailsDiv($div_id, $stage)
 															
@@ -299,19 +301,22 @@
 											#if $stage[1][2] != "0": 
 												#set $linkclass = "error" 
 											#end if
-											
+	
+											#if not re.search('.*Nothing to.*', $stage[1][0])										
 											<span>												
 												#set $div_id = "%s_ist%s_details" % ($suiteSess.uid, $iS)
 												
 												#import re
 																
-												#if not re.search('.*Nothing to.*', $stage[1][0])
+
 													&nbsp;<span>${stage[3]}</span>
 													<a class="${linkclass}" href="#" id="${suiteSess.uid}_ist${iS}_button">
 														&nbsp;[ f ]
 													</a>
-												#end if
+
 											</span>
+											&nbsp;
+											#end if
 											
 											$stageDetailsDiv($div_id, $stage)
 											<script style="display: none;">

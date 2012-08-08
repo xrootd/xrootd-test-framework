@@ -25,6 +25,8 @@
 # Desc:   Virtual machines clusters manager.
 #-------------------------------------------------------------------------------
 from Utils import Logger
+from curses.ascii import isalnum
+from mhlib import isnumeric
 LOGGER = Logger(__name__).setup()
 
 try:
@@ -297,9 +299,23 @@ class Disk(object):
     
     def __init__(self, name, size, mountPoint, cache=True):
         self.name = name
-        self.size = size
+        self.size = self.parseDiskSize(size)
         self.mountPoint = mountPoint
         self.cache = cache
+        
+    def parseDiskSize(self, size):
+        '''
+        Takes a size in readable format, e.g. 50G or 200M and returns the size in bytes.
+        
+        If a purely numeric string is given, a byte value will be assumed.
+        '''
+        suffixes = ('B', 'K', 'M', 'G', 'T', 'P')
+        if size[-1] in suffixes and size[:-1].isdigit():
+            return int(size[:-1]) * (1024 ** suffixes.index(size[-1]))
+        elif size.isdigit():
+            return size
+        else:
+            raise ClusterManagerException('Invalid disk size definition for disk %s' % self.name)
 
 class Cluster(Utils.Stateful):
 

@@ -1,0 +1,41 @@
+all.export /data
+
+xrd.port 1094 if exec xrootd
+xrd.port 2094 if exec cmsd
+
+if metamanager1+
+all.role meta manager
+all.manager meta metamanager1.xrd.test 2094
+
+else if manager1+
+all.role manager
+all.manager meta metamanager1.xrd.test 2094
+all.manager manager1.xrd.test 2094
+
+else if manager2+
+all.role manager
+all.manager meta metamanager1.xrd.test 2094
+all.manager manager2.xrd.test 2094
+
+else if ds1+
+all.role server
+all.manager manager1.xrd.test 2094
+xrootd.chksum md5
+
+else if ds2+
+all.role server
+all.manager manager1.xrd.test 2094
+xrootd.chksum md5
+
+else if ds3+
+all.role server
+all.manager manager2.xrd.test 2094
+xrootd.chksum md5
+
+else if ds4+
+all.role server
+all.manager manager2.xrd.test 2094
+xrootd.chksum md5
+
+fi
+

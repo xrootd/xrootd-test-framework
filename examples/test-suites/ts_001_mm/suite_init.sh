@@ -12,15 +12,11 @@ function stamp () {
 #---------------------------------------------------------------------------------------------------------
 log "Initializing test suite on slave" @slavename@ "..."
 
-######## Important parameters ########
+# Important parameters
 
-CLUSTER_NAME=cluster_example
-CONFIG_FILE=xrd_cluster_example.cf
+CLUSTER_NAME=cluster_001_mm
+CONFIG_FILE=xrd_cluster_001_mm.cf
 CONFIG_PATH=/etc/xrootd/${CONFIG_FILE}
-
-STORAGE_PATH=/data
-
-######################################
 
 log "Fetching latest xrootd build ..."
 
@@ -31,25 +27,17 @@ wget -q "http://master.xrd.test:8080/showScript/lib/get_xrd_latest.py" -O get_xr
 chmod 755 get_xrd_latest.py
 rm -rf xrd_rpms
 python get_xrd_latest.py
-rm -rf xrd_rpms/slc-6-x86_64/xrootd-*-src-*.rpm
+rm -rf xrd_rpms/slc-6-x86_64/xrootd-*.src.*.rpm
+rm -rf xrd_rpms/slc-6-x86_64/xrootd-*-devel-*.rpm
 
 #---------------------------------------------------------------------------------------------------------
 log "Installing xrootd packages ..."
 
-# Fix for when RPM breaks it's own db...
-rm -rf /var/lib/rpm/__db*
-rpm --rebuilddb
-
 rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-libs-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-libs-devel-*.rpm
 rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-client-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-client-devel-*.rpm
 rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-client-admin-perl-*.rpm
 rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-fuse-*.rpm
 rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-server-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-server-devel-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-debuginfo-*.rpm
-
 cd ..
 
 #---------------------------------------------------------------------------------------------------------
@@ -65,16 +53,16 @@ fi
 wget -q "http://master.xrd.test:8080/downloadScript/clusters/${CLUSTER_NAME}/${CONFIG_FILE}" -O $CONFIG_FILE
 mv $CONFIG_FILE $CONFIG_PATH
 
+# extracting machine name from hostname
+arr=($(echo @slavename@ | tr "." " "))
+NAME=${arr[0]}
+
 #---------------------------------------------------------------------------------------------------------
 log "Creating service config file etc/sysconfig/xrootd ..."
 
 SERVICE_CONFIG_FILE=/etc/sysconfig/xrootd
 rm -rf $SERVICE_CONFIG_FILE
 touch $SERVICE_CONFIG_FILE
-
-# extracting machine name from hostname
-arr=($(echo @slavename@ | tr "." " "))
-NAME=${arr[0]}
 UCASE_NAME=$(echo $NAME | tr a-z A-Z)
 
 echo "
@@ -95,9 +83,9 @@ XFRD_INSTANCES=\"${NAME}\"
 #---------------------------------------------------------------------------------------------------------
 log "Mounting storage disks for machine $NAME ..."
 
-if [ ! -d $STORAGE_PATH ]; then mkdir $STORAGE_PATH; fi
-mount -t ext4 -o user_xattr /dev/vda $STORAGE_PATH
-chown daemon.daemon $STORAGE_PATH
+if [ ! -d /data ]; then mkdir /data; fi
+mount -t ext4 -o user_xattr /dev/vda /data
+chown daemon.daemon /data
 
 #---------------------------------------------------------------------------------------------------------
 log "Starting xrootd and cmsd for machine $NAME ..."
@@ -106,8 +94,6 @@ log "Config file: $CONFIG_PATH"
 mkdir -p /var/log/xrootd
 mkdir -p /root/xrdfilesystem
 
-export XRD_DEBUG_LEVEL=3
-export XRDDEBUG=3
 stamp service xrootd setup
 stamp service xrootd start
 stamp service cmsd start

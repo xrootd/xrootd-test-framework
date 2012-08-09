@@ -113,6 +113,9 @@ class XrdMessage(object):
         '''
         self.name = name
         self.sender = msg_sender
+        
+    def __str__(self):
+        return self.name
 
 class SocketDisconnectedError(Exception):
     '''

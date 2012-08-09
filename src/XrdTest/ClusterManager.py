@@ -432,6 +432,7 @@ class ClusterManager:
                 except libvirtError, e:
                     LOGGER.info("Error occured. Undefining created machines.")
                     innerErrMsg = self.removeHosts(hostsCreated)
+                    self.removeCluster(cluster)
                     raise ClusterManagerException("Error during " + \
                           "creation of machine %s: %s. %s" % \
                           (h.uname, e, innerErrMsg))

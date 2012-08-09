@@ -30,7 +30,6 @@ def getCluster():
     #---------------------------------------------------------------------------
     # Host definitions
     #---------------------------------------------------------------------------
-    
     metamanager1 = Host('metamanager1.xrd.test', '192.168.127.3', "52:54:00:65:44:65")
     manager1 = Host('manager1.xrd.test', '192.168.127.4', "52:54:00:65:44:66")
     manager2 = Host('manager2.xrd.test', '192.168.127.5', "52:54:00:65:44:67")
@@ -51,10 +50,17 @@ def getCluster():
     ds3.disks =  [Disk('disk1', '50G', 'vdb')]
     ds4.disks =  [Disk('disk1', '50G', 'vdb')]
     client1.disks =  [Disk('disk1', '50G', 'vdb')]
+    
+    #---------------------------------------------------------------------------
+    # Optional load balancing configuration
+    #---------------------------------------------------------------------------
+    # The DNS alias to be used
+    net.lbAlias = 'lb.xrd.test'
+    # The machines that will be load balanced (round-robin) under the alias
+    net.lbHosts = [ds1, ds2, ds3, ds4]
  
     # Hosts to be included in the cluster
     hosts = [metamanager1, manager1, manager2, ds1, ds2, ds3, ds4, client1]
-
 
     net.addHosts(hosts)
     cluster.network = net

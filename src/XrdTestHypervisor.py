@@ -224,7 +224,6 @@ class XrdTestHypervisor(Runnable):
         from blocking queue of received messages, runs appropriate and
         return answer message.
         '''
-        global LOGGER
         while not self.stopEvent.isSet():
             try:
                 #receive msg from master
@@ -251,6 +250,8 @@ class XrdTestHypervisor(Runnable):
             except SocketDisconnectedError, e:
                 LOGGER.info("Connection to XrdTestMaster closed.")
                 if self.clusterManager:
+                        for cluster in self.clusterManager.clusters:
+                            self.clusterManager.removeCluster(cluster)
                         self.clusterManager.disconnect()
                 break
 

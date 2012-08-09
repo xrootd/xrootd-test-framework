@@ -25,8 +25,6 @@
 # Desc:   Virtual machines clusters manager.
 #-------------------------------------------------------------------------------
 from Utils import Logger
-from curses.ascii import isalnum
-from mhlib import isnumeric
 LOGGER = Logger(__name__).setup()
 
 try:
@@ -113,6 +111,7 @@ class Network(object):
 """
     xmlDnsHostPattern = """
       <host ip="%(ip)s">
+          %(lbalias)s
           <hostname>%(hostname)s</hostname>
       </host>
 """
@@ -125,6 +124,10 @@ class Network(object):
         self.DHCPRange = ("", "")   #(begin_address, end_address)
         self.DHCPHosts = []
         self.DnsHosts = []
+        # Load balancing alias
+        self.lbAlias = ""
+        # Hosts to be balanced under alias
+        self.lbHosts = []
 
         self.xrdTestMasterIP = socket.gethostbyname(socket.gethostname())
 
@@ -167,6 +170,7 @@ class Network(object):
     def xmlDesc(self):
         hostsXML = ""
         dnsHostsXML = ""
+        lbAliasTag = ""
 
         values = dict()
         for h in self.DHCPHosts:
@@ -174,7 +178,10 @@ class Network(object):
             hostsXML = hostsXML + Network.xmlHostPattern % values
 
         for dns in self.DnsHosts:
-            values = {"ip": dns[0], "hostname": dns[1]}
+            for host in self.lbHosts:
+                if dns[1] == host.name:
+                    lbAliasTag = '<hostname>%s</hostname>' % self.lbAlias
+            values = {"ip": dns[0], "hostname": dns[1], "lbalias": lbAliasTag}
             dnsHostsXML = dnsHostsXML + Network.xmlDnsHostPattern % values
 
         values = {"name": self.uname,

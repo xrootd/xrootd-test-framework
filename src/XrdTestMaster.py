@@ -96,6 +96,10 @@ class XrdTestMaster(Runnable):
         self.defaultConfFile = '/etc/XrdTest/XrdTestMaster.conf'
         self.defaultPidFile = '/var/run/XrdTestMaster.pid'
         self.defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
+        # Default TCP server configuration
+        self.serverIP = '0.0.0.0'
+        self.serverPort = 20000
+        
         # Priority queue (locking) with incoming events, i.a. incoming messages
         # Referred to as: main events queue.
         self.recvQueue = PriorityBlockingQueue()
@@ -1169,9 +1173,14 @@ class XrdTestMaster(Runnable):
         '''
         TODO:
         '''
+        if self.config.has_option('server', 'ip'):
+            self.serverIP = self.config.get('server', 'ip')
+                               
+        if self.config.has_option('server', 'port'):
+            self.serverPort = self.config.getint('server', 'port')
+
         try:
-            server = ThreadedTCPServer((self.config.get('server', 'ip'), \
-                                        self.config.getint('server', 'port')),
+            server = ThreadedTCPServer((self.serverIP, self.serverPort),
                                ThreadedTCPRequestHandler)
         except socket.error, e:
             if e[0] == 98:
@@ -1196,29 +1205,25 @@ class XrdTestMaster(Runnable):
         '''
         TODO:
         '''
-        cherrypyCfg = {
+        webinterface = WebInterface(self.config, self)
+        
+        cherrypyCfg =  {
                         '/webpage/js': {
                         'tools.staticdir.on': True,
-                        'tools.staticdir.dir' : \
-                        self.config.get('webserver', 'webpage_dir') \
-                        + "/js",
+                        'tools.staticdir.dir' : webinterface.webroot + "/js",
                         },
                         '/webpage/css': {
                         'tools.staticdir.on': True,
-                        'tools.staticdir.dir' : \
-                        self.config.get('webserver', 'webpage_dir') \
-                        + "/css",
+                        'tools.staticdir.dir' : webinterface.webroot + "/css",
                         }
                        }
-
-        webinterface = WebInterface(self.config, self)
         
         cherrypy.tree.mount(webinterface, "/", cherrypyCfg)
         cherrypy.config.update(
                             {'server.socket_host': \
-                             self.config.get('server', 'ip'),
+                             self.serverIP,
                             'server.socket_port': \
-                            self.config.getint('webserver', 'port'),
+                            int(webinterface.webport),
                             'server.environment': 'production'
                             })
 

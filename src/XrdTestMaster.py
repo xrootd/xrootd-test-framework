@@ -180,7 +180,7 @@ class XrdTestMaster(Runnable):
         '''
         LOGGER.info("Loading definitions...")
 
-        for repo in self.config.get('general', 'test-repos').split(','): 
+        for repo in filter(lambda x: x, self.config.get('general', 'test-repos').split(',')): 
             repo = 'test-repo-' + repo
             
             # Pull remote git repo if necessary
@@ -1237,7 +1237,7 @@ class XrdTestMaster(Runnable):
         '''
         TODO:
         '''
-        for repo in self.config.get('general', 'test-repos').split(','):
+        for repo in filter(lambda x: x, self.config.get('general', 'test-repos').split(',')):
             repo = 'test-repo-' + repo
             
             if self.config.get(repo, 'type') == 'localfs':

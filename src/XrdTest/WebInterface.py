@@ -39,6 +39,22 @@ except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
 
+class XrdWebInterfaceException(Exception):
+    '''
+    General Exception raised by WebInterface.
+    '''
+    def __init__(self, desc):
+        '''
+        Constructs Exception
+        @param desc: description of an error
+        '''
+        self.desc = desc
+        
+    def __str__(self):
+        '''
+        Returns textual representation of an error
+        '''
+        return repr(self.desc)
 
 class WebInterface:
     '''
@@ -50,10 +66,21 @@ class WebInterface:
         self.testMaster = test_master_ref
         # reference to loaded config
         self.config = config
+        # absolute path to webpage root
+        self.webroot = '/usr/share/XrdTest/webpage'
+        
+        # override default web root if specified in config
+        if self.config.has_option('webserver', 'webpage_dir'):
+            webroot = self.config.get('webserver', 'webpage_dir')
+            if os.path.exists(webroot):
+                self.webroot = webroot
+            else:
+                raise XrdWebInterfaceException('Path to web root does not exist at %s' % webroot)
+            
 
         self.cp_config = {'request.error_response': handleCherrypyError,
                           'error_page.404': \
-                          self.config.get('webserver', 'webpage_dir') + \
+                          self.webroot + \
                           os.sep + "page_404.tmpl"}
 
     def disp(self, tpl_file, tpl_vars):
@@ -64,7 +91,7 @@ class WebInterface:
         @param tpl_vars: vars can be used in HTML page, Cheetah style
         '''
         tpl = None
-        tplFile = self.config.get('webserver', 'webpage_dir') \
+        tplFile = self.webroot \
                     + os.sep + tpl_file
 
         tpl_vars['HTTPport'] = self.config.getint('webserver', 'port')

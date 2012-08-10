@@ -37,18 +37,18 @@ rm -rf xrd_rpms/slc-6-x86_64/xrootd-*-src-*.rpm
 log "Installing xrootd packages ..."
 
 # Fix for when RPM breaks it's own db...
-rm -rf /var/lib/rpm/__db*
-rpm --rebuilddb
+# rm -rf /var/lib/rpm/__db*
+# rpm --rebuilddb
 
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-libs-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-libs-devel-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-client-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-client-devel-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-client-admin-perl-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-fuse-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-server-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-server-devel-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-debuginfo-*.rpm
+rpm -F xrd_rpms/slc-6-x86_64/xrootd-libs-*.rpm
+rpm -F xrd_rpms/slc-6-x86_64/xrootd-libs-devel-*.rpm
+rpm -F xrd_rpms/slc-6-x86_64/xrootd-client-*.rpm
+rpm -F xrd_rpms/slc-6-x86_64/xrootd-client-devel-*.rpm
+rpm -F xrd_rpms/slc-6-x86_64/xrootd-client-admin-perl-*.rpm
+rpm -F xrd_rpms/slc-6-x86_64/xrootd-fuse-*.rpm
+rpm -F xrd_rpms/slc-6-x86_64/xrootd-server-*.rpm
+rpm -F xrd_rpms/slc-6-x86_64/xrootd-server-devel-*.rpm
+rpm -F xrd_rpms/slc-6-x86_64/xrootd-debuginfo-*.rpm
 
 cd ..
 
@@ -78,8 +78,8 @@ NAME=${arr[0]}
 UCASE_NAME=$(echo $NAME | tr a-z A-Z)
 
 echo "
-XROOTD_USER=daemon
-XROOTD_GROUP=daemon
+XROOTD_USER=xrootd
+XROOTD_GROUP=xrootd
 
 XROOTD_${UCASE_NAME}_OPTIONS=\" -l /var/log/xrootd/xrootd.log -c ${CONFIG_PATH} -k 7\"
 CMSD_${UCASE_NAME}_OPTIONS=\" -l /var/log/xrootd/cmsd.log -c ${CONFIG_PATH} -k 7\"
@@ -104,10 +104,7 @@ log "Starting xrootd and cmsd for machine $NAME ..."
 log "Config file: $CONFIG_PATH"
 
 mkdir -p /var/log/xrootd
-mkdir -p /root/xrdfilesystem
 
-export XRD_DEBUG_LEVEL=3
-export XRDDEBUG=3
 stamp service xrootd setup
 stamp service xrootd start
 stamp service cmsd start

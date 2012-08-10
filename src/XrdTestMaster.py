@@ -779,10 +779,9 @@ class XrdTestMaster(Runnable):
             return 
         
         for clustName in ts.clusters:
-            if not self.clusters[clustName].state == State(Cluster.S_ACTIVE):
-                j = Job(Job.START_CLUSTER, groupId, (clustName, test_suite_name))
-                self.pendingJobs.append(j)
-                self.pendingJobsDbg.append("startCluster(%s)" % clustName)
+            j = Job(Job.START_CLUSTER, groupId, (clustName, test_suite_name))
+            self.pendingJobs.append(j)
+            self.pendingJobsDbg.append("startCluster(%s)" % clustName)
 
         j = Job(Job.INITIALIZE_TEST_SUITE, groupId, test_suite_name)
         self.pendingJobs.append(j)

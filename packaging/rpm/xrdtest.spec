@@ -155,8 +155,11 @@ Xrd Test Hypervisor is component of XrdTestFramework. It manages virtual machine
 %post master
 /sbin/ldconfig
 /sbin/chkconfig --add xrdtestmasterd
-openssl genrsa -out %{_sysconfdir}/XrdTest/certs/masterkey.pem 2048
-openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/masterkey.pem -out %{_sysconfdir}/XrdTest/certs/mastercert.pem -days 1095
+if [ ! -f %{_sysconfdir}/XrdTest/certs/masterkey.pem ] 
+then
+        openssl genrsa -out %{_sysconfdir}/XrdTest/certs/masterkey.pem 2048
+        openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/masterkey.pem -out %{_sysconfdir}/XrdTest/certs/mastercert.pem -days 1095
+fi
 
 %postun master
 /sbin/ldconfig
@@ -164,8 +167,11 @@ openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/masterkey.pem -o
 %post slave
 /sbin/ldconfig
 /sbin/chkconfig --add xrdtestslaved
-openssl genrsa -out %{_sysconfdir}/XrdTest/certs/slavekey.pem 2048
-openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/slavekey.pem -out %{_sysconfdir}/XrdTest/certs/slavecert.pem -days 1095
+if [ ! -f %{_sysconfdir}/XrdTest/certs/slavekey.pem ]
+then
+        openssl genrsa -out %{_sysconfdir}/XrdTest/certs/slavekey.pem 2048
+        openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/slavekey.pem -out %{_sysconfdir}/XrdTest/certs/slavecert.pem -days 1095
+fi
 
 %postun slave
 /sbin/ldconfig
@@ -173,8 +179,11 @@ openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/slavekey.pem -ou
 %post hypervisor
 /sbin/ldconfig
 /sbin/chkconfig --add xrdtesthypervisord
-openssl genrsa -out %{_sysconfdir}/XrdTest/certs/hypervisorkey.pem 2048
-openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/hypervisorkey.pem -out %{_sysconfdir}/XrdTest/certs/hypervisorcert.pem -days 1095
+if [ ! -f %{_sysconfdir}/XrdTest/certs/hypervisorkey.pem ]
+then
+        openssl genrsa -out %{_sysconfdir}/XrdTest/certs/hypervisorkey.pem 2048
+        openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/hypervisorkey.pem -out %{_sysconfdir}/XrdTest/certs/hypervisorcert.pem -days 1095
+fi
 
 %postun hypervisor
 /sbin/ldconfig

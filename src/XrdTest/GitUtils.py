@@ -49,8 +49,6 @@ def sync_remote_git(repo, config):
     @param repo: 
     @param config: configuration file containing repository information
     '''
-    user = config.get(repo, 'user')
-    host = config.get(repo, 'host')
     remote_repo = config.get(repo, 'remote_repo')
     local_repo = config.get(repo, 'local_repo')
     local_branch = config.get(repo, 'local_branch')
@@ -58,7 +56,7 @@ def sync_remote_git(repo, config):
     
     # Clone the repo if we don't have it yet.
     if not os.path.exists(local_repo):
-        git_clone(user, host, remote_repo, local_repo, local_repo)
+        git_clone(remote_repo, local_repo, local_repo)
     
     git_fetch(local_repo)
     output = git_diff(local_branch, remote_branch, local_repo)
@@ -97,20 +95,18 @@ def git_pull(cwd):
     '''
     return Command('git pull', cwd).execute()
 
-def git_clone(user, host, remote_repo, local_repo, cwd):
+def git_clone(remote_repo, local_repo, cwd):
     '''
     Clone a remote repository into a new local directory. Must have key-based
     authentication set up for this to work.
     
     TODO: handle exceptions for no key-based auth
     
-    @param user: the username of the owner of the repository to clone.
-    @param host: the name/address of the remote host.
     @param remote_repo: the repository repo on the remote host. 
     @param local_repo: the local repo in which to clone the new repo.
     @param cwd: the working directory in which to execute.
     '''
     os.mkdir(local_repo)
-    Command('git clone %s@%s:%s %s' % (user, host, remote_repo, local_repo), cwd).execute()
+    Command('git clone %s %s' % (remote_repo, local_repo), cwd).execute()
     
     

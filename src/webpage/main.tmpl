@@ -27,8 +27,9 @@
 	<body>
 		<p>XRootD Testing Framework</p>
 		<div id="main">
-		
-			#include "webpage/main_menu.tmpl"
+			
+			#set $inc = $webroot + '/main_menu.tmpl' 
+			#include $inc
 			
 			<div class="left">
 				<h1>Cluster definitions</h1>

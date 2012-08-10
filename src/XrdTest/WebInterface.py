@@ -96,8 +96,7 @@ class WebInterface:
         @param tpl_vars: vars can be used in HTML page, Cheetah style
         '''
         tpl = None
-        tplFile = self.webroot \
-                    + os.sep + tpl_file
+        tplFile = self.webroot + os.sep + tpl_file
 
         tpl_vars['HTTPport'] = self.config.getint('webserver', 'port')
         try:
@@ -114,6 +113,7 @@ class WebInterface:
         '''
         tplVars = { 'title' : 'Xrd Test Master - Web Interface',
                     'message' : 'Welcome and begin the tests!',
+                    'webroot' : self.webroot,
                     'clusters' : self.testMaster.clusters,
                     'hypervisors': self.testMaster.hypervisors,
                     'suiteSessions' : self.testMaster.suiteSessions,
@@ -132,6 +132,7 @@ class WebInterface:
         Page showing suit sessions runs.
         '''
         tplVars = { 'title' : 'Xrd Test Master - Web Interface',
+                    'webroot': self.webroot,
                     'suiteSessions' : self.testMaster.suiteSessions,
                     'runningSuiteUids' : self.testMaster.runningSuiteUids,
                     'slaves': self.testMaster.slaves,

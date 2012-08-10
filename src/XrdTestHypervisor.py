@@ -303,8 +303,8 @@ def main():
     (options, args) = parse.parse_args()
     
     # suppress output on daemon start
-    if options.backgroundMode:
-        LOGGER.setLevel(level=logging.ERROR)
+#    if options.backgroundMode:
+#        LOGGER.setLevel(level=logging.ERROR)
         
     configFile = None
     if options.configFile:
@@ -339,7 +339,7 @@ def main():
             sys.exit(1)
             
     # re-up logging level for logfile
-    LOGGER.setLevel(level=logging.DEBUG)
+    #LOGGER.setLevel(level=logging.DEBUG)
 
     # run test master in standard mode. Used for debugging
     if not options.backgroundMode:

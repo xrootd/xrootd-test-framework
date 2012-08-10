@@ -140,8 +140,14 @@ class XrdTestMaster(Runnable):
         else:
             self.config = self.readConfig(self.defaultConfFile)
         
-        self.suiteSessions = shelve.open(\
+        if self.config.has_option('general', 'suite_sessions_file'):
+            if os.path.exists(self.config.get('general', 'suite_sessions_file')):
+                self.suiteSessions = shelve.open(\
                              self.config.get('general', 'suite_sessions_file'))
+            else:
+                f = open(self.config.get('general', 'suite_sessions_file'), 'w').close()
+        else:
+            LOGGER.error('Cannot open suite session storage file.')
 
     def retrieveSuiteSession(self, suite_name):
         '''
@@ -180,7 +186,7 @@ class XrdTestMaster(Runnable):
         '''
         LOGGER.info("Loading definitions...")
 
-        for repo in filter(lambda x: x, self.config.get('general', 'test-repos').split(',')): 
+        for repo in map(lambda x: x.strip(), filter(lambda x: x, self.config.get('general', 'test-repos').split(','))): 
             repo = 'test-repo-' + repo
             
             # Pull remote git repo if necessary
@@ -1237,7 +1243,7 @@ class XrdTestMaster(Runnable):
         '''
         TODO:
         '''
-        for repo in filter(lambda x: x, self.config.get('general', 'test-repos').split(',')):
+        for repo in map(lambda x: x.strip(), filter(lambda x: x, self.config.get('general', 'test-repos').split(','))):
             repo = 'test-repo-' + repo
             
             if self.config.get(repo, 'type') == 'localfs':
@@ -1315,8 +1321,8 @@ def main():
     (options, args) = parse.parse_args()
     
     # suppress output on daemon start
-    if options.backgroundMode:
-        LOGGER.setLevel(level=logging.ERROR)
+#    if options.backgroundMode:
+#        LOGGER.setLevel(level=logging.ERROR)
         
     if options.configFile:
         LOGGER.info("Using config file: %s" % options.configFile)
@@ -1357,7 +1363,7 @@ def main():
             sys.exit(1)
             
     # re-up logging level for logfile
-    LOGGER.setLevel(level=logging.DEBUG)
+    # LOGGER.setLevel(level=logging.DEBUG)
 
     # run test master in standard mode. Used for debugging
     if not options.backgroundMode:

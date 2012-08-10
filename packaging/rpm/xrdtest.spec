@@ -58,7 +58,7 @@ install -pm 755 src/conf/XrdTestSlave.conf %{buildroot}%{_sysconfdir}/XrdTest
 # webpage
 mkdir -p %{buildroot}%{_datadir}/XrdTest
 cp -r src/webpage %{buildroot}%{_datadir}/XrdTest
-chmod --recursive 755 %{buildroot}%{_datadir}/XrdTest/webpage
+chmod --recursive 777 %{buildroot}%{_datadir}/XrdTest/webpage
 
 # disk image cache locations
 mkdir -p %{buildroot}%{_localstatedir}/lib/libvirt/images/XrdTest

@@ -316,9 +316,6 @@ class XrdTestSlave(Runnable):
 
     def run(self):
         ''' TODO: '''
-        # re-up logging level for logfile
-        LOGGER.setLevel(level=logging.DEBUG)
-    
         sock = self.connectMaster(self.config.get('test_master', 'ip'),
                            self.config.getint('test_master', 'port'))
         if not sock:
@@ -400,6 +397,7 @@ def main():
 
     # run test master in standard mode. Used for debugging
     if not options.backgroundMode:
+        LOGGER.setLevel(level=logging.DEBUG)
         testSlave.run()
 
 

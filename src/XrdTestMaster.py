@@ -1285,6 +1285,7 @@ class XrdTestMaster(Runnable):
         Main method of a programme. Initializes all serving threads and starts
         main loop receiving MasterEvents.
         '''
+        LOGGER.setLevel(level=logging.INFO)
         # Start TCP server for incoming slave and hypervisors connections
         self.startTCPServer()
 
@@ -1340,14 +1341,14 @@ def main():
     parse.add_option("-c", "--configfile", dest="configFile", type="string", \
                      action="store", help="config (.conf) file location")
     parse.add_option("-b", "--background", dest="backgroundMode", \
-                     action="store_true", \
+                     type='string', action="store", \
                       help="run runnable as a daemon")
 
     (options, args) = parse.parse_args()
     
     # suppress output on daemon start
-#    if options.backgroundMode:
-#        LOGGER.setLevel(level=logging.ERROR)
+    if options.backgroundMode:
+        LOGGER.setLevel(level=logging.ERROR)
         
     if options.configFile:
         LOGGER.info("Using config file: %s" % options.configFile)
@@ -1386,12 +1387,10 @@ def main():
         except (DaemonException, RuntimeError, ValueError, IOError), e:
             LOGGER.exception(str(e))
             sys.exit(1)
-            
-    # re-up logging level for logfile
-    # LOGGER.setLevel(level=logging.DEBUG)
 
     # run test master in standard mode. Used for debugging
     if not options.backgroundMode:
+        LOGGER.setLevel(level=logging.DEBUG)
         xrdTestMaster.run()
 
 

@@ -31,6 +31,7 @@ try:
     import os
     import signal
     import sys
+    import logging
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
@@ -182,8 +183,8 @@ class Daemon:
             logFile.close()
             pidFile = file(self.pidFile, 'w')
         except Exception, e:
-            raise DaemonException(('Cannot access log file or pid file: ' + \
-                                  '%s or %s') % (self.logFile, self.pidFile))
+            raise DaemonException(('%s: Cannot access log file or pid file: ' + \
+                                  '%s or %s') % (e, self.logFile, self.pidFile))
 
         # Fork - create daemon process
         try:
@@ -223,6 +224,7 @@ class Daemon:
             raise DaemonException('Cannot redirect output to the log file: ' + 
                                   str(e))
 
+        LOGGER.setLevel(level=logging.INFO)
         LOGGER.info('Running process with pidfile: ' + self.pidFile + 
                     ' [' + str(os.getpid()) + ']')
         sys.stdout.flush()

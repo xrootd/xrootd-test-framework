@@ -78,9 +78,7 @@ class ClusterManager:
         try:
             self.virtConnection = libvirt.open(url)
         except libvirtError, e:
-            msg = "Could not create connection to libvirt: %s" % e
-            LOGGER.error(msg)
-            raise ClusterManagerException(msg, ERR_CONNECTION)
+            LOGGER.error("Can not connect to libvirt (-c qemu:///system): %s" % e)
         else:
             LOGGER.debug("Connected to libvirt manager.")
 

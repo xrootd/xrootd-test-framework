@@ -99,11 +99,7 @@ class XrdTestHypervisor(Runnable):
         self.clusterManager.cacheImagesDir = \
             self.config.get('virtual_machines', 'cache_images_dir')
 
-        try:
-            self.clusterManager.connect("qemu:///system")
-        except ClusterManagerException, e:
-            LOGGER.error("Can not connect to libvirt (-c qemu:///system): %s" \
-                         % e)
+        self.clusterManager.connect("qemu:///system")
 
     def __del__(self):
         ''' TODO: '''
@@ -259,6 +255,8 @@ class XrdTestHypervisor(Runnable):
         '''
         Main thread. Initialize TCP threads and run recvLoop().
         '''
+        LOGGER.setLevel(level=logging.INFO)
+                
         sock = self.connectMaster(self.config.get('test_master', 'ip'),
                            self.config.getint('test_master', 'port'))
         if not sock:
@@ -303,8 +301,8 @@ def main():
     (options, args) = parse.parse_args()
     
     # suppress output on daemon start
-#    if options.backgroundMode:
-#        LOGGER.setLevel(level=logging.ERROR)
+    if options.backgroundMode:
+        LOGGER.setLevel(level=logging.ERROR)
         
     configFile = None
     if options.configFile:
@@ -337,12 +335,10 @@ def main():
         except (DaemonException, RuntimeError, ValueError, IOError), e:
             LOGGER.error("Problem in daemon operation: %s" % e)
             sys.exit(1)
-            
-    # re-up logging level for logfile
-    #LOGGER.setLevel(level=logging.DEBUG)
 
     # run test master in standard mode. Used for debugging
     if not options.backgroundMode:
+        LOGGER.setLevel(level=logging.DEBUG)
         testHypervisor.run()
 
 if __name__ == '__main__':

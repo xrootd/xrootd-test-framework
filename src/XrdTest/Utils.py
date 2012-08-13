@@ -31,7 +31,6 @@ import subprocess
 from copy import copy
 from threading import Lock, Condition
 
-
 class State(object):
     '''
     Represents current state of some entity.
@@ -123,8 +122,14 @@ class Command(object):
     
     def execute(self):
         LOGGER.info('Running command: %s' % self.cmd)
-        (stdout, stderr) = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE,
-                                             cwd=self.cwd).communicate()
+        proc = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE,
+                                             cwd=self.cwd)
+        stdout = proc.communicate()[0]
+        retcode = proc.returncode
+        
+        if retcode != 0:
+            LOGGER.error('Command returned with non-zero exit code: %s' % retcode)
+        
         output = stdout
         if output == '': 
             LOGGER.debug('Command returned no output.') 
@@ -142,7 +147,7 @@ class Logger(object):
     def setup(self):
         logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
-                    '%(message)s', datefmt="[%H:%M:%S]", level=logging.DEBUG)
+                    '%(message)s', datefmt="[%H:%M:%S]", level=logging.ERROR)
         return logging.getLogger(self.filename)
 
 class UserInfoHandler(logging.Handler):

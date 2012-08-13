@@ -34,7 +34,7 @@ try:
     import sys
     import types
     
-    from pyinotify import WatchManager, ThreadedNotifier, ProcessEvent
+    from pyinotify import WatchManager, ThreadedNotifier, ProcessEvent, WatchManagerError
     from apscheduler.scheduler import Scheduler
     from GitUtils import sync_remote_git
 except ImportError, e:
@@ -113,12 +113,13 @@ class DirectoryWatch(object):
         clusterNotifier.start()
         suiteNotifier.start()
     
-        wm.add_watch(self.config.get(self.repo, \
-                           'cluster_defs_path'), \
-                           self.mask, rec=True)
-        wm2.add_watch(self.config.get(self.repo, \
-                           'suite_defs_path'), \
-                           self.mask, rec=True)
+        try:
+            wm.add_watch(self.config.get(self.repo, 'cluster_defs_path'), \
+                               self.mask, rec=True, quiet=False)
+            wm2.add_watch(self.config.get(self.repo, 'suite_defs_path'), \
+                               self.mask, rec=True, quiet=False)
+        except WatchManagerError, e:
+            LOGGER.error(e)
 
 
 class ClustersDefinitionsChangeHandler(ProcessEvent):

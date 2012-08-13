@@ -31,6 +31,7 @@
 #
 #-------------------------------------------------------------------------------
 from XrdTest.Utils import Logger
+from logging import getLogger
 LOGGER = Logger(__name__).setup()
 
 try:
@@ -1228,14 +1229,23 @@ class XrdTestMaster(Runnable):
                              self.serverIP,
                             'server.socket_port': \
                             int(webinterface.webport),
-                            'server.environment': 'production'
+                            'environment': 'production',
+                            'log.screen': False,
                             })
-
+      
         try:
             cherrypy.server.start()
         except cherrypy._cperror.HTTPError, e:
             LOGGER.error(str(e))
             sys.exit(1)
+
+        # Silence cherrypy
+        loggers = logging.Logger.manager.loggerDict.keys()
+        for name in loggers:
+            if name.startswith('cherrypy'):
+                logging.getLogger(name).setLevel(0)
+            else:
+                logging.getLogger(name).setLevel(logging.INFO)
     
     def watchDirectories(self):
         '''
@@ -1313,7 +1323,7 @@ def main():
     parse.add_option("-c", "--configfile", dest="configFile", type="string", \
                      action="store", help="config (.conf) file location")
     parse.add_option("-b", "--background", dest="backgroundMode", \
-                     type="string", action="store", \
+                     action="store_true", \
                       help="run runnable as a daemon")
 
     (options, args) = parse.parse_args()

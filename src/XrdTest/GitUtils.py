@@ -33,6 +33,7 @@ try:
     import sys
     import os
     from Utils import Command
+    from ConfigParser import NoOptionError
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
@@ -49,25 +50,28 @@ def sync_remote_git(repo, config):
     @param repo: 
     @param config: configuration file containing repository information
     '''
-    remote_repo = config.get(repo, 'remote_repo')
-    local_repo = config.get(repo, 'local_repo')
-    local_branch = config.get(repo, 'local_branch')
-    remote_branch = config.get(repo, 'remote_branch')
-    
-    # Clone the repo if we don't have it yet.
-    if not os.path.exists(local_repo):
-        git_clone(remote_repo, local_repo, local_repo)
-    
-    git_fetch(local_repo)
-    output = git_diff(local_branch, remote_branch, local_repo)
-    
-    # If git-diff prints to stdout, then we have changes (or an error).
-    # TODO: handle errors with incorrect branch names
-    if output != '':
-        LOGGER.info('Remote branch has changes. Pulling.')
-        git_pull(local_repo)
-    return output
+    try:
+        remote_repo = config.get(repo, 'remote_repo')
+        local_repo = config.get(repo, 'local_path')
+        local_branch = config.get(repo, 'local_branch')
+        remote_branch = config.get(repo, 'remote_branch')
+        
+        # Clone the repo if we don't have it yet.
+        if not os.path.exists(local_repo):
+            git_clone(remote_repo, local_repo, local_repo)
+        
+        git_fetch(local_repo)
+        output = git_diff(local_branch, remote_branch, local_repo)
+        
+        # If git-diff prints to stdout, then we have changes (or an error).
+        # TODO: handle errors with incorrect branch names
+        if output != '':
+            LOGGER.info('Remote branch has changes. Pulling.')
+            git_pull(local_repo)
+        return output
 
+    except NoOptionError, e:
+        LOGGER.error(e)    
 
 def git_diff(local_branch, remote_branch, cwd):
     '''

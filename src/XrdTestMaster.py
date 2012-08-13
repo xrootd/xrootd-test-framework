@@ -191,11 +191,22 @@ class XrdTestMaster(Runnable):
             # Pull remote git repo if necessary
             if self.config.get(repo, 'type') == 'git':
                 sync_remote_git(repo, self.config)
+                
+            if self.config.has_option(repo, 'local_path'):
+                localPath = self.config.get(repo, 'local_path')
+            else:
+                LOGGER.error('No local path defined for repository %s' % repo) 
             
             try:
-                # load example cluster definitions
-                clusters = loadClustersDefs(\
-                            self.config.get(repo, 'cluster_defs_path'))
+                # load cluster definitions
+                if self.config.has_option(repo, 'cluster_defs_path'):
+                    clustDefPath = localPath + os.sep + self.config.get(repo, 'cluster_defs_path')
+                elif os.path.exists(localPath + os.sep + 'clusters'):
+                    clustDefPath = localPath + os.sep + 'clusters'
+                else:
+                    LOGGER.error('No cluster definitions found for repository %s' % repo)
+                    
+                clusters = loadClustersDefs(clustDefPath)
                 for clu in clusters:
                     self.clusters[clu.name] = clu
             except ClusterManagerException, e:
@@ -203,9 +214,15 @@ class XrdTestMaster(Runnable):
                 sys.exit()
     
             try:
-                # load example test suite definitions
-                testSuites = loadTestSuiteDefs(\
-                            self.config.get(repo, 'suite_defs_path'))
+                # load test suite definitions
+                if self.config.has_option(repo, 'suite_defs_path'):
+                    suiteDefPath = localPath + os.sep + self.config.get(repo, 'suite_defs_path')
+                elif os.path.exists(localPath + os.sep + 'test-suites'):
+                    suiteDefPath = localPath + os.sep + 'test-suites'
+                else:
+                    LOGGER.error('No test suite definitions found for repository %s' % repo)
+                
+                testSuites = loadTestSuiteDefs(suiteDefPath)
                 for ts in testSuites:
                     ts.checkIfDefComplete(self.clusters)
                     self.testSuites[ts.name] = ts

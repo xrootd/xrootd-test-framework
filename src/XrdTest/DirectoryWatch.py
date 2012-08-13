@@ -33,6 +33,7 @@ LOGGER = Logger(__name__).setup()
 try:
     import sys
     import types
+    import os
     
     from pyinotify import WatchManager, ThreadedNotifier, ProcessEvent, WatchManagerError
     from apscheduler.scheduler import Scheduler
@@ -74,24 +75,7 @@ class DirectoryWatch(object):
         '''
         Monitor a local directory for changes.
         '''
-        wm = WatchManager()
-        wm2 = WatchManager()
-        
-        clusterNotifier = ThreadedNotifier(wm, \
-                            ClustersDefinitionsChangeHandler(\
-                            masterCallback=self.callback))
-        suiteNotifier = ThreadedNotifier(wm2, \
-                            SuiteDefinitionsChangeHandler(\
-                            masterCallback=self.callback))
-        clusterNotifier.start()
-        suiteNotifier.start()
-    
-        wm.add_watch(self.config.get(self.repo, \
-                           'cluster_defs_path'), \
-                           self.mask, rec=True)
-        wm2.add_watch(self.config.get(self.repo, \
-                           'suite_defs_path'), \
-                           self.mask, rec=True)
+        self._watch
         
     def watch_remote_git(self):
         '''
@@ -101,6 +85,9 @@ class DirectoryWatch(object):
         sched.start()
         sched.add_interval_job(sync_remote_git, seconds=30, args=[self.repo, self.config])
         
+        self._watch()
+    
+    def _watch(self):
         wm = WatchManager()
         wm2 = WatchManager()
         
@@ -112,12 +99,26 @@ class DirectoryWatch(object):
                             masterCallback=self.callback))
         clusterNotifier.start()
         suiteNotifier.start()
+        
+        local_path = ''
+        if self.config.has_option(self.repo, 'local_path'):
+            local_path = self.config.get(self.repo, 'local_path')
+        else:
+            LOGGER.error('No local path defined for repository %s' % self.repo)
     
+        if not self.config.has_option(self.repo, 'cluster_defs_path'):
+            clustdir = local_path + os.sep + 'clusters'
+        else: 
+            clustdir = local_path + os.sep + self.config.get(self.repo, 'cluster_defs_path')
+    
+        if not self.config.has_option(self.repo, 'suite_defs_path'):
+            suitedir = local_path + os.sep + 'test-suites'
+        else: 
+            suitedir = local_path + os.sep + self.config.get(self.repo, 'suite_defs_path')
+        
         try:
-            wm.add_watch(self.config.get(self.repo, 'cluster_defs_path'), \
-                               self.mask, rec=True, quiet=False)
-            wm2.add_watch(self.config.get(self.repo, 'suite_defs_path'), \
-                               self.mask, rec=True, quiet=False)
+            wm.add_watch(clustdir, self.mask, rec=True, quiet=False)
+            wm2.add_watch(suitedir, self.mask, rec=True, quiet=False)
         except WatchManagerError, e:
             LOGGER.error(e)
 

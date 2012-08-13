@@ -141,11 +141,9 @@ class XrdTestMaster(Runnable):
             self.config = self.readConfig(self.defaultConfFile)
         
         if self.config.has_option('general', 'suite_sessions_file'):
-            if os.path.exists(self.config.get('general', 'suite_sessions_file')):
                 self.suiteSessions = shelve.open(\
                              self.config.get('general', 'suite_sessions_file'))
-            else:
-                f = open(self.config.get('general', 'suite_sessions_file'), 'w').close()
+
         else:
             LOGGER.error('Cannot open suite session storage file.')
 

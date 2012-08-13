@@ -159,7 +159,7 @@
 								<tr>
 									<td>$cl</td>
 									<td>
-										#if $clusters.has_key($cl)
+										#if dict($clusters).has_key($cl)
 											loaded
 										#else
 											<span style="color:#ff0000;">unavailable</span>
@@ -206,7 +206,7 @@
 								#end if
 							</table>
 							<p class="sect_title">SESSIONS</p>
-							#if $suiteSessions.has_key(ts[1].name)
+							#if $suiteSessions and $suiteSessions.has_key($ts[1].name)
 							<table class="desctab" cellspacing="0" cellpadding="0">
 								<tr>
 									<th>Name</th>

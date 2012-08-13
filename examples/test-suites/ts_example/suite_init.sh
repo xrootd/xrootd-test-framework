@@ -78,8 +78,8 @@ NAME=${arr[0]}
 UCASE_NAME=$(echo $NAME | tr a-z A-Z)
 
 echo "
-XROOTD_USER=xrootd
-XROOTD_GROUP=xrootd
+XROOTD_USER=daemon
+XROOTD_GROUP=daemon
 
 XROOTD_${UCASE_NAME}_OPTIONS=\" -l /var/log/xrootd/xrootd.log -c ${CONFIG_PATH} -k 7\"
 CMSD_${UCASE_NAME}_OPTIONS=\" -l /var/log/xrootd/cmsd.log -c ${CONFIG_PATH} -k 7\"

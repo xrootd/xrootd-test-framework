@@ -21,8 +21,6 @@ if [[ @slavename@ =~ ds ]]; then
 elif [[ @slavename@ =~ client ]]; then
 	
 	log "Mounting xrootd fuse on @slavename@ ..."
-	
-	# mount -t fuse xrootdfs /xrootdfs -o rdr=xroot://metamanager1.xrd.test:1094//data,uid=daemon
 
 	if [ ! -d /mnt ]; then
 		mkdir /mnt
@@ -32,12 +30,16 @@ elif [[ @slavename@ =~ client ]]; then
 		mkdir /mnt/xrootd
 	fi
 	
-	if ! grep -Fxq "xrootdfs" /etc/fstab
-	then
-    	echo "xrootdfs  /mnt/xrootd  fuse  rdr=xroot://metamanager1.xrd.test:1094//data/,uid=xrootd 0 0" >> /etc/fstab
-		mount /mnt/xrootd
-	fi
+	# if ! grep -Fxq "xrootdfs" /etc/fstab
+	# then
+    	# echo "xrootdfs  /mnt/xrootd  fuse  rdr=xroot://metamanager1.xrd.test:1094//data/,uid=xrootd,nosuid,nodev,allow_other 0 0" >> /etc/fstab
+		# mount /mnt/xrootd
+	# fi
 	
+	service cmsd stop
+	service xrootd stop
+	
+	mount -t fuse xrootdfs /mnt/xrootd -o rdr=xroot://metamanager1.xrd.test:1094//data,uid=daemon,nosuid,nodev,allow_other
 
 else
 	log "Nothing to initialize." 

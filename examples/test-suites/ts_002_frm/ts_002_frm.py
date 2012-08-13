@@ -8,7 +8,7 @@ def getTestSuite():
     ts.machines = ['frm1', 'frm2', 'ds1', 'ds2', 'ds3', 'ds4', 'client1']
     ts.tests = ['simple_copy_to', 'simple_copy_from']
     
-    ts.schedule = dict(second='30', minute='08', hour='*', day='*', month='*')
+    ts.schedule = dict(second='30', minute='08', hour='*', day='*', month='1')
 
     ts.initialize = "file://suite_init.sh"
     ts.finalize = "file://suite_finalize.sh"

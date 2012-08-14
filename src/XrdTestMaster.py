@@ -98,7 +98,7 @@ class XrdTestMaster(Runnable):
         self.defaultPidFile = '/var/run/XrdTestMaster.pid'
         self.defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
         # Default TCP server configuration
-        self.serverIP = '0.0.0.0'
+        self.server_ip = '0.0.0.0'
         self.serverPort = 20000
         
         # Priority queue (locking) with incoming events, i.a. incoming messages
@@ -211,7 +211,6 @@ class XrdTestMaster(Runnable):
                     self.clusters[clu.name] = clu
             except ClusterManagerException, e:
                 LOGGER.error("ClusterManager Exception: %s" % e)
-                sys.exit()
     
             try:
                 # load test suite definitions
@@ -228,7 +227,6 @@ class XrdTestMaster(Runnable):
                     self.testSuites[ts.name] = ts
             except TestSuiteException, e:
                 LOGGER.error("Test Suite Exception: %s" % e)
-                sys.exit()
     
             # add jobs to scheduler if it's enabled
             if self.config.getint('scheduler', 'enabled') == 1:
@@ -246,7 +244,6 @@ class XrdTestMaster(Runnable):
                     except Exception, e:
                         LOGGER.error(("Error while scheduling job " + \
                                    "for test suite %s: %s") % (ts.name, e))
-                        sys.exit()
     
     def handleSuiteDefinitionChanged(self, dirEvent):
         '''
@@ -1196,13 +1193,13 @@ class XrdTestMaster(Runnable):
         TODO:
         '''
         if self.config.has_option('server', 'ip'):
-            self.serverIP = self.config.get('server', 'ip')
+            self.server_ip = self.config.get('server', 'ip')
                                
         if self.config.has_option('server', 'port'):
             self.serverPort = self.config.getint('server', 'port')
 
         try:
-            server = ThreadedTCPServer((self.serverIP, self.serverPort),
+            server = ThreadedTCPServer((self.server_ip, self.serverPort),
                                ThreadedTCPRequestHandler)
         except socket.error, e:
             if e[0] == 98:
@@ -1241,18 +1238,39 @@ class XrdTestMaster(Runnable):
                        }
         
         cherrypy.tree.mount(webinterface, "/", cherrypyCfg)
-        cherrypy.config.update(
-                            {'server.socket_host': \
-                             self.serverIP,
-                            'server.socket_port': \
-                            int(webinterface.webport),
-                            'environment': 'production',
-                            'log.screen': False,
-                            })
-      
+        cherrypy.config.update({'environment': 'production',
+                                'log.screen': False})
+
+        cherrypy.server.unsubscribe()
+    
+        ssl_server = cherrypy._cpserver.Server()
+        ssl_server.socket_port=webinterface.https_port
+        ssl_server._socket_host=self.server_ip
+        ssl_server.ssl_module = 'pyopenssl'
+        
+        if self.config.has_option('security', 'certfile'):
+            ssl_server.ssl_certificate = self.config.get('security', 'certfile')
+        else:
+            LOGGER.error('No SSL certificate defined in config file')
+            
+        if self.config.has_option('security', 'keyfile'):
+            ssl_server.ssl_private_key = self.config.get('security', 'keyfile')
+        else:
+            LOGGER.error('No private key defined in config file')
+            
+        ssl_server.subscribe()
+    
+        http_server = cherrypy._cpserver.Server()
+        http_server.socket_port=webinterface.http_port
+        http_server._socket_host=self.server_ip
+        http_server.subscribe()
+
         try:
-            cherrypy.server.start()
+            cherrypy.engine.start()
         except cherrypy._cperror.HTTPError, e:
+            LOGGER.error(str(e))
+            sys.exit(1)
+        except socket.error, e:
             LOGGER.error(str(e))
             sys.exit(1)
 
@@ -1261,8 +1279,6 @@ class XrdTestMaster(Runnable):
         for name in loggers:
             if name.startswith('cherrypy'):
                 logging.getLogger(name).setLevel(0)
-            else:
-                logging.getLogger(name).setLevel(logging.INFO)
     
     def watchDirectories(self):
         '''

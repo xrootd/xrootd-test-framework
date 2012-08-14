@@ -139,6 +139,26 @@
 						#if $testSuites and len($testSuites) > 0
 							#for $ts in	$testSuites.iteritems()
 							
+						<button id="${ts[1].name}" type="button" style="float:right;margin:4px;">Run Me!</button>
+						
+						<div id="${ts[1].name}_pass" style='display: none;' title='Enter Password'>
+						<form action="runTestSuite" method="post">
+							  <label for="password">Enter password to run test suite ${ts[1].name}:</label>
+							  <input id="${ts[1].name}_input" name="password" type="password" maxlength="40"/>
+							  <input id="${ts[1].name}_submit" type="submit" />
+							  <input type="hidden" name="testsuite" value="${ts[1].name}" />
+						  </form>
+						</div>
+						
+						<script>
+						  \$(${ts[1].name}).click(function() {
+						      \$(${ts[1].name}_input).val('');
+						      \$(${ts[1].name}_pass).dialog({
+                                  modal: true
+                              });
+						  });
+						</script>
+						
 						<h3>${ts[1].name}</h3>
 						<div class="inner">
 							<p class="sect_title">SCHEDULER EXPRESSION</p>

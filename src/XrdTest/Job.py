@@ -30,6 +30,7 @@ LOGGER = Logger(__name__).setup()
 try:
     import sys
     import datetime
+    import re
     from string import maketrans
 except ImportError, e:
     LOGGER.error(str(e))
@@ -73,6 +74,6 @@ class Job(object):
         '''
         d = datetime.datetime.now()
         r = "%s-%s" % (suite_name, d.isoformat())
-        r = r.translate(maketrans('', ''), '-:.')# remove special
+        r = re.sub('-:.', '', r) # remove special
         return r
     

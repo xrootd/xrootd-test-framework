@@ -140,6 +140,9 @@ class TestSuite:
         # Filled automatically by load test suite defs. Holds Python objects 
         # representing test cases
         self.testCases = []    
+        # If the test suite definition failed for any reason, this field will be filled
+        # with the exception details for debugging.
+        self.error = ''
 
     def validateStatic(self):
         '''
@@ -156,8 +159,8 @@ class TestSuite:
                                       "given in TestSuite %s definition.") % \
                                       self.name, \
                                       TestSuiteException.ERR_CRITICAL)
-        if not self.initialize or not self.finalize:
-            raise TestSuiteException(("No initialize or finalize script " + \
+        if not self.initialize:
+            raise TestSuiteException(("No initialize script " + \
                                       "in TestSuite %s definition") % \
                                       self.name, \
                                       TestSuiteException.ERR_CRITICAL)
@@ -378,13 +381,13 @@ def loadTestCasesDefs(path):
             raise TestSuiteException(("TypeError while loading test case " + \
                           "definition file %s: %s") % (modFile, e))
         except AttributeError, e:
-            raise TestSuiteException(("AttributeError during loading test" + \
+            raise TestSuiteException(("AttributeError during loading test " + \
                           "case definition file %s: %s") % (modFile, e))
         except ImportError:
-            raise TestSuiteException(("ImportError during loading test case" + \
+            raise TestSuiteException(("ImportError during loading test case " + \
                           "definition file %s: %s") % (modFile, e))
         except Exception, e:
-            raise TestSuiteException(("Exception during loading test case" + \
+            raise TestSuiteException(("Exception during loading test case " + \
                           "definition file %s: %s") % (modFile, e))
     return testCases
 
@@ -433,13 +436,13 @@ def loadTestSuiteDef(path):
             raise TestSuiteException(("Name error in test suite def file " + \
                   " %s: %s") % (modFile, e))
         except AttributeError, e:
-            raise TestSuiteException(("Sth can't be found in test suite " + \
+            raise TestSuiteException(("Something can't be found in test suite " + \
                                       "definition file %s: %s") % (modFile, e))
         except ImportError, e:
             raise TestSuiteException("Import error " + \
                   "during test suite %s import: %s" % (modFile, e))
         except Exception, e:
-            raise TestSuiteException("Exception occured " + \
+            raise TestSuiteException("Exception occurred " + \
                   "during test suite %s import: %s" % (modFile, e))
     elif ext == ".pyc":
         return None
@@ -488,6 +491,9 @@ def resolveScript(definition, root_path):
     elif definition.startswith('http://'):
         return urllib2.urlopen(definition).read()
     
+    # NoneType means no script at all
+    elif not definition:
+        return
     else:
         raise TestSuiteException("Unknown script definition type: %s" % definition)
 

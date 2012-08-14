@@ -68,6 +68,8 @@ class WebInterface:
         self.config = config
         # absolute path to webpage root
         self.webroot = '/usr/share/XrdTest/webpage'
+        # default server type
+        self.server_type = 'http'
         # default http port
         self.http_port = 8080
         # default https port
@@ -82,6 +84,9 @@ class WebInterface:
                 self.webroot = webroot
             else:
                 raise XrdWebInterfaceException('Path to web root does not exist at %s' % webroot)
+            
+        if self.config.has_option('webserver', 'server_type'):
+            self.server_type = self.config.get('webserver', 'server_type')
             
         # do the same with the web ports
         if self.config.has_option('webserver', 'http_port'):

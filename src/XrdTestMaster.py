@@ -1226,7 +1226,7 @@ class XrdTestMaster(Runnable):
         '''
         webinterface = WebInterface(self.config, self)
         
-        cherrypyCfg =  {
+        cherrypyCfg = {
                         '/webpage/js': {
                         'tools.staticdir.on': True,
                         'tools.staticdir.dir' : webinterface.webroot + "/js",
@@ -1238,35 +1238,42 @@ class XrdTestMaster(Runnable):
                        }
         
         cherrypy.tree.mount(webinterface, "/", cherrypyCfg)
-        cherrypy.config.update({'environment': 'production',
-                                'log.screen': False})
-
-        cherrypy.server.unsubscribe()
+        cherrypy.config.update({
+                                'environment': 'production',
+                                'log.screen': False,
+                              })
     
-        ssl_server = cherrypy._cpserver.Server()
-        ssl_server.socket_port=webinterface.https_port
-        ssl_server._socket_host=self.server_ip
-        ssl_server.ssl_module = 'pyopenssl'
+        if webinterface.server_type == 'https':
+            cherrypy.config.update({
+                                    'server.socket_host': self.server_ip,
+                                    'server.socket_port': webinterface.https_port,
+                                    'server.ssl_module': 'pyopenssl'
+                                  })
+            
+            if self.config.has_option('security', 'certfile'):
+                cherrypy.config.update({'server.ssl_certificate': \
+                                        self.config.get('security', 'certfile')})
+            else:
+                LOGGER.error('No SSL certificate defined in config file')
+                
+            if self.config.has_option('security', 'keyfile'):
+                cherrypy.config.update({'server.ssl_private_key': \
+                                        self.config.get('security', 'keyfile')})
+            else:
+                LOGGER.error('No private key defined in config file')
+    
+        elif webinterface.server_type == 'http':
+            cherrypy.config.update({
+                                    'server.socket_host': self.server_ip,
+                                    'server.socket_port': webinterface.http_port,
+                                  })
         
-        if self.config.has_option('security', 'certfile'):
-            ssl_server.ssl_certificate = self.config.get('security', 'certfile')
         else:
-            LOGGER.error('No SSL certificate defined in config file')
-            
-        if self.config.has_option('security', 'keyfile'):
-            ssl_server.ssl_private_key = self.config.get('security', 'keyfile')
-        else:
-            LOGGER.error('No private key defined in config file')
-            
-        ssl_server.subscribe()
-    
-        http_server = cherrypy._cpserver.Server()
-        http_server.socket_port=webinterface.http_port
-        http_server._socket_host=self.server_ip
-        http_server.subscribe()
+            LOGGER.error('Unknown server type %s in config file' % webinterface.server_type)
+            sys.exit(1)
 
         try:
-            cherrypy.engine.start()
+            cherrypy.server.start()
         except cherrypy._cperror.HTTPError, e:
             LOGGER.error(str(e))
             sys.exit(1)

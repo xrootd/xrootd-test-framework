@@ -96,6 +96,7 @@ class XrdTestMaster(Runnable):
         self.defaultConfFile = '/etc/XrdTest/XrdTestMaster.conf'
         self.defaultPidFile = '/var/run/XrdTestMaster.pid'
         self.defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
+        self.defaultLogLevel = logging.INFO
         # Default TCP server configuration
         self.server_ip = '0.0.0.0'
         self.serverPort = 20000
@@ -138,7 +139,14 @@ class XrdTestMaster(Runnable):
         if not configFile:
             configFile = self.defaultConfFile
         self.config = self.readConfig(configFile)
-            
+        
+        # setup logging level
+        if self.config.has_option('daemon', 'log_level'):
+            level = self.config.get('daemon', 'log_level')
+        else:
+            level = self.defaultLogLevel
+        logging.getLogger().setLevel(level)
+        
         # redirect output on daemon start
         if backgroundMode:
             if self.config.has_option('daemon', 'log_file_path'):
@@ -1305,7 +1313,7 @@ class XrdTestMaster(Runnable):
                 logging.getLogger(name).setLevel(logging.NOTSET)
             else:
                 logging.getLogger(name).setLevel(logging.INFO)
-    
+
     def watchDirectories(self):
         '''
         TODO:

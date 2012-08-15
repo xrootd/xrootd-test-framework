@@ -45,6 +45,8 @@
 									#set $state = "normal"
 									#if $cluster.state.id < 0
 									   #set $state = 'error'
+									#elif $cluster.state.id in (2, 3)
+									   #set $state = 'success'
 								    #end if
 								    <br />
 									<span class="cl-state-head ${state}">${cluster.state.name}</span>

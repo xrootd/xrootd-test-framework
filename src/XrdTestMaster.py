@@ -979,7 +979,7 @@ class XrdTestMaster(Runnable):
             cond = lambda j: cond1(j) and cond2(j) and cond3(j)
         # remove jobs if cluster start failed
         else:
-            LOGGER.debug("Removing next few jobs due to cluster start fail.")
+            LOGGER.info("Removing next few jobs due to cluster start fail.")
             cond = lambda j: cond1(j)
 
 

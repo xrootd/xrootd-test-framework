@@ -347,8 +347,8 @@ class ClusterManager:
         @param cluster: cluster definition object
         '''
         if self.clusters.has_key(cluster.name):
-            raise ClusterManagerException(("Cluster %s seems to be already." + \
-                              " Need to be destroyed first.") % \
+            raise ClusterManagerException(("Cluster %s already exists." + \
+                              " Needs to be destroyed first.") % \
                               (cluster.name))
         self.clusters[cluster.name] = cluster
         self.removeDanglingNetwork(cluster.network)
@@ -356,7 +356,7 @@ class ClusterManager:
 
         if not net:
             raise ClusterManagerException(("Network %s couldn't be created." + \
-                                          " Stoping cluster %s creation.") % \
+                                          " Stopping cluster %s creation.") % \
                                           (cluster.network.uname, cluster.name))
             return
 

@@ -326,16 +326,15 @@ class Disk(object):
 
 class Cluster(Utils.Stateful):
 
-    S_ACTIVE = (10, "Cluster active")
-    S_ERROR = (-10, "Cluster error")
-    S_ERROR_START = (-11, "Cluster error at start")
-    S_ERROR_STOP = (-12, "Cluster error at stop")
-    S_UNKNOWN = (1, "Cluster state unknown")
-    S_UNKNOWN_NOHYPERV = (1, "Cluster state unknown, no hypervisor to plant it on")
+    S_ERROR = (-4, "Cluster error")
+    S_ERROR_START = (-3, "Cluster error at start")
+    S_ERROR_STOP = (-2, "Cluster error at stop")
+    S_UNKNOWN_NOHYPERV = (-1, "Cluster state unknown, no hypervisor to plant it on")
+    S_UNKNOWN = (0, "Cluster state unknown")
     S_DEFINITION_SENT = (2, "Cluster definition sent to hypervisor to start")
-    S_ACTIVE = (2, "Cluster active")
-    S_STOPPED = (3, "Cluster stopped")
-    S_STOPCOMMAND_SENT = (4, "Cluster stop command sent to cluster")
+    S_ACTIVE = (3, "Cluster active")
+    S_STOPPED = (4, "Cluster stopped")
+    S_STOPCOMMAND_SENT = (5, "Cluster stop command sent to cluster")
     '''
     Represents a cluster comprised of hosts connected through network.
     '''

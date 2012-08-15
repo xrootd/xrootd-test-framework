@@ -216,6 +216,7 @@ class WebInterface:
             return 'Incorrect password.'
         else:
             self.testMaster.enqueueJob(testsuite)
+            self.testMaster.startNextJob()
             raise cherrypy.HTTPRedirect("index")
 
     index.exposed = True

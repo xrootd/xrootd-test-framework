@@ -90,6 +90,7 @@ class TCPReceiveThread(object):
                 self.recvQueue.put(msg)
             except SocketDisconnectedError, e:
                 LOGGER.info("Connection to XrdTestMaster closed.")
+                break
 
 class Hypervisor(TCPClient):
     '''

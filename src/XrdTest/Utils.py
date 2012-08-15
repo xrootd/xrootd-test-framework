@@ -149,7 +149,7 @@ class Logger(object):
     def setup(self):
         logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
                     '[%(filename)s %(lineno)d] ' + \
-                    '%(message)s', datefmt="[%H:%M:%S]", level=logging.ERROR)
+                    '%(message)s', datefmt="[%H:%M:%S]")
         return logging.getLogger(self.filename)
 
 class UserInfoHandler(logging.Handler):

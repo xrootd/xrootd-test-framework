@@ -43,6 +43,7 @@ try:
     import threading
     import shelve
     import cherrypy
+    import re
     
     from XrdTest.ClusterUtils import ClusterManagerException, extractClusterName, \
         loadClusterDef, loadClustersDefs, Cluster 
@@ -96,7 +97,8 @@ class XrdTestMaster(Runnable):
         self.defaultConfFile = '/etc/XrdTest/XrdTestMaster.conf'
         self.defaultPidFile = '/var/run/XrdTestMaster.pid'
         self.defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
-        self.defaultLogLevel = logging.INFO
+        self.logLevel = logging.INFO
+        
         # Default TCP server configuration
         self.server_ip = '0.0.0.0'
         self.serverPort = 20000
@@ -142,10 +144,8 @@ class XrdTestMaster(Runnable):
         
         # setup logging level
         if self.config.has_option('daemon', 'log_level'):
-            level = self.config.get('daemon', 'log_level')
-        else:
-            level = self.defaultLogLevel
-        logging.getLogger().setLevel(level)
+            self.logLevel = getattr(logging, self.config.get('daemon', 'log_level'))
+        logging.getLogger().setLevel(self.logLevel)
         
         # redirect output on daemon start
         if backgroundMode:
@@ -1306,13 +1306,12 @@ class XrdTestMaster(Runnable):
             LOGGER.error(str(e))
             sys.exit(1)
 
-        # Silence cherrypy
+        # Silence cherrypy and other unwanted logs
         loggers = logging.Logger.manager.loggerDict.keys()
         for name in loggers:
-            if name.startswith('cherrypy'):
-                logging.getLogger(name).setLevel(logging.NOTSET)
-            else:
-                logging.getLogger(name).setLevel(logging.INFO)
+            logging.getLogger(name).setLevel(self.logLevel)
+            if re.match('(cherry|pyinotify|apscheduler)', name):
+                logging.getLogger(name).setLevel(logging.ERROR)
 
     def watchDirectories(self):
         '''

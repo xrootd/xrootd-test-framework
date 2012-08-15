@@ -30,10 +30,12 @@ start() {
 	export PYTHONPATH=$PYTHON_LIBPATH/XrdTest
 	$PYTHON $PROG $OPTIONS start
 	RETVAL=$?
+	[ $RETVAL -eq 0 ] && echo "[ OK ]"
+    [ $RETVAL -ne 0 ] && echo "[FAILED]"
 	return $RETVAL
 }
 stop() {
-        echo -n $"Stopping $DESC daemon: "
+        echo -n $"Stopping $DESC daemon"
 
 	cd $APP_PATH
 	

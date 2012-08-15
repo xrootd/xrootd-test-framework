@@ -89,19 +89,6 @@ class Daemon:
             raise DaemonException("No pidfile or logfile provided, unable" + 
                                   + " to init Daemon.")
 
-    def redirectOutput(self):
-        '''
-        Redirect the stderr and stdout to a file
-        '''
-        outLog = file(self.logFile, 'a+')
-        sys.stdout.flush()
-        sys.stderr.flush()
-        os.close(sys.stdout.fileno())
-        os.close(sys.stderr.fileno())
-
-        os.dup2(outLog.fileno(), sys.stdout.fileno())
-        os.dup2(outLog.fileno(), sys.stderr.fileno())
-
     def check(self, pid=None):
         '''
         Checks if process with given pid is currently running. If no pid is
@@ -174,7 +161,7 @@ class Daemon:
         # Check if the process is already running
         pid = self.check()
         if pid:
-            raise RuntimeError('The process is running, pid: ' + str(pid))
+            raise RuntimeError('The process is already running, pid: ' + str(pid))
             return
 
         # Check if we can access the files
@@ -212,19 +199,7 @@ class Daemon:
         except OSError, e:
             raise RuntimeError('Fork for runnable with pidfile ' + 
                                self.pidFile + ' failed: ' + str(e))
-
-        # Redirect the standard input and output of the daemon
-        try:
-            devNull = file(os.devnull, 'r')
-            os.close(sys.stdin.fileno())
-            os.dup2(devNull.fileno(), sys.stdin.fileno())
-            os.chdir('/')
-            self.redirectOutput()
-        except IOError, e:
-            raise DaemonException('Cannot redirect output to the log file: ' + 
-                                  str(e))
-
-        LOGGER.setLevel(level=logging.INFO)
+        
         LOGGER.info('Running process with pidfile: ' + self.pidFile + 
                     ' [' + str(os.getpid()) + ']')
         sys.stdout.flush()

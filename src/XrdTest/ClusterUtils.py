@@ -355,7 +355,9 @@ class Cluster(Utils.Stateful):
 
         self.defaultHost = Host()
         
-        self.__network = None
+        self.__network = Network()
+        
+        self.state = ''
 
     def addHost(self, host):
         from uuid import uuid1
@@ -457,13 +459,15 @@ class Cluster(Utils.Stateful):
         '''
         if self.hosts:
             for h in self.hosts:
-                c1 = (h.bootImage and not os.path.exists(h.bootImage))
-                c2 = (self.defaultHost.bootImage and \
-                      not os.path.exists(self.defaultHost.bootImage))
-                if c1 or c2:
-                    return (False, ("One of disk images %s, %s" + \
-                                    "has to exist") % \
-                                    (h.bootImage, self.defaultHost.bootImage))
+                if h.bootImage and not os.path.exists(h.bootImage):
+                    return (False, ("Custom boot image given at %s, " + \
+                                    "but does not exist") % (h.bootImage))
+                
+                if self.defaultHost.bootImage and \
+                      not os.path.exists(self.defaultHost.bootImage):
+                    return (False, ("Default boot image %s " + \
+                                    "does not exist") % \
+                                    (self.defaultHost.bootImage))
 
         return (True, "")
 
@@ -539,6 +543,9 @@ def loadClustersDefs(path):
                     if clu:
                         clusters.append(clu)
                 except ClusterManagerException, e:
-                    raise e
+                    clu = Cluster()
+                    clu.name = f
+                    clu.state = State((-1, e))
+                    clusters.append(clu)
 
     return clusters

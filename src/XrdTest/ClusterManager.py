@@ -251,8 +251,8 @@ class ClusterManager:
                 self.nets[netObj.uname] = conn.networkLookupByName(netObj.uname)
             except libvirtError, e:
                 LOGGER.error(e)
-                msg = ("Could not define net %s neither obtain net definition. " + \
-                      " After network already exists.") % netObj.uname
+                msg = ("Could not define net %s neither obtain net definition: " + \
+                      " %s") % (netObj.uname, e)
                 raise ClusterManagerException(msg, ERR_CREATE_NETWORK)
 
         return self.nets[netObj.uname]

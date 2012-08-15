@@ -47,7 +47,7 @@ try:
     from XrdTest.TCPClient import TCPReceiveThread
     from XrdTest.SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
     from XrdTest.TestUtils import TestSuite
-    from XrdTest.Utils import State 
+    from XrdTest.Utils import State, redirectOutput
     from optparse import OptionParser
     from string import join
     from copy import copy
@@ -78,17 +78,23 @@ class XrdTestSlave(Runnable):
     '''
     Test Slave main executable class.
     '''
-    def __init__(self, configFile):
+    def __init__(self, configFile, backgroundMode):
         ''' TODO: '''
         #Default daemon configuration
         self.defaultConfFile = '/etc/XrdTest/XrdTestSlave.conf'
         self.defaultPidFile = '/var/run/XrdTestSlave.pid'
         self.defaultLogFile = '/var/log/XrdTest/XrdTestSlave.log'
 
-        if configFile and os.path.exists(configFile):
-            self.config = self.readConfig(configFile)
-        else:
-            self.config = self.readConfig(self.defaultConfFile)
+        if not configFile:
+            configFile = self.defaultConfFile
+        self.config = self.readConfig(configFile)
+            
+        # redirect output on daemon start
+        if backgroundMode:
+            if self.config.has_option('daemon', 'log_file_path'):
+                redirectOutput(self.config.get('daemon', 'log_file_path'))
+        
+        LOGGER.info("Using config file: %s" % configFile)
             
         self.sockStream = None
         #Blocking queue of commands received from XrdTestMaster
@@ -166,7 +172,7 @@ class XrdTestSlave(Runnable):
             self.sockStream.connect((socket.gethostbyname(masterName), masterPort))
         except socket.error, e:
             if e[0] == 111:
-                LOGGER.info("Connection from master refused.")
+                LOGGER.error("Connection from master refused.")
             else:
                 LOGGER.info("Connection with master could not be established.")
                 LOGGER.exception(e)
@@ -331,9 +337,7 @@ class XrdTestSlave(Runnable):
             '''
             Reads configuration from given file or from default if None given.
             @param confFile: file with configuration
-            '''
-            LOGGER.info("Reading config file % s", str(confFile))
-        
+            '''  
             config = ConfigParser.ConfigParser()
             if os.path.exists(confFile):
                 try:
@@ -343,7 +347,7 @@ class XrdTestSlave(Runnable):
                 except IOError, e:
                     LOGGER.exception(e)
             else:
-                raise XrdTestSlaveException("Config file could not be read")
+                raise XrdTestSlaveException("Config file %s could not be read" % confFile)
             return config
     
 def main():
@@ -358,18 +362,13 @@ def main():
                       help="run runnable as a daemon")
 
     (options, args) = parse.parse_args()
-    
-    # suppress output on daemon start
-    if options.backgroundMode:
-        LOGGER.setLevel(level=logging.ERROR)
 
     configFile = None
     if options.configFile:
         configFile = options.configFile    
-        LOGGER.info("Using config file: %s" % configFile)
     
     # Initialize the slave
-    testSlave = XrdTestSlave(configFile)
+    testSlave = XrdTestSlave(configFile, options.backgroundMode)
 
     # run the daemon
     if options.backgroundMode:
@@ -397,7 +396,6 @@ def main():
 
     # run test master in standard mode. Used for debugging
     if not options.backgroundMode:
-        LOGGER.setLevel(level=logging.DEBUG)
         testSlave.run()
 
 

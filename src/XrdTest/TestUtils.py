@@ -46,7 +46,7 @@ try:
     import urllib2
     import datetime
     
-    from Utils import Stateful
+    from Utils import State, Stateful
     from string import maketrans 
     from copy import deepcopy
 except ImportError, e:
@@ -74,10 +74,12 @@ class TestSuiteException(Exception):
         '''
         return repr(self.desc)
 
-class TestSuite:
+class TestSuite(Stateful):
     '''
     Represents a single test suite object.
     '''
+    S_DEF_OK = (1, "Test suite definition complete")
+    
     S_IDLE = (10, "idle")
 
     S_WAIT_4_INIT = (20, "wait for suite initialization")
@@ -103,6 +105,7 @@ class TestSuite:
     S_INIT_ERROR = (-22, "initialization error")
     
     def __init__(self):
+        Stateful.__init__(self)
         # Name of test suite: must be the same as the name of test suite definition 
         # file
         self.name = ""      
@@ -140,9 +143,8 @@ class TestSuite:
         # Filled automatically by load test suite defs. Holds Python objects 
         # representing test cases
         self.testCases = []    
-        # If the test suite definition failed for any reason, this field will be filled
-        # with the exception details for debugging.
-        self.error = ''
+
+        self.state = ''
 
     def validateStatic(self):
         '''
@@ -190,7 +192,7 @@ class TestSuite:
                 self.defEnabled = False
                 raise TestSuiteException(\
                 ("Cluster %s in suite %s definition " + \
-                "doesn't exist in clusters' definitions.") % (cl, self.name))
+                "does not exist or is defined incorrectly") % (cl, self.name))
 
         # check if all required machines are connected and idle
         if not len(self.machines):
@@ -466,9 +468,14 @@ def loadTestSuiteDefs(path):
             try:
                 ts = loadTestSuiteDef(fp)
                 if ts:
+                    ts.state = State(TestSuite.S_DEF_OK)
                     testSuites.append(ts)
             except TestSuiteException, e:
-                continue
+                ts = TestSuite()
+                ts.name = f
+                ts.state = State((-1, e))
+                testSuites.append(ts)
+                LOGGER.error(e)
 
     return testSuites
 

@@ -225,3 +225,15 @@ a.trigger.open {
 	text-align: left;
 	background-color: #e0e0e0;
 }
+
+.error {
+    color: #dd0000
+}
+
+.success {
+    color: #00bb00;
+}
+
+.info {
+    color: #C47003;
+}

@@ -27,6 +27,8 @@
 import logging
 import datetime
 import subprocess
+import os
+import sys
 
 from copy import copy
 from threading import Lock, Condition
@@ -160,6 +162,28 @@ class UserInfoHandler(logging.Handler):
             self.testMaster = xrdTestMaster
     def emit(self, record):
         self.testMaster.userMsgs.append(record)
+        
+def redirectOutput(logFile):
+    '''
+    Redirect the stderr and stdout to a file
+    '''
+    try:
+        devNull = file(os.devnull, 'r')
+        os.close(sys.stdin.fileno())
+        os.dup2(devNull.fileno(), sys.stdin.fileno())
+        os.chdir('/')
+        
+        outLog = file(logFile, 'a+')
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os.close(sys.stdout.fileno())
+        os.close(sys.stderr.fileno())
+
+        os.dup2(outLog.fileno(), sys.stdout.fileno())
+        os.dup2(outLog.fileno(), sys.stderr.fileno())
+    except IOError, e:
+        raise Exception('Cannot redirect output to the log file: ' + 
+                              str(e))
 
 LOGGER = Logger(__name__).setup()
     

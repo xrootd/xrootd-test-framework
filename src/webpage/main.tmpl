@@ -41,14 +41,16 @@
 							<h3>
 								<a href="#">
 									${cluster.name}
-									<span class="cl-state-head">${cluster.state}</span>
+									
+									#set $state = "normal"
+									#if $cluster.state.id < 0
+									   #set $state = 'error'
+								    #end if
+								    <br />
+									<span class="cl-state-head ${state}">${cluster.state.name}</span>
 								</a>
 							</h3>
 							<div class="inner">
-								<p class="sect_title">
-									LAST STATE
-									<span class="cl-state-inner">${cluster.state}</span>
-								</p>
 								<p class="sect_title">NETWORK</p>
 								<table class="desctab" cellspacing="0" cellpadding="0">
 									<tr>
@@ -139,27 +141,43 @@
 						#if $testSuites and len($testSuites) > 0
 							#for $ts in	$testSuites.iteritems()
 							
-						<button id="${ts[1].name}" type="button" style="float:right;margin:4px;">Run Me!</button>
+							    #set $state = "normal"
+                                #if $ts[1].state.id < 0
+                                    #set $state = 'error'
+                                    
+                                #else
+                                
+                                <button id="${ts[1].name}" type="button" style="float:right;margin:4px;">Run Me!</button>
+                        
+		                        <div id="${ts[1].name}_pass" style='display: none;' title='Enter Password'>
+		                        <form action="runTestSuite" method="post">
+		                              <label for="password">Enter password to run test suite ${ts[1].name}:</label>
+		                              <input id="${ts[1].name}_input" name="password" type="password" maxlength="40"/>
+		                              <input id="${ts[1].name}_submit" type="submit" />
+		                              <input type="hidden" name="testsuite" value="${ts[1].name}" />
+		                          </form>
+		                        </div>
+		                        
+		                        <script>
+		                          \$(${ts[1].name}).click(function() {
+		                              \$(${ts[1].name}_input).val('');
+		                              \$(${ts[1].name}_pass).dialog({
+		                                  modal: true
+		                              });
+		                          });
+		                        </script>
+                                
+                                #end if
 						
-						<div id="${ts[1].name}_pass" style='display: none;' title='Enter Password'>
-						<form action="runTestSuite" method="post">
-							  <label for="password">Enter password to run test suite ${ts[1].name}:</label>
-							  <input id="${ts[1].name}_input" name="password" type="password" maxlength="40"/>
-							  <input id="${ts[1].name}_submit" type="submit" />
-							  <input type="hidden" name="testsuite" value="${ts[1].name}" />
-						  </form>
-						</div>
+						<h3>
+						      <a href='#'>
+							  ${ts[1].name}
+							  <br />
+                              <span class="cl-state-head ${state}">${ts[1].state.name}</span>
+                            </a>
+						</h3>
 						
-						<script>
-						  \$(${ts[1].name}).click(function() {
-						      \$(${ts[1].name}_input).val('');
-						      \$(${ts[1].name}_pass).dialog({
-                                  modal: true
-                              });
-						  });
-						</script>
-						
-						<h3>${ts[1].name}</h3>
+                        
 						<div class="inner">
 							<p class="sect_title">SCHEDULER EXPRESSION</p>
 							<table class="desctab" cellspacing="0" cellpadding="0">

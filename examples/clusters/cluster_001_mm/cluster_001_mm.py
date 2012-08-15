@@ -51,7 +51,6 @@ def getCluster():
     ds4.disks =  [Disk('disk1', '59055800320', 'vdb')]
     client1.disks =  [Disk('disk1', '59055800320', 'vdb')]
 
-
     # Hosts to be included in the cluster
     hosts = [metamanager1, manager1, manager2, ds1, ds2, ds3, ds4, client1]
 

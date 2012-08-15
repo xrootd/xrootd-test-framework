@@ -39,13 +39,14 @@ try:
     import socket
     import ssl
     import threading
+    import time
 
     from XrdTest.Daemon import Daemon, DaemonException, Runnable
     from XrdTest.TCPClient import TCPReceiveThread
     from XrdTest.SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
     from XrdTest.ClusterManager import ClusterManager
     from XrdTest.ClusterUtils import ClusterManagerException, Cluster
-    from XrdTest.Utils import State
+    from XrdTest.Utils import State, redirectOutput
     from optparse import OptionParser
 except ImportError, e:
     LOGGER.error(str(e))
@@ -73,7 +74,7 @@ class XrdTestHypervisor(Runnable):
     '''
     Test Hypervisor main executable class.
     '''
-    def __init__(self, configFile):
+    def __init__(self, configFile, backgroundMode):
         '''
         Initialize basic variables. Start and configure ClusterManager.
         @param configFile:
@@ -83,10 +84,16 @@ class XrdTestHypervisor(Runnable):
         self.defaultPidFile = '/var/run/XrdTestHypervisor.pid'
         self.defaultLogFile = '/var/log/XrdTest/XrdTestHypervisor.log'
         
-        if configFile:
-            self.config = self.readConfig(configFile)
-        else:
-            self.config = self.readConfig(self.defaultConfFile)
+        if not configFile:
+            configFile = self.defaultConfFile
+        self.config = self.readConfig(configFile)
+            
+        # redirect output on daemon start
+        if backgroundMode:
+            if self.config.has_option('daemon', 'log_file_path'):
+                redirectOutput(self.config.get('daemon', 'log_file_path'))
+        
+        LOGGER.info("Using config file: %s" % configFile)
         
         # Connection with the master 
         self.sockStream = None
@@ -105,6 +112,20 @@ class XrdTestHypervisor(Runnable):
         ''' TODO: '''
         self.clusterManager.disconnect()
 
+    def tryConnect(self):
+        ''' 
+        Attempt to connect to the master. Retry every 10 seconds, up to a 
+        maximum of 20 times.
+        '''
+        for i in xrange(20):
+            LOGGER.debug('Connection attempt: %s' % str(i))
+            sock = self.connectMaster(self.config.get('test_master', 'ip'),
+                           self.config.getint('test_master', 'port'))
+            if sock:
+                return sock
+            time.sleep(10)
+        return None
+        
     def connectMaster(self, masterName, masterPort):
         '''
         Try to establish the connection with the test master.
@@ -112,7 +133,6 @@ class XrdTestHypervisor(Runnable):
         @param masterName:
         @param masterPort:
         '''
-        global currentDir
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.sockStream = ssl.wrap_socket(sock, server_side=False,
@@ -125,8 +145,8 @@ class XrdTestHypervisor(Runnable):
             self.sockStream.connect((socket.gethostbyname(masterName), masterPort))
         except socket.error, e:
             if e[0] == 111:
-                LOGGER.info("%s Connection from master refused: Probably " + \
-                            " wrong address or master not running." % e)
+                LOGGER.error("%s: Connection from master refused: Probably \
+                             wrong address or master not running." % e)
             else:
                 LOGGER.info("Connection with master could not be established.")
                 LOGGER.error("Socket error occured: %s" % e)
@@ -245,6 +265,8 @@ class XrdTestHypervisor(Runnable):
                 LOGGER.debug("Sent msg: " + str(resp))
             except SocketDisconnectedError, e:
                 LOGGER.info("Connection to XrdTestMaster closed.")
+                #  Try to reconnect to master
+                self.tryConnect()
                 if self.clusterManager:
                         for cluster in self.clusterManager.clusters:
                             self.clusterManager.removeCluster(cluster)
@@ -254,11 +276,9 @@ class XrdTestHypervisor(Runnable):
     def run(self):
         '''
         Main thread. Initialize TCP threads and run recvLoop().
-        '''
-        LOGGER.setLevel(level=logging.INFO)
-                
-        sock = self.connectMaster(self.config.get('test_master', 'ip'),
-                           self.config.getint('test_master', 'port'))
+        '''  
+        sock = self.tryConnect()
+    
         if not sock:
             return
 
@@ -273,8 +293,6 @@ class XrdTestHypervisor(Runnable):
             Reads configuration from given file or from default if None given.
             @param confFile: file with configuration
             '''
-            LOGGER.info("Reading config file % s", str(confFile))
-        
             config = ConfigParser.ConfigParser()
             if os.path.exists(confFile):
                 try:
@@ -284,7 +302,7 @@ class XrdTestHypervisor(Runnable):
                 except IOError, e:
                     LOGGER.exception(e)
             else:
-                raise XrdTestHypervisorException("Config file could not be read")
+                raise XrdTestHypervisorException("Config file %s could not be read" % confFile)
             return config
 
 def main():
@@ -299,18 +317,13 @@ def main():
                       help="run runnable as a daemon")
 
     (options, args) = parse.parse_args()
-    
-    # suppress output on daemon start
-    if options.backgroundMode:
-        LOGGER.setLevel(level=logging.ERROR)
         
     configFile = None
     if options.configFile:
         configFile = options.configFile    
-        LOGGER.info("Using config file: %s" % configFile)
     
     # Initialize the hypervisor
-    testHypervisor = XrdTestHypervisor(configFile)
+    testHypervisor = XrdTestHypervisor(configFile, options.backgroundMode)
 
     # run the daemon
     if options.backgroundMode:
@@ -338,7 +351,6 @@ def main():
 
     # run test master in standard mode. Used for debugging
     if not options.backgroundMode:
-        LOGGER.setLevel(level=logging.DEBUG)
         testHypervisor.run()
 
 if __name__ == '__main__':

@@ -75,7 +75,7 @@ class DirectoryWatch(object):
         '''
         Monitor a local directory for changes.
         '''
-        self._watch
+        self._watch()
         
     def watch_remote_git(self):
         '''

@@ -31,7 +31,6 @@
 #
 #-------------------------------------------------------------------------------
 from XrdTest.Utils import Logger
-from logging import getLogger
 LOGGER = Logger(__name__).setup()
 
 try:
@@ -55,7 +54,7 @@ try:
         loadTestSuiteDef, loadTestSuiteDefs, extractSuiteName
     from XrdTest.Job import Job
     from XrdTest.Daemon import Runnable, Daemon, DaemonException
-    from XrdTest.Utils import State, UserInfoHandler
+    from XrdTest.Utils import State, UserInfoHandler, redirectOutput
     from XrdTest.GitUtils import sync_remote_git
     from XrdTest.WebInterface import WebInterface
     from XrdTest.DirectoryWatch import DirectoryWatch
@@ -90,7 +89,7 @@ class XrdTestMaster(Runnable):
     Main class of module, only one instance can exist in the system,
     it's runnable as a daemon.
     '''
-    def __init__(self, configFile):
+    def __init__(self, configFile, backgroundMode):
         # Global configuration for master
         self.config = None 
         # Default daemon configuration
@@ -131,15 +130,21 @@ class XrdTestMaster(Runnable):
         # message logging system
         self.userMsgs = []
         # tasks scheduler only instance
-        self.sched = Scheduler()
+        self.sched = None
         # Constants
         self.C_SLAVE = 'slave'
         self.C_HYPERV = 'hypervisor'
         
-        if configFile:
-            self.config = self.readConfig(configFile)
-        else:
-            self.config = self.readConfig(self.defaultConfFile)
+        if not configFile:
+            configFile = self.defaultConfFile
+        self.config = self.readConfig(configFile)
+            
+        # redirect output on daemon start
+        if backgroundMode:
+            if self.config.has_option('daemon', 'log_file_path'):
+                redirectOutput(self.config.get('daemon', 'log_file_path'))
+        
+        LOGGER.info("Using config file: %s" % configFile)
         
         if self.config.has_option('general', 'suite_sessions_file'):
                 self.suiteSessions = shelve.open(\
@@ -223,10 +228,17 @@ class XrdTestMaster(Runnable):
                 
                 testSuites = loadTestSuiteDefs(suiteDefPath)
                 for ts in testSuites:
-                    ts.checkIfDefComplete(self.clusters)
+                    try:
+                        ts.checkIfDefComplete(self.clusters)
+                    except TestSuiteException, e:
+                        ts.state = State((-1, e))
                     self.testSuites[ts.name] = ts
             except TestSuiteException, e:
                 LOGGER.error("Test Suite Exception: %s" % e)
+                suite = TestSuite()
+                suite.name = ts.name
+                suite.state = State((-1, e))
+                self.testSuites[suite.name] = suite
     
             # add jobs to scheduler if it's enabled
             if self.config.getint('scheduler', 'enabled') == 1:
@@ -274,31 +286,31 @@ class XrdTestMaster(Runnable):
                     del sys.modules[modName]
                     # remove testSuite from test suits' definitions
                     del self.testSuites[modName]
-                    # remove module name variable
-                    del modName
             except TestSuiteException, e:
                 LOGGER.error("Error while undefining: %s" % str(e))
             except Exception, e:
                 LOGGER.error(("Error while defining test suite %s") % e)
 
-        #if file added or modified do tasks necessery while adding jobs 
+        #if file added or modified do tasks necessary while adding jobs 
         if dirEvent.maskname in addMasks or \
             dirEvent.maskname == "IN_MODIFY":
             try:
                 # load single test suite definition
+                LOGGER.info("Defining test suite: %s" % modName)
                 suite = loadTestSuiteDef(p)
-                try:
-                    if suite:
-                        suite.checkIfDefComplete(self.clusters)
-                except TestSuiteException, e:
-                    LOGGER.error("Definition warning: %s." % e)
                 if suite:
+                    suite.checkIfDefComplete(self.clusters)
+                    suite.state = State(TestSuite.S_DEF_OK)
                     # add job connected to added test suite
                     suite.jobFun = self.executeJob(suite.name)
                     self.sched.add_cron_job(suite.jobFun, **(suite.schedule))
                     self.testSuites[suite.name] = suite
             except TestSuiteException, e:
                 LOGGER.error("Error while defining: %s" % e)
+                suite = TestSuite()
+                suite.name = modName
+                suite.state = State((-1, e))
+                self.testSuites[suite.name] = suite
             except Exception, e:
                 # in case of any exception thron e.g. from scheduler
                 LOGGER.error(("Error while defining " + \
@@ -314,9 +326,9 @@ class XrdTestMaster(Runnable):
             for ts in self.testSuites.values():
                 ts.checkIfDefComplete(self.clusters)
         except TestSuiteException, e:
-            LOGGER.error("Error in test suite %s: %s" % (ts.name, e))
+            raise TestSuiteException("Error in test suite %s: %s" % (ts.name, e))
         except Exception, e:
-            LOGGER.error(("Error in test suite %s: %s") % (ts.name, e))
+            raise TestSuiteException("Error in test suite %s: %s" % (ts.name, e))
 
     def handleClusterDefinitionChanged(self, dirEvent):
         '''
@@ -343,22 +355,27 @@ class XrdTestMaster(Runnable):
                     del sys.modules[modName]
                     # remove cluster definition
                     del self.clusters[modName]
-                    # remove the name of cluster localy
-                    del modName
                 # check if after deletion all test suits definitions are valid
                 self.checkIfSuitsDefsComplete()
+            except TestSuiteException, e:
+                LOGGER.error("Error while undefining: %s" % e)
             except ClusterManagerException, e:
                 LOGGER.error("Error while undefining: %s" % e)
         # cluster definition added or modified (same things in both cases)
         if dirEvent.maskname in addMasks or dirEvent.maskname == "IN_MODIFY":
             try:
+                LOGGER.info("Defining cluster: %s" % modName)
                 clu = loadClusterDef(p, self.clusters.values(), True)
-                LOGGER.info("Defining cluster: %s" % clu.name)
                 self.clusters[clu.name] = clu
                 # check if after adding some test suits definitions become valid
                 self.checkIfSuitsDefsComplete()
-            except ClusterManagerException, e:
+            except (TestSuiteException, ClusterManagerException), e:
                 LOGGER.error("Error while defining: %s" % e)
+                clu = Cluster()
+                clu.name = modName
+                clu.state = State((-1, e))
+                self.clusters[clu.name] = clu
+
 
     def slaveState(self, slave_name):
         '''
@@ -1285,7 +1302,10 @@ class XrdTestMaster(Runnable):
         loggers = logging.Logger.manager.loggerDict.keys()
         for name in loggers:
             if name.startswith('cherrypy'):
-                logging.getLogger(name).setLevel(0)
+                logging.getLogger(name).setLevel(logging.NOTSET)
+                print name, logging.getLogger(name).getEffectiveLevel()
+            else:
+                logging.getLogger(name).setLevel(logging.INFO)
     
     def watchDirectories(self):
         '''
@@ -1308,12 +1328,13 @@ class XrdTestMaster(Runnable):
         Main method of a programme. Initializes all serving threads and starts
         main loop receiving MasterEvents.
         '''
-        LOGGER.setLevel(level=logging.INFO)
         # Start TCP server for incoming slave and hypervisors connections
         self.startTCPServer()
 
         # Start scheduler if it's enabled in config file
         if self.config.getint('scheduler', 'enabled') == 1:
+            LOGGER.info('Starting scheduler')
+            self.sched = Scheduler()
             self.sched.start()
         else:
             LOGGER.info("SCHEDULER is disabled.")
@@ -1341,9 +1362,7 @@ class XrdTestMaster(Runnable):
             '''
             Reads configuration from given file or from default if None given.
             @param confFile: file with configuration
-            '''
-            LOGGER.info("Reading config file % s", str(confFile))
-        
+            '''        
             config = ConfigParser.ConfigParser()
             if os.path.exists(confFile):
                 try:
@@ -1353,7 +1372,7 @@ class XrdTestMaster(Runnable):
                 except IOError, e:
                     LOGGER.exception(e)
             else:
-                raise XrdTestMasterException("Config file could not be read")
+                raise XrdTestMasterException("Config file %s could not be read" % confFile)
             return config
     
 def main():
@@ -1368,19 +1387,13 @@ def main():
                       help="run runnable as a daemon")
 
     (options, args) = parse.parse_args()
-    
-    # suppress output on daemon start
-    if options.backgroundMode:
-        LOGGER.setLevel(level=logging.ERROR)
-        
+
+    configFile = None
     if options.configFile:
-        LOGGER.info("Using config file: %s" % options.configFile)
         configFile = options.configFile
-    else:
-        configFile = None
 
     # Initialize main class of the system
-    xrdTestMaster = XrdTestMaster(configFile)
+    xrdTestMaster = XrdTestMaster(configFile, options.backgroundMode)
     
     uih = UserInfoHandler(xrdTestMaster)
     LOGGER.addHandler(uih)
@@ -1408,12 +1421,11 @@ def main():
                             + 'reload the deamon')
                 sys.exit(3)
         except (DaemonException, RuntimeError, ValueError, IOError), e:
-            LOGGER.exception(str(e))
+            LOGGER.error(str(e))
             sys.exit(1)
 
     # run test master in standard mode. Used for debugging
     if not options.backgroundMode:
-        LOGGER.setLevel(level=logging.DEBUG)
         xrdTestMaster.run()
 
 

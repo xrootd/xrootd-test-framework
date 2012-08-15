@@ -22,26 +22,65 @@ OPTIONS=" -b "
 
 PYTHON_LIBPATH=`python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"`
 
+if [ -z "$COLUMNS" ]
+then
+  test -x /usr/bin/tty && CONSOLE=`/usr/bin/tty`
+  test -z "$CONSOLE" && CONSOLE=/dev/console
+  SIZE=$(stty size < $CONSOLE)
+  COLUMNS=${SIZE#*\ }
+fi
+
+COL=$[$COLUMNS - 10]
+SET_COL="echo -en \\033[${COL}G"
+NORMAL="echo -en \\033[0;39m"
+SUCCESS="echo -en \\033[0;32m"
+FAILURE="echo -en \\033[0;31m"
+
 start() {
         echo -n $"Starting $DESC daemon: "
-        
-	cd $APP_PATH
-	
-	export PYTHONPATH=$PYTHON_LIBPATH/XrdTest
-	$PYTHON $PROG $OPTIONS start
-	RETVAL=$?
-	[ $RETVAL -eq 0 ] && echo "[ OK ]"
-    [ $RETVAL -ne 0 ] && echo "[FAILED]"
-	return $RETVAL
+
+        cd $APP_PATH
+
+        export PYTHONPATH=$PYTHON_LIBPATH/XrdTest
+        $PYTHON $PROG $OPTIONS start
+        RETVAL=$?
+        [ $RETVAL -eq 0 ] && print_status success
+        [ $RETVAL -ne 0 ] && print_status failure
+        return $RETVAL
 }
+
 stop() {
         echo -n $"Stopping $DESC daemon"
 
-	cd $APP_PATH
-	
-	export PYTHONPATH=$PYTHON_LIBPATH/XrdTest
-	$PYTHON $PROG $OPTIONS stop
-	echo
+        cd $APP_PATH
+
+        export PYTHONPATH=$PYTHON_LIBPATH/XrdTest
+        $PYTHON $PROG $OPTIONS stop
+        RETVAL=$?
+        [ $RETVAL -eq 0 ] && print_status success
+        [ $RETVAL -ne 0 ] && print_status failure
+        return $RETVAL
+}
+
+print_status() {
+  case "$1" in
+    success)
+      $SET_COL
+      echo -n "[  "
+      $SUCCESS
+      echo -n "OK"
+      $NORMAL
+      echo "  ]"
+      ;;
+    failure)
+      $SET_COL
+      echo -n "["
+      $FAILURE
+      echo -n "FAILED"
+      $NORMAL
+      echo "]"
+      ;;
+  esac
 }
 
 case "$1" in

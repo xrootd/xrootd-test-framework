@@ -1303,7 +1303,6 @@ class XrdTestMaster(Runnable):
         for name in loggers:
             if name.startswith('cherrypy'):
                 logging.getLogger(name).setLevel(logging.NOTSET)
-                print name, logging.getLogger(name).getEffectiveLevel()
             else:
                 logging.getLogger(name).setLevel(logging.INFO)
     

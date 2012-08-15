@@ -153,8 +153,7 @@ class WebInterface:
                     'slaves': self.testMaster.slaves,
                     'hostname': socket.gethostname(),
                     'testSuites': self.testMaster.testSuites,
-                    'testMaster': self.testMaster,
-                    'HTTPport' : self.config.getint('webserver', 'port')}
+                    'testMaster': self.testMaster}
         return self.disp("suite_sessions.tmpl", tplVars)
 
     def indexRedirect(self):

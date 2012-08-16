@@ -147,7 +147,7 @@ class Logger(object):
         self.filename = filename
     
     def setup(self):
-        logging.basicConfig(format='%(asctime)s %(levelname)s ' + \
+        logging.basicConfig(format='%(asctime)s %(levelname)s \t' + \
                     '[%(filename)s %(lineno)d] ' + \
                     '%(message)s', datefmt="[%H:%M:%S]")
         return logging.getLogger(self.filename)

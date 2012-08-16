@@ -83,15 +83,15 @@ class XrdTestHypervisor(Runnable):
         self.defaultConfFile = '/etc/XrdTest/XrdTestHypervisor.conf'
         self.defaultPidFile = '/var/run/XrdTestHypervisor.pid'
         self.defaultLogFile = '/var/log/XrdTest/XrdTestHypervisor.log'
-        self.logLevel = logging.INFO
+        self.logLevel = 'INFO'
         
         if not configFile:
             configFile = self.defaultConfFile
         self.config = self.readConfig(configFile)
         
         if self.config.has_option('daemon', 'log_level'):
-            self.logLevel = self.config.get('daemon', 'log_level')
-        logging.getLogger().setLevel(getattr(logging, self.logLevel))
+            self.logLevel = getattr(logging, self.config.get('daemon', 'log_level'))
+        logging.getLogger().setLevel(self.logLevel)
         
         # redirect output on daemon start
         if backgroundMode:

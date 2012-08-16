@@ -83,7 +83,7 @@ Summary: Xrd Test Master is component of XrdTestFramework.
 Group:   Development/Tools
 Requires: python >= 2.4
 Requires: xrdtest-lib
-Requires: python-apscheduler, python-uuid, python-cherrypy, python-cheetah, python-inotify, openssl
+Requires: python-apscheduler, python-uuid, python-cherrypy, python-cheetah, python-inotify, openssl, pyOpenSSL
 
 %description master
 Xrd Test Master is component of XrdTestFramework.
@@ -153,8 +153,17 @@ then
   openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/masterkey.pem -out %{_sysconfdir}/XrdTest/certs/mastercert.pem -days 1095
 fi
 
+%preun master
+/sbin/service xrdtestmasterd stop
+/sbin/chkconfig --del xrdtestmasterd
+
 %postun master
 /sbin/ldconfig
+if [ "$1" -ge "1" ] ; then
+    /sbin/service xrdtestmasterd condrestart
+fi
+
+#-------------------------------------------------------------------------------
 
 %post slave
 /sbin/ldconfig
@@ -165,8 +174,17 @@ then
   openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/slavekey.pem -out %{_sysconfdir}/XrdTest/certs/slavecert.pem -days 1095
 fi
 
+%preun slave
+service xrdtestslaved stop
+/sbin/chkconfig --del xrdtestslaved
+
 %postun slave
 /sbin/ldconfig
+if [ "$1" -ge "1" ] ; then
+    /sbin/service xrdtestmasterd condrestart
+fi
+
+#-------------------------------------------------------------------------------
 
 %post hypervisor
 /sbin/ldconfig
@@ -177,8 +195,17 @@ then
   openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/hypervisorkey.pem -out %{_sysconfdir}/XrdTest/certs/hypervisorcert.pem -days 1095
 fi
 
+%preun hypervisor
+service xrdtesthypervisord stop
+/sbin/chkconfig --del xrdtesthypervisord
+
 %postun hypervisor
 /sbin/ldconfig
+if [ "$1" -ge "1" ] ; then
+    /sbin/service xrdtestmasterd condrestart
+fi
+
+#-------------------------------------------------------------------------------
 
 %changelog
 * Thu Jul 5 2012 Justin Salmon <jsalmon@cern.ch>

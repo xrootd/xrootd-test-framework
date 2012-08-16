@@ -97,7 +97,9 @@ class XrdTestMaster(Runnable):
         self.defaultConfFile = '/etc/XrdTest/XrdTestMaster.conf'
         self.defaultPidFile = '/var/run/XrdTestMaster.pid'
         self.defaultLogFile = '/var/log/XrdTest/XrdTestMaster.log'
-        self.logLevel = logging.INFO
+        # Must be a string, as config file param is a string - getattr() 
+        # will get proper int val later
+        self.logLevel = 'INFO'
         
         # Default TCP server configuration
         self.server_ip = '0.0.0.0'
@@ -200,6 +202,7 @@ class XrdTestMaster(Runnable):
 
         for repo in map(lambda x: x.strip(), filter(lambda x: x, self.config.get('general', 'test-repos').split(','))): 
             repo = 'test-repo-' + repo
+            LOGGER.info('Setting up repository %s' % repo)
             
             # Pull remote git repo if necessary
             if self.config.get(repo, 'type') == 'git':
@@ -207,6 +210,7 @@ class XrdTestMaster(Runnable):
                 
             if self.config.has_option(repo, 'local_path'):
                 localPath = self.config.get(repo, 'local_path')
+                LOGGER.info('Using local path %s for test repository %s' % (localPath, repo))
             else:
                 LOGGER.error('No local path defined for repository %s' % repo) 
             
@@ -1034,9 +1038,9 @@ class XrdTestMaster(Runnable):
                     # check if suite init error was already handled
                     if not suiteInError:
                         tss.state = State(TestSuite.S_INIT_ERROR)
-                        print slave.hostname, tss.name
                         LOGGER.error("%s slave initialization error in test suite %s" \
                                      % (slave.hostname, tss.name))
+                        LOGGER.error(msg.result)
                         sSlaves = self.getSuiteSlaves(tss.suite)
                         for sSlave in sSlaves:
                             sSlave.state = State(Slave.S_CONNECTED_IDLE)
@@ -1307,11 +1311,12 @@ class XrdTestMaster(Runnable):
             sys.exit(1)
 
         # Silence cherrypy and other unwanted logs
-        loggers = logging.Logger.manager.loggerDict.keys()
+        loggers = LOGGER.manager.loggerDict.keys()
         for name in loggers:
             logging.getLogger(name).setLevel(self.logLevel)
             if re.match('(cherry|pyinotify|apscheduler)', name):
                 logging.getLogger(name).setLevel(logging.ERROR)
+
 
     def watchDirectories(self):
         '''

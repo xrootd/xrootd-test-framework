@@ -84,17 +84,15 @@ class XrdTestSlave(Runnable):
         self.defaultConfFile = '/etc/XrdTest/XrdTestSlave.conf'
         self.defaultPidFile = '/var/run/XrdTestSlave.pid'
         self.defaultLogFile = '/var/log/XrdTest/XrdTestSlave.log'
-        self.defaultLogLevel = logging.INFO
+        self.logLevel = 'INFO'
 
         if not configFile:
             configFile = self.defaultConfFile
         self.config = self.readConfig(configFile)
         
         if self.config.has_option('daemon', 'log_level'):
-            level = self.config.get('daemon', 'log_level')
-        else:
-            level = self.defaultLogLevel
-        logging.getLogger().setLevel(level)
+            self.logLevel = getattr(logging, self.config.get('daemon', 'log_level'))
+        logging.getLogger().setLevel(self.logLevel)
             
         # redirect output on daemon start
         if backgroundMode:
@@ -117,7 +115,7 @@ class XrdTestSlave(Runnable):
         command = ""
         cmd = cmd.strip()
 
-        LOGGER.info("executeSh: %s" % cmd)
+        LOGGER.debug("executeSh: %s" % cmd)
         #reading a file contents
         if cmd[0:2] == "#!":
             LOGGER.info("Direct shell script to be executed.")

@@ -18,6 +18,7 @@ CLUSTER_NAME=cluster_001_mm
 CONFIG_FILE=xrd_cluster_001_mm.cf
 CONFIG_PATH=/etc/xrootd/${CONFIG_FILE}
 
+sleep 1m
 log "Fetching latest xrootd build ..."
 
 mkdir -p tmp_initsh

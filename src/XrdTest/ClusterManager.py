@@ -80,7 +80,7 @@ class ClusterManager:
         except libvirtError, e:
             LOGGER.error("Can not connect to libvirt (-c qemu:///system): %s" % e)
         else:
-            LOGGER.debug("Connected to libvirt manager.")
+            LOGGER.info("Connected to libvirt manager.")
 
     def disconnect(self):
         '''
@@ -310,6 +310,7 @@ class ClusterManager:
             host = conn.lookupByName(hostObj.uname)
             LOGGER.info("Machine already defined: %s" % hostObj.uname)
         except libvirtError, e:
+            LOGGER.error(e)
             return
 
         if host:
@@ -330,6 +331,7 @@ class ClusterManager:
             net = conn.networkLookupByName(netObj.uname)
             LOGGER.info("Network already defined: %s" % netObj.uname)
         except libvirtError, e:
+            LOGGER.error(e)
             return
 
         if net:
@@ -346,6 +348,14 @@ class ClusterManager:
         same name) - it removes it completely. The same story regards network.
         @param cluster: cluster definition object
         '''
+        # Check libvirt connection
+        try:
+            self.virtConnection = libvirt.open('qemu:///system')
+        except libvirtError, e:
+            LOGGER.error("Can not connect to libvirt (-c qemu:///system): %s" % e)
+        else:
+            LOGGER.info("Connected to libvirt manager.")
+        
         if self.clusters.has_key(cluster.name):
             raise ClusterManagerException(("Cluster %s already exists." + \
                               " Needs to be destroyed first.") % \

@@ -4,7 +4,7 @@
 # Provides:          XrdTestHypervisor.py application instance
 # Required-Start:    $all
 # Required-Stop:     $all
-# Defalt-Start: 2 3 4 5
+# Default-Start: 2 3 4 5
 # Default-Stop: 0 1 6
 # Short-Description: starts instance of XrdTestSlave.py app
 # Description:       starts instance of XrdTestSlave.py app using start-stop-daemon
@@ -14,8 +14,9 @@
 . /etc/rc.d/init.d/functions
 
 RETVAL=0
-DESC="xrdtesthypervisor"
+DAEMON="xrdtest-hypervisor"
 PROG=XrdTestHypervisor.py
+PID=/var/run/XrdTestHypervisor.pid
 APP_PATH=/usr/sbin/
 PYTHON=/usr/bin/python
 OPTIONS=" -b "
@@ -37,29 +38,48 @@ SUCCESS="echo -en \\033[0;32m"
 FAILURE="echo -en \\033[0;31m"
 
 start() {
-        echo -n $"Starting $DESC daemon: "
+  echo -n $"Starting $DAEMON daemon: "
 
-        cd $APP_PATH
+  cd $APP_PATH
 
-        export PYTHONPATH=$PYTHON_LIBPATH/XrdTest
-        $PYTHON $PROG $OPTIONS start
-        RETVAL=$?
-        [ $RETVAL -eq 0 ] && print_status success
-        [ $RETVAL -ne 0 ] && print_status failure
-        return $RETVAL
+  export PYTHONPATH=$PYTHON_LIBPATH/XrdTest
+  $PYTHON $PROG $OPTIONS start
+  RETVAL=$?
+  [ $RETVAL -eq 0 ] && print_status success
+  [ $RETVAL -ne 0 ] && print_status failure
+  return $RETVAL
 }
 
 stop() {
-        echo -n $"Stopping $DESC daemon"
+  echo -n $"Stopping $DAEMON daemon"
 
-        cd $APP_PATH
+  cd $APP_PATH
 
-        export PYTHONPATH=$PYTHON_LIBPATH/XrdTest
-        $PYTHON $PROG $OPTIONS stop
-        RETVAL=$?
-        [ $RETVAL -eq 0 ] && print_status success
-        [ $RETVAL -ne 0 ] && print_status failure
-        return $RETVAL
+  export PYTHONPATH=$PYTHON_LIBPATH/XrdTest
+  $PYTHON $PROG $OPTIONS stop
+  RETVAL=$?
+  [ $RETVAL -eq 0 ] && print_status success
+  [ $RETVAL -ne 0 ] && print_status failure
+  return $RETVAL
+}
+
+condrestart() {
+  status -p $PID $DAEMON > /dev/null
+  if test $? -ne 0; then
+     return 0
+  fi
+
+  stop
+  if test $? -ne 0; then
+     return 1
+  fi
+
+  start
+  if test $? -ne 0; then
+     return 2
+  fi
+
+  return 0
 }
 
 print_status() {
@@ -85,20 +105,23 @@ print_status() {
 
 case "$1" in
   start)
-        start
-        ;;
+    start
+    ;;
   stop)
-        stop
-        ;;
+    stop
+    ;;
   restart)
-        stop
-        start
-        ;;
+    stop
+    start
+    ;;
+  condrestart)
+    condrestart
+    ;;
   *)
-        N=/etc/init.d/$PROG
-        echo "Usage: $N {start|stop|restart}" >&2
-        exit 1
-        ;;
+    N=/etc/init.d/$PROG
+    echo "Usage: $N {start|stop|restart}" >&2
+    exit 1
+    ;;
 esac
 
-exit 0
+exit $?

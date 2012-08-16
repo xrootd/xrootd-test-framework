@@ -55,20 +55,23 @@ def sync_remote_git(repo, config):
         local_repo = config.get(repo, 'local_path')
         local_branch = config.get(repo, 'local_branch')
         remote_branch = config.get(repo, 'remote_branch')
+        LOGGER.info('Syncing %s' % remote_repo)
         
         # Clone the repo if we don't have it yet.
         if not os.path.exists(local_repo):
             git_clone(remote_repo, local_repo, local_repo)
         
-        git_fetch(local_repo)
-        output = git_diff(local_branch, remote_branch, local_repo)
+        output = git_fetch(local_repo)
+        diff = ''
+        if output: 
+            diff = git_diff(local_branch, remote_branch, local_repo)
         
         # If git-diff prints to stdout, then we have changes (or an error).
         # TODO: handle errors with incorrect branch names
-        if output != '':
+        if diff:
             LOGGER.info('Remote branch has changes. Pulling.')
             git_pull(local_repo)
-        return output
+        return diff
 
     except NoOptionError, e:
         LOGGER.error(e)    

@@ -4,15 +4,15 @@
 Name:           xrdtest
 Version:        0.0.1
 Release:        1%{?dist}
-License:	GPL3
+License:        GPL3
 Summary:        Xrootd Testing Framework consists of 4 components (packages): test master, test slave, test hypervisor and a library package.
 Group:          Development/Tools
-Packager:	Justin Salmon <jsalmon@cern.ch>
+Packager:       Justin Salmon <jsalmon@cern.ch>
 URL:            http://xrootd.cern.ch/cgi-bin/cgit.cgi/xrootd-tests/
 Source0:        %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:      noarch
-Requires: 	python >= 2.4
+Requires:       python >= 2.4
 
 %description
 Xrootd Testing Framework consists of 4 components (packages): test master, test slave, test hypervisor and a library package.
@@ -29,17 +29,16 @@ Xrootd Testing Framework consists of 4 components (packages): test master, test 
 
 # libs
 mkdir -p %{libs_path}
-install -pm 755 src/XrdTest/*.py %{libs_path}
+install -pm 644 src/XrdTest/*.py %{libs_path}
 
 # logs
 mkdir -p %{buildroot}%{_localstatedir}/log/XrdTest
-chmod --recursive 755 %{buildroot}%{_localstatedir}/log/XrdTest
 
 # init scripts
 mkdir -p %{buildroot}%{_initrddir}
-install -pm 755 packaging/rpm/xrdtestmasterd %{buildroot}%{_initrddir}
-install -pm 755 packaging/rpm/xrdtesthypervisord %{buildroot}%{_initrddir}
-install -pm 755 packaging/rpm/xrdtestslaved %{buildroot}%{_initrddir}
+install -pm 755 packaging/rpm/xrdtest-master.init %{buildroot}%{_initrddir}/xrdtest-master
+install -pm 755 packaging/rpm/xrdtest-hypervisor.init %{buildroot}%{_initrddir}/xrdtest-hypervisor
+install -pm 755 packaging/rpm/xrdtest-slave.init %{buildroot}%{_initrddir}/xrdtest-slave
 
 # configs
 mkdir -p %{buildroot}%{_sysconfdir}/XrdTest
@@ -49,20 +48,15 @@ mkdir -p %{buildroot}%{_sysconfdir}/XrdTest/certs
 mkdir -p %{buildroot}%{_sbindir}
 
 install -pm 755 src/XrdTestMaster.py %{buildroot}%{_sbindir}
-install -pm 755 src/conf/XrdTestMaster.conf %{buildroot}%{_sysconfdir}/XrdTest
+install -pm 644 src/conf/XrdTestMaster.conf %{buildroot}%{_sysconfdir}/XrdTest
 install -pm 755 src/XrdTestHypervisor.py %{buildroot}%{_sbindir}
-install -pm 755 src/conf/XrdTestHypervisor.conf %{buildroot}%{_sysconfdir}/XrdTest
+install -pm 644 src/conf/XrdTestHypervisor.conf %{buildroot}%{_sysconfdir}/XrdTest
 install -pm 755 src/XrdTestSlave.py %{buildroot}%{_sbindir}
-install -pm 755 src/conf/XrdTestSlave.conf %{buildroot}%{_sysconfdir}/XrdTest
+install -pm 644 src/conf/XrdTestSlave.conf %{buildroot}%{_sysconfdir}/XrdTest
 
 # webpage
 mkdir -p %{buildroot}%{_datadir}/XrdTest
 cp -r src/webpage %{buildroot}%{_datadir}/XrdTest
-chmod --recursive 777 %{buildroot}%{_datadir}/XrdTest/webpage
-
-# disk image cache locations
-mkdir -p %{buildroot}%{_localstatedir}/lib/libvirt/images/XrdTest
-chmod --recursive 777 %{buildroot}%{_localstatedir}/lib/libvirt/images/
 
 #-------------------------------------------------------------------------------
 # XrdTestLib
@@ -77,7 +71,7 @@ Requires: python >= 2.4
 Shared library files for XrdTestFramework.
 
 %files lib
-%defattr(-,root,root,755)
+%defattr(-,root,root,-)
 %{python_sitelib}/XrdTest
 
 #-------------------------------------------------------------------------------
@@ -94,13 +88,13 @@ Requires: python-apscheduler, python-uuid, python-cherrypy, python-cheetah, pyth
 %description master
 Xrd Test Master is component of XrdTestFramework.
 %files master
-%defattr(-,root,root,755)
+%defattr(-,root,root,-)
 
-%attr(0500, root, root) %config(noreplace) %{_sysconfdir}/XrdTest/XrdTestMaster.conf
+%attr(0400, root, root) %config(noreplace) %{_sysconfdir}/XrdTest/XrdTestMaster.conf
 %{_sysconfdir}/XrdTest/certs/
 %{_sbindir}/XrdTestMaster.py
 %{_datadir}/XrdTest/webpage/*
-%{_initrddir}/xrdtestmasterd
+%{_initrddir}/xrdtest-master
 %{_localstatedir}/log/XrdTest
 
 #-------------------------------------------------------------------------------
@@ -115,12 +109,12 @@ Requires: xrdtest-lib, openssl
 %description slave
 Xrd Test Slave is component of XrdTestFramework. It runs tests provided by Xrd Test Master on virtual or physical machines.
 %files slave
-%defattr(-,root,root,755)
+%defattr(-,root,root,-)
 
-%attr(0500, root, root) %config(noreplace) %{_sysconfdir}/XrdTest/XrdTestSlave.conf
+%attr(0400, root, root) %config(noreplace) %{_sysconfdir}/XrdTest/XrdTestSlave.conf
 %{_sysconfdir}/XrdTest/certs/
 %{_sbindir}/XrdTestSlave.py
-%{_initrddir}/xrdtestslaved
+%{_initrddir}/xrdtest-slave
 %{_localstatedir}/log/XrdTest
 
 #-------------------------------------------------------------------------------
@@ -136,15 +130,13 @@ Group:	 Development/Tools
 %description hypervisor
 Xrd Test Hypervisor is component of XrdTestFramework. It manages virtual machines clusters, on master's requests.
 %files hypervisor
-%defattr(-,root,root,755)
+%defattr(-,root,root,-)
 
-%attr(0500, root, root) %config(noreplace) %{_sysconfdir}/XrdTest/XrdTestHypervisor.conf
+%attr(0400, root, root) %config(noreplace) %{_sysconfdir}/XrdTest/XrdTestHypervisor.conf
 %{_sysconfdir}/XrdTest/certs/
 %{_sbindir}/XrdTestHypervisor.py
-%{_initrddir}/xrdtesthypervisord
+%{_initrddir}/xrdtest-hypervisor
 %{_localstatedir}/log/XrdTest
-%{_localstatedir}/lib/libvirt/images/
-%{_localstatedir}/lib/libvirt/images/XrdTest
 
 %clean
 [ "x%{buildroot}" != "x/" ] && rm -rf %{buildroot}
@@ -154,11 +146,11 @@ Xrd Test Hypervisor is component of XrdTestFramework. It manages virtual machine
 #-------------------------------------------------------------------------------
 %post master
 /sbin/ldconfig
-/sbin/chkconfig --add xrdtestmasterd
+/sbin/chkconfig --add xrdtest-master
 if [ ! -f %{_sysconfdir}/XrdTest/certs/masterkey.pem ] 
 then
-        openssl genrsa -out %{_sysconfdir}/XrdTest/certs/masterkey.pem 2048
-        openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/masterkey.pem -out %{_sysconfdir}/XrdTest/certs/mastercert.pem -days 1095
+  openssl genrsa -out %{_sysconfdir}/XrdTest/certs/masterkey.pem 2048
+  openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/masterkey.pem -out %{_sysconfdir}/XrdTest/certs/mastercert.pem -days 1095
 fi
 
 %postun master
@@ -166,11 +158,11 @@ fi
 
 %post slave
 /sbin/ldconfig
-/sbin/chkconfig --add xrdtestslaved
+/sbin/chkconfig --add xrdtest-slave
 if [ ! -f %{_sysconfdir}/XrdTest/certs/slavekey.pem ]
 then
-        openssl genrsa -out %{_sysconfdir}/XrdTest/certs/slavekey.pem 2048
-        openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/slavekey.pem -out %{_sysconfdir}/XrdTest/certs/slavecert.pem -days 1095
+  openssl genrsa -out %{_sysconfdir}/XrdTest/certs/slavekey.pem 2048
+  openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/slavekey.pem -out %{_sysconfdir}/XrdTest/certs/slavecert.pem -days 1095
 fi
 
 %postun slave
@@ -178,11 +170,11 @@ fi
 
 %post hypervisor
 /sbin/ldconfig
-/sbin/chkconfig --add xrdtesthypervisord
+/sbin/chkconfig --add xrdtest-hypervisor
 if [ ! -f %{_sysconfdir}/XrdTest/certs/hypervisorkey.pem ]
 then
-        openssl genrsa -out %{_sysconfdir}/XrdTest/certs/hypervisorkey.pem 2048
-        openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/hypervisorkey.pem -out %{_sysconfdir}/XrdTest/certs/hypervisorcert.pem -days 1095
+  openssl genrsa -out %{_sysconfdir}/XrdTest/certs/hypervisorkey.pem 2048
+  openssl req -new -batch -x509 -key %{_sysconfdir}/XrdTest/certs/hypervisorkey.pem -out %{_sysconfdir}/XrdTest/certs/hypervisorcert.pem -days 1095
 fi
 
 %postun hypervisor

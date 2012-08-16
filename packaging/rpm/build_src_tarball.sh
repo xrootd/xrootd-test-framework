@@ -1,8 +1,8 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-        echo "usage: build_src_tarball.sh <src_path>"
-	exit 0
+  echo "usage: build_src_tarball.sh <src_path>"
+  exit 0
 fi
 echo "Copying files from $1"
 
@@ -25,8 +25,8 @@ mkdir -p ${DEST}/packaging
 mkdir -p ${DEST}/packaging/rpm
 
 for n in Slave Master Hypervisor; do
-	cp $CP_OPTS ${SRC}/src/XrdTest$n.py ${DEST}/src
-	cp $CP_OPTS ${SRC}/src/conf/XrdTest$n.conf ${DEST}/src/conf
+  cp $CP_OPTS ${SRC}/src/XrdTest$n.py ${DEST}/src
+  cp $CP_OPTS ${SRC}/src/conf/XrdTest$n.conf ${DEST}/src/conf
 done
 
 cp $CP_OPTS ${SRC}/src/webpage ${DEST}/src
@@ -36,7 +36,7 @@ cp -R $CP_OPTS ${SRC}/examples/test-suites/ ${DEST}/examples/test-suites
 
 cp $CP_OPTS ${SRC}/src/XrdTest/ ${DEST}/src
 
-cp $CP_OPTS ${SRC}/packaging/rpm/xrdtest*d ${DEST}/packaging/rpm
+cp $CP_OPTS ${SRC}/packaging/rpm/xrdtest-*.init ${DEST}/packaging/rpm
 
 tar -cvzf ${NAME}.tar.gz ${NAME}
 rm -rf ${DEST}

@@ -163,7 +163,7 @@ class Network(object):
         if not self.clusterName:
             raise ClusterManagerException(("Can't refer to host.uname if " + \
                                           " clusterName property not " + \
-                                          "defined for host ") % self.name)
+                                          "defined for host %s") % self.name)
         return self.clusterName + "_" + self.name
 
     @property
@@ -290,7 +290,7 @@ class Host(object):
         if not self.clusterName:
             raise ClusterManagerException(("Can't refer to host.uname if " + \
                                           " clusterName property not " + \
-                                          "defined for host ") % self.name)
+                                          "defined for host %s") % self.name)
         return self.clusterName + "_" + self.name
 
     @property
@@ -427,7 +427,7 @@ class Cluster(Utils.Stateful):
                                                ' cluster %s.') % \
                                               (h.net, h.name, self.name))
         if self.network.ip == self.network.DHCPRange[0]:
-            raise ClusterManagerException(('Network %s [%s] IP the ' + \
+            raise ClusterManagerException(('Network %s [%s] IP is the ' + \
                                            'same as DHCPRange ' + \
                                            ' first address') \
                                           % (self.network.name, \
@@ -447,8 +447,8 @@ class Cluster(Utils.Stateful):
                        self.network.ip == c.network.ip]
         if len(n) != 0:
             raise ClusterManagerException(
-                    ("Cluster's %s some network's %s parameters doubled" + \
-                    " in %s") % (self.name, self.network.name, ",".join(n)))
+                    ("Some network parameters doubled" + \
+                    " in %s") % (self.name))
 
     def validateDynamic(self):
         '''
@@ -493,7 +493,7 @@ def loadClusterDef(fp, clusters, validateWithRest=True):
             cl = mod.getCluster()
             if cl.name != modName:
                 raise ClusterManagerException(("Cluster name %s in file %s" + \
-                  " is not the same as filename <cluster_name>.py") % \
+                  " does not match filename.") % \
                                          (cl.name, modFile))
             cl.definitionFile = modFile
             #after load, check if cluster definition is correct
@@ -508,8 +508,8 @@ def loadClusterDef(fp, clusters, validateWithRest=True):
             raise ClusterManagerException("Can't import %s: %s." % \
                                            (modName, e))
         except NameError, e:
-            raise ClusterManagerException("Name error while " + \
-                                          "cluster  %s import: %s." % \
+            raise ClusterManagerException("Name error during " + \
+                                          "cluster %s import: %s." % \
                                            (modName, e))
         except Exception, e:
             raise ClusterManagerException("Error during" + \
@@ -517,7 +517,7 @@ def loadClusterDef(fp, clusters, validateWithRest=True):
     elif ext == ".pyc":
         return None
     else:
-        raise ClusterManagerException("%s is not cluster definition." % \
+        raise ClusterManagerException("%s is not a cluster definition." % \
                                        (modFile))
     return cl
 
@@ -544,7 +544,7 @@ def loadClustersDefs(path):
                 except ClusterManagerException, e:
                     clu = Cluster()
                     clu.name = f
-                    clu.state = State((-1, e))
+                    clu.state = State((-1, e.desc))
                     clusters.append(clu)
 
     return clusters

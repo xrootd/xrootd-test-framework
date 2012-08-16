@@ -189,7 +189,7 @@ class ClusterManager:
                 self.hosts[host.uname] = (hostdef, None, host)
                 LOGGER.info("Machine already defined: %s" % host.uname)
             except libvirtError, e:
-                msg = ("Can't define machine %s on image %s neither " + \
+                msg = ("Can't define machine %s on image %s nor " + \
                         "obtain machine definition: %s") % \
                         (host.uname, host.runningDiskImage, e)
                 raise ClusterManagerException(msg, ERR_ADD_HOST)
@@ -251,7 +251,7 @@ class ClusterManager:
                 self.nets[netObj.uname] = conn.networkLookupByName(netObj.uname)
             except libvirtError, e:
                 LOGGER.error(e)
-                msg = ("Could not define net %s neither obtain net definition: " + \
+                msg = ("Could not define net %s nor obtain net definition: " + \
                       " %s") % (netObj.uname, e)
                 raise ClusterManagerException(msg, ERR_CREATE_NETWORK)
 
@@ -476,7 +476,7 @@ class ClusterManager:
                 removeErr += str(e)
 
         if removeErr:
-            raise ClusterManagerException("Errors during cluster " + \
+            raise ClusterManagerException("Error during cluster " + \
                                           "removal: %s" % removeErr)
         else:
             del self.clusters[clusterName]

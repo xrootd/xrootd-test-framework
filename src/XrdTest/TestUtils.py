@@ -151,8 +151,8 @@ class TestSuite(Stateful):
         Checks if definition (e.g given names) is statically correct.
         '''
         if not self.name or " " in self.name:
-            raise TestSuiteException(("No name given in TestSuite " + \
-                                      "definition or the name %s have " + \
+            raise TestSuiteException(("No name given for TestSuite, " + \
+                                      "or the name (%s) " + \
                                       "is not alphanumeric without spaces.") % \
                                       self.name, \
                                       TestSuiteException.ERR_CRITICAL)
@@ -163,7 +163,7 @@ class TestSuite(Stateful):
                                       TestSuiteException.ERR_CRITICAL)
         if not self.initialize:
             raise TestSuiteException(("No initialize script " + \
-                                      "in TestSuite %s definition") % \
+                                      "in TestSuite %s definition.") % \
                                       self.name, \
                                       TestSuiteException.ERR_CRITICAL)
         if not len(self.tests):
@@ -173,15 +173,15 @@ class TestSuite(Stateful):
                                       TestSuiteException.ERR_CRITICAL)
         for t in self.tests:
             if not self.testCases.has_key(t):
-                raise TestSuiteException(("No TestCase %s defined but used" + \
-                                         " in TestSuite definition") % str(t), \
+                raise TestSuiteException(("No TestCase %s was defined, but was used" + \
+                                         " in TestSuite definition.") % str(t), \
                                           TestSuiteException.ERR_CRITICAL)
         return True
 
     def checkIfDefComplete(self, clusters):
         '''
         Makes sure all cluster definitions are complete.
-        
+
         @param clusters: all currently defined clusters.
         '''
         if self.machinesAutoFilled:
@@ -192,7 +192,7 @@ class TestSuite(Stateful):
                 self.defEnabled = False
                 raise TestSuiteException(\
                 ("Cluster %s in suite %s definition " + \
-                "does not exist or is defined incorrectly") % (cl, self.name))
+                "does not exist or is defined incorrectly.") % (cl, self.name))
 
         # check if all required machines are connected and idle
         if not len(self.machines):
@@ -239,8 +239,8 @@ class TestCase:
         Return whether or not definition (e.g given names) is statically correct.
         '''
         if not self.name or " " in self.name:
-            raise TestSuiteException(("No name given in TestCase " + \
-                                      "definition or the name %s have " + \
+            raise TestSuiteException(("No name given for TestCase, " + \
+                                      "or the name (%s) " + \
                                       "is not alphanumeric without spaces.") % \
                                      self.name, \
                                       TestSuiteException.ERR_CRITICAL)
@@ -376,9 +376,8 @@ def loadTestCasesDefs(path):
                     obj.validateStatic()
                     testCases[obj.name] = obj
             else:
-                raise TestSuiteException("Method " + method + \
-                  " doesn't return list of objects in " + \
-                  " file: " + str(modFile))
+                raise TestSuiteException("Method %s doesn't return list of " + \
+                    "objects in file: %s" % (method, str(modFile)))
         except TypeError, e:
             raise TestSuiteException(("TypeError while loading test case " + \
                           "definition file %s: %s") % (modFile, e))
@@ -396,7 +395,7 @@ def loadTestCasesDefs(path):
 def loadTestSuiteDef(path):
     '''
     Load a single test suite definition.
-    
+
     @param path: path to the suite definition to be loaded.
     '''
     fp = path
@@ -417,9 +416,8 @@ def loadTestSuiteDef(path):
             obj = fun()
 
             if obj.name != modName:
-                raise TestSuiteException(("TestSuite name %s in file %s" + \
-                  " is not the same as filename <test_suite_name>.py") % \
-                                         (obj.name, modFile))
+                raise TestSuiteException(('Test Suite %s in file %s ' + \
+                  'does not match filename.') % (obj.name, modFile))
             obj.definitionFile = modFile
             
             # Resolve script URLs into actual text
@@ -435,29 +433,28 @@ def loadTestSuiteDef(path):
             raise TestSuiteException(("TypeError in test suite definition " + \
                   "file %s: %s") % (modFile, e))
         except NameError, e:
-            raise TestSuiteException(("Name error in test suite def file " + \
+            raise TestSuiteException(("NameError in test suite definition file " + \
                   " %s: %s") % (modFile, e))
         except AttributeError, e:
-            raise TestSuiteException(("Something can't be found in test suite " + \
+            raise TestSuiteException(("AttributeError in test suite " + \
                                       "definition file %s: %s") % (modFile, e))
         except ImportError, e:
-            raise TestSuiteException("Import error " + \
+            raise TestSuiteException("ImportError " + \
                   "during test suite %s import: %s" % (modFile, e))
         except Exception, e:
-            raise TestSuiteException("Exception occurred " + \
-                  "during test suite %s import: %s" % (modFile, e))
+            raise TestSuiteException('Error: %s' % e.desc)
     elif ext == ".pyc":
         return None
     else:
         raise TestSuiteException(("File %s " + \
-              "seems not to be test suite definition.") % fp)
+              "seems not to be a test suite definition.") % fp)
     return obj
 
 def loadTestSuiteDefs(path):
     '''
     Loads TestSuite and TestCase definitions from .py files
     stored in path directory.
-    
+
     @param path: path for .py files, storing cluster definitions
     '''
     testSuites = []
@@ -473,7 +470,7 @@ def loadTestSuiteDefs(path):
             except TestSuiteException, e:
                 ts = TestSuite()
                 ts.name = f
-                ts.state = State((-1, e))
+                ts.state = State((-1, e.desc))
                 testSuites.append(ts)
                 LOGGER.error(e)
 
@@ -502,6 +499,6 @@ def resolveScript(definition, root_path):
     elif not definition:
         return
     else:
-        raise TestSuiteException("Unknown script definition type: %s" % definition)
+        raise TestSuiteException("Unknown script definition type: %s." % definition)
 
 

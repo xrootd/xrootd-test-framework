@@ -100,7 +100,7 @@ class XrdTestSlave(Runnable):
                 redirectOutput(self.config.get('daemon', 'log_file_path'))
         
         LOGGER.info("Using config file: %s" % configFile)
-            
+        
         self.sockStream = None
         #Blocking queue of commands received from XrdTestMaster
         self.recvQueue = Queue.Queue()

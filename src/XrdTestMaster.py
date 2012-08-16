@@ -243,13 +243,13 @@ class XrdTestMaster(Runnable):
                     try:
                         ts.checkIfDefComplete(self.clusters)
                     except TestSuiteException, e:
-                        ts.state = State((-1, e))
+                        ts.state = State((-1, e.desc))
                     self.testSuites[ts.name] = ts
             except TestSuiteException, e:
                 LOGGER.error("Test Suite Exception: %s" % e)
                 suite = TestSuite()
                 suite.name = ts.name
-                suite.state = State((-1, e))
+                suite.state = State((-1, e.desc))
                 self.testSuites[suite.name] = suite
     
             # add jobs to scheduler if it's enabled
@@ -321,7 +321,7 @@ class XrdTestMaster(Runnable):
                 LOGGER.error("Error while defining: %s" % e)
                 suite = TestSuite()
                 suite.name = modName
-                suite.state = State((-1, e))
+                suite.state = State((-1, e.desc))
                 self.testSuites[suite.name] = suite
             except Exception, e:
                 # in case of any exception thron e.g. from scheduler
@@ -338,9 +338,9 @@ class XrdTestMaster(Runnable):
             for ts in self.testSuites.values():
                 ts.checkIfDefComplete(self.clusters)
         except TestSuiteException, e:
-            raise TestSuiteException("Error in test suite %s: %s" % (ts.name, e))
+            raise TestSuiteException("Error in test suite %s: %s." % (ts.name, e))
         except Exception, e:
-            raise TestSuiteException("Error in test suite %s: %s" % (ts.name, e))
+            raise TestSuiteException("Error in test suite %s: %s." % (ts.name, e))
 
     def handleClusterDefinitionChanged(self, dirEvent):
         '''
@@ -385,7 +385,7 @@ class XrdTestMaster(Runnable):
                 LOGGER.error("Error while defining: %s" % e)
                 clu = Cluster()
                 clu.name = modName
-                clu.state = State((-1, e))
+                clu.state = State((-1, e.desc))
                 self.clusters[clu.name] = clu
 
 

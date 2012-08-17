@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+#set -e
 
 function log () {
 	echo `date +['%T']` $@
@@ -12,18 +12,20 @@ function stamp () {
 #---------------------------------------------------------------------------------------------------------
 log "Initializing test suite on slave" @slavename@ "..."
 
-# Important parameters
+######## Important parameters ########
 
 CLUSTER_NAME=cluster_001_mm
 CONFIG_FILE=xrd_cluster_001_mm.cf
 CONFIG_PATH=/etc/xrootd/${CONFIG_FILE}
+
+######################################
 
 log "Fetching latest xrootd build ..."
 
 mkdir -v -p tmp_initsh
 rm -rf tmpinitsh/*
 cd tmp_initsh
-wget "@proto@://master.xrd.test:@port@/showScript/utils/get_xrd_latest.py" -O get_xrd_latest.py 2>&1
+curl -sSkO "@proto@://master.xrd.test:@port@/showScript/utils/get_xrd_latest.py" > /dev/null
 chmod 755 get_xrd_latest.py
 rm -rf xrd_rpms
 python get_xrd_latest.py
@@ -33,11 +35,18 @@ rm -rf xrd_rpms/slc-6-x86_64/xrootd-*-devel-*.rpm
 #---------------------------------------------------------------------------------------------------------
 log "Installing xrootd packages ..."
 
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-libs-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-client-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-client-admin-perl-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-fuse-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-server-*.rpm
+# Fix for when RPM breaks it's own db...
+if [ -f rm /var/lib/rpm/__db* ]; then rm -f /var/lib/rpm/__db*; fi
+rpm --rebuilddb
+
+rpm -ev xroot-server xrootd-fuse xrootd-client-admin-perl xrootd-client xrootd-libs
+
+rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-libs-*.rpm \
+xrd_rpms/slc-6-x86_64/xrootd-client-*.rpm \
+xrd_rpms/slc-6-x86_64/xrootd-client-admin-perl-*.rpm \
+xrd_rpms/slc-6-x86_64/xrootd-fuse-*.rpm \
+xrd_rpms/slc-6-x86_64/xrootd-server-*.rpm
+
 cd ..
 
 #---------------------------------------------------------------------------------------------------------
@@ -50,7 +59,7 @@ cd tmp_inittest
 if [ -f $CONFIG_PATH ]; then
 	rm $CONFIG_PATH
 fi
-wget -q "@proto@://master.xrd.test:@port@/downloadScript/clusters/${CLUSTER_NAME}/${CONFIG_FILE}" -O $CONFIG_FILE
+curl -sSkO "@proto@://master.xrd.test:@port@/downloadScript/clusters/${CLUSTER_NAME}/${CONFIG_FILE}" > /dev/null
 mv $CONFIG_FILE $CONFIG_PATH
 
 # extracting machine name from hostname
@@ -65,9 +74,12 @@ rm -rf $SERVICE_CONFIG_FILE
 touch $SERVICE_CONFIG_FILE
 UCASE_NAME=$(echo $NAME | tr a-z A-Z)
 
-echo "
 XROOTD_USER=daemon
 XROOTD_GROUP=daemon
+
+echo "
+XROOTD_USER=$XROOTD_USER
+XROOTD_GROUP=$XROOTD_GROUP
 
 XROOTD_${UCASE_NAME}_OPTIONS=\" -l /var/log/xrootd/xrootd.log -c ${CONFIG_PATH} -k 7\"
 CMSD_${UCASE_NAME}_OPTIONS=\" -l /var/log/xrootd/cmsd.log -c ${CONFIG_PATH} -k 7\"
@@ -83,9 +95,8 @@ XFRD_INSTANCES=\"${NAME}\"
 #---------------------------------------------------------------------------------------------------------
 log "Mounting storage disks for machine $NAME ..."
 
-if [ ! -d @mountpoint@ ]; then mkdir @mountpoint@; fi
-mount -t ext4 -o user_xattr /dev/@device@ @mountpoint@
-chown daemon.daemon @mountpoint@
+# Will be replaced by appropriate mount commands for each slave
+@diskmounts@
 
 #---------------------------------------------------------------------------------------------------------
 log "Starting xrootd and cmsd for machine $NAME ..."

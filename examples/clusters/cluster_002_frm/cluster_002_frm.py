@@ -40,14 +40,18 @@ def getCluster():
     
     #---------------------------------------------------------------------------
     # Additional host disk definitions
+    #
+    # As per the libvirt docs, the device name given here is not guaranteed to 
+    # map to the same name in the guest OS. Incrementing the device name works
+    # (i.e. disk1 = vda, disk2 = vdb etc.).
     #---------------------------------------------------------------------------
-    frm1.disks =  [Disk('disk1', '59055800320', 'vdb')]
-    frm2.disks =  [Disk('disk1', '59055800320', 'vdb')]
-    ds1.disks =  [Disk('disk1', '59055800320', 'vdb')]
-    ds2.disks =  [Disk('disk1', '59055800320', 'vdb')]
-    ds3.disks =  [Disk('disk1', '59055800320', 'vdb')]
-    ds4.disks =  [Disk('disk1', '59055800320', 'vdb')]
-    client1.disks =  [Disk('disk1', '59055800320', 'vdb')]
+    frm1.disks =  [Disk('disk1', '5G', device='vda', mountPoint='/data')]
+    frm2.disks =  [Disk('disk1', '5G', device='vda', mountPoint='/data')]
+    ds1.disks =  [Disk('disk1', '5G', device='vda', mountPoint='/data')]
+    ds2.disks =  [Disk('disk1', '5G', device='vda', mountPoint='/data')]
+    ds3.disks =  [Disk('disk1', '5G', device='vda', mountPoint='/data')]
+    ds4.disks =  [Disk('disk1', '5G', device='vda', mountPoint='/data')]
+    client1.disks =  [Disk('disk1', '5G', device='vda', mountPoint='/data')]
 
 
     # Hosts to be included in the cluster

@@ -161,6 +161,7 @@ class XrdTestSlave(Runnable):
         return res
 
     def requestTags(self, script, hostname):
+        ''' TODO: '''
         LOGGER.info('Requesting tags from master ...')
         
         msg = XrdMessage(XrdMessage.M_TAG_REQUEST)
@@ -173,7 +174,13 @@ class XrdTestSlave(Runnable):
                          
             script = script.replace('@proto@', resp.proto)
             script = script.replace('@port@', str(resp.port))
-#            script = script.replace('@mountpoint@', msg.mountPoint)
+            
+            if hasattr(resp, 'diskMounts'):
+                LOGGER.info('Received disk mount tags: %s' % resp.diskMounts)
+                script = script.replace('@diskmounts@', resp.diskMounts)
+            else:
+                LOGGER.info('No disk mount tags received.')
+                script.replace('@diskmounts@', '')
         else:
             raise XrdTestSlaveException('Could not get tag values for slave ' + \
                                         '%s.', hostname)

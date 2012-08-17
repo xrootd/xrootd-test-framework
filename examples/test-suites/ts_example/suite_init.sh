@@ -18,8 +18,6 @@ CLUSTER_NAME=cluster_example
 CONFIG_FILE=xrd_cluster_example.cf
 CONFIG_PATH=/etc/xrootd/${CONFIG_FILE}
 
-STORAGE_PATH=/data
-
 ######################################
 
 log "Fetching latest xrootd build ..."
@@ -37,18 +35,16 @@ rm -rf xrd_rpms/slc-6-x86_64/xrootd-*-src-*.rpm
 log "Installing xrootd packages ..."
 
 # Fix for when RPM breaks it's own db...
-# rm -rf /var/lib/rpm/__db*
-# rpm --rebuilddb
+if [ -f rm /var/lib/rpm/__db* ]; then rm -f /var/lib/rpm/__db*; fi
+rpm --rebuilddb
 
-rpm -F xrd_rpms/slc-6-x86_64/xrootd-libs-*.rpm
-rpm -F xrd_rpms/slc-6-x86_64/xrootd-libs-devel-*.rpm
-rpm -F xrd_rpms/slc-6-x86_64/xrootd-client-*.rpm
-rpm -F xrd_rpms/slc-6-x86_64/xrootd-client-devel-*.rpm
-rpm -F xrd_rpms/slc-6-x86_64/xrootd-client-admin-perl-*.rpm
-rpm -F xrd_rpms/slc-6-x86_64/xrootd-fuse-*.rpm
-rpm -F xrd_rpms/slc-6-x86_64/xrootd-server-*.rpm
-rpm -F xrd_rpms/slc-6-x86_64/xrootd-server-devel-*.rpm
-rpm -F xrd_rpms/slc-6-x86_64/xrootd-debuginfo-*.rpm
+rpm -ev xroot-server xrootd-fuse xrootd-client-admin-perl xrootd-client xrootd-libs
+
+rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-libs-*.rpm \
+xrd_rpms/slc-6-x86_64/xrootd-client-*.rpm \
+xrd_rpms/slc-6-x86_64/xrootd-client-admin-perl-*.rpm \
+xrd_rpms/slc-6-x86_64/xrootd-fuse-*.rpm \
+xrd_rpms/slc-6-x86_64/xrootd-server-*.rpm
 
 cd ..
 
@@ -95,9 +91,8 @@ XFRD_INSTANCES=\"${NAME}\"
 #---------------------------------------------------------------------------------------------------------
 log "Mounting storage disks for machine $NAME ..."
 
-if [ ! -d $STORAGE_PATH ]; then mkdir $STORAGE_PATH; fi
-mount -t ext4 -o user_xattr /dev/vda $STORAGE_PATH
-chown daemon.daemon $STORAGE_PATH
+# Will be replaced by appropriate mount commands for each slave
+@diskmounts@
 
 #---------------------------------------------------------------------------------------------------------
 log "Starting xrootd and cmsd for machine $NAME ..."

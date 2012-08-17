@@ -132,6 +132,10 @@
 													#set $stdout = $stdout.replace($match.group(1), '<span class="error">' + $match.group(1) + '</span>')
 												#end for
 														
+												#for $match in re.finditer(r'((?!\[..:..:..\]).*)\[..:..:..\]', $stdout, re.I)
+                                                    $important.append(($match.group(1), 'error'))
+                                                    #set $stdout = $stdout.replace($match.group(1), '<span class="warning">' + $match.group(1) + '</span>')
+                                                #end for
 												<td class="stdout">$stdout</td>
 											</tr>
 

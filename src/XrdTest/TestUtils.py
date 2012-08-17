@@ -478,8 +478,7 @@ def loadTestSuiteDefs(path):
 
 def resolveScript(definition, root_path):
     '''
-    Grabs a script from some arbitrary path and replaces keywords with
-    their corresponding values.
+    Grabs a script from some arbitrary path.
     
     TODO: add more error handling
     '''

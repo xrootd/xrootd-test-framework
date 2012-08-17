@@ -12,11 +12,13 @@ function stamp () {
 #---------------------------------------------------------------------------------------------------------
 log "Initializing test suite on slave" @slavename@ "..."
 
-# Important parameters
+######## Important parameters ########
 
 CLUSTER_NAME=cluster_002_frm
 CONFIG_FILE=xrd_cluster_002_frm.cf
 CONFIG_PATH=/etc/xrootd/${CONFIG_FILE}
+
+######################################
 
 log "Fetching latest xrootd build ..."
 
@@ -33,11 +35,18 @@ rm -rf xrd_rpms/slc-6-x86_64/xrootd-*-devel-*.rpm
 #---------------------------------------------------------------------------------------------------------
 log "Installing xrootd packages ..."
 
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-libs-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-client-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-client-admin-perl-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-fuse-*.rpm
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-server-*.rpm
+# Fix for when RPM breaks it's own db...
+if [ -f rm /var/lib/rpm/__db* ]; then rm -f /var/lib/rpm/__db*; fi
+rpm --rebuilddb
+
+rpm -ev xroot-server xrootd-fuse xrootd-client-admin-perl xrootd-client xrootd-libs
+
+rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-libs-*.rpm \
+xrd_rpms/slc-6-x86_64/xrootd-client-*.rpm \
+xrd_rpms/slc-6-x86_64/xrootd-client-admin-perl-*.rpm \
+xrd_rpms/slc-6-x86_64/xrootd-fuse-*.rpm \
+xrd_rpms/slc-6-x86_64/xrootd-server-*.rpm
+
 cd ..
 
 #---------------------------------------------------------------------------------------------------------
@@ -83,9 +92,8 @@ XFRD_INSTANCES=\"${NAME}\"
 #---------------------------------------------------------------------------------------------------------
 log "Mounting storage disks for machine $NAME ..."
 
-if [ ! -d /data ]; then mkdir /data; fi
-mount -t ext4 -o user_xattr /dev/vda /data
-chown daemon.daemon /data
+# Will be replaced by appropriate mount commands for each slave
+@diskmounts@
 
 #---------------------------------------------------------------------------------------------------------
 log "Starting xrootd and cmsd for machine $NAME ..."

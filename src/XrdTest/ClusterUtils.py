@@ -304,9 +304,10 @@ class Host(object):
 
 class Disk(object):
     
-    def __init__(self, name, size, mountPoint, cache=True):
+    def __init__(self, name, size, device='vda', mountPoint='/data', cache=True):
         self.name = name
         self.size = self.parseDiskSize(size)
+        self.device = device
         self.mountPoint = mountPoint
         self.cache = cache
         

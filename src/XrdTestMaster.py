@@ -1151,10 +1151,34 @@ class XrdTestMaster(Runnable):
         ''' TODO: '''
         for slave in self.slaves.itervalues():
             if slave.hostname == slavename:
-                print slave
                 msg = XrdMessage(XrdMessage.M_TAG_REPLY)
                 msg.proto = self.webInterface.protocol
                 msg.port = self.webInterface.port
+                
+                # Find disk definitions
+                disks = []
+                for cluster in self.clusters.itervalues():
+                    if cluster.state == Cluster.S_ACTIVE:
+                        for host in cluster.hosts:
+                            if host.name.split('.')[0] == slavename \
+                            and host.clusterName == cluster.name:
+                                disks = host.disks
+                
+                diskMountTemplate = '''
+                    if [ ! -d %(mountpoint)s ]; then mkdir %(mountpoint)s; fi
+                    
+                    mount -t ext4 -o user_xattr /dev/%(device)s %(mountpoint)s
+                    chown $XROOTD_USER.$XROOTD_GROUP %(mountpoint)s
+                    '''
+                
+                if len(disks):
+                    msg.diskMounts = ''
+                    for disk in disks:
+                        values = dict()
+                        values['mountpoint'] = disk.mountPoint
+                        values['device'] = disk.device
+                        msg.diskMounts += diskMountTemplate % values
+                    print msg.diskMounts
                 
                 slave.send(msg)
         

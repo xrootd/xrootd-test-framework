@@ -489,12 +489,12 @@ class ClusterManager:
 
                 try:
                     self.attachDisk(host.uname, disk.name, disk.size, disk.cache, \
-                                     disk.mountPoint)
+                                     disk.device)
                     LOGGER.info('Attached storage disk.')
                 except ClusterManagerException, e:
                     LOGGER.error(e)
             
-    def attachDisk(self, host, diskName, diskSize, cache, mountPoint):
+    def attachDisk(self, host, diskName, diskSize, cache, device):
         ''' 
         TODO:
         '''
@@ -506,8 +506,8 @@ class ClusterManager:
                 f.truncate(int(diskSize))
             Command('mkfs.ext4 -F %s/%s_%s' % (root, host, diskName), root).execute()
   
-        output = Command('virsh attach-disk %s %s/%s_%s %s' % 
-                (host, root, host, diskName, mountPoint), root).execute()
+        output = Command('virsh attach-disk %s %s/%s_%s %s --persistent' % 
+                (host, root, host, diskName, device), root).execute()
         if re.match('error', output):
             raise ClusterManagerException('Attaching disk failed: %s' % output)
 

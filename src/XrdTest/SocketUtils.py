@@ -100,6 +100,9 @@ class XrdMessage(object):
     M_TESTSUITE_STATE = 'test_case_state'
     M_TESTCASE_STAGE_RESULT = 'test_case_stage_result'
 
+    M_TAG_REQUEST = 'tag_request'
+    M_TAG_REPLY = 'tag_reply'
+
     M_DISCONNECT = 'disconnect'
     M_UNKNOWN = 'unknown'
 

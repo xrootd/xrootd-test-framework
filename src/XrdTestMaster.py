@@ -102,7 +102,7 @@ class XrdTestMaster(Runnable):
         self.logLevel = 'INFO'
         
         # Default TCP server configuration
-        self.server_ip = '0.0.0.0'
+        self.serverIP = '0.0.0.0'
         self.serverPort = 20000
         
         # Priority queue (locking) with incoming events, i.a. incoming messages
@@ -1143,6 +1143,21 @@ class XrdTestMaster(Runnable):
                 LOGGER.info("%s finalized test %s in suite %s" % \
                             (slave, msg.testName, tss.name))
 
+        elif msg.name == XrdMessage.M_TAG_REQUEST:
+            slave = msg.hostname
+            self.handleTagRequest(slave)
+            
+    def handleTagRequest(self, slavename):
+        ''' TODO: '''
+        for slave in self.slaves.itervalues():
+            if slave.hostname == slavename:
+                print slave
+                msg = XrdMessage(XrdMessage.M_TAG_REPLY)
+                msg.proto = self.webInterface.protocol
+                msg.port = self.webInterface.port
+                
+                slave.send(msg)
+        
     def procEvents(self):
         '''
         Main loop processing incoming MasterEvents from main events queue:
@@ -1222,13 +1237,13 @@ class XrdTestMaster(Runnable):
         TODO:
         '''
         if self.config.has_option('server', 'ip'):
-            self.server_ip = self.config.get('server', 'ip')
+            self.serverIP = self.config.get('server', 'ip')
                                
         if self.config.has_option('server', 'port'):
             self.serverPort = self.config.getint('server', 'port')
 
         try:
-            server = ThreadedTCPServer((self.server_ip, self.serverPort),
+            server = ThreadedTCPServer((self.serverIP, self.serverPort),
                                ThreadedTCPRequestHandler)
         except socket.error, e:
             if e[0] == 98:
@@ -1253,29 +1268,29 @@ class XrdTestMaster(Runnable):
         '''
         TODO:
         '''
-        webinterface = WebInterface(self.config, self)
+        webInterface = WebInterface(self.config, self)
         
         cherrypyCfg = {
                         '/webpage/js': {
                         'tools.staticdir.on': True,
-                        'tools.staticdir.dir' : webinterface.webroot + "/js",
+                        'tools.staticdir.dir' : webInterface.webroot + "/js",
                         },
                         '/webpage/css': {
                         'tools.staticdir.on': True,
-                        'tools.staticdir.dir' : webinterface.webroot + "/css",
+                        'tools.staticdir.dir' : webInterface.webroot + "/css",
                         }
                        }
         
-        cherrypy.tree.mount(webinterface, "/", cherrypyCfg)
+        cherrypy.tree.mount(webInterface, "/", cherrypyCfg)
         cherrypy.config.update({
+                                'server.socket_host': self.serverIP,
+                                'server.socket_port': webInterface.port,
                                 'environment': 'production',
                                 'log.screen': False,
                               })
     
-        if webinterface.server_type == 'https':
+        if webInterface.protocol == 'https':
             cherrypy.config.update({
-                                    'server.socket_host': self.server_ip,
-                                    'server.socket_port': webinterface.https_port,
                                     'server.ssl_module': 'pyopenssl'
                                   })
             
@@ -1291,16 +1306,11 @@ class XrdTestMaster(Runnable):
             else:
                 LOGGER.error('No private key defined in config file')
     
-        elif webinterface.server_type == 'http':
-            cherrypy.config.update({
-                                    'server.socket_host': self.server_ip,
-                                    'server.socket_port': webinterface.http_port,
-                                  })
-        
-        else:
-            LOGGER.error('Unknown server type %s in config file' % webinterface.server_type)
+        elif not webInterface.protocol == 'http':
+            LOGGER.error('Unknown server protocol %s in config file' % webInterface.protocol)
             sys.exit(1)
 
+        self.webInterface = webInterface
         try:
             cherrypy.server.start()
         except cherrypy._cperror.HTTPError, e:

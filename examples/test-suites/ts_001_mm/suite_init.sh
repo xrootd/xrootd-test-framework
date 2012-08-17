@@ -18,13 +18,12 @@ CLUSTER_NAME=cluster_001_mm
 CONFIG_FILE=xrd_cluster_001_mm.cf
 CONFIG_PATH=/etc/xrootd/${CONFIG_FILE}
 
-sleep 1m
 log "Fetching latest xrootd build ..."
 
-mkdir -p tmp_initsh
+mkdir -v -p tmp_initsh
 rm -rf tmpinitsh/*
 cd tmp_initsh
-wget -q "http://master.xrd.test:8080/showScript/lib/get_xrd_latest.py" -O get_xrd_latest.py
+wget "@proto@://master.xrd.test:@port@/showScript/utils/get_xrd_latest.py" -O get_xrd_latest.py 2>&1
 chmod 755 get_xrd_latest.py
 rm -rf xrd_rpms
 python get_xrd_latest.py
@@ -51,7 +50,7 @@ cd tmp_inittest
 if [ -f $CONFIG_PATH ]; then
 	rm $CONFIG_PATH
 fi
-wget -q "http://master.xrd.test:8080/downloadScript/clusters/${CLUSTER_NAME}/${CONFIG_FILE}" -O $CONFIG_FILE
+wget -q "@proto@://master.xrd.test:@port@/downloadScript/clusters/${CLUSTER_NAME}/${CONFIG_FILE}" -O $CONFIG_FILE
 mv $CONFIG_FILE $CONFIG_PATH
 
 # extracting machine name from hostname
@@ -84,16 +83,15 @@ XFRD_INSTANCES=\"${NAME}\"
 #---------------------------------------------------------------------------------------------------------
 log "Mounting storage disks for machine $NAME ..."
 
-if [ ! -d /data ]; then mkdir /data; fi
-mount -t ext4 -o user_xattr /dev/vda /data
-chown daemon.daemon /data
+if [ ! -d @mountpoint@ ]; then mkdir @mountpoint@; fi
+mount -t ext4 -o user_xattr /dev/@device@ @mountpoint@
+chown daemon.daemon @mountpoint@
 
 #---------------------------------------------------------------------------------------------------------
 log "Starting xrootd and cmsd for machine $NAME ..."
 log "Config file: $CONFIG_PATH"
 
 mkdir -p /var/log/xrootd
-mkdir -p /root/xrdfilesystem
 
 stamp service xrootd setup
 stamp service xrootd start

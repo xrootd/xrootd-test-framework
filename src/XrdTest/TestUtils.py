@@ -478,27 +478,33 @@ def loadTestSuiteDefs(path):
 
 def resolveScript(definition, root_path):
     '''
-    TODO:
+    Grabs a script from some arbitrary path and replaces keywords with
+    their corresponding values.
+    
+    TODO: add more error handling
     '''
+    script = ''
     # If already a bash script, nothing to do
     if definition.startswith('#!/bin/bash'):
-        return
+        pass
     # Absolute file path
     elif definition.startswith('file:///'):
         with open(definition[7:], 'r') as f:
-            return f.read()
+            script = f.read()
     # Relative file path
     elif definition.startswith('file://'):
         with open(root_path + os.sep + definition[7:], 'r') as f:
-            return f.read()
+            script = f.read()
     # URL
     elif definition.startswith('http://'):
-        return urllib2.urlopen(definition).read()
+        script = urllib2.urlopen(definition).read()
     
     # NoneType means no script at all
     elif not definition:
         return
     else:
         raise TestSuiteException("Unknown script definition type: %s." % definition)
+    
+    return script
 
 

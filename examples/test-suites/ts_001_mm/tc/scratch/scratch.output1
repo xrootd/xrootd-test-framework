@@ -1,8 +1,0 @@
-total 68
-drwxr-xr-x  3 jsalmon jsalmon     4096 2012-08-07 08:32 .
-drwxr-xr-x 17 jsalmon jsalmon     4096 2012-07-05 22:06 ..
--rw-r--r--  1 jsalmon jsalmon     7372 2012-07-31 17:56 buildTestCase.py
-drwxr-xr-x 11 jsalmon jsalmon     4096 2012-08-03 11:46 castortests
--rw-r--r--  1 jsalmon jsalmon    26371 2012-07-25 11:59 conftest.py
--rw-r--r--  1 jsalmon jsalmon 52428800 2012-08-07 08:32 testfile
--rw-r--r--  1 jsalmon jsalmon    17806 2009-09-29 10:39 uuid.py

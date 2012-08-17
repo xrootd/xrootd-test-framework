@@ -154,13 +154,13 @@ then
 fi
 
 %preun master
-/sbin/service xrdtestmasterd stop
-/sbin/chkconfig --del xrdtestmasterd
+/sbin/service xrdtest-master stop
+/sbin/chkconfig --del xrdtest-master
 
 %postun master
 /sbin/ldconfig
 if [ "$1" -ge "1" ] ; then
-    /sbin/service xrdtestmasterd condrestart
+    /sbin/service xrdtest-master condrestart
 fi
 
 #-------------------------------------------------------------------------------
@@ -175,13 +175,13 @@ then
 fi
 
 %preun slave
-service xrdtestslaved stop
-/sbin/chkconfig --del xrdtestslaved
+service xrdtest-slave stop
+/sbin/chkconfig --del xrdtest-slave
 
 %postun slave
 /sbin/ldconfig
 if [ "$1" -ge "1" ] ; then
-    /sbin/service xrdtestmasterd condrestart
+    /sbin/service xrdtest-slave condrestart
 fi
 
 #-------------------------------------------------------------------------------
@@ -196,13 +196,13 @@ then
 fi
 
 %preun hypervisor
-service xrdtesthypervisord stop
-/sbin/chkconfig --del xrdtesthypervisord
+service xrdtest-hypervisor stop
+/sbin/chkconfig --del xrdtest-hypervisor
 
 %postun hypervisor
 /sbin/ldconfig
 if [ "$1" -ge "1" ] ; then
-    /sbin/service xrdtestmasterd condrestart
+    /sbin/service xrdtest-hypervisor condrestart
 fi
 
 #-------------------------------------------------------------------------------

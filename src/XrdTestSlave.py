@@ -133,7 +133,6 @@ class XrdTestSlave(Runnable):
                 LOGGER.info("Running script from file: " + cmd)
 
         command = command.replace("@slavename@", socket.gethostname())
-        LOGGER.info("Shell script to run: " + command)
 
         res = ('Nothing executed', '', '0')
         localError = ''
@@ -161,6 +160,25 @@ class XrdTestSlave(Runnable):
 
         return res
 
+    def requestTags(self, script, hostname):
+        LOGGER.info('Requesting tags from master ...')
+        
+        msg = XrdMessage(XrdMessage.M_TAG_REQUEST)
+        msg.hostname = hostname
+        self.sockStream.send(msg)
+        
+        resp = self.recvQueue.get(block=True, timeout=1000)
+        if resp:
+            LOGGER.info('Received tags.')
+                         
+            script = script.replace('@proto@', resp.proto)
+            script = script.replace('@port@', str(resp.port))
+#            script = script.replace('@mountpoint@', msg.mountPoint)
+        else:
+            raise XrdTestSlaveException('Could not get tag values for slave ' + \
+                                        '%s.', hostname)
+        return script
+        
     def connectMaster(self, masterName, masterPort):
         ''' TODO: '''
         global currentDir
@@ -273,6 +291,10 @@ class XrdTestSlave(Runnable):
         cmd = msg.cmd
         jobGroupId = msg.jobGroupId
         suiteName = msg.suiteName
+        
+        # Ask the master for the necessary tags so we can replace them in
+        # the script
+        cmd = self.requestTags(cmd, socket.gethostname())
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
         msg.suiteName = suiteName

@@ -69,13 +69,14 @@ class WebInterface:
         # absolute path to webpage root
         self.webroot = '/usr/share/XrdTest/webpage'
         # default server type
-        self.server_type = 'http'
-        # default http port
-        self.http_port = 8080
-        # default https port
-        self.https_port = 8443
+        self.protocol = 'http'
+        # default port settings
+        self.port = 0
+        self.defaultHttpPort = 8080
+        self.defaultHttpsPort = 8443
+        
         # default test suite run password = empty
-        self.suite_run_pass = ''
+        self.suiteRunPass = ''
         
         # override default web root if specified in config
         if self.config.has_option('webserver', 'webpage_dir'):
@@ -85,18 +86,20 @@ class WebInterface:
             else:
                 raise XrdWebInterfaceException('Path to web root does not exist at %s' % webroot)
             
-        if self.config.has_option('webserver', 'server_type'):
-            self.server_type = self.config.get('webserver', 'server_type')
+        if self.config.has_option('webserver', 'protocol'):
+            self.protocol = self.config.get('webserver', 'protocol')
             
         # do the same with the web ports
-        if self.config.has_option('webserver', 'http_port'):
-            self.http_port = self.config.getint('webserver', 'http_port')
-        if self.config.has_option('webserver', 'https_port'):
-            self.https_port = self.config.getint('webserver', 'https_port')
+        if self.config.has_option('webserver', 'port'):
+            self.port = self.config.getint('webserver', 'port')
+        elif self.protocol == 'http':
+            self.port = self.defaultHttpPort
+        elif self.protocol == 'https':
+            self.port = self.defaultHttpsPort
             
         # ..and the suite run password
         if self.config.has_option('webserver', 'suite_run_pass'):
-            self.suite_run_pass = self.config.get('webserver', 'suite_run_pass')    
+            self.suiteRunPass = self.config.get('webserver', 'suite_run_pass')    
         
         self.cp_config = {'request.error_response': handleCherrypyError,
                           'error_page.404': \
@@ -113,7 +116,7 @@ class WebInterface:
         tpl = None
         tplFile = self.webroot + os.sep + tpl_file
 
-        tpl_vars['HTTPport'] = self.config.getint('webserver', 'http_port')
+        tpl_vars['HTTPport'] = self.config.getint('webserver', 'port')
         try:
             tpl = Template(file=tplFile, searchList=[tpl_vars])
         except Exception, e:
@@ -195,24 +198,18 @@ class WebInterface:
 
         @param script_name:
         '''        
-        for repo in self.config.get('general', 'test-repos').split(','):
-            repo = 'test-repo-' + repo
-            
-            if self.config.get(repo, 'type') == 'localfs':
-                path = os.path.abspath(self.config.get(repo, 'local_path'))
-            elif self.config.get(repo, 'type') == 'git':
-                path = self.config.get(repo, 'local_path')
-            
-            for i in xrange(0, len(script_name)):
-                path += os.sep + script_name[i]
-    
-            if os.path.exists(path):
-                return serve_file(path , "text/html")
+        path = self.config.get('webserver', 'webpage_dir')
+        
+        for i in xrange(0, len(script_name)):
+            path += os.sep + script_name[i]
+
+        if os.path.exists(path):
+            return serve_file(path , "text/html")
 
         return "%s: not found in any repository" % path
     
     def runTestSuite(self, password=None, testsuite=None): 
-        if not password == self.suite_run_pass:
+        if not password == self.suiteRunPass:
             return 'Incorrect password.'
         else:
             self.testMaster.enqueueJob(testsuite)

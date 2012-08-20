@@ -11,7 +11,7 @@ def getCluster():
     #---------------------------------------------------------------------------
     # Cluster defaults
     #---------------------------------------------------------------------------
-    cluster.defaultHost.bootImage = '/var/lib/libvirt/images/slc6_testslave_ref.img'
+    cluster.defaultHost.bootImage = 'slc6_testslave_ref.img'
     cluster.defaultHost.cacheBootImage = True
     cluster.defaultHost.arch = 'x86_64'
     cluster.defaultHost.ramSize = '1048576'

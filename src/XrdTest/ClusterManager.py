@@ -66,7 +66,7 @@ class ClusterManager:
         # dictionary of currently running networks. Key: networkObj.uname
         self.nets = {}
         
-        self.cacheImagesDir = ''
+        self.storagePool = ''
 
     def connect(self, url="qemu:///system"):
         '''
@@ -164,7 +164,7 @@ class ClusterManager:
         cacheImg = None
         if not host.bootImage:
             # first, copy the original disk image
-            cacheImg = '%s/%s.img.cache' % (self.cacheImagesDir, host.uname)
+            cacheImg = '%s/%s.img.cache' % (self.storagePool, host.uname)
             host.runningDiskImage = cacheImg
         else:
             # machine uses ogirinal source image
@@ -381,6 +381,7 @@ class ClusterManager:
                 needCopy = 0    # number of machines that need additional
                                 # thread to copy their source images
                 waitingForCreate = []
+                
                 for h in cluster.hosts:
                     self.removeDanglingHost(h)
                     self.defineHost(h)
@@ -394,7 +395,7 @@ class ClusterManager:
                         # machine uses cached image
                         LOGGER.info("Using cached image for machine %s." % \
                                     (h.uname))
-                        if not os.path.exists(self.cacheImagesDir + os.sep + h.uname + '.img.cache'):
+                        if not os.path.exists(self.storagePool + os.sep + h.uname + '.img.cache'):
                             # make a copy from original image
                             LOGGER.info("No cached image exists for machine %s. Copying from %s" % \
                                         (h.uname, cluster.defaultHost.bootImage))

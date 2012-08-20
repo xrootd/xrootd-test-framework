@@ -35,7 +35,7 @@ try:
     import types
     import os
     
-    from pyinotify import WatchManager, ThreadedNotifier, ProcessEvent, WatchManagerError
+    from pyinotify import WatchManager, ThreadedNotifier, ProcessEvent, WatchManagerError, EventsCodes
     from apscheduler.scheduler import Scheduler
     from GitUtils import sync_remote_git
 except ImportError, e:
@@ -54,7 +54,7 @@ class DirectoryWatch(object):
     IN_CREATE = 0x00000100L                 # Subfile was created
     IN_DELETE = 0x00000200L                 # was delete
     IN_MODIFY = 0x00000002L                 # was modified
-    mask = IN_DELETE | IN_CREATE | IN_MOVED | IN_MODIFY
+    mask = IN_DELETE | IN_CREATE | IN_MOVED | IN_MODIFY 
     
     def __init__(self, repo, config, callback, watch_type=None):
         '''

@@ -79,11 +79,12 @@ class XrdTestHypervisor(Runnable):
         Initialize basic variables. Start and configure ClusterManager.
         @param configFile:
         '''
-        # Default daemon configuration
+        # Default configuration
         self.defaultConfFile = '/etc/XrdTest/XrdTestHypervisor.conf'
         self.defaultPidFile = '/var/run/XrdTestHypervisor.pid'
         self.defaultLogFile = '/var/log/XrdTest/XrdTestHypervisor.log'
         self.logLevel = 'INFO'
+        self.storagePool = '/var/lib/libvirt/XrdTest/images'
         
         if not configFile:
             configFile = self.defaultConfFile
@@ -108,9 +109,11 @@ class XrdTestHypervisor(Runnable):
         # Reference to cluster manager, which is abstraction layer to 
         # virtualization library - in our case libvirt
         self.clusterManager = ClusterManager()
-        self.clusterManager.cacheImagesDir = \
-            self.config.get('virtual_machines', 'cache_images_dir')
-
+        
+        if self.config.has_option('virtual_machines', 'storage_pool'):
+            self.storagePool = self.config.get('virtual_machines', 'storage_pool')
+        self.clusterManager.storagePool = self.storagePool
+                
         self.clusterManager.connect("qemu:///system")
 
     def __del__(self):
@@ -205,9 +208,10 @@ class XrdTestHypervisor(Runnable):
                                                 'emulator_path'))
         cluster.network.xrdTestMasterIP = socket.gethostbyname( \
                                         self.config.get('test_master', 'ip'))
+        cluster.defaultHost.bootImage = self.storagePool + os.sep + \
+                                        cluster.defaultHost.bootImage
         # check if cluster definition is correct on this hypervisor
         res, msg = cluster.validateDynamic()
-
         if res:
             try:
                 LOGGER.info("Cluster definition semantically correct. " + \
@@ -279,7 +283,10 @@ class XrdTestHypervisor(Runnable):
                         for cluster in self.clusterManager.clusters:
                             self.clusterManager.removeCluster(cluster)
                         self.clusterManager.clusters = {}
-                        self.clusterManager.disconnect()
+                        try:
+                            self.clusterManager.disconnect()
+                        except ClusterManagerException, e:
+                            LOGGER.error(e)
                         
                 # Try to reconnect
                 self.tryConnect()

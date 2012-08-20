@@ -329,23 +329,6 @@
 						</div>
 					#end if
 				</div>
-				<h1>Pending jobs</h1>
-				<div id="acc8" class="accordion">
-					#if $pendingJobs and len($pendingJobs) > 0
-						#for $job in $pendingJobs
-							<h3>
-								<a href="#">&rsaquo;
-									${pendingJobsDbg[$pendingJobs.index($job)]}
-									<span style="font-weight:normal;color:#666666;">${job.state[1]}</span>
-								</a>
-							</h3>
-						#end for
-					#else
-						<div>
-							<p>No jobs.</p>
-						</div>
-					#end if
-				</div>
 			</div>
 		</div>
 	</body>

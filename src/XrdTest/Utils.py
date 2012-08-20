@@ -151,17 +151,6 @@ class Logger(object):
                     '[%(filename)s %(lineno)d] ' + \
                     '%(message)s', datefmt="[%H:%M:%S]")
         return logging.getLogger(self.filename)
-
-class UserInfoHandler(logging.Handler):
-    '''
-    Specialized logging handler, to store logging messages in some
-    arbitral variable.
-    '''
-    def __init__(self, xrdTestMaster):
-            logging.Handler.__init__(self)
-            self.testMaster = xrdTestMaster
-    def emit(self, record):
-        self.testMaster.userMsgs.append(record)
         
 def redirectOutput(logFile):
     '''

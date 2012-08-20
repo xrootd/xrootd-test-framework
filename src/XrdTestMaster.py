@@ -55,7 +55,7 @@ try:
         loadTestSuiteDef, loadTestSuiteDefs, extractSuiteName
     from XrdTest.Job import Job
     from XrdTest.Daemon import Runnable, Daemon, DaemonException
-    from XrdTest.Utils import State, UserInfoHandler, redirectOutput
+    from XrdTest.Utils import State, redirectOutput
     from XrdTest.GitUtils import sync_remote_git
     from XrdTest.WebInterface import WebInterface
     from XrdTest.DirectoryWatch import DirectoryWatch
@@ -148,7 +148,7 @@ class XrdTestMaster(Runnable):
         if self.config.has_option('daemon', 'log_level'):
             self.logLevel = self.config.get('daemon', 'log_level')
         logging.getLogger().setLevel(getattr(logging, self.logLevel))
-        
+            
         # redirect output on daemon start
         if backgroundMode:
             if self.config.has_option('daemon', 'log_file_path'):
@@ -159,7 +159,6 @@ class XrdTestMaster(Runnable):
         if self.config.has_option('general', 'suite_sessions_file'):
                 self.suiteSessions = shelve.open(\
                              self.config.get('general', 'suite_sessions_file'))
-
         else:
             LOGGER.error('Cannot open suite session storage file.')
 
@@ -1178,7 +1177,6 @@ class XrdTestMaster(Runnable):
                         values['mountpoint'] = disk.mountPoint
                         values['device'] = disk.device
                         msg.diskMounts += diskMountTemplate % values
-                    print msg.diskMounts
                 
                 slave.send(msg)
         
@@ -1347,7 +1345,6 @@ class XrdTestMaster(Runnable):
         # Silence cherrypy and other unwanted logs
         loggers = LOGGER.manager.loggerDict.keys()
         for name in loggers:
-            logging.getLogger(name).setLevel(self.logLevel)
             if re.match('(cherry|pyinotify|apscheduler)', name):
                 logging.getLogger(name).setLevel(logging.ERROR)
 
@@ -1439,9 +1436,6 @@ def main():
 
     # Initialize main class of the system
     xrdTestMaster = XrdTestMaster(configFile, options.backgroundMode)
-    
-    uih = UserInfoHandler(xrdTestMaster)
-    LOGGER.addHandler(uih)
 
     # run the daemon
     if options.backgroundMode:

@@ -25,11 +25,12 @@ log "Fetching latest xrootd build ..."
 mkdir -p tmp_initsh
 rm -rf tmpinitsh/*
 cd tmp_initsh
-wget -q "http://master.xrd.test:8080/showScript/lib/get_xrd_latest.py" -O get_xrd_latest.py
+curl -sSkO "@proto@://master.xrd.test:@port@/showScript/utils/get_xrd_latest.py" > /dev/null
 chmod 755 get_xrd_latest.py
 rm -rf xrd_rpms
 python get_xrd_latest.py
 rm -rf xrd_rpms/slc-6-x86_64/xrootd-*-src-*.rpm
+rm -rf xrd_rpms/slc-6-x86_64/xrootd-*-devel-*.rpm
 
 #---------------------------------------------------------------------------------------------------------
 log "Installing xrootd packages ..."
@@ -58,7 +59,7 @@ cd tmp_inittest
 if [ -f $CONFIG_PATH ]; then
 	rm $CONFIG_PATH
 fi
-wget -q "http://master.xrd.test:8080/downloadScript/clusters/${CLUSTER_NAME}/${CONFIG_FILE}" -O $CONFIG_FILE
+curl -sSkO "@proto@://master.xrd.test:@port@/downloadScript/clusters/${CLUSTER_NAME}/${CONFIG_FILE}" > /dev/null
 mv $CONFIG_FILE $CONFIG_PATH
 
 #---------------------------------------------------------------------------------------------------------

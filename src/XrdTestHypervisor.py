@@ -90,8 +90,8 @@ class XrdTestHypervisor(Runnable):
         self.config = self.readConfig(configFile)
         
         if self.config.has_option('daemon', 'log_level'):
-            self.logLevel = getattr(logging, self.config.get('daemon', 'log_level'))
-        logging.getLogger().setLevel(self.logLevel)
+            self.logLevel = self.config.get('daemon', 'log_level')
+        logging.getLogger().setLevel(getattr(logging, self.logLevel))
         
         # redirect output on daemon start
         if backgroundMode:
@@ -127,6 +127,9 @@ class XrdTestHypervisor(Runnable):
             sock = self.connectMaster(self.config.get('test_master', 'ip'),
                            self.config.getint('test_master', 'port'))
             if sock:
+                tcpReceiveTh = TCPReceiveThread(self.sockStream, self.recvQueue)
+                thTcpReceive = threading.Thread(target=tcpReceiveTh.run)
+                thTcpReceive.start()
                 return sock
             time.sleep(10)
         return None
@@ -150,8 +153,7 @@ class XrdTestHypervisor(Runnable):
             self.sockStream.connect((socket.gethostbyname(masterName), masterPort))
         except socket.error, e:
             if e[0] == 111:
-                LOGGER.error("%s: Connection from master refused: Probably \
-                             wrong address or master not running." % e)
+                LOGGER.error("%s: Probably wrong address or master not running." % e)
             else:
                 LOGGER.info("Connection with master could not be established.")
                 LOGGER.error("Socket error occured: %s" % e)
@@ -263,20 +265,24 @@ class XrdTestHypervisor(Runnable):
                     #undefine and remove all running machines
                     self.clusterManager.disconnect()
                     break
+                elif isinstance(msg, Exception):
+                    raise msg
                 else:
                     LOGGER.info("Received unknown message: " + str(msg.name))
 
                 self.sockStream.send(resp)
                 LOGGER.debug("Sent msg: " + str(resp))
-            except SocketDisconnectedError, e:
-                LOGGER.info("Connection to XrdTestMaster closed.")
-                #  Try to reconnect to master
-                self.tryConnect()
+            except (SocketDisconnectedError, Exception), e:
+                LOGGER.info("Connection to XrdTestMaster closed.")    
+                # Remove clusters
                 if self.clusterManager:
                         for cluster in self.clusterManager.clusters:
                             self.clusterManager.removeCluster(cluster)
+                        self.clusterManager.clusters = {}
                         self.clusterManager.disconnect()
-                break
+                        
+                # Try to reconnect
+                self.tryConnect()
 
     def run(self):
         '''
@@ -286,10 +292,6 @@ class XrdTestHypervisor(Runnable):
     
         if not sock:
             return
-
-        tcpReceiveTh = TCPReceiveThread(self.sockStream, self.recvQueue)
-        thTcpReceive = threading.Thread(target=tcpReceiveTh.run)
-        thTcpReceive.start()
 
         self.recvLoop()
 

@@ -146,8 +146,8 @@ class XrdTestMaster(Runnable):
         
         # setup logging level
         if self.config.has_option('daemon', 'log_level'):
-            self.logLevel = getattr(logging, self.config.get('daemon', 'log_level'))
-        logging.getLogger().setLevel(self.logLevel)
+            self.logLevel = self.config.get('daemon', 'log_level')
+        logging.getLogger().setLevel(getattr(logging, self.logLevel))
         
         # redirect output on daemon start
         if backgroundMode:

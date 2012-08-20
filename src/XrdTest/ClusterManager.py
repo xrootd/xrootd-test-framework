@@ -478,8 +478,6 @@ class ClusterManager:
         if removeErr:
             raise ClusterManagerException("Error during cluster " + \
                                           "removal: %s" % removeErr)
-        else:
-            del self.clusters[clusterName]
             
     def attachDisks(self, host):
 

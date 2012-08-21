@@ -227,13 +227,13 @@ a.trigger.open {
 }
 
 .error {
-    color: #dd0000
+    color: #dd0000;
 }
 
 .success {
     color: #00bb00;
 }
 
-.info {
+.warning {
     color: #C47003;
 }

@@ -39,6 +39,7 @@ elif [[ @slavename@ =~ client ]]; then
 	service cmsd stop
 	service xrootd stop
 	
+	rm -rf /mnt/xrootd/*
 	mount -t fuse xrootdfs /mnt/xrootd -o rdr=xroot://metamanager1.xrd.test:1094//data,uid=daemon,nosuid,nodev,allow_other
 
 else

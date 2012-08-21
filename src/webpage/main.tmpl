@@ -45,7 +45,7 @@
 									#set $state = "normal"
 									#if $cluster.state.id < 0
 									   #set $state = 'error'
-									#elif $cluster.state.id > 2
+									#elif 1 < $cluster.state.id < 11
 									   #set $state = 'success'
 								    #end if
 								    <br />

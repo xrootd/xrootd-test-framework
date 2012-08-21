@@ -1,5 +1,5 @@
 #!/bin/bash
-#set -e
+set -e
 
 function log () {
 	echo `date +['%T']` $@

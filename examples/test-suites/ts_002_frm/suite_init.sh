@@ -25,7 +25,7 @@ log "Fetching latest xrootd build ..."
 mkdir -p tmp_initsh
 rm -rf tmpinitsh/*
 cd tmp_initsh
-wget -q "http://master.xrd.test:8080/showScript/lib/get_xrd_latest.py" -O get_xrd_latest.py
+curl -sSkO "@proto@://master.xrd.test:@port@/showScript/utils/get_xrd_latest.py" > /dev/null
 chmod 755 get_xrd_latest.py
 rm -rf xrd_rpms
 python get_xrd_latest.py
@@ -36,12 +36,20 @@ rm -rf xrd_rpms/slc-6-x86_64/xrootd-*-devel-*.rpm
 log "Installing xrootd packages ..."
 
 # Fix for when RPM breaks it's own db...
-if [ -f rm /var/lib/rpm/__db* ]; then rm -f /var/lib/rpm/__db*; fi
+if [ -f /var/lib/rpm/__db* ]; then rm -f /var/lib/rpm/__db*; fi
 rpm --rebuilddb
 
-rpm -ev xrootd-server xrootd-fuse xrootd-client-admin-perl xrootd-client xrootd-libs
+if [ `rpm -qa xrootd-server-devel` ]; then rpm -ev --noscripts xrootd-server-devel; fi
+if [ `rpm -qa xrootd-server` ]; then rpm -ev --noscripts xrootd-server; fi
+if [ `rpm -qa xrootd-fuse` ]; then rpm -ev --noscripts xrootd-fuse; fi
+if [ `rpm -qa xrootd-client-admin-perl` ]; then rpm -ev --noscripts xrootd-client-admin-perl; fi
+if [ `rpm -qa xrootd-client-devel` ]; then rpm -ev --noscripts xrootd-client-devel; fi
+if [ `rpm -qa xrootd-client` ]; then rpm -ev --noscripts xrootd-client; fi
+if [ `rpm -qa xrootd-libs-devel` ]; then rpm -ev --noscripts xrootd-libs-devel; fi
+if [ `rpm -qa xrootd-libs` ]; then rpm -ev --noscripts xrootd-libs; fi
 
-rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-libs-*.rpm \
+rpm -U \
+xrd_rpms/slc-6-x86_64/xrootd-libs-*.rpm \
 xrd_rpms/slc-6-x86_64/xrootd-client-*.rpm \
 xrd_rpms/slc-6-x86_64/xrootd-client-admin-perl-*.rpm \
 xrd_rpms/slc-6-x86_64/xrootd-fuse-*.rpm \
@@ -59,7 +67,7 @@ cd tmp_inittest
 if [ -f $CONFIG_PATH ]; then
 	rm $CONFIG_PATH
 fi
-wget -q "http://master.xrd.test:8080/downloadScript/clusters/${CLUSTER_NAME}/${CONFIG_FILE}" -O $CONFIG_FILE
+curl -sSkO "@proto@://master.xrd.test:@port@/downloadScript/clusters/${CLUSTER_NAME}/${CONFIG_FILE}" > /dev/null
 mv $CONFIG_FILE $CONFIG_PATH
 
 # extracting machine name from hostname

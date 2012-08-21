@@ -338,7 +338,7 @@ def extractSuiteName(path):
 
     return (modName, ext, modPath, modFile)
 
-def loadTestCasesDefs(path):
+def loadTestCasesDefs(path, tests):
     '''
     Loads TestCase definitions from .py file. Search for getTestCases function
     in the file and expects list of testCases to be returned.
@@ -346,50 +346,30 @@ def loadTestCasesDefs(path):
     @param path: path for .py files, storing cluster definitions
     '''
     testCases = {}
-
-    (modName, ext, modPath, modFile) = extractSuiteName(path)
-
-    if os.path.isfile(path) and ext == '.py':
-        mod = None
+    
+    for test in tests:
         try:
-            if not modPath in sys.path:
-                sys.path.insert(0, modPath)
-
-            method = 'getTestCases'
-            if sys.modules.has_key(modName):
-                del sys.modules[modName]
-            mod = __import__(modName, {}, {}, [method])
-            fun = getattr(mod, method)
-            objs = fun()
-
-            if objs and getattr(objs, '__iter__', False):
-                for obj in objs:
-                    obj.definitionFile = modFile
-                    
-                    # Resolve script URLs into actual text
-                    root_path = '/'.join(path.split(os.sep)[:-1])
-                    obj.initialize = resolveScript(obj.initialize, root_path) 
-                    obj.run = resolveScript(obj.run, root_path) 
-                    obj.finalize = resolveScript(obj.finalize, root_path)
+            tc = TestCase()
+            tc.name = test
             
-                    #after load, check if definition is correct
-                    obj.validateStatic()
-                    testCases[obj.name] = obj
-            else:
-                raise TestSuiteException("Method %s doesn't return list of " + \
-                    "objects in file: %s" % (method, str(modFile)))
-        except TypeError, e:
-            raise TestSuiteException(("TypeError while loading test case " + \
-                          "definition file %s: %s") % (modFile, e))
-        except AttributeError, e:
-            raise TestSuiteException(("AttributeError during loading test " + \
-                          "case definition file %s: %s") % (modFile, e))
-        except ImportError:
-            raise TestSuiteException(("ImportError during loading test case " + \
-                          "definition file %s: %s") % (modFile, e))
+            tcpath = path + os.sep + 'tc' + os.sep + test
+            for file in os.listdir(tcpath):
+                if file == 'init.sh':
+                    tc.initialize = readFile(os.path.join(tcpath, file))
+                elif file == 'run.sh':
+                    tc.run = readFile(os.path.join(tcpath, file))
+                elif file == 'finalize.sh':
+                    tc.finalize = readFile(os.path.join(tcpath, file))
+            
+            tc.validateStatic()
+            testCases[test] = tc
+            
         except Exception, e:
-            raise TestSuiteException(("Exception during loading test case " + \
-                          "definition file %s: %s") % (modFile, e))
+            raise TestSuiteException('Error occurred loading test cases: %s' % e) 
+                   
+    if not testCases:
+        raise TestSuiteException('No test cases found in test suite')
+
     return testCases
 
 def loadTestSuiteDef(path):
@@ -421,12 +401,12 @@ def loadTestSuiteDef(path):
             obj.definitionFile = modFile
             
             # Resolve script URLs into actual text
-            root_path = '/'.join(path.split(os.sep)[:-1])
+            root_path = os.sep.join(path.split(os.sep)[:-1])
             obj.initialize = resolveScript(obj.initialize, root_path) 
             obj.finalize = resolveScript(obj.finalize, root_path)
             
             #load TestCases
-            obj.testCases = loadTestCasesDefs(fp)
+            obj.testCases = loadTestCasesDefs(modPath, obj.tests)
             #after load, check if testSuite definition is correct
             obj.validateStatic()
         except TypeError, e:
@@ -506,4 +486,6 @@ def resolveScript(definition, root_path):
     
     return script
 
-
+def readFile(path):
+    with open(os.path.abspath(path), 'r') as f:
+        return f.read()

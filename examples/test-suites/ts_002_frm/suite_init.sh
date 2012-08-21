@@ -39,7 +39,7 @@ log "Installing xrootd packages ..."
 if [ -f rm /var/lib/rpm/__db* ]; then rm -f /var/lib/rpm/__db*; fi
 rpm --rebuilddb
 
-rpm -ev xroot-server xrootd-fuse xrootd-client-admin-perl xrootd-client xrootd-libs
+rpm -ev xrootd-server xrootd-fuse xrootd-client-admin-perl xrootd-client xrootd-libs
 
 rpm -i --force xrd_rpms/slc-6-x86_64/xrootd-libs-*.rpm \
 xrd_rpms/slc-6-x86_64/xrootd-client-*.rpm \

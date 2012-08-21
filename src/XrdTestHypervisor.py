@@ -280,13 +280,12 @@ class XrdTestHypervisor(Runnable):
                 LOGGER.info("Connection to XrdTestMaster closed.")    
                 # Remove clusters
                 if self.clusterManager:
-                        for cluster in self.clusterManager.clusters:
-                            self.clusterManager.removeCluster(cluster)
-                        self.clusterManager.clusters = {}
-                        try:
-                            self.clusterManager.disconnect()
-                        except ClusterManagerException, e:
-                            LOGGER.error(e)
+                    for cluster in self.clusterManager.clusters:
+                        self.clusterManager.removeCluster(cluster)
+                    try:
+                        self.clusterManager.disconnect()
+                    except ClusterManagerException, e:
+                        LOGGER.error(e)
                         
                 # Try to reconnect
                 self.tryConnect()

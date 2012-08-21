@@ -59,9 +59,9 @@ def getCluster():
     # Optional load balancing configuration
     #---------------------------------------------------------------------------
     # The DNS alias to be used
-    net.lbAlias = 'lb.xrd.test'
+    #net.lbAlias = 'lb.xrd.test'
     # The machines that will be load balanced (round-robin) under the alias
-    net.lbHosts = [ds1, ds2, ds3, ds4]
+    #net.lbHosts = [ds1, ds2, ds3, ds4]
  
     # Hosts to be included in the cluster
     hosts = [metamanager1, manager1, manager2, ds1, ds2, ds3, ds4, client1]

@@ -114,7 +114,7 @@
 											</tr>
 											<tr class="all">
 												#import re		
-												#set $stdout = $stage[1][0].decode('utf-8')	
+												#set $stdout = $stage[1][0].decode('latin-1')	
 												#set $important = []				
 												
 												#for $match in re.finditer(r'\n(.*\[\s*ok\s*\])', $stdout, re.I)

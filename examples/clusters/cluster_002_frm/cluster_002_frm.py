@@ -6,7 +6,7 @@ def getCluster():
     # Global names
     #---------------------------------------------------------------------------
     cluster.name = 'cluster_002_frm' 
-    network_name = 'net_frm'
+    network_name = cluster.name + '_net'
     
     #---------------------------------------------------------------------------
     # Cluster defaults

@@ -88,6 +88,7 @@ class XrdMessage(object):
     M_START_CLUSTER = 'start_cluster'
     M_STOP_CLUSTER = 'stop_cluster'
     M_CLUSTER_STATE = 'cluster_state'
+    M_HYPERVISOR_STATE = 'hypervisor_state'
 
     M_TESTSUITE_INIT = 'test_suite_init'
     M_TESTSUITE_FINALIZE = 'test_suite_finalize'

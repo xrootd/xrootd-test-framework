@@ -331,11 +331,18 @@ class Cluster(Utils.Stateful):
     S_ERROR_START = (-3, "Error at start:")
     S_ERROR_STOP = (-2, "Error at stop:")
     S_UNKNOWN_NOHYPERV = (-1, "Cluster state unknown: no hypervisor to run cluster.")
-    S_UNKNOWN = (0, "Cluster state unknown")
-    S_DEFINITION_SENT = (2, "Cluster start command sent to hypervisor.")
-    S_ACTIVE = (3, "Cluster active.")
-    S_STOPPED = (4, "Cluster stopped.")
-    S_STOPCOMMAND_SENT = (5, "Cluster stop command sent to hypervisor.")
+    S_UNKNOWN = (0, "Cluster state unknown.")
+    S_DEFINITION_SENT = (1, "Cluster start command sent to hypervisor.")  
+    S_STARTING_CLUSTER = (2, 'Starting cluster.')
+    S_CREATING_NETWORK = (3, 'Creating network.')
+    S_CREATING_SLAVES = (4, 'Creating slaves.')
+    S_COPYING_IMAGES = (5, 'Copying slave images.')
+    S_ATTACHING_DISKS = (6, 'Attaching slave disks.')
+    S_WAITING_BOOT = (7, 'Cluster active. Waiting for slaves to boot.')
+    S_ACTIVE = (8, "Cluster active.")
+    S_STOPCOMMAND_SENT = (9, "Cluster stop command sent to hypervisor.")
+    S_DESTROYING_CLUSTER = (10, 'Destroying cluster')
+    S_STOPPED = (11, "Cluster stopped.")
     '''
     Represents a cluster comprised of hosts connected through network.
     '''

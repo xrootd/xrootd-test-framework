@@ -1225,8 +1225,12 @@ class XrdTestMaster(Runnable):
                                                args=msg.clusterName))
                     else:
                         raise XrdTestMasterException("Unknown cluster " + \
-                                                     "state recvd: " + \
+                                                     "state received: " + \
                                                      msg.clusterName)
+                
+                elif msg.name == XrdMessage.M_HYPERVISOR_STATE:
+                    if self.hypervisors.has_key(msg.sender):
+                        self.hypervisors[msg.sender].states.append(msg.state)
 
             # Messages from slaves
             elif evt.type == MasterEvent.M_SLAVE_MSG:

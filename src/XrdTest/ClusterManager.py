@@ -39,9 +39,10 @@ try:
     import threading
     import libvirt
     
-    from ClusterUtils import ClusterManagerException
+    from ClusterUtils import ClusterManagerException, Cluster
     from ClusterUtils import ERR_CONNECTION, ERR_ADD_HOST, ERR_CREATE_NETWORK
-    from Utils import SafeCounter, Command
+    from Utils import SafeCounter, Command, State
+    from SocketUtils import XrdMessage
     from copy import deepcopy
     from libvirt import libvirtError
 except ImportError, e:
@@ -59,13 +60,15 @@ class ClusterManager:
         '''
         # holds libvirt connection of a type libvirt.virConnect
         self.virtConnection = None
+        # Socket reference back to the master, for publishing status updates
+        self.sockStream = None
         # definitions of clusters. Key: name Value: cluster definition
         self.clusters = {}
         # dictionary of currently running hosts. Key: hostObj.uname
         self.hosts = {}
         # dictionary of currently running networks. Key: networkObj.uname
         self.nets = {}
-        
+        # path to the libvirt storage pool
         self.storagePool = ''
 
     def connect(self, url="qemu:///system"):
@@ -115,6 +118,8 @@ class ClusterManager:
         @param huName: host.uname - host unique name
         @param safeCounter: thread safe counter to signalize this run finished
         '''
+        self.updateState(Cluster.S_COPYING_IMAGES)
+        
         (host, cacheImg, hostObj) = self.hosts[huName]
 
         dip = self.clusters[hostObj.clusterName].defaultHost.bootImage
@@ -265,6 +270,8 @@ class ClusterManager:
         @raise ClusterManagerException: when fails
         @return: None
         '''
+        self.updateState(Cluster.S_CREATING_NETWORK)
+        
         net = None
         try:
             net = self.defineNetwork(networkObj)
@@ -370,6 +377,7 @@ class ClusterManager:
                                           (cluster.network.uname, cluster.name))
             return
 
+        self.updateState(Cluster.S_CREATING_SLAVES)
         try:
             if cluster.hosts and len(cluster.hosts):
                 copyThreads = {}
@@ -445,7 +453,8 @@ class ClusterManager:
                     raise ClusterManagerException("Error during " + \
                           "creation of machine %s: %s. %s" % \
                           (h.uname, e, innerErrMsg))
-                    
+                
+                self.updateState(Cluster.S_ATTACHING_DISKS)
                 try:
                     for host in cluster.hosts:
                         self.attachDisks(host)
@@ -483,7 +492,7 @@ class ClusterManager:
             del self.clusters[clusterName]
             
     def attachDisks(self, host):
-
+        
         if len(host.disks):
             LOGGER.info('Attaching storage disks to machine %s' % host.uname)
             for disk in host.disks:
@@ -513,5 +522,11 @@ class ClusterManager:
             raise ClusterManagerException('Attaching disk failed: %s' % output)
 
             
-        
-    
+    def updateState(self, state):
+        ''' Send a progress update message to the master. '''
+        msg = XrdMessage(XrdMessage.M_HYPERVISOR_STATE)
+        msg.state = State(state)
+        try:
+            self.sockStream.send(msg)
+        except Exception, e:
+            LOGGER.error(e)

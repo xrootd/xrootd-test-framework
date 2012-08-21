@@ -120,7 +120,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                 if self.clientType == self.C_HYPERV:
                     evtType = MasterEvent.M_HYPERV_MSG
 
-                LOGGER.debug("Server: Received message, enqueuing event: %s" % str(evtType))
+                LOGGER.debug("Server: Received message %s, enqueuing event: %s" % (msg, str(evtType)))
                 msg.sender = self.client_address
 
                 evt = MasterEvent(evtType, msg, self.client_address)

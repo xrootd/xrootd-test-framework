@@ -46,7 +46,7 @@ class State(object):
         self.id = status_tuple[0]
         self.name = status_tuple[1]
         self.datetime = datetime.datetime.now()
-        self.time = self.datetime.strftime("%a %H:%M:%S %d-%m-%Y")
+        self.time = self.datetime.strftime("%d-%m-%Y %H:%M:%S")
         if additDesc:
             self.addDesc(additDesc)
 

@@ -45,7 +45,7 @@
 									#set $state = "normal"
 									#if $cluster.state.id < 0
 									   #set $state = 'error'
-									#elif $cluster.state.id in (2, 3)
+									#elif $cluster.state.id > 2
 									   #set $state = 'success'
 								    #end if
 								    <br />
@@ -278,17 +278,17 @@
 							</h3>
 							<div class="inner">
 								<b>
-									States:
+									Activity Log
 									<br />
 								</b>
-								#set sI = 0
 								#for $slSt in $hypervisor[1].states
-									#set sI = sI+1
 									#set $color = "#111111"
 									#if $slSt.id < 0
 										#set $color = "#dd0000"
 									#end if
-								<p style="color:$color;">$sI. ${slSt}</p>
+									<span style="color:${color};">${slSt.name}</span>
+									<span style="float: right; color:#666">[ ${slSt.time} ]</span>
+									<br />
 								#end for
 							</div>
 						#end for

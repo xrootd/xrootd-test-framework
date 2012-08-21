@@ -42,7 +42,7 @@ try:
     import time
 
     from XrdTest.Daemon import Daemon, DaemonException, Runnable
-    from XrdTest.TCPClient import TCPReceiveThread
+    from XrdTest.TCPClient import TCPReceiveThread, Hypervisor
     from XrdTest.SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
     from XrdTest.ClusterManager import ClusterManager
     from XrdTest.ClusterUtils import ClusterManagerException, Cluster
@@ -113,7 +113,7 @@ class XrdTestHypervisor(Runnable):
         if self.config.has_option('virtual_machines', 'storage_pool'):
             self.storagePool = self.config.get('virtual_machines', 'storage_pool')
         self.clusterManager.storagePool = self.storagePool
-                
+        
         self.clusterManager.connect("qemu:///system")
 
     def __del__(self):
@@ -133,6 +133,7 @@ class XrdTestHypervisor(Runnable):
                 tcpReceiveTh = TCPReceiveThread(self.sockStream, self.recvQueue)
                 thTcpReceive = threading.Thread(target=tcpReceiveTh.run)
                 thTcpReceive.start()
+                self.clusterManager.sockStream = self.sockStream  
                 return sock
             time.sleep(10)
         return None
@@ -196,6 +197,8 @@ class XrdTestHypervisor(Runnable):
         '''
         Handle start cluster message from a master - start a cluster.
         '''
+        self.updateState(Cluster.S_STARTING_CLUSTER)
+        
         resp = XrdMessage(XrdMessage.M_CLUSTER_STATE)
         # rewrite important parameters to response message
         resp.clusterName = msg.clusterDef.name
@@ -217,8 +220,9 @@ class XrdTestHypervisor(Runnable):
                 LOGGER.info("Cluster definition semantically correct. " + \
                             "Starting cluster.")
                 self.clusterManager.createCluster(cluster)
-
-                resp.state = State(Cluster.S_ACTIVE)
+                
+                resp.state = State(Cluster.S_ACTIVE)                   
+                self.updateState(Cluster.S_WAITING_BOOT)
             except ClusterManagerException, e:
                 LOGGER.error("Error occured during cluster start: %s" % e)
                 resp.state = State(Cluster.S_ERROR_START, e)
@@ -317,6 +321,12 @@ class XrdTestHypervisor(Runnable):
             else:
                 raise XrdTestHypervisorException("Config file %s could not be read" % confFile)
             return config
+        
+    def updateState(self, state):
+        ''' Send a progress update message to the master. '''
+        msg = XrdMessage(XrdMessage.M_HYPERVISOR_STATE)
+        msg.state = State(state)
+        self.sockStream.send(msg)
 
 def main():
     '''

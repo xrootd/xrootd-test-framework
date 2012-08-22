@@ -35,19 +35,6 @@ rm -rf xrd_rpms/slc-6-x86_64/xrootd-*-devel-*.rpm
 #---------------------------------------------------------------------------------------------------------
 log "Installing xrootd packages ..."
 
-# Fix for when RPM breaks it's own db...
-if [ -f /var/lib/rpm/__db* ]; then rm -f /var/lib/rpm/__db*; fi
-rpm --rebuilddb
-
-if [ `rpm -qa xrootd-server-devel` ]; then rpm -ev --noscripts xrootd-server-devel; fi
-if [ `rpm -qa xrootd-server` ]; then rpm -ev --noscripts xrootd-server; fi
-if [ `rpm -qa xrootd-fuse` ]; then rpm -ev --noscripts xrootd-fuse; fi
-if [ `rpm -qa xrootd-client-admin-perl` ]; then rpm -ev --noscripts xrootd-client-admin-perl; fi
-if [ `rpm -qa xrootd-client-devel` ]; then rpm -ev --noscripts xrootd-client-devel; fi
-if [ `rpm -qa xrootd-client` ]; then rpm -ev --noscripts xrootd-client; fi
-if [ `rpm -qa xrootd-libs-devel` ]; then rpm -ev --noscripts xrootd-libs-devel; fi
-if [ `rpm -qa xrootd-libs` ]; then rpm -ev --noscripts xrootd-libs; fi
-
 rpm -U \
 xrd_rpms/slc-6-x86_64/xrootd-libs-*.rpm \
 xrd_rpms/slc-6-x86_64/xrootd-client-*.rpm \

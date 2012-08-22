@@ -66,9 +66,9 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         self.sockStream = None
         self.clientType = ThreadedTCPRequestHandler.C_SLAVE
 
-    def authClient(self):
+    def authClient(self, clientType):
         '''
-        Check if hypervisor is authentic. He provides connection passwd.
+        Check if hypervisor is authentic. It will provide the connection password.
         '''
         msg = self.sockStream.recv()
         if msg == self.server.config.get('server', 'connection_passwd'):
@@ -91,10 +91,12 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                                 self.server.config.get('security', 'keyfile'),
                                           ssl_version=ssl.PROTOCOL_TLSv1)
         self.sockStream = FixedSockStream(self.sockStream)
-        # authenticate client
-        self.authClient()
+        
         # whether client is slave or hypervisor
         (clientType, clientHostname) = self.sockStream.recv()
+        # authenticate hypervisors
+        if clientType == 'hypervisor':
+            self.authClient(clientType)
 
         LOGGER.info(("%s [%s, %s] establishing connection...") % \
                                 (clientType.capitalize(), \
@@ -104,7 +106,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         if clientType == ThreadedTCPRequestHandler.C_HYPERV:
             self.clientType = ThreadedTCPRequestHandler.C_HYPERV
 
-        # preparing MasterEvent and add it to main programm events queue
+        # prepare MasterEvent and add it to main program events queue
         # to handle logic of event
         evt = MasterEvent(MasterEvent.M_CLIENT_CONNECTED, (self.clientType,
                             self.client_address, self.sockStream, \

@@ -188,7 +188,6 @@ class XrdTestSlave(Runnable):
         
     def connectMaster(self, masterName, masterPort):
         ''' TODO: '''
-        global currentDir
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.sockStream = ssl.wrap_socket(sock, server_side=False,
@@ -211,24 +210,10 @@ class XrdTestSlave(Runnable):
             LOGGER.debug("Connected to master.")
         try:
             self.sockStream = FixedSockStream(self.sockStream)
-
-            #authenticate in master
-            self.sockStream.send(\
-                self.config.get('test_master', 'connection_passwd'))
-            msg = self.sockStream.recv()
-            LOGGER.info('Received msg: ' + msg)
-            if msg == "PASSWD_OK":
-                LOGGER.info("Connected and authenticated to XrdTestMaster " + \
-                            "successfully. Waiting for commands " + \
-                            "from the master.")
-            else:
-                LOGGER.info("Password authentication in master failed.")
-                return None
+            self.sockStream.send(("slave", socket.gethostname()))
         except socket.error, e:
             LOGGER.exception(e)
             return None
-
-        self.sockStream.send(("slave", socket.gethostname()))
 
         return self.sockStream
 

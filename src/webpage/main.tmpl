@@ -1,12 +1,15 @@
 <html>
 	<head>
-		<meta http-equiv="refresh" content="url=http://${hostname}:${HTTPport}" />
+		<meta http-equiv="refresh" content="url=http://${hostname}:${port}" />
 		<title>$title</title>
-		<script type="text/javascript" src="webpage/js/jquery-1.6.2.min.js"></script>
-		<script type="text/javascript" src="webpage/js/jquery-ui-1.8.16.custom.min.js"></script>
+		<script type="text/javascript" src="webpage/js/jquery-1.8.0.min.js"></script>
+		<script type="text/javascript" src="webpage/js/jquery-ui-1.8.23.custom.min.js"></script>
 		<script type="text/javascript" src="webpage/js/jquery.nestedAccordion.js"></script>
+		<script type="text/javascript" src="webpage/js/jquery-jvert-tabs-1.1.4.js"></script>
+		<link rel="stylesheet" type="text/css" href="webpage/css/jquery-jvert-tabs-1.1.4.css" />
 		<link rel="stylesheet" type="text/css" href="webpage/css/jquery.css" />
 		<link rel="stylesheet" type="text/css" href="webpage/css/main.css" />
+
 		<script type="text/javascript">
 			<!--// --><![CDATA[//><!--
 
@@ -23,6 +26,8 @@
 			//--><!]]>
 
 		</script>
+
+		
 	</head>
 	<body>
 		<p>XRootD Testing Framework</p>
@@ -30,7 +35,7 @@
 			
 			#set $inc = $webroot + '/main_menu.tmpl' 
 			#include $inc
-			
+					
 			<div class="left">
 				<h1>Cluster definitions</h1>
 				<div id="acc1" class="accordion">

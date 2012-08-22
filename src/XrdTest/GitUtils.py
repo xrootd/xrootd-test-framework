@@ -61,10 +61,8 @@ def sync_remote_git(repo, config):
         if not os.path.exists(local_repo):
             git_clone(remote_repo, local_repo, local_repo)
         
-        output = git_fetch(local_repo)
-        diff = ''
-        if output: 
-            diff = git_diff(local_branch, remote_branch, local_repo)
+        git_fetch(local_repo)
+        diff = git_diff(local_branch, remote_branch, local_repo)
         
         # If git-diff prints to stdout, then we have changes (or an error).
         # TODO: handle errors with incorrect branch names

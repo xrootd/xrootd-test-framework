@@ -116,7 +116,7 @@ class WebInterface:
         tpl = None
         tplFile = self.webroot + os.sep + tpl_file
 
-        tpl_vars['HTTPport'] = self.config.getint('webserver', 'port')
+        tpl_vars['port'] = self.port
         try:
             tpl = Template(file=tplFile, searchList=[tpl_vars])
         except Exception, e:

@@ -167,7 +167,9 @@ class XrdTestHypervisor(Runnable):
         try:
             # Wrap sockStream into fixed socket implementation
             self.sockStream = FixedSockStream(self.sockStream)
-
+            # Send my identity information
+            self.sockStream.send(("hypervisor", socket.gethostname()))
+            
             #Authenticate in master
             self.sockStream.send(\
                         self.config.get('test_master', 'connection_passwd'))
@@ -181,8 +183,6 @@ class XrdTestHypervisor(Runnable):
             else:
                 LOGGER.info("Password authentication in master failed.")
                 return None
-            # Send my identity information
-            self.sockStream.send(("hypervisor", socket.gethostname()))
 
             return self.sockStream
         except socket.error, e:

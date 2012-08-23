@@ -267,6 +267,10 @@ class XrdTestHypervisor(Runnable):
                 #receive msg from master
                 addrMsg = self.recvQueue.get()
                 msg = addrMsg
+
+                if isinstance(msg, Exception):
+                    raise msg
+                
                 LOGGER.info("Received msg: " + str(msg.name))
 
                 resp = XrdMessage(XrdMessage.M_UNKNOWN)

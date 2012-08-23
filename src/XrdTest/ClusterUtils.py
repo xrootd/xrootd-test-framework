@@ -484,6 +484,7 @@ def extractClusterName(path):
     (modName, ext) = os.path.splitext(modFile)
     return (modName, ext, modPath, modFile)
 
+
 def loadClusterDef(fp, clusters, validateWithRest=True):
     (modName, ext, modPath, modFile) = extractClusterName(fp)
 

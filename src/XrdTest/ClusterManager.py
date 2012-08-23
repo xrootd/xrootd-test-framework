@@ -68,7 +68,6 @@ class ClusterManager:
         self.hosts = {}
         # dictionary of currently running networks. Key: networkObj.uname
         self.nets = {}
-        # path to the libvirt storage pool
         self.storagePool = ''
 
     def connect(self, url="qemu:///system"):
@@ -137,14 +136,14 @@ class ClusterManager:
             f.close()
             cacheImgFile.close()
         except IOError, e:
-            msg = "Can't open %s. %s" % (dip, e)
+            msg = "Can't open %s: %s" % (dip, e)
             raise ClusterManagerException(msg)
         else:
             LOGGER.info(("Disk image %s  (for %s) copied to cache file %s") \
                         % (dip, hostObj.name, cacheImg))
             if safeCounter:
                 safeCounter.inc()
-
+                
     def defineHost(self, host):
         '''
         Defines virtual host in a cluster using given host object,
@@ -166,16 +165,14 @@ class ClusterManager:
                 (not host.bootImage and h[2].runningDiskImage == cip):
                 return h[0]
 
-        cacheImg = None
         if not host.bootImage:
-            # first, copy the original disk image
-            cacheImg = '%s/%s.img.cache' % (self.storagePool, host.uname)
-            host.runningDiskImage = cacheImg
+            host.runningDiskImage = os.path.join(self.findStoragePool(\
+                                    self.storagePool), '%s.img.cache' % (host.uname))
         else:
-            # machine uses ogirinal source image
-            LOGGER.info(("Defining machine %s using ORIGINAL IMAGE %s") \
+            # machine uses original source image
+            LOGGER.info(("Defining machine %s using original image %s") \
                         % (host.uname, host.bootImage))
-            host.runningDiskImage = host.bootImage
+            host.runningDiskImage = os.path.join(self.findStoragePool(self.storagePool), host.bootImage)
 
         self.hosts[host.uname] = None
         try:
@@ -184,7 +181,7 @@ class ClusterManager:
 
             # add host definition objects to dictionary
             # key: host.uname - unique name
-            self.hosts[host.uname] = (hostdef, cacheImg, host)
+            self.hosts[host.uname] = (hostdef, host.runningDiskImage, host)
             LOGGER.info("Defined machine: %s" % host.uname)
         except libvirtError, e:
             try:
@@ -210,7 +207,6 @@ class ClusterManager:
             LOGGER.info("Destroying and undefining machine %s." % hostUName)
             h.destroy()
             h.undefine()
-            LOGGER.info("Done.")
 
             del self.hosts[hostUName]
         except libvirtError, e:
@@ -317,9 +313,10 @@ class ClusterManager:
             host = conn.lookupByName(hostObj.uname)
             LOGGER.info("Machine already defined: %s" % hostObj.uname)
         except libvirtError, e:
-            LOGGER.error(e)
+            # It's OK that the host isn't defined.
+            LOGGER.debug(e)
             return
-
+        
         if host:
             LOGGER.info("Old host %s definition found. Removing." % \
                         hostObj.uname)
@@ -338,7 +335,8 @@ class ClusterManager:
             net = conn.networkLookupByName(netObj.uname)
             LOGGER.info("Network already defined: %s" % netObj.uname)
         except libvirtError, e:
-            LOGGER.error(e)
+            # It's OK that the network isn't defined.
+            LOGGER.debug(e)
             return
 
         if net:
@@ -367,9 +365,14 @@ class ClusterManager:
             raise ClusterManagerException(("Cluster %s already exists." + \
                               " Needs to be destroyed first.") % \
                               (cluster.name))
+            
         self.clusters[cluster.name] = cluster
-        self.removeDanglingNetwork(cluster.network)
-        net = self.createNetwork(cluster.network)
+        try:
+            self.removeDanglingNetwork(cluster.network)
+            net = self.createNetwork(cluster.network)
+        except ClusterManagerException, e:
+            LOGGER.error(e)
+            raise e
 
         if not net:
             raise ClusterManagerException(("Network %s couldn't be created." + \
@@ -381,52 +384,88 @@ class ClusterManager:
         try:
             if cluster.hosts and len(cluster.hosts):
                 copyThreads = {}
-                safeCounter = SafeCounter() # thread safe counter
-                                        # to count how many machines have been
-                                        # copied by additional threads, thus
-                                        # can continue creation process
-
-                needCopy = 0    # number of machines that need additional
-                                # thread to copy their source images
+                # thread safe counter to count how many machines have been
+                # copied by additional threads, thus can continue creation process
+                safeCounter = SafeCounter()           
+                # number of machines that need additional thread to copy their 
+                # source images
+                needCopy = 0    
+                
                 waitingForCreate = []
                 
                 for h in cluster.hosts:
                     self.removeDanglingHost(h)
                     self.defineHost(h)
                     waitingForCreate.append(h.uname)
-
+                        
                     if h.bootImage:
-                        # machine uses original image
-                        LOGGER.info("Using original image %s for machine %s." % \
+                        # machine defines custom boot image
+                        LOGGER.info("Using custom image %s for machine %s." % \
                                     (h.bootImage, h.uname))
-                    elif h.cacheBootImage:
+                        # get full path from storage pool
+                        h.bootImage = self.findStorageVolume(self.storagePool, h.bootImage)
+                    else:
+                        # machine uses default boot image
+                        LOGGER.info("Using default image %s for machine %s." % \
+                                    (cluster.defaultHost.bootImage, h.uname))
+                        # get full path from storage pool
+                        h.bootImage = cluster.defaultHost.bootImage   
+                    
+                    if h.cacheBootImage:
                         # machine uses cached image
-                        LOGGER.info("Using cached image for machine %s." % \
-                                    (h.uname))
-                        if not os.path.exists(self.storagePool + os.sep + h.uname + '.img.cache'):
+                        LOGGER.info("Retrieving cached image for machine %s." % (h.uname))
+                        
+                        try: 
+                            self.findStorageVolume(self.storagePool, h.uname + '.img.cache')
+                        except:
                             # make a copy from original image
-                            LOGGER.info("No cached image exists for machine %s. Copying from %s" % \
-                                        (h.uname, cluster.defaultHost.bootImage))
+                            LOGGER.info("Cached image doesn't exist for machine %s. Copying from %s" % \
+                                        (h.uname, h.bootImage))
                             sys.setcheckinterval(500)
                             needCopy += 1
                             # create and start thread copying given virtual machine
-                            # image to a temporary file
+                            # image to the cache
                             copyThreads[h.uname] = \
                                 threading.Thread(target=self.copyImg, args=\
                                                  (h.uname, safeCounter))
                             copyThreads[h.uname].start()
-                    else:
-                        # make a copy from original image
-                        LOGGER.info("Copying image %s for machine %s." % \
-                                    (cluster.defaultHost.bootImage, h.uname))
-                        sys.setcheckinterval(500)
-                        needCopy += 1
-                        # create and start thread copying given virtual machine
-                        # image to a temporary file
-                        copyThreads[h.uname] = \
-                            threading.Thread(target=self.copyImg, args=\
-                                             (h.uname, safeCounter))
-                        copyThreads[h.uname].start()
+                    
+                    
+#                    if h.bootImage:
+#                        # machine defines custom image
+#                        LOGGER.info("Using custom image %s for machine %s." % \
+#                                    (h.bootImage, h.uname))
+#                        # get full path from storage pool
+#                        h.bootImage = self.findStorageVolume(self.storagePool, h.bootImage)
+#                    elif h.cacheBootImage:
+#                        # machine uses cached image
+#                        LOGGER.info("Using cached image for machine %s." % \
+#                                    (h.uname))
+#                        
+#                        if not os.path.exists(self.findStorageVolume(self.storagePool, h.uname + '.img.cache')):
+#                            # make a copy from original image
+#                            LOGGER.info("No cached image exists for machine %s. Copying from %s" % \
+#                                        (h.uname, cluster.defaultHost.bootImage))
+#                            sys.setcheckinterval(500)
+#                            needCopy += 1
+#                            # create and start thread copying given virtual machine
+#                            # image to a temporary file
+#                            copyThreads[h.uname] = \
+#                                threading.Thread(target=self.copyImg, args=\
+#                                                 (h.uname, safeCounter))
+#                            copyThreads[h.uname].start()
+#                    else:
+#                        # make a copy from original image
+#                        LOGGER.info("Copying image %s for machine %s." % \
+#                                    (cluster.defaultHost.bootImage, h.uname))
+#                        sys.setcheckinterval(500)
+#                        needCopy += 1
+#                        # create and start thread copying given virtual machine
+#                        # image to a temporary file
+#                        copyThreads[h.uname] = \
+#                            threading.Thread(target=self.copyImg, args=\
+#                                             (h.uname, safeCounter))
+#                        copyThreads[h.uname].start()
 
                 #wait for all threads to copy images
                 if needCopy > 0:
@@ -445,9 +484,8 @@ class ClusterManager:
                         LOGGER.info("Creating machine %s..." % huname)
                         self.hosts[huname][0].create()
                         hostsCreated.append(huname)
-                        LOGGER.info("Created successfully machine %s." % huname)
                 except libvirtError, e:
-                    LOGGER.info("Error occured. Undefining created machines.")
+                    LOGGER.error("Error occured. Undefining created machines.")
                     innerErrMsg = self.removeHosts(hostsCreated)
                     self.removeCluster(cluster)
                     raise ClusterManagerException("Error during " + \
@@ -459,10 +497,11 @@ class ClusterManager:
                     for host in cluster.hosts:
                         self.attachDisks(host)
                 except ClusterManagerException, e:
-                    LOGGER.error(e)
+                    raise e
             else:
-                LOGGER.info("No hosts in cluster defined.")
+                LOGGER.warning("No hosts in cluster defined.")
         except ClusterManagerException, e:
+            LOGGER.error(e)
             self.removeNetwork(cluster.network.uname)
             raise e
 
@@ -495,30 +534,36 @@ class ClusterManager:
         
         if len(host.disks):
             LOGGER.info('Attaching storage disks to machine %s' % host.uname)
+            
             for disk in host.disks:
-
                 try:
                     self.attachDisk(host.uname, disk.name, disk.size, disk.cache, \
                                      disk.device)
                     LOGGER.info('Attached storage disk.')
-                except ClusterManagerException, e:
-                    LOGGER.error(e)
+                except (ClusterManagerException, Exception), e:
+                    raise ClusterManagerException('Failure attaching disks: %s' % e)
             
     def attachDisk(self, host, diskName, diskSize, cache, device):
         ''' 
         TODO:
         '''
-        root = '/var/lib/libvirt/images/XrdTest'
+        diskPath = os.path.join(self.findStoragePool(self.storagePool), \
+                                '%s_%s' % (host, diskName))
         
-        if not os.path.exists('%s/%s_%s' % (root, host, diskName)) or not cache:
+        if not os.path.exists(diskPath) or not cache:
             LOGGER.info('Creating storage disk %s_%s' % (host, diskName))
-            with open('%s/%s_%s' % (root, host, diskName), 'w') as f:
-                f.truncate(int(diskSize))
-            Command('mkfs.ext4 -F %s/%s_%s' % (root, host, diskName), root).execute()
-  
-        output = Command('virsh attach-disk %s %s/%s_%s %s --persistent' % 
-                (host, root, host, diskName, device), root).execute()
-        if re.match('error', output):
+            
+            try:
+                with open(diskPath, 'w') as f:
+                    f.truncate(int(diskSize))
+                Command('mkfs.ext4 -F %s' % diskPath, '.').execute()
+            except Exception, e:
+                LOGGER.error(e)
+                raise ClusterManagerException('Disk creation error: %s' % e)
+        
+        output = Command('virsh attach-disk %s %s %s' % 
+                (host, diskPath, device), '.').execute()
+        if output[1] != 0:
             raise ClusterManagerException('Attaching disk failed: %s' % output)
 
             
@@ -529,4 +574,86 @@ class ClusterManager:
         try:
             self.sockStream.send(msg)
         except Exception, e:
-            LOGGER.error(e)
+            LOGGER.error('Error updating state: %s' % e)
+    
+    def getPoolPath(self, poolXML):
+        '''Parse the given storage pool XML description and return its
+        path. '''
+        from xml.dom.minidom import parseString
+        doc = parseString(poolXML)
+        return doc.getElementsByTagName('target')[0].getElementsByTagName('path')[0].firstChild.nodeValue
+    
+    def findStoragePool(self, poolname):
+        '''Attempt to find a storage pool with the given name. '''
+        con = self.virtConnection
+        pool = ''
+        
+        try:
+            pools = con.listStoragePools()
+            for p in pools:
+                if p == poolname:
+                    pool = con.storagePoolLookupByName(pool)
+            
+            if not pool:
+                LOGGER.warning('Storage pool %s not found. Using default.' % poolname)
+                pool = con.storagePoolLookupByName('default')
+            
+            poolXML = pool.XMLDesc(0)
+            path = self.getPoolPath(poolXML)
+            return path
+
+        except libvirtError, e:
+            raise ClusterManagerException(e)
+            
+    
+    def findStorageVolume(self, poolname, volumename):
+        '''Attempt to find a storage volume (file) in the specified libvirt storage
+        pool. If the volume is not found, the default pool will be searched. Return
+        the full path to the volume.'''
+        con = self.virtConnection
+        pool = ''
+        volume = ''
+        
+        try:
+            pools = con.listStoragePools()
+            for p in pools:
+                if p == poolname:
+                    pool = con.storagePoolLookupByName(pool)
+            
+            if not pool:
+                LOGGER.warning('Storage pool %s not found. Using default.' % poolname)
+                pool = con.storagePoolLookupByName('default')
+        
+            # The pool might have changed, so refresh it
+            pool.refresh(0)
+            volumes = pool.listVolumes()
+            for v in volumes:
+                if v == volumename:
+                    volume = pool.storageVolLookupByName(v)
+                    volume = volume.path()
+                    
+            if not volume:
+                raise ClusterManagerException(('Volume %s not found in pool %s or in the default pool.' \
+                                               % (volumename, poolname)))
+            return volume
+            
+        except libvirtError, e:
+            raise ClusterManagerException(e)
+            
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

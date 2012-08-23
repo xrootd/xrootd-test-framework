@@ -130,7 +130,6 @@ class WebInterface:
         Main page of web interface, shows definitions.
         '''
         tplVars = { 'title' : 'Xrd Test Master - Web Interface',
-                    'message' : 'Welcome and begin the tests!',
                     'webroot' : self.webroot,
                     'clusters' : self.testMaster.clusters,
                     'hypervisors': self.testMaster.hypervisors,
@@ -164,7 +163,7 @@ class WebInterface:
         Page that at once redirects user to index. Used to clear URL parameters.
         '''
         tplVars = { 'hostname': socket.gethostname(),
-                    'HTTPport': self.config.getint('webserver', 'port')}
+                    'port': self.port}
         return self.disp("index_redirect.tmpl", tplVars)
 
     def downloadScript(self, *script_name):

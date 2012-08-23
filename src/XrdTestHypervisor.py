@@ -42,7 +42,7 @@ try:
     import time
 
     from XrdTest.Daemon import Daemon, DaemonException, Runnable
-    from XrdTest.TCPClient import TCPReceiveThread, Hypervisor
+    from XrdTest.TCPClient import TCPReceiveThread
     from XrdTest.SocketUtils import FixedSockStream, XrdMessage, SocketDisconnectedError
     from XrdTest.ClusterManager import ClusterManager
     from XrdTest.ClusterUtils import ClusterManagerException, Cluster
@@ -211,8 +211,15 @@ class XrdTestHypervisor(Runnable):
                                                 'emulator_path'))
         cluster.network.xrdTestMasterIP = socket.gethostbyname( \
                                         self.config.get('test_master', 'ip'))
-        cluster.defaultHost.bootImage = self.storagePool + os.sep + \
-                                        cluster.defaultHost.bootImage
+        
+        try:
+            cluster.defaultHost.bootImage = self.clusterManager.findStorageVolume( \
+                                self.storagePool, cluster.defaultHost.bootImage)
+        except ClusterManagerException, e:
+            LOGGER.error(e)
+            resp.state = State(Cluster.S_ERROR_START, e)
+            return resp
+            
         # check if cluster definition is correct on this hypervisor
         res, msg = cluster.validateDynamic()
         if res:
@@ -273,26 +280,27 @@ class XrdTestHypervisor(Runnable):
                     #undefine and remove all running machines
                     self.clusterManager.disconnect()
                     break
-                elif isinstance(msg, Exception):
-                    raise msg
                 else:
                     LOGGER.info("Received unknown message: " + str(msg.name))
 
                 self.sockStream.send(resp)
                 LOGGER.debug("Sent msg: " + str(resp))
-            except (SocketDisconnectedError, Exception), e:
-                LOGGER.info("Connection to XrdTestMaster closed.")    
+            except SocketDisconnectedError, e:
+                LOGGER.error(e)
+                LOGGER.info("Connection to XrdTestMaster closed.")  
+                
+                # Try to reconnect
+                self.tryConnect()
+                
                 # Remove clusters
                 if self.clusterManager:
-                    for cluster in self.clusterManager.clusters:
+                    clusters = self.clusterManager.clusters
+                    for cluster in clusters:
                         self.clusterManager.removeCluster(cluster)
                     try:
                         self.clusterManager.disconnect()
                     except ClusterManagerException, e:
                         LOGGER.error(e)
-                        
-                # Try to reconnect
-                self.tryConnect()
 
     def run(self):
         '''

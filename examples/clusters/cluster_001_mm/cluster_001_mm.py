@@ -11,8 +11,7 @@ def getCluster():
     #---------------------------------------------------------------------------
     # Cluster defaults
     #
-    # The bootImage parameter is relative to the storage_pool location as given
-    # in the hypervisor config file.
+    # The bootImage parameter is relative to some libvirt-managed storage pool.
     #---------------------------------------------------------------------------
     cluster.defaultHost.bootImage = 'slc6_testslave_ref.img'
     cluster.defaultHost.cacheBootImage = True

@@ -6,3 +6,4 @@ SUITE_SESSIONS.bin
 .project
 .pydevproject
 *.pyc
+/nbproject/private/

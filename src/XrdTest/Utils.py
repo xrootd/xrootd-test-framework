@@ -29,6 +29,7 @@ import datetime
 import subprocess
 import os
 import sys
+import threading
 
 from copy import copy
 from threading import Lock, Condition
@@ -137,7 +138,7 @@ class Command(object):
             LOGGER.debug('Command returned no output.') 
         else: 
             LOGGER.debug('Command output: \n%s' % output.rstrip('\n'))
-        return output
+        return (output, retcode)
     
 class Logger(object):
     '''

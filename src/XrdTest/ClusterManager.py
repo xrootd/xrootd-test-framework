@@ -429,43 +429,6 @@ class ClusterManager:
                                 threading.Thread(target=self.copyImg, args=\
                                                  (h.uname, safeCounter))
                             copyThreads[h.uname].start()
-                    
-                    
-#                    if h.bootImage:
-#                        # machine defines custom image
-#                        LOGGER.info("Using custom image %s for machine %s." % \
-#                                    (h.bootImage, h.uname))
-#                        # get full path from storage pool
-#                        h.bootImage = self.findStorageVolume(self.storagePool, h.bootImage)
-#                    elif h.cacheBootImage:
-#                        # machine uses cached image
-#                        LOGGER.info("Using cached image for machine %s." % \
-#                                    (h.uname))
-#                        
-#                        if not os.path.exists(self.findStorageVolume(self.storagePool, h.uname + '.img.cache')):
-#                            # make a copy from original image
-#                            LOGGER.info("No cached image exists for machine %s. Copying from %s" % \
-#                                        (h.uname, cluster.defaultHost.bootImage))
-#                            sys.setcheckinterval(500)
-#                            needCopy += 1
-#                            # create and start thread copying given virtual machine
-#                            # image to a temporary file
-#                            copyThreads[h.uname] = \
-#                                threading.Thread(target=self.copyImg, args=\
-#                                                 (h.uname, safeCounter))
-#                            copyThreads[h.uname].start()
-#                    else:
-#                        # make a copy from original image
-#                        LOGGER.info("Copying image %s for machine %s." % \
-#                                    (cluster.defaultHost.bootImage, h.uname))
-#                        sys.setcheckinterval(500)
-#                        needCopy += 1
-#                        # create and start thread copying given virtual machine
-#                        # image to a temporary file
-#                        copyThreads[h.uname] = \
-#                            threading.Thread(target=self.copyImg, args=\
-#                                             (h.uname, safeCounter))
-#                        copyThreads[h.uname].start()
 
                 #wait for all threads to copy images
                 if needCopy > 0:
@@ -640,20 +603,5 @@ class ClusterManager:
         except libvirtError, e:
             raise ClusterManagerException(e)
             
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     

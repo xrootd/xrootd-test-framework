@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en" class="no-js">
+    <head>
+        <title>${title}</title>
+        <meta charset="UTF-8">
+        <meta name="description" content="${title}">
+        <meta name="author" content="Justin Salmon <jsalmon@cern.ch>">
+
+        <link rel="shortcut icon" href="/webpage/img/favicon.ico">
+
+        <!-- CSS Styles -->
+        <link rel="stylesheet" href="/webpage/css/style.css">
+        <link rel="stylesheet" href="/webpage/css/colors.css">
+        <link rel="stylesheet" href="/webpage/css/jquery.tipsy.css">
+        <link rel="stylesheet" href="/webpage/css/jquery.datatables.css">
+        <link rel="stylesheet" href="/webpage/css/jquery.nyromodal.css">
+        <link rel="stylesheet" href="/webpage/css/jquery.datepicker.css">
+
+        <!-- Google WebFonts -->
+        <link href='http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic' rel='stylesheet' type='text/css'>
+
+        <script src="/webpage/js/libs/modernizr-1.7.min.js"></script>
+    </head>
+
+    <!-- Add class .fixed for fixed layout. You would need also edit CSS file for width -->
+    <body>
+
+        <!-- Fixed Layout Wrapper -->
+        <div class="fixed-wrapper">
+
+            <!-- Aside Block -->
+            <section role="navigation">
+                <header>
+                    <h2><a href="./index" title="Back to Homepage"></a>XRootD</h2>
+                    <h1>Testing Framework</h1>
+                </header>
+
+                <!-- Main Navigation -->
+                <nav id="main-nav">
+                    <ul>
+                        <!-- Use class .no-submenu to open link instead of a sub menu-->
+                        <!-- Use class .current to open submenu on page load -->
+                        <li class="current">
+                            <a href="index" class="dashboard no-submenu">Dashboard</a>
+                        </li>
+                        <li>
+                            <a href="hypervisors" class="dashboard no-submenu">Hypervisors</a><span title="1 connected hypervisor(s)">1</span>
+                        </li>
+                        <li>
+                            <a href="slaves" class="projects no-submenu">Slaves</a><span title="0 connected slave(s)">0</span>
+                        </li>
+                        <li>
+                            <a href="clusters" class="products no-submenu">Clusters</a>
+                        </li>
+                        <li>
+                            <a href="testsuites" class="settings no-submenu">Test Suites</a>
+                        </li>
+                    </ul>
+                </nav>
+                <!-- /Main Navigation -->
+
+            </section>
+            <!-- /Aside Block -->
+
+            <!-- Main Content -->
+            <section role="main">
+
+                <!-- Breadcrumbs -->
+                <ul id="breadcrumbs">
+                    <li><a href="index" title="Back to Homepage">Back to Home</a></li>
+                    <li><a href="#">Dashboard</a></li>
+                </ul>
+                <!-- /Breadcrumbs -->
+
+                <!-- Full Content Block -->
+                <!-- Note that only 1st article need clearfix class for clearing -->
+                <article class="full-block clearfix">
+
+                    <!-- Article Container for safe floating -->
+                    <div class="article-container">
+
+                        <!-- Article Header -->
+                        <header>
+                            <h2>Welcome to the XRootD Testing Framework</h2>
+                        </header>
+                        <!-- /Article Header -->
+
+                        <!-- Article Content -->
+                        <section>
+                            <ul>
+                                <li>Status</li>
+                                <li>Overview</li>
+                                <li>Statistics</li>
+                            </ul>
+                        </section>
+                        <!-- /Article Content -->
+
+                    </div>
+                    <!-- /Article Container -->
+
+                </article>
+                <!-- /Full Content Block -->
+
+            </section>
+            <!-- /Main Content -->
+
+        </div>
+        <!-- /Fixed Layout Wrapper -->
+
+
+        <!-- JS Libs at the end for faster loading -->
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+        <script>!window.jQuery && document.write(unescape('%3Cscript src="/webpage/js/jquery/jquery-1.5.1.min.js"%3E%3C/script%3E'))</script>
+        <script src="/webpage/js/jquery/jquery.nyromodal.js"></script>
+        <script src="/webpage/js/jquery/jquery.tipsy.js"></script>
+        <script src="/webpage/js/jquery/jquery.datatables.js"></script>
+        <script src="/webpage/js/jquery/jquery.datepicker.js"></script>
+        <script src="/webpage/js/script.js"></script>
+
+    </body>
+</html>

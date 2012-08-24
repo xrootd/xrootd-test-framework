@@ -16,7 +16,7 @@ a, #main-nav ul li.current a, #main-nav ul li.current li.current a, #main-nav ul
 .sidebar h2, .jq-datepicker .datepick-month-header select, .jq-datepicker .datepick-month th,
 .jq-datepicker .datepick-month th a, .tab-switch li a, .sidetab-switch li a
 { color:#666; }
-section[role=navigation] header h1, article footer, .widget.add-new-widget a:hover strong,
+section[role=navigation] header h2, article footer, .widget.add-new-widget a:hover strong,
 .sidetab-switch p, .jq-datepicker .datepick-month td .datepick-weekend, .ticket-data-ticket
 { color:#999; }
 .htmlcalendar .calendar-event .event a, .error-page strong, .jq-datepicker .datepick-month a:hover,

@@ -238,6 +238,10 @@ section[role=navigation] header a {
 }
 
 section[role=navigation] header h1 {
+    font-size: 150%;
+}
+
+section[role=navigation] header h2 {
 	margin-top: 3px;
 	font-weight: normal;
 	font-style: italic;
@@ -548,6 +552,12 @@ article section h3,article section h4,article section h5 {
 
 article section h3 {
 	font-size: 153.9%;
+}
+
+article section h3 span {
+    font-size: 70%;
+    font-weight: normal;
+    margin: 0.5em;
 }
 
 article section h4 {
@@ -1217,7 +1227,7 @@ div.tab>img,div.tab>.image-frame img {
 .logs li {
 	background-position: 10px 8px;
 	background-repeat: no-repeat;
-	background-image: url('../img/icons/icon_event.png');
+	background-image: url('../img/icons/icon_event_log.png');
 	list-style: none;
 	display: block;
 	padding: 10px 10px 10px 35px;

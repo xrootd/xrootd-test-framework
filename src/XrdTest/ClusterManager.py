@@ -58,8 +58,6 @@ class ClusterManager:
         '''
         Creates Manager instance. Needs url to virtual virt domains manager
         '''
-        # holds libvirt connection of a type libvirt.virConnect
-        self.virtConnection = None
         # Socket reference back to the master, for publishing status updates
         self.sockStream = None
         # definitions of clusters. Key: name Value: cluster definition
@@ -70,7 +68,7 @@ class ClusterManager:
         self.nets = {}
         self.storagePool = ''
 
-    def connect(self, url="qemu:///system"):
+    def virtconnect(self, url="qemu:///system"):
         '''
         Creates and returns connection to virtual machines manager
         @param url: connection url
@@ -78,11 +76,11 @@ class ClusterManager:
         @return: None
         '''
         try:
-            self.virtConnection = libvirt.open(url)
+            virtConnection = libvirt.open(url)
         except libvirtError, e:
             LOGGER.error("Can not connect to libvirt (-c qemu:///system): %s" % e)
-        else:
-            LOGGER.info("Connected to libvirt manager.")
+        
+        return virtConnection  
 
     def disconnect(self):
         '''
@@ -90,24 +88,15 @@ class ClusterManager:
         by this cluster manager and disconnects from libvirt manager.
         @raise ClusterManagerException: when fails
         '''
-        try:
-            err = ''
-            clusters = deepcopy(self.clusters)
-            for clusterName in clusters:
-                try:
-                    self.removeCluster(clusterName)
-                except ClusterManagerException, e:
-                    err += ',' + str(e)
-            if err:
-                LOGGER.error(err)
-            if self.virtConnection:
-                self.virtConnection.close()
-        except libvirtError, e:
-            msg = "Could not disconnect from libvirt: %s" % e
-            LOGGER.error(msg)
-            raise ClusterManagerException(msg, ERR_CONNECTION)
-        else:
-            LOGGER.debug("libvirt manager disconnected")
+        err = ''
+        clusters = deepcopy(self.clusters)
+        for clusterName in clusters:
+            try:
+                self.removeCluster(clusterName)
+            except ClusterManagerException, e:
+                err += ',' + str(e)
+        if err:
+            LOGGER.error(err)
 
     def copyImg(self, huName, safeCounter=None):
         '''
@@ -176,7 +165,7 @@ class ClusterManager:
 
         self.hosts[host.uname] = None
         try:
-            conn = self.virtConnection
+            conn = self.virtconnect()
             hostdef = conn.defineXML(host.xmlDesc)
 
             # add host definition objects to dictionary
@@ -243,7 +232,7 @@ class ClusterManager:
             return self.nets[netObj.uname]
 
         try:
-            conn = self.virtConnection
+            conn = self.virtconnect()
             self.nets[netObj.uname] = conn.networkDefineXML(netObj.xmlDesc)
             LOGGER.info("Defining network " + netObj.uname)
         except libvirtError, e:
@@ -309,7 +298,7 @@ class ClusterManager:
         '''
         host = None
         try:
-            conn = self.virtConnection
+            conn = self.virtconnect()
             host = conn.lookupByName(hostObj.uname)
             LOGGER.info("Machine already defined: %s" % hostObj.uname)
         except libvirtError, e:
@@ -331,7 +320,7 @@ class ClusterManager:
         '''
         net = None
         try:
-            conn = self.virtConnection
+            conn = self.virtconnect()
             net = conn.networkLookupByName(netObj.uname)
             LOGGER.info("Network already defined: %s" % netObj.uname)
         except libvirtError, e:
@@ -353,14 +342,6 @@ class ClusterManager:
         same name) - it removes it completely. The same story regards network.
         @param cluster: cluster definition object
         '''
-        # Check libvirt connection
-        try:
-            self.virtConnection = libvirt.open('qemu:///system')
-        except libvirtError, e:
-            LOGGER.error("Can not connect to libvirt (-c qemu:///system): %s" % e)
-        else:
-            LOGGER.info("Connected to libvirt manager.")
-        
         if self.clusters.has_key(cluster.name):
             raise ClusterManagerException(("Cluster %s already exists." + \
                               " Needs to be destroyed first.") % \
@@ -548,7 +529,7 @@ class ClusterManager:
     
     def findStoragePool(self, poolname):
         '''Attempt to find a storage pool with the given name. '''
-        con = self.virtConnection
+        con = self.virtconnect()
         pool = ''
         
         try:
@@ -573,7 +554,7 @@ class ClusterManager:
         '''Attempt to find a storage volume (file) in the specified libvirt storage
         pool. If the volume is not found, the default pool will be searched. Return
         the full path to the volume.'''
-        con = self.virtConnection
+        con = self.virtconnect()
         pool = ''
         volume = ''
         

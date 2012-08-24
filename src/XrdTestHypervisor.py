@@ -113,8 +113,6 @@ class XrdTestHypervisor(Runnable):
         if self.config.has_option('virtual_machines', 'storage_pool'):
             self.storagePool = self.config.get('virtual_machines', 'storage_pool')
         self.clusterManager.storagePool = self.storagePool
-        
-        self.clusterManager.connect("qemu:///system")
 
     def __del__(self):
         ''' TODO: '''
@@ -122,10 +120,10 @@ class XrdTestHypervisor(Runnable):
 
     def tryConnect(self):
         ''' 
-        Attempt to connect to the master. Retry every 10 seconds, up to a 
-        maximum of 20 times.
+        Attempt to connect to the master. Retry every 5 seconds, up to a 
+        maximum of 500 times.
         '''
-        for i in xrange(20):
+        for i in xrange(500):
             LOGGER.debug('Connection attempt: %s' % str(i))
             sock = self.connectMaster(self.config.get('test_master', 'ip'),
                            self.config.getint('test_master', 'port'))
@@ -135,7 +133,7 @@ class XrdTestHypervisor(Runnable):
                 thTcpReceive.start()
                 self.clusterManager.sockStream = self.sockStream  
                 return sock
-            time.sleep(10)
+            time.sleep(5)
         return None
         
     def connectMaster(self, masterName, masterPort):

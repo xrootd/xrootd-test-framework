@@ -74,9 +74,10 @@ class WebInterface:
         self.port = 0
         self.defaultHttpPort = 8080
         self.defaultHttpsPort = 8443
-        
         # default test suite run password = empty
         self.suiteRunPass = ''
+        # default page title
+        self.title = 'XRootD Testing Framework - Web Interface'
         
         # override default web root if specified in config
         if self.config.has_option('webserver', 'webpage_dir'):
@@ -106,67 +107,83 @@ class WebInterface:
                           self.webroot + \
                           os.sep + "page_404.tmpl"}
 
-    def disp(self, tpl_file, tpl_vars):
+    def disp(self, tfile, tvars):
         '''
-        Utility method for displying tpl_file and replace tpl_vars.
+        Utility method for displying a Cheetah template file with the
+        supplied variables.
 
-        @param tpl_file: to be displayed as HTML page
-        @param tpl_vars: vars can be used in HTML page, Cheetah style
+        @param tfile: to be displayed as HTML page
+        @param tvars: variables to be used in HTML page, Cheetah style
         '''
-        tpl = None
-        tplFile = self.webroot + os.sep + tpl_file
+        template = None
+        tfile = os.path.join(self.webroot, tfile)
 
-        tpl_vars['HTTPport'] = self.config.getint('webserver', 'port')
         try:
-            tpl = Template(file=tplFile, searchList=[tpl_vars])
+            template = Template(file=tfile, searchList=[tvars])
         except Exception, e:
             LOGGER.error(str(e))
-            return "An error occured. Check log for details."
+            return "An error occurred. Check log for details."
         else:
-            return tpl.respond()
-
-    def index(self):
-        '''
-        Main page of web interface, shows definitions.
-        '''
-        tplVars = { 'title' : 'Xrd Test Master - Web Interface',
-                    'message' : 'Welcome and begin the tests!',
+            return template.respond()
+        
+    def vars(self):
+        '''Return the variables necessary for a webpage template.'''
+        tvars = {   
+                    'title' : self.title,
                     'webroot' : self.webroot,
+                    'protocol': self.protocol,
+                    'port': self.port,
                     'clusters' : self.testMaster.clusters,
                     'hypervisors': self.testMaster.hypervisors,
                     'suiteSessions' : self.testMaster.suiteSessions,
                     'runningSuiteUids' : self.testMaster.runningSuiteUids,
                     'slaves': self.testMaster.slaves,
                     'hostname': socket.gethostname(),
-                    'testSuites': self.testMaster.testSuites,
+                    'testsuites': self.testMaster.testSuites,
                     'pendingJobs': self.testMaster.pendingJobs,
                     'pendingJobsDbg': self.testMaster.pendingJobsDbg,
                     'userMsgs' : self.testMaster.userMsgs,
-                    'testMaster': self.testMaster, }
-        return self.disp("main.tmpl", tplVars)
+                    'testMaster': self.testMaster, 
+                }
+        return tvars
 
-    def suiteSessions(self):
-        '''
-        Page showing suit sessions runs.
-        '''
-        tplVars = { 'title' : 'Xrd Test Master - Web Interface',
-                    'webroot': self.webroot,
-                    'suiteSessions' : self.testMaster.suiteSessions,
-                    'runningSuiteUids' : self.testMaster.runningSuiteUids,
-                    'slaves': self.testMaster.slaves,
-                    'hostname': socket.gethostname(),
-                    'testSuites': self.testMaster.testSuites,
-                    'testMaster': self.testMaster}
-        return self.disp("suite_sessions.tmpl", tplVars)
+    @cherrypy.expose
+    def index(self):
+        return self.disp("index.html", self.vars())
+    
+    @cherrypy.expose
+    def hypervisors(self):
+        return self.disp("hypervisors.html", self.vars())
+    
+    @cherrypy.expose
+    def slaves(self):
+        return self.disp("slaves.html", self.vars())
+    
+    @cherrypy.expose
+    def clusters(self):
+        return self.disp("clusters.html", self.vars())
+    
+    @cherrypy.expose
+    def testsuites(self):
+        return self.disp("testsuites.html", self.vars())
+    
+    @cherrypy.expose
+    def documentation(self):
+        return self.disp("documentation.html", self.vars())
 
+    @cherrypy.expose
     def indexRedirect(self):
         '''
         Page that at once redirects user to index. Used to clear URL parameters.
         '''
-        tplVars = { 'hostname': socket.gethostname(),
-                    'HTTPport': self.config.getint('webserver', 'port')}
-        return self.disp("index_redirect.tmpl", tplVars)
+        tvars = {   
+                    'hostname': socket.gethostname(),
+                    'protocol': self.protocol,
+                    'port': self.port
+                }
+        return self.disp("index_redirect.tmpl", tvars)
 
+    @cherrypy.expose
     def downloadScript(self, *script_name):
         '''
         Enable slave to download some script as a regular file from master and
@@ -191,6 +208,7 @@ class WebInterface:
 
         return "%s: not found in any repository" % path
 
+    @cherrypy.expose
     def showScript(self, *script_name):
         '''
         Enable slave to view some script as text from master and
@@ -208,6 +226,7 @@ class WebInterface:
 
         return "%s: not found in any repository" % path
     
+    @cherrypy.expose
     def runTestSuite(self, password=None, testsuite=None): 
         if not password == self.suiteRunPass:
             return 'Incorrect password.'
@@ -215,13 +234,6 @@ class WebInterface:
             self.testMaster.enqueueJob(testsuite)
             self.testMaster.startNextJob()
             raise cherrypy.HTTPRedirect("index")
-
-    index.exposed = True
-    suiteSessions.exposed = True
-    downloadScript.exposed = True
-    showScript.exposed = True
-    runTestSuite.exposed = True
-    
 
 def handleCherrypyError():
         cherrypy.response.status = 500

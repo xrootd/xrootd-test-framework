@@ -21,6 +21,11 @@
 
         <script src="/webpage/js/libs/modernizr-1.7.min.js"></script>
     </head>
+    
+    #set $nt = len($testsuites)
+    #set $nc = len($clusters)
+    #set $nh = len($hypervisors)
+    #set $ns = len($slaves)
 
     <!-- Add class .fixed for fixed layout. You would need also edit CSS file for width -->
     <body>
@@ -44,16 +49,20 @@
                             <a href="index" class="dashboard no-submenu">Dashboard</a>
                         </li>
                         <li>
-                            <a href="hypervisors" class="dashboard no-submenu">Hypervisors</a><span title="1 connected hypervisor(s)">1</span>
-                        </li>
-                        <li class="current">
-                            <a href="slaves" class="projects no-submenu">Slaves</a><span title="0 connected slave(s)">0</span>
+                            <a href="testsuites" class="settings no-submenu">Test Suites</a>
+                            <span title="${nt} defined test suite(s)">$nt</span>
                         </li>
                         <li>
                             <a href="clusters" class="products no-submenu">Clusters</a>
+                            <span title="${nc} defined cluster(s)">$nc</span>
                         </li>
                         <li>
-                            <a href="testsuites" class="settings no-submenu">Test Suites</a>
+                            <a href="hypervisors" class="dashboard no-submenu">Hypervisors</a>
+                            <span title="${nh} connected hypervisor(s)">$nh</span>
+                        </li>
+                        <li class="current">
+                            <a href="slaves" class="projects no-submenu">Slaves</a>
+                            <span title="${ns} connected slave(s)">$ns</span>
                         </li>
                     </ul>
                 </nav>

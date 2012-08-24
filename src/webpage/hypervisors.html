@@ -21,13 +21,12 @@
 
         <script src="/webpage/js/libs/modernizr-1.7.min.js"></script>
     </head>
-    
-    <!-- 
-        #set $nh = len($hypervisors)
-        #set $ns = len($slaves)
-        #set $nc = len($clusters)
-        #set $nt = len($testsuites)
-    -->
+
+    #set $nt = len($testsuites)
+    #set $nc = len($clusters)
+    #set $nh = len($hypervisors)
+    #set $ns = len($slaves)
+
      
     <!-- Add class .fixed for fixed layout. You would need also edit CSS file for width -->
     <body>
@@ -50,6 +49,14 @@
                         <li>
                             <a href="index" class="dashboard no-submenu">Dashboard</a>
                         </li>
+                        <li>
+                            <a href="testsuites" class="settings no-submenu">Test Suites</a>
+                            <span title="${nt} defined test suite(s)">$nt</span>
+                        </li>
+                        <li>
+                            <a href="clusters" class="products no-submenu">Clusters</a>
+                            <span title="${nc} defined cluster(s)">$nc</span>
+                        </li>
                         <li class="current">
                             <a href="hypervisors" class="dashboard no-submenu">Hypervisors</a>
                             <span title="${nh} connected hypervisor(s)">$nh</span>
@@ -57,14 +64,6 @@
                         <li>
                             <a href="slaves" class="projects no-submenu">Slaves</a>
                             <span title="${ns} connected slave(s)">$ns</span>
-                        </li>
-                        <li>
-                            <a href="clusters" class="products no-submenu">Clusters</a>
-                            <span title="${nc} defined cluster(s)">$nc</span>
-                        </li>
-                        <li>
-                            <a href="testsuites" class="settings no-submenu">Test Suites</a>
-                            <span title="${nt} defined test suite(s)">$nt</span>
                         </li>
                     </ul>
                 </nav>
@@ -99,48 +98,58 @@
 
                         <!-- Article Content -->
                         <section>
+                            #if len($hypervisors)
+	                            <!-- Tab Content with class. sidetabs for side tabs container -->
+	                            <div class="tab default-tab sidetabs" id="tab1">
+	                                <!-- Side Tab Navigation -->
+	                                <nav class="sidetab-switch">
+	                                    <ul>
+	                                        #for $i, $h in enumerate($hypervisors.itervalues())
+	                                           ## First tab is the default tab
+	                                           #if $i == 0
+	                                               <li><a class="default-sidetab" href="#sidetab${i}">$h.hostname</a></li>
+	                                           #else
+	                                               <li><a href="#sidetab${$i}">$h.hostname</a></li>
+	                                           #end if
+	                                        #end for
+	                                    </ul>
+	                                </nav>
+	                                <!-- /Side Tab Navigation -->	                               
+	                                
+	                                #for $i, ($addr, $h) in enumerate($hypervisors.iteritems())
+	                                
+	                                   <!-- Side Tab Content -->
+	                                   #if $i == 0
+	                                       <div class="sidetab default-sidetab" id="sidetab${i}">
+	                                   #else
+	                                       <div class="sidetab" id="sidetab${i}">
+	                                   #end if
+	                                        <h3>
+	                                           $h.hostname
+	                                           <span>$addr[0] : $addr[1]</span>
+	                                        </h3>
+	                                        <ul class="logs">
+	                                            #for $state in $h.states
+	                                               <li>
+                                                    <span class="logs-timestamp">[ $state.time ]</span>
+                                                    <h4 class="logs-event">$state.name</h4>
+                                                </li>
+	                                            #end for    
+	                                        </ul>
+	                                    </div>
+	                                    <!-- /Side Tab Content -->
+	                                
+	                                #end for
 
-                            <!-- Tab Content with class. sidetabs for side tabs container -->
-                            <div class="tab default-tab sidetabs" id="tab1">
-                                <!-- Side Tab Navigation -->
-                                <nav class="sidetab-switch">
-                                    <ul>
-                                        <li><a class="default-sidetab" href="#sidetab1">dssbuild2.cern.ch</a></li>
-                                        <li><a href="#sidetab2">dssbuild3.cern.ch</a></li>
-                                    </ul>
-                                </nav>
-                                <!-- /Side Tab Navigation -->
-
-                                <!-- Side Tab Content -->
-                                <div class="sidetab default-sidetab" id="sidetab1">
-                                    <h3>dssbuild2.cern.ch</h3>
-                                    <ul class="logs">
-                                        <li>
-                                            <span class="logs-timestamp">[ 12:23:34 22/08/2012 ]</span>
-                                            <h4 class="logs-event">Connected</h4>
-                                            <p>Hypervisor initialization successful. Connected and authenticated to master.</p>
-                                        </li>
-                                        <li>
-                                            <span class="logs-timestamp">[ 12:23:34 22/08/2012 ]</span>
-                                            <h4 class="logs-event">Starting cluster</h4>
-                                            <p>Cluster start command received.</p>
-                                        </li>
-                                        <li>
-                                            <span class="logs-timestamp">[ 12:23:34 22/08/2012 ]</span>
-                                            <h4 class="logs-event">Creating slaves</h4>
-                                            <p>Defining and configuring slave images.</p>
-                                        </li>
-                                    </ul>
+	                            </div>
+	                            <!-- /Tab Content -->
+                            #else
+                                <div class="notification attention">
+                                    <p>
+                                    <strong>Warning:</strong> No hypervisors connected.
+                                    </p>
                                 </div>
-                                <!-- /Side Tab Content -->
-
-                                <!-- Side Tab Content -->
-                                <div class="sidetab" id="sidetab2">
-                                    <h3>dssbuild3.cern.ch</h3>
-                                </div>
-                                <!-- /Side Tab Content -->
-                            </div>
-                            <!-- /Tab Content -->
+                            #end if
                         </section>
                         <!-- /Article Content -->
 

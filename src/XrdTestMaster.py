@@ -1085,7 +1085,7 @@ class XrdTestMaster(Runnable):
             # test case was initialized on slave
             elif msg.state == State(TestSuite.S_SLAVE_TEST_INITIALIZED):
                 tss = self.retrieveSuiteSession(msg.suiteName)
-                tss.addStageResult(msg.state, msg.result, uid=msg.testUid,
+                tss.addStageResult(msg.state, msg.result, uid="case_inited",
                                    slave_name=slave.hostname)
 
                 slave.state = State(Slave.S_TEST_INITIALIZED)
@@ -1106,7 +1106,7 @@ class XrdTestMaster(Runnable):
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 tss.addStageResult(msg.state, msg.result,
                                    slave_name=slave.hostname,
-                                   uid=msg.testUid)
+                                   uid="case_run")
                 slave.state = State(Slave.S_TEST_RUN_FINISHED)
                 tc = tss.cases[msg.testUid]
                 waitSlaves = self.getSuiteSlaves(tss.suite, test_case=tc)
@@ -1125,7 +1125,7 @@ class XrdTestMaster(Runnable):
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 tss.addStageResult(msg.state, msg.result, \
                                    slave_name=slave.hostname, \
-                                   uid=msg.testUid)
+                                   uid="case_finalized")
                 slave.state = State(Slave.S_SUITE_INITIALIZED)
                 slave.state.suiteName = msg.suiteName
 

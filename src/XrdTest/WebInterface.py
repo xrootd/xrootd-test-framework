@@ -135,15 +135,15 @@ class WebInterface:
                     'port': self.port,
                     'clusters' : self.testMaster.clusters,
                     'hypervisors': self.testMaster.hypervisors,
-                    'suiteSessions' : self.testMaster.suiteSessions,
-                    'runningSuiteUids' : self.testMaster.runningSuiteUids,
+                    'suite_hist' : self.testMaster.suiteSessions,
+                    'running_suite_uids' : self.testMaster.runningSuiteUids,
                     'slaves': self.testMaster.slaves,
                     'hostname': socket.gethostname(),
                     'testsuites': self.testMaster.testSuites,
-                    'pendingJobs': self.testMaster.pendingJobs,
-                    'pendingJobsDbg': self.testMaster.pendingJobsDbg,
-                    'userMsgs' : self.testMaster.userMsgs,
-                    'testMaster': self.testMaster, 
+                    'pending_jobs': self.testMaster.pendingJobs,
+                    'pending_jobs_dbg': self.testMaster.pendingJobsDbg,
+                    'user_msgs' : self.testMaster.userMsgs,
+                    'test_master': self.testMaster, 
                 }
         return tvars
 
@@ -152,20 +152,27 @@ class WebInterface:
         return self.disp("index.html", self.vars())
     
     @cherrypy.expose
-    def hypervisors(self):
-        return self.disp("hypervisors.html", self.vars())
-    
-    @cherrypy.expose
-    def slaves(self):
-        return self.disp("slaves.html", self.vars())
+    def testsuites(self, ts_name=None):
+        if ts_name:
+            tvars = self.vars()
+            tvars['testsuite'] = self.testMaster.testSuites[ts_name]
+            tvars['run_hist'] = [run for run in self.testMaster.suiteSessions.itervalues() if run.name == ts_name]
+            return self.disp("testsuite.html", tvars)
+        
+        else:
+            return self.disp("testsuites.html", self.vars())
     
     @cherrypy.expose
     def clusters(self):
         return self.disp("clusters.html", self.vars())
     
     @cherrypy.expose
-    def testsuites(self):
-        return self.disp("testsuites.html", self.vars())
+    def hypervisors(self):
+        return self.disp("hypervisors.html", self.vars())
+    
+    @cherrypy.expose
+    def slaves(self):
+        return self.disp("slaves.html", self.vars())
     
     @cherrypy.expose
     def documentation(self):

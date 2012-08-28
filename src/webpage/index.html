@@ -36,8 +36,8 @@
             <!-- Aside Block -->
             <section role="navigation">
                 <header>
-                    <h2><a href="./index" title="Back to Homepage"></a>XRootD</h2>
-                    <h1>Testing Framework</h1>
+                    <h1><a href="index" title="Back to Homepage"></a>XRootD</h1>
+                    <h2>Testing Framework</h2>
                 </header>
 
                 <!-- Main Navigation -->
@@ -49,19 +49,26 @@
                             <a href="index" class="dashboard no-submenu">Dashboard</a>
                         </li>
                         <li>
-                            <a href="testsuites" class="settings no-submenu">Test Suites</a>
+                            <a href="testsuites" class="projects">Test Suites</a>
                             <span title="${nt} defined test suite(s)">$nt</span>
+                            #if len($testsuites)
+	                            <ul>
+		                            #for $ts_name in $testsuites.iterkeys()
+		                                <li><a href="testsuites/${ts_name}">$ts_name</a></li>
+		                            #end for
+	                            </ul>
+                            #end if
                         </li>
                         <li>
                             <a href="clusters" class="products no-submenu">Clusters</a>
                             <span title="${nc} defined cluster(s)">$nc</span>
                         </li>
                         <li>
-                            <a href="hypervisors" class="dashboard no-submenu">Hypervisors</a>
+                            <a href="hypervisors" class="articles no-submenu">Hypervisors</a>
                             <span title="${nh} connected hypervisor(s)">$nh</span>
                         </li>
                         <li>
-                            <a href="slaves" class="projects no-submenu">Slaves</a>
+                            <a href="slaves" class="settings no-submenu">Slaves</a>
                             <span title="${ns} connected slave(s)">$ns</span>
                         </li>
                     </ul>

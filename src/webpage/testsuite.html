@@ -21,7 +21,8 @@
 
         <script src="/webpage/js/libs/modernizr-1.7.min.js"></script>
     </head>
-
+    #import re
+    
     #set $nt = len($testsuites)
     #set $nc = len($clusters)
     #set $nh = len($hypervisors)
@@ -31,6 +32,37 @@
     
     #set $failed_runs = len([run for run in $run_hist if $run.failed])
     #set $success_runs = len($run_hist) - $failed_runs
+    
+    #def get_case_init_stages($all_stages)
+        #set $init_stages = []
+        #for $stage in $all_stages
+            #if re.match('^\[..:..:..\] Initializing.*', $stage[1][0])
+                $init_stages.append($stage)
+            #end if
+        #end for
+        #return $init_stages
+    #end def
+    
+    #def get_case_run_stages($all_stages)
+        #set $run_stages = []
+        #for $stage in $all_stages
+            #if re.match('^\[..:..:..\] Running.*', $stage[1][0])
+                $run_stages.append($stage)
+            #end if
+        #end for
+        #return $run_stages
+    #end def
+    
+    #def get_case_finalize_stages($all_stages)
+        #set $finalize_stages = []
+        #for $stage in $all_stages
+            #if re.match('^\[..:..:..\] Finalizing.*', $stage[1][0])
+                $finalize_stages.append($stage)
+            #end if
+        #end for
+        #return $finalize_stages
+    #end def
+    
     
     <!-- Add class .fixed for fixed layout. You would need also edit CSS file for width -->
     <body>
@@ -54,7 +86,7 @@
                             <a href="/index" class="dashboard no-submenu">Dashboard</a>
                         </li>
                         <li class="current">
-                            <a href="/testsuites" class="projects">Test Suites</a>
+                            <a href="/testsuites" class="projects no-submenu">Test Suites</a>
                             <span title="${nt} defined test suite(s)">$nt</span>
                             #if len($testsuites)
 	                            <ul>
@@ -269,19 +301,41 @@
 			                                        #for $i, $case in enumerate($run.cases.itervalues())
                                                         #set $case_stages = $run.getTestCaseStages($case.uid)
                                                         
+                                                        
                                                         <div class="tab" id="tab-case-run-${case.uid}">
 
                                                             <header class="square">
 		                                                        <nav class="leftnav">
 		                                                              <ul class="tab-switch">
-		                                                                  #set $state = 'failure'
-		                                                                  
+		                                                                  #set $state = 'success'
+                                                                          #set $init_stages = self.get_case_init_stages($case_stages)
+		                                                                  #for $stage in $init_stages
+		                                                                      #if $stage[1][2] != "0"
+		                                                                          #set $state = 'failure'
+		                                                                      #end if
+		                                                                  #end for
 		                                                                  <li class="$state">
 		                                                                      <a href="#tab-inner-case-init-${case.uid}" class="default-tab">Case Initialization</a>
 		                                                                  </li>
+		                                                                  
+		                                                                  #set $state = 'success'
+                                                                          #set $run_stages = self.get_case_run_stages($case_stages)
+                                                                          #for $stage in $run_stages
+                                                                              #if $stage[1][2] != "0"
+                                                                                  #set $state = 'failure'
+                                                                              #end if
+                                                                          #end for
 		                                                                  <li class="$state">
 		                                                                      <a href="#tab-inner-case-run-${case.uid}">Case Run</a>
 		                                                                  </li>
+		                                                                  
+		                                                                  #set $state = 'success'
+                                                                          #set $fin_stages = self.get_case_finalize_stages($case_stages)
+                                                                          #for $stage in $fin_stages
+                                                                              #if $stage[1][2] != "0"
+                                                                                  #set $state = 'failure'
+                                                                              #end if
+                                                                          #end for
 		                                                                  <li class="$state">
 		                                                                      <a href="#tab-inner-case-fin-${case.uid}">Case Finalization</a>
 		                                                                  </li>
@@ -295,37 +349,51 @@
 		                                                            <div class="sidetabs">
 		                                                                <nav class="sidetab-switch">
 		                                                                    <ul>
-		                                                                        #for $i, $case_stage in enumerate($case_stages)
-		                                                                            #set $state = 'failure'
+		                                                                        #set $init_stages = self.get_case_init_stages($case_stages)
+
+		                                                                        #for $i, $stage in enumerate($init_stages)
+		                                                                            #set $state = 'success'
+		                                                                            #if $stage[1][2] != "0"
+		                                                                               #set $state = 'failure'
+		                                                                            #end if
 		                                                                            
 		                                                                            #set $default_tab = ''
 						                                                            #if $i == 0
 						                                                               #set $default_tab = 'default-tab'
 						                                                            #end if
-	                                                                                
-	                                                                                <li class="$state">
-	                                                                                   <a href="#sidetab-inner-case-init-${case.uid}">$case_stage[2]</a>
-	                                                                                </li>
+
+                                                                                    <li class="$state">
+                                                                                       <a href="#sidetab-inner-case-init-${stage[3]}-${case.uid}">$stage[3]</a>
+                                                                                    </li>
+
 		                                                                        #end for
 		                                                                    </ul>
 		                                                                </nav>
 		                                                                
 		                                                                <section>
-		                                                                    #for $i, $case_stage in enumerate($case_stages)
+		                                                                    #set $init_stages = self.get_case_init_stages($case_stages)
 		                                                                    
+		                                                                    #for $i, $stage in enumerate($init_stages)
+		                                                                              
+	                                                                            #set $default_tab = ''
+                                                                                #if $i == 0
+                                                                                   #set $default_tab = 'default-sidetab'
+                                                                                #end if
+                                                                                   
+	                                                                            <div class="sidetab $default_tab" id="sidetab-inner-case-init-${stage[3]}-${case.uid}">
+	                                                                                <article class="full-block nested light">                                       
+	                                                                                    <div class="article-container">
+	                                                                                    
+	                                                                                        <section>
+	                                                                                            <br />
+	                                                                                            <code>$stage[1][0]</code>
+	                                                                                        </section>
+	                                                                                    
+	                                                                                    </div>
+	                                                                                </article>
+	                                                                            </div>
+		                                                                            
 		                                                                    #end for
-		                                                                    <div class="sidetab default-sidetab" id="sidetab-inner-case-init-${case.uid}">
-				                                                                <article class="full-block nested light">                                       
-					                                                                <div class="article-container">
-					                                                                
-						                                                                <section>
-							                                                                <br />
-							                                                                <code>Case init $case.uid</code>
-						                                                                </section>
-					                                                                
-					                                                                </div>
-					                                                            </article>
-		                                                                    </div>
 		                                                                </section>
 		                                                            </div>
 	                                                            </div>
@@ -334,32 +402,51 @@
 	                                                                <div class="sidetabs">
 	                                                                    <nav class="sidetab-switch">
 	                                                                        <ul>
-	                                                                            #for $i, $case_stage in enumerate($case_stages)
-	                                                                            
-	                                                                                #set $default_tab = ''
-	                                                                                #if $i == 0
-	                                                                                   #set $default_tab = 'default-tab'
-	                                                                                #end if
-	                                                                            
-	                                                                            #end for
-	                                                                            <li><a>run</a></li>
-	                                                                            <li><a>x</a></li>
+	                                                                            #set $run_stages = self.get_case_run_stages($case_stages)
+
+                                                                                #for $i, $stage in enumerate($run_stages)
+                                                                                    #set $state = 'success'
+                                                                                    #if $stage[1][2] != "0"
+                                                                                       #set $state = 'failure'
+                                                                                    #end if
+                                                                                    
+                                                                                    #set $default_tab = ''
+                                                                                    #if $i == 0
+                                                                                       #set $default_tab = 'default-tab'
+                                                                                    #end if
+
+                                                                                    <li class="$state">
+                                                                                       <a href="#sidetab-inner-case-run-${stage[3]}-${case.uid}">$stage[3]</a>
+                                                                                    </li>
+
+                                                                                #end for
 	                                                                        </ul>
 	                                                                    </nav>
 	                                                                    
 	                                                                    <section>
-	                                                                        <div class="sidetab default-sidetab">
-	                                                                            <article class="full-block nested light">                                       
-	                                                                                <div class="article-container">
-	                                                                                
-	                                                                                    <section>
-	                                                                                        <br />
-	                                                                                        <code>Case run $case.uid</code>
-	                                                                                    </section>
-	                                                                                
-	                                                                                </div>
-	                                                                            </article>
-	                                                                        </div>
+	                                                                        #set $run_stages = self.get_case_run_stages($case_stages)
+                                                                            
+                                                                            #for $i, $stage in enumerate($run_stages)
+                                                                                      
+                                                                                #set $default_tab = ''
+                                                                                #if $i == 0
+                                                                                   #set $default_tab = 'default-sidetab'
+                                                                                #end if
+                                                                                   
+                                                                                <div class="sidetab $default_tab" id="sidetab-inner-case-run-${stage[3]}-${case.uid}">
+                                                                                    <article class="full-block nested light">                                       
+                                                                                        <div class="article-container">
+                                                                                        
+                                                                                            <section>
+                                                                                                <br />
+                                                                                                <code>$stage[1][0]</code>
+                                                                                            </section>
+                                                                                        
+                                                                                        </div>
+                                                                                    </article>
+                                                                                </div>
+                                                                                    
+                                                                            #end for
 	                                                                    </section>
 	                                                                </div>
 	                                                            </div>
@@ -368,33 +455,51 @@
 	                                                                <div class="sidetabs">
 	                                                                    <nav class="sidetab-switch">
 	                                                                        <ul>
-	                                                                            #for $i, $case_stage in enumerate($case_stages)
-	                                                                            
-	                                                                                #set $default_tab = ''
-	                                                                                #if $i == 0
-	                                                                                   #set $default_tab = 'default-tab'
-	                                                                                #end if
-	                                                                            
-	                                                                            #end for
-	                                                                            <li><a>fin</a></li>
-	                                                                            <li><a>x</a></li>
+	                                                                            #set $fin_stages = self.get_case_finalize_stages($case_stages)
+
+                                                                                #for $i, $stage in enumerate($fin_stages)
+                                                                                    #set $state = 'success'
+                                                                                    #if $stage[1][2] != "0"
+                                                                                       #set $state = 'failure'
+                                                                                    #end if
+                                                                                    
+                                                                                    #set $default_tab = ''
+                                                                                    #if $i == 0
+                                                                                       #set $default_tab = 'default-tab'
+                                                                                    #end if
+
+                                                                                    <li class="$state">
+                                                                                       <a href="#sidetab-inner-case-fin-${stage[3]}-${case.uid}">$stage[3]</a>
+                                                                                    </li>
+
+                                                                                #end for
 	                                                                        </ul>
 	                                                                    </nav>
 	                                                                    
 	                                                                    <section>
-	                                                                        <div class="sidetab default-sidetab">
-	                                                                            <article class="full-block nested light">                                       
-	                                                                                <div class="article-container">
-	                                                                                
-	                                                                                    <section>
-	                                                                                        <br />
-	                                                                                        $case
-	                                                                                        <code>Case finalize $case.uid</code>
-	                                                                                    </section>
-	                                                                                
-	                                                                                </div>
-	                                                                            </article>
-	                                                                        </div>
+	                                                                        #set $fin_stages = self.get_case_finalize_stages($case_stages)
+                                                                            
+                                                                            #for $i, $stage in enumerate($fin_stages)
+                                                                                      
+                                                                                #set $default_tab = ''
+                                                                                #if $i == 0
+                                                                                   #set $default_tab = 'default-sidetab'
+                                                                                #end if
+                                                                                   
+                                                                                <div class="sidetab $default_tab" id="sidetab-inner-case-fin-${stage[3]}-${case.uid}">
+                                                                                    <article class="full-block nested light">                                       
+                                                                                        <div class="article-container">
+                                                                                        
+                                                                                            <section>
+                                                                                                <br />
+                                                                                                <code>$stage[1][0]</code>
+                                                                                            </section>
+                                                                                        
+                                                                                        </div>
+                                                                                    </article>
+                                                                                </div>
+                                                                                    
+                                                                            #end for
 	                                                                    </section>
 	                                                                </div>
 	                                                            </div>
@@ -405,16 +510,57 @@
                                                     #end for
                                                     
                                                     <div class="tab" id="tab-suite-fin-${run.uid}">
-                                                        <article class="full-block nested light">                                       
-                                                            <div class="article-container">
-                                                            
-                                                            <section>
-                                                                <br />
-                                                                <code>Suite finalization $run.uid</code>
-                                                            </section>
-                                                            
-                                                            </div>
-                                                        </article>
+                                                        #if len($run.cases)
+                                                           #set $fin_stages = $run.getTestCaseStages("suite_finalized") 
+                                                           #if $fin_stages and len($fin_stages)
+                                                           
+                                                           <div class="sidetabs">
+                                                                <nav class="sidetab-switch">
+                                                                    <ul>
+                                                                        #for $i, $stage in enumerate($fin_stages)
+                                                                            #set $default_class = ''
+                                                                            #set $state = 'failure'
+                                                                            
+                                                                            #if $i == 0
+                                                                                #set $default_class = 'default-sidetab'
+                                                                            #end if
+                                                                            
+                                                                            #if $stage[1][2] == "0"
+                                                                                #set $state = 'success'
+                                                                            #end if
+                                                                            
+                                                                            <li class="$state">
+                                                                            <a href="#sidetab-inner-suite-fin-${stage[3]}-${run.uid}" class="$default_class">$stage[3]</a>
+                                                                            </li>
+                                                                        
+                                                                        #end for
+                                                                    </ul>
+                                                                </nav>
+                                                                
+                                                                <section>
+                                                                #for $i, $stage in enumerate($fin_stages)
+                                                                    #set $default_class = ''
+                                                                    #if $i == 0
+                                                                        #set $default_class = 'default-sidetab'
+                                                                    #end if
+                                                                    <div class="sidetab $default_class" id="sidetab-inner-suite-fin-${stage[3]}-${run.uid}">        
+                                                                        <article class="full-block nested light">                                       
+                                                                            <div class="article-container">
+                                                                               <section>
+                                                                                  <br />
+                                                                                  #set $stdout = $stage[1][0].decode('latin-1')    
+                                                                                  <code>$stdout</code>
+                                                                                  
+                                                                               </section>
+                                                                            </div>
+                                                                        </article>     
+                                                                    </div>
+                                                                    
+                                                                #end for
+                                                                </section>
+                                                           </div>
+                                                           #end if                    
+                                                      #end if
                                                     </div>    
 		                                        </section>                              
 		                                        

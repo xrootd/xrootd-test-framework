@@ -25,8 +25,8 @@ $(function () {
 	)
 
 	// Menu Dropdown
-	$('#main-nav li ul').hide(); //Hide all sub menus
-	$('#main-nav li.current a').parent().find('ul').slideToggle('slow'); // Slide down the current sub menu
+	//$('#main-nav li ul').hide(); //Hide all sub menus
+	//$('#main-nav li.current a').parent().find('ul').slideToggle('fast'); // Slide down the current sub menu
 	$('#main-nav li a').click(
 		function () {
 			$(this).parent().siblings().find('ul').slideUp('normal'); // Slide up all menus except the one clicked

@@ -1,5 +1,5 @@
 $(function () {
-
+	
 	// Notification Close Button
 	$('.close-notification').click(
 		function () {
@@ -79,13 +79,25 @@ $(function () {
 	$('.default-tab, .default-sidetab').show(); // Show the div with class 'default-tab'
 	$('.tab-switch a.default-tab, .sidetab-switch a.default-sidetab').addClass('current'); // Set the class of the default tab link to 'current'
 
-	if (window.location.hash && window.location.hash.match(/^#tab\d+$/)) {
+	if (window.location.hash && window.location.hash.match(/^#tab\d+/)) {
 		var tabID = window.location.hash;
 		
 		$('.tab-switch a[href='+tabID+']').addClass('current').parent().siblings().find('a').removeClass('current');
 		$('div'+tabID).parent().find('.tab').hide();
 		$('div'+tabID).show();
-	} else if (window.location.hash && window.location.hash.match(/^#sidetab\d+$/)) {
+	} else if (window.location.hash && window.location.hash.match(/^#sidetab\d+/)) {
+		var sidetabID = window.location.hash;
+		
+		$('.sidetab-switch a[href='+sidetabID+']').addClass('current');
+		$('div'+sidetabID).parent().find('.sidetab').hide();
+		$('div'+sidetabID).show();
+	} else if (window.location.hash && window.location.hash.match(/^#tab.+/)) {
+		var sidetabID = window.location.hash;
+		
+		$('.sidetab-switch a[href='+sidetabID+']').addClass('current');
+		$('div'+sidetabID).parent().find('.sidetab').hide();
+		$('div'+sidetabID).show();
+	} else if (window.location.hash && window.location.hash.match(/^#sidetab.+/)) {
 		var sidetabID = window.location.hash;
 		
 		$('.sidetab-switch a[href='+sidetabID+']').addClass('current');

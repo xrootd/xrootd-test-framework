@@ -19,6 +19,8 @@
         <!-- Google WebFonts -->
         <link href='http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic' rel='stylesheet' type='text/css'>
 
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+        <script>!window.jQuery && document.write(unescape('%3Cscript src="/webpage/js/jquery/jquery-1.5.1.min.js"%3E%3C/script%3E'))</script>
         <script src="/webpage/js/libs/modernizr-1.7.min.js"></script>
     </head>
     
@@ -26,6 +28,36 @@
     #set $nc = len($clusters)
     #set $nh = len($hypervisors)
     #set $ns = len($slaves)
+    
+    #def run_history_nav($ts_name) 
+        <p>Run History:</p>
+        
+        #if len($suite_hist)
+        <nav class='sidetab-switch'>
+            <ul>
+            #set $hist = []
+            #for $ts in $suite_hist.itervalues()
+                #if $ts.name == $ts_name
+                    $hist.append($ts)
+                #end if
+            #end for
+            
+            #for $i, $run in enumerate($hist)
+            
+                #if $i == 0
+                <li><a class='default-sidetab' href='#run${i}-${ts_name}'>$ts.initDate.strftime("%d-%m-%Y %H:%M:%S")</a></li>
+                #else
+                <li><a href='#run${i}-${ts_name}'>$ts.initDate.strftime("%d-%m-%Y %H:%M:%S")</a></li>
+                #end if
+            
+            #end for
+            
+            </ul>
+        </nav>
+        #else
+            <p>No historic runs.</p>
+        #end if 
+    #end def
 
     <!-- Add class .fixed for fixed layout. You would need also edit CSS file for width -->
     <body>
@@ -46,27 +78,38 @@
                         <!-- Use class .no-submenu to open link instead of a sub menu-->
                         <!-- Use class .current to open submenu on page load -->
                         <li>
-                            <a href="index" class="dashboard no-submenu">Dashboard</a>
+                            <a href="/index" class="dashboard no-submenu">Dashboard</a>
                         </li>
                         <li class="current">
-                            <a href="testsuites" class="settings no-submenu">Test Suites</a>
+                            <a href="/testsuites" class="projects">Test Suites</a>
                             <span title="${nt} defined test suite(s)">$nt</span>
+                            #if len($testsuites)
+	                            <ul>
+		                            #for $ts_name in $testsuites.iterkeys()
+		                                <li><a href="/testsuites/${ts_name}">$ts_name</a></li>
+		                            #end for
+	                            </ul>
+                            #end if
                         </li>
                         <li>
-                            <a href="clusters" class="products no-submenu">Clusters</a>
+                            <a href="/clusters" class="products no-submenu">Clusters</a>
                             <span title="${nc} defined cluster(s)">$nc</span>
                         </li>
                         <li>
-                            <a href="hypervisors" class="dashboard no-submenu">Hypervisors</a>
+                            <a href="/hypervisors" class="articles no-submenu">Hypervisors</a>
                             <span title="${nh} connected hypervisor(s)">$nh</span>
                         </li>
                         <li>
-                            <a href="slaves" class="projects no-submenu">Slaves</a>
+                            <a href="/slaves" class="settings no-submenu">Slaves</a>
                             <span title="${ns} connected slave(s)">$ns</span>
                         </li>
                     </ul>
                 </nav>
                 <!-- /Main Navigation -->
+                
+                <section class="sidebar nested">
+                    <a href="documentation">Framework Documentation</a>
+                </section>
 
             </section>
             <!-- /Aside Block -->
@@ -76,107 +119,37 @@
 
                 <!-- Breadcrumbs -->
                 <ul id="breadcrumbs">
-                    <li><a href="index" title="Back to Homepage">Back to Home</a></li>
-                    <li><a href="#">Dashboard</a></li>
+                    <li><a href="/index" title="Back to Homepage">Back to Home</a></li>
+                    <li><a href="/index">Dashboard</a></li>
+                    <li>Test Suites</li>
                 </ul>
                 <!-- /Breadcrumbs -->
-
-                <!-- Full Content Block -->
+                
                 <article class="full-block clearfix">
-
                     <div class="article-container">
-                        <!-- Article Header -->
                         <header>
                             <h2>Test Suites</h2>
-                            <!-- Article Header Tab Navigation -->
-                            <nav>
-                                <ul class="tab-switch">
-                                    <li><a class="default-tab" href="#tab0">Run Histories</a></li>
-                                    <li><a href="#tab1">Definitions</a></li>
-                                </ul>
-                            </nav>
-                            <!-- /Article Header Tab Navigation -->
-
                         </header>
-                        <!-- /Article Header -->
-
-                        <!-- Article Content -->
+                    
                         <section>
-                            <!-- Tab Content with class .sidetabs for side tabs container -->
-                            <div class="tab default-tab sidetabs" id="tab0">
-                                <!-- Side Tab Navigation -->
-                                <nav class="sidetab-switch">
-                                    <ul>
-                                        <li><a class="default-sidetab" href="#sidetab1">ts_001_mm</a></li>
-                                        <li><a href="#sidetab2">ts_002_frm</a></li>
-                                    </ul>
-                                </nav>
-                                <!-- /Side Tab Navigation -->
-                                
-                                <!-- Side Tab Content -->
-                                <div class="sidetab default-sidetab" id="sidetab1">
-                                    <h3>ts_001_mm</h3>
-                                    <ul class="logs">
-                                        <li>
-                                            <span class="logs-timestamp">[ 12:23:34 22/08/2012 ]</span>
-                                            <h4 class="logs-event">Defined</h4>
-                                            <p>Suite definition complete. Ready to run.</p>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <!-- /Side Tab Content -->
-
-                                <!-- Side Tab Content -->
-                                <div class="sidetab" id="sidetab2">
-                                    <h3>ts_002_frm</h3>
-                                    <ul class="logs">
-                                        <li>
-                                            <span class="logs-timestamp">[ 12:23:34 22/08/2012 ]</span>
-                                            <h4 class="logs-event">Defined</h4>
-                                            <p>Suite definition complete. Ready to run.</p>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <!-- /Side Tab Content -->
+                        
+                        #if len($testsuites)
+                            
+                            $testsuites
+                        
+                        #else
+                            <div class="notification attention">
+                                <p>
+                                <strong>Warning:</strong> No test suites defined.
+                                </p>
                             </div>
-                            <!-- /Tab Content -->
-
-                            <!-- Tab Content with class .sidetabs for side tabs container -->
-                            <div class="tab sidetabs" id="tab1">
-
-                                <!-- Side Tab Navigation -->
-                                <nav class="sidetab-switch">
-                                    <ul>
-                                        <li><a class="default-sidetab" href="#sidetab3">ts_001_mm</a></li>
-                                        <li><a href="#sidetab4">ts_002_frm</a></li>
-                                    </ul>
-                                </nav>
-                                <!-- /Side Tab Navigation -->
-
-                                <!-- Side Tab Content -->
-                                <div class="sidetab default-sidetab" id="sidetab3">
-                                    <h3>ts_001_mm</h3>
-                                    <p>definition goes here</p>
-                                </div>
-                                <!-- /Side Tab Content -->
-
-                                <!-- Side Tab Content -->
-                                <div class="sidetab" id="sidetab4">
-                                    <h3>ts_002_frm</h3>
-                                    <p>definition goes here</p>
-                                </div>
-                                <!-- /Side Tab Content -->
-                            </div>
-                            <!-- /Tab Content -->
+                        #end if
 
                         </section>
-                        <!-- /Article Content -->
-
+                        
                     </div>
-
                 </article>
-                <!-- /Full Content Block -->
-
+                
             </section>
             <!-- /Main Content -->
 
@@ -184,8 +157,6 @@
         <!-- /Fixed Layout Wrapper -->
 
         <!-- JS Libs at the end for faster loading -->
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
-        <script>!window.jQuery && document.write(unescape('%3Cscript src="/webpage/js/jquery/jquery-1.5.1.min.js"%3E%3C/script%3E'))</script>
         <script src="/webpage/js/jquery/jquery.nyromodal.js"></script>
         <script src="/webpage/js/jquery/jquery.tipsy.js"></script>
         <script src="/webpage/js/jquery/jquery.datatables.js"></script>

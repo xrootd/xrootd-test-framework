@@ -77,6 +77,18 @@ a:hover {
 	color: #036;
 }
 
+span.warning {
+    color: #BE8007;
+}
+
+span.success {
+	color: #77AB13;
+}
+
+span.error {
+	color: #AE432E;
+}
+
 /*  Background Color  */
 body,body.login,body.error-page,tbody tr:hover,.tickets .ticket-data .ticket-details dl
 	{
@@ -401,9 +413,13 @@ article.nested .sidetab-switch li,article.nested .accordion,article.nested .acco
 	color: #666;
 }
 
-article.nested header h2,article.nested .accordion .accordion-switch h3
+article.nested .accordion .accordion-switch h3
 	{
 	color: #ae432e;
+}
+
+article.nested header h2 {
+	font-weight: normal;
 }
 
 article.nested {

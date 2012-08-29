@@ -555,10 +555,17 @@ article section h3 {
 	font-size: 153.9%;
 }
 
+article section h2 span {
+    font-size: 70%;
+    font-weight: normal;
+    text-shadow: none;	
+}
+
 article section h3 span, article section h4 span {
 	font-size: 90%;
 	font-weight: normal;
 	margin: 0.5em;
+	text-shadow: none; 
 }
 
 article section h4 {

@@ -2,7 +2,7 @@
 XrdTestMaster-jsalmon.conf
 XrdTestHypervisor-jsalmon.conf
 XrdTestSlave-jsalmon.conf
-SUITE_SESSIONS.bin
+suite_history.bin
 .project
 .pydevproject
 *.pyc

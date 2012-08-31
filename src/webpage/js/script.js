@@ -1,4 +1,4 @@
-$(function () {
+$(document).ready(function () {
 	
 	// Notification Close Button
 	$('.close-notification').click(
@@ -27,13 +27,13 @@ $(function () {
 	// Menu Dropdown
 	//$('#main-nav li ul').hide(); //Hide all sub menus
 	//$('#main-nav li.current a').parent().find('ul').slideToggle('fast'); // Slide down the current sub menu
-	$('#main-nav li a').click(
-		function () {
-			$(this).parent().siblings().find('ul').slideUp('normal'); // Slide up all menus except the one clicked
-			$(this).parent().find('ul').slideToggle('normal'); // Slide down the clicked sub menu
-			return false;
-		}
-	);
+//	$('#main-nav li a').click(
+//		function () {
+//			$(this).parent().siblings().find('ul').slideUp('normal'); // Slide up all menus except the one clicked
+//			$(this).parent().find('ul').slideToggle('normal'); // Slide down the clicked sub menu
+//			return false;
+//		}
+//	);
 	$('#main-nav li a.no-submenu, #main-nav li li a').click(
 		function () {
 			window.location.href=(this.href); // Open link instead of a sub menu
@@ -147,10 +147,15 @@ $(function () {
 		}
 	);
 	
-	// Progress bar animation
-	$('.progress-bar').each(function() {
-		var progress = $(this).children().width();
-		$(this).children().css({ 'width':0 }).animate({width:progress},3000);
+	// Password submit ajax callback
+	$('#askpass').submit(function() {
+		alert("lol")
+		$.ajax({
+		  type: 'POST',
+		  async: false,
+		  url: 'runTestSuite',
+		  data: { password: "John", testsuite: "ts_001_mm" },
+		  success: function(data) { $('.error').show() },
+		});
 	});
-	
 });

@@ -216,9 +216,9 @@ class XrdTestMaster(Runnable):
             try:
                 # load cluster definitions
                 if self.config.has_option(repo, 'cluster_defs_path'):
-                    clustDefPath = localPath + os.sep + self.config.get(repo, 'cluster_defs_path')
-                elif os.path.exists(localPath + os.sep + 'clusters'):
-                    clustDefPath = localPath + os.sep + 'clusters'
+                    clustDefPath = os.path.join(localPath, self.config.get(repo, 'cluster_defs_path'))
+                elif os.path.exists(os.path.join(localPath, 'clusters')):
+                    clustDefPath = os.path.join(localPath, 'clusters')
                 else:
                     LOGGER.error('No cluster definitions found for repository %s' % repo)
                     
@@ -231,9 +231,9 @@ class XrdTestMaster(Runnable):
             try:
                 # load test suite definitions
                 if self.config.has_option(repo, 'suite_defs_path'):
-                    suiteDefPath = localPath + os.sep + self.config.get(repo, 'suite_defs_path')
-                elif os.path.exists(localPath + os.sep + 'test-suites'):
-                    suiteDefPath = localPath + os.sep + 'test-suites'
+                    suiteDefPath = os.path.join(localPath, self.config.get(repo, 'suite_defs_path'))
+                elif os.path.exists(os.path.join(localPath,+ 'test-suites')):
+                    suiteDefPath = os.path.join(localPath, 'test-suites')
                 else:
                     LOGGER.error('No test suite definitions found for repository %s' % repo)
                 
@@ -259,7 +259,7 @@ class XrdTestMaster(Runnable):
                         continue
                     try:
                         ts.jobFun = self.executeJob(ts.name)
-                        self.sched.add_cron_job(ts.jobFun, \
+                        ts.job = self.sched.add_cron_job(ts.jobFun, \
                                                  **(ts.schedule))
     
                         LOGGER.info("Adding scheduler job for test suite %s at %s" % \
@@ -876,7 +876,8 @@ class XrdTestMaster(Runnable):
             else:
                 return True
         elif job.job == Job.START_CLUSTER:
-            if not self.clusters.has_key(job.args[0]):
+            if not self.clusters.has_key(job.args[0]) or \
+                self.clusters[job.args[0]].state.id < 0:
                 return False
             elif not self.testSuites[job.args[1]].defComplete:
                 return False
@@ -1394,10 +1395,7 @@ class XrdTestMaster(Runnable):
             
         # Load cluster and test suite definitions
         self.loadDefinitions()
-
-        # Prepare notifiers for cluster and test suite definition 
-        # directory monitoring (local and remote)
-        self.watchDirectories()
+        j = self.sched.get_jobs()[0]
 
         # Process events incoming to the system MasterEvents
         self.procEvents()

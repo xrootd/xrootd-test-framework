@@ -26,7 +26,9 @@
     #set $nt = len($testsuites)
     #set $nc = len($clusters)
     #set $nh = len($hypervisors)
-    #set $ns = len($slaves)
+    
+    #set $ts_fail = [t for t in $testsuites.itervalues() if t.state.id < 0]
+    #set $cl_fail = [c for c in $clusters.itervalues() if c.state.id < 0]
     
     #set $run_hist = sorted($run_hist, key=lambda x: $x.initDate, reverse=True)
     
@@ -114,7 +116,7 @@
             #end if
             
             
-            #if re.match(r'.*(ok).*', $line, re.I)
+            #if re.match(r'.*(ok|\[xrootd\]).*', $line, re.I)
                 #set $line = '<span class="success">' + $line[:-1] + '</span>'
                 $success.append($line)
                 $important.append($line)
@@ -165,32 +167,45 @@
                         <li>
                             <a href="/index" class="dashboard no-submenu">Dashboard</a>
                         </li>
-                        <li class="current">
+                        <li>
                             <a href="/testsuites" class="projects no-submenu">Test Suites</a>
-                            <span title="${nt} defined test suite(s)">$nt</span>
+                            <span title="${nt} test suite(s) ${'('+str(len(ts_fail)) + 
+                                        ' defined incorrectly)' if len(ts_fail) else ''}" 
+                                  class="${'failure' if len($ts_fail) else 'success'}">
+                                  $nt
+                            </span>
                             #if len($testsuites)
-	                            <ul>
-		                            #for $ts_name in $testsuites.iterkeys()
-		                                <li><a href="/testsuites/${ts_name}">$ts_name</a></li>
-		                            #end for
-	                            </ul>
+                                <ul>
+                                    #for $ts_name in $testsuites.iterkeys()
+                                        <li><a href="/testsuites/${ts_name}">$ts_name</a></li>
+                                    #end for
+                                </ul>
                             #end if
                         </li>
                         <li>
                             <a href="/clusters" class="products no-submenu">Clusters</a>
-                            <span title="${nc} defined cluster(s)">$nc</span>
+                            <span title="${nc} defined cluster(s) ${'('+str(len(ts_fail)) + 
+                                        ' defined incorrectly)' if len(ts_fail) else ''}"
+                                  class="${'failure' if len($cl_fail) else 'success'}">
+                                  $nc
+                            </span>
                         </li>
                         <li>
                             <a href="/hypervisors" class="articles no-submenu">Hypervisors</a>
                             <span title="${nh} connected hypervisor(s)">$nh</span>
                         </li>
-                        <li>
-                            <a href="/slaves" class="settings no-submenu">Slaves</a>
-                            <span title="${ns} connected slave(s)">$ns</span>
-                        </li>
                     </ul>
                 </nav>
                 <!-- /Main Navigation -->
+                
+                <section class="sidebar nested">
+                    <a href="documentation">Framework Documentation</a>
+                </section>
+                
+                <span class="valid-images">
+                    <img src="/webpage/img/valid_html5.png" alt="HTML5 valid"/>
+                    <img src="/webpage/img/valid_css3.png" alt="CSS3 valid"/>
+                </span>
 
             </section>
             <!-- /Aside Block -->
@@ -203,19 +218,18 @@
                     <li><a href="/index" title="Back to Homepage">Back to Home</a></li>
                     <li><a href="/index">Dashboard</a></li>
                     <li><a href="/testsuites">Test Suites</a></li>
-                    <li>$testsuite.name</li>
+                    <li>${testsuite.name if hasattr($testsuite, 'name') else $testsuite}</li>
                 </ul>
                 <!-- /Breadcrumbs -->
 
                 <!-- Full Content Block -->
                 <!-- Note that only 1st article need clearfix class for clearing -->
                 <article class="full-block clearfix">
-
+                #if $testsuite and hasattr($testsuite, 'name')
                     <!-- Article Container for safe floating -->
                     <div class="article-container">
-
                         <header>
-                            <h2>$testsuite.name</h2>
+                            <h2>Run History : $testsuite.name</h2>
                             <!-- Article Header Tab Navigation -->
                             <nav>
                                 <ul class="tab-switch">
@@ -474,32 +488,32 @@
 				                                                                                            <nav>
 				                                                                                                <ul class="tab-switch">
 				                                                                                                    <li>
-				                                                                                                    <a class="default-tab" href="#tab-log-case-init-all-${$stage[3]}-${run.uid}">All</a>
+				                                                                                                    <a class="default-tab" href="#tab-log-case-init-all-${$stage[3]}-${case.uid}">All</a>
 				                                                                                                    </li>
 				                                                                                                    <li>
-				                                                                                                    <a href="#tab-log-case-init-important-${$stage[3]}-${run.uid}">Important</a>
+				                                                                                                    <a href="#tab-log-case-init-important-${$stage[3]}-${case.uid}">Important</a>
 				                                                                                                    </li>
 				                                                                                                    <li>
-				                                                                                                    <a href="#tab-log-case-init-error-${$stage[3]}-${run.uid}">Errors</a>
+				                                                                                                    <a href="#tab-log-case-init-error-${$stage[3]}-${case.uid}">Errors</a>
 				                                                                                                    </li>
 				                                                                                                    <li>
-				                                                                                                    <a href="#tab-log-case-init-warning-${$stage[3]}-${run.uid}">Warnings</a>
+				                                                                                                    <a href="#tab-log-case-init-warning-${$stage[3]}-${case.uid}">Warnings</a>
 				                                                                                                    </li>
 				                                                                                                </ul>
 				                                                                                            </nav>
 				                                                                                        </header>
 				                                                                                        
 				                                                                                        <section>
-				                                                                                            <div class="tab default-tab" id="tab-log-case-init-all-${$stage[3]}-${run.uid}">
+				                                                                                            <div class="tab default-tab" id="tab-log-case-init-all-${$stage[3]}-${case.uid}">
 				                                                                                                <code>$logs['all']</code>
 				                                                                                            </div>
-				                                                                                            <div class="tab" id="tab-log-case-init-important-${$stage[3]}-${run.uid}">
+				                                                                                            <div class="tab" id="tab-log-case-init-important-${$stage[3]}-${case.uid}">
 				                                                                                                <code>$logs['important']</code>
 				                                                                                            </div>
-				                                                                                            <div class="tab" id="tab-log-case-init-error-${$stage[3]}-${run.uid}">
+				                                                                                            <div class="tab" id="tab-log-case-init-error-${$stage[3]}-${case.uid}">
 				                                                                                                <code>$logs['error']</code>
 				                                                                                            </div>
-				                                                                                            <div class="tab" id="tab-log-case-init-warning-${$stage[3]}-${run.uid}">
+				                                                                                            <div class="tab" id="tab-log-case-init-warning-${$stage[3]}-${case.uid}">
 				                                                                                                <code>$logs['warning']</code>
 				                                                                                            </div>
 				                                                                                        </section>
@@ -563,32 +577,32 @@
                                                                                                             <nav>
                                                                                                                 <ul class="tab-switch">
                                                                                                                     <li>
-                                                                                                                    <a class="default-tab" href="#tab-log-case-run-all-${$stage[3]}-${run.uid}">All</a>
+                                                                                                                    <a class="default-tab" href="#tab-log-case-run-all-${$stage[3]}-${case.uid}">All</a>
                                                                                                                     </li>
                                                                                                                     <li>
-                                                                                                                    <a href="#tab-log-case-run-important-${$stage[3]}-${run.uid}">Important</a>
+                                                                                                                    <a href="#tab-log-case-run-important-${$stage[3]}-${case.uid}">Important</a>
                                                                                                                     </li>
                                                                                                                     <li>
-                                                                                                                    <a href="#tab-log-case-run-error-${$stage[3]}-${run.uid}">Errors</a>
+                                                                                                                    <a href="#tab-log-case-run-error-${$stage[3]}-${case.uid}">Errors</a>
                                                                                                                     </li>
                                                                                                                     <li>
-                                                                                                                    <a href="#tab-log-case-run-warning-${$stage[3]}-${run.uid}">Warnings</a>
+                                                                                                                    <a href="#tab-log-case-run-warning-${$stage[3]}-${case.uid}">Warnings</a>
                                                                                                                     </li>
                                                                                                                 </ul>
                                                                                                             </nav>
                                                                                                         </header>
                                                                                                         
                                                                                                         <section>
-                                                                                                            <div class="tab default-tab" id="tab-log-case-run-all-${$stage[3]}-${run.uid}">
+                                                                                                            <div class="tab default-tab" id="tab-log-case-run-all-${$stage[3]}-${case.uid}">
                                                                                                                 <code>$logs['all']</code>
                                                                                                             </div>
-                                                                                                            <div class="tab" id="tab-log-case-run-important-${$stage[3]}-${run.uid}">
+                                                                                                            <div class="tab" id="tab-log-case-run-important-${$stage[3]}-${case.uid}">
                                                                                                                 <code>$logs['important']</code>
                                                                                                             </div>
-                                                                                                            <div class="tab" id="tab-log-case-run-error-${$stage[3]}-${run.uid}">
+                                                                                                            <div class="tab" id="tab-log-case-run-error-${$stage[3]}-${case.uid}">
                                                                                                                 <code>$logs['error']</code>
                                                                                                             </div>
-                                                                                                            <div class="tab" id="tab-log-case-run-warning-${$stage[3]}-${run.uid}">
+                                                                                                            <div class="tab" id="tab-log-case-run-warning-${$stage[3]}-${case.uid}">
                                                                                                                 <code>$logs['warning']</code>
                                                                                                             </div>
                                                                                                         </section>
@@ -809,13 +823,21 @@
                             
                             <!-- Tab Content -->
                             <div class="tab" id="tab1">
-                                def
+                            
+                                
+                                
                             </div>
                             <!-- /Tab Content -->
 
                         </section>
                         <!-- /Article Content -->
-
+                    #else
+                        <div class="notification error">
+                            <p>
+                                <strong>Error:</strong> Test suite not found.
+                            </p>
+                        </div>
+                    #end if
                     </div>
                     <!-- /Article Container -->
 

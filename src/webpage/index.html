@@ -25,7 +25,11 @@
     #set $nt = len($testsuites)
     #set $nc = len($clusters)
     #set $nh = len($hypervisors)
-    #set $ns = len($slaves)
+        
+    #set $tcs = [t for t in $testsuites.itervalues() for t in t.tests]
+    
+    #set $ts_fail = [t for t in $testsuites.itervalues() if t.state.id < 0]
+    #set $cl_fail = [c for c in $clusters.itervalues() if c.state.id < 0]
     
     <!-- Add class .fixed for fixed layout. You would need also edit CSS file for width -->
     <body>
@@ -50,30 +54,43 @@
                         </li>
                         <li>
                             <a href="testsuites" class="projects no-submenu">Test Suites</a>
-                            <span title="${nt} defined test suite(s)">$nt</span>
+                            <span title="${nt} test suite(s) ${'('+str(len(ts_fail)) + 
+                                        ' defined incorrectly)' if len(ts_fail) else ''}" 
+                                  class="${'failure' if len($ts_fail) else 'success'}">
+                                  $nt
+                            </span>
                             #if len($testsuites)
-	                            <ul>
-		                            #for $ts_name in $testsuites.iterkeys()
-		                                <li><a href="testsuites/${ts_name}">$ts_name</a></li>
-		                            #end for
-	                            </ul>
+                                <ul>
+                                    #for $ts_name in $testsuites.iterkeys()
+                                        <li><a href="testsuites/${ts_name}">$ts_name</a></li>
+                                    #end for
+                                </ul>
                             #end if
                         </li>
                         <li>
                             <a href="clusters" class="products no-submenu">Clusters</a>
-                            <span title="${nc} defined cluster(s)">$nc</span>
+                            <span title="${nc} defined cluster(s) ${'('+str(len(ts_fail)) + 
+                                        ' defined incorrectly)' if len(ts_fail) else ''}"
+                                  class="${'failure' if len($cl_fail) else 'success'}">
+                                  $nc
+                            </span>
                         </li>
                         <li>
                             <a href="hypervisors" class="articles no-submenu">Hypervisors</a>
                             <span title="${nh} connected hypervisor(s)">$nh</span>
                         </li>
-                        <li>
-                            <a href="slaves" class="settings no-submenu">Slaves</a>
-                            <span title="${ns} connected slave(s)">$ns</span>
-                        </li>
                     </ul>
                 </nav>
                 <!-- /Main Navigation -->
+                
+                <section class="sidebar nested">
+                    <a href="documentation">Framework Documentation</a>
+                </section>
+                
+                <span class="valid-images">
+                    <img src="/webpage/img/valid_html5.png" alt="HTML5 valid"/>
+                    <img src="/webpage/img/valid_css3.png" alt="CSS3 valid"/>
+                </span>
 
             </section>
             <!-- /Aside Block -->
@@ -103,17 +120,50 @@
 
                         <!-- Article Content -->
                         <section>
-                            <ul>
-                                <li>Status</li>
-                                <li>Overview</li>
-                                <li>Statistics</li>
-                            </ul>
+	                        <article class="quarter-block">
+	                            <div class="article-container">
+	                                <ul class="stats-summary">
+	                                    <li>
+	                                        <strong class="stats-count">$nt</strong>
+	                                        <p>Test suites</p>
+	                                        <p class="stats-meta">
+	                                           (${len([t for t in $testsuites.itervalues() if t.state.id > 0])} defined correctly)
+	                                        </p>
+	                                        <a href="/testsuites" class="button stats-view" rel="tooltip" title="View test suites">View</a>
+	                                    </li>
+	                                    <li>
+	                                        <strong class="stats-count">${len($tcs)}</strong>
+	                                        <p>Total test cases</p>
+	                                        <a href="/testsuites" class="button stats-view" rel="tooltip" title="View test cases">View</a>
+	                                    </li>
+	                                </ul>
+	                            </div>
+	                        </article>
+	                        <article class="quarter-block">
+                                <div class="article-container">
+                                    <ul class="stats-summary">
+                                        <li>
+                                            <strong class="stats-count">$nt</strong>
+                                            <p>Test suites</p>
+                                            <p class="stats-meta">
+                                               (${len([t for t in $testsuites.itervalues() if t.state.id > 0])} defined correctly)
+                                            </p>
+                                            <a href="/testsuites" class="button stats-view" rel="tooltip" title="View test suites">View</a>
+                                        </li>
+                                        <li>
+                                            <strong class="stats-count">${len($tcs)}</strong>
+                                            <p>Total test cases</p>
+                                            <a href="/testsuites" class="button stats-view" rel="tooltip" title="View test cases">View</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </article>
                         </section>
                         <!-- /Article Content -->
 
                     </div>
                     <!-- /Article Container -->
-
+                    
                 </article>
                 <!-- /Full Content Block -->
 

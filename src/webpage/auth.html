@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+    <meta charset="UTF-8">
+    <title>$title</title>
+    <meta name="description" content="${title}">
+    <meta name="author" content="Justin Salmon <jsalmon@cern.ch>">
+
+    <link rel="shortcut icon" href="/webpage/img/favicon.ico">
+    
+    <!-- CSS Styles -->
+    <link rel="stylesheet" href="/webpage/css/style.css">
+    <link rel="stylesheet" href="/webpage/css/colors.css">
+    <link rel="stylesheet" href="/webpage/css/jquery.tipsy.css">
+    
+    <!-- Google WebFonts -->
+    <link href='http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic' rel='stylesheet' type='text/css'>
+    
+    <script src="/webpage/js/libs/modernizr-1.7.min.js"></script>
+</head>
+<body class="login">
+    <section role="main">
+
+        <header>
+            <h1><a href="index" title="Back to Homepage"></a>XRootD</h1>
+            <h2>Testing Framework</h2>
+        </header>
+
+        <article id="login-box">
+            #if $testsuite
+	            <div class="article-container">
+	                <p>You must enter the administration password to run the test suite $testsuite.</p>
+	                
+	                <!-- Notification -->
+	                <div class="notification error" style="display: none;">
+	                    <a href="#" class="close-notification" rel="tooltip" title="Hide Notification">x</a>
+	                    <p><strong>Error: </strong><span class="error-message"></span></p>
+	                </div>
+	                <!-- /Notification -->
+	            
+	                <form id="askpass" method="post" action="#">
+	                    <fieldset>
+	                        <dl>
+	                            <dt>
+	                                <label>Password</label>
+	                            </dt>
+	                            <dd>
+	                                <input id="password" type="password" maxlength="30" placeholder="Enter password">
+	                            </dd>
+	                            <dt class="checkbox"><label>Remember password</label></dt>
+	                            <dd><input type="checkbox"></dd>
+	                        </dl>
+	                        <input type="hidden" id="testsuite" name="testsuite" value="$testsuite" />
+	                    </fieldset>
+	                    <button type="submit" class="right">Submit</button>
+	                </form>
+	
+	            </div>
+            #else 
+                <div class="notification error">
+                    <p><strong>Error: </strong>Test suite not found.</p>
+                </div>
+            #end if
+        </article> 
+
+        <ul class="login-links">
+            <li><a href="/testsuites">Back to page</a></li>
+        </ul>
+        
+    </section>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+    <script>!window.jQuery && document.write(unescape('%3Cscript src="/webpage/js/jquery/jquery-1.5.1.min.js"%3E%3C/script%3E'))</script>
+    <script src="/webpage/js/jquery/jquery.tipsy.js"></script>
+    <script src="/webpage/js/auth.js"></script>
+</body>
+</html>

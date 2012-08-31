@@ -26,7 +26,9 @@
     #set $nc = len($clusters)
     #set $nh = len($hypervisors)
     #set $ns = len($slaves)
-
+    
+    #set $ts_fail = [t for t in $testsuites.itervalues() if t.state.id < 0]
+    #set $cl_fail = [c for c in $clusters.itervalues() if c.state.id < 0]
      
     <!-- Add class .fixed for fixed layout. You would need also edit CSS file for width -->
     <body>
@@ -51,30 +53,43 @@
                         </li>
                         <li>
                             <a href="testsuites" class="projects no-submenu">Test Suites</a>
-                            <span title="${nt} defined test suite(s)">$nt</span>
+                            <span title="${nt} test suite(s) ${'('+str(len(ts_fail)) + 
+                                        ' defined incorrectly)' if len(ts_fail) else ''}" 
+                                  class="${'failure' if len($ts_fail) else 'success'}">
+                                  $nt
+                            </span>
                             #if len($testsuites)
-	                            <ul>
-		                            #for $ts_name in $testsuites.iterkeys()
-		                                <li><a href="testsuites/${ts_name}">$ts_name</a></li>
-		                            #end for
-	                            </ul>
+                                <ul>
+                                    #for $ts_name in $testsuites.iterkeys()
+                                        <li><a href="testsuites/${ts_name}">$ts_name</a></li>
+                                    #end for
+                                </ul>
                             #end if
                         </li>
                         <li>
                             <a href="clusters" class="products no-submenu">Clusters</a>
-                            <span title="${nc} defined cluster(s)">$nc</span>
+                            <span title="${nc} defined cluster(s) ${'('+str(len(ts_fail)) + 
+                                        ' defined incorrectly)' if len(ts_fail) else ''}"
+                                  class="${'failure' if len($cl_fail) else 'success'}">
+                                  $nc
+                            </span>
                         </li>
                         <li class="current">
                             <a href="hypervisors" class="articles no-submenu">Hypervisors</a>
                             <span title="${nh} connected hypervisor(s)">$nh</span>
                         </li>
-                        <li>
-                            <a href="slaves" class="settings no-submenu">Slaves</a>
-                            <span title="${ns} connected slave(s)">$ns</span>
-                        </li>
                     </ul>
                 </nav>
                 <!-- /Main Navigation -->
+                
+                <section class="sidebar nested">
+                    <a href="documentation">Framework Documentation</a>
+                </section>
+                
+                <span class="valid-images">
+                    <img src="/webpage/img/valid_html5.png" alt="HTML5 valid"/>
+                    <img src="/webpage/img/valid_css3.png" alt="CSS3 valid"/>
+                </span>
 
             </section>
             <!-- /Aside Block -->
@@ -107,47 +122,80 @@
                         <section>
                             #if len($hypervisors)
 	                            <!-- Tab Content with class. sidetabs for side tabs container -->
-	                            <div class="tab default-tab sidetabs" id="tab1">
+	                            <div class="sidetabs">
 	                                <!-- Side Tab Navigation -->
 	                                <nav class="sidetab-switch">
 	                                    <ul>
-	                                        #for $i, $h in enumerate($hypervisors.itervalues())
-	                                           ## First tab is the default tab
-	                                           #if $i == 0
-	                                               <li><a class="default-sidetab" href="#sidetab${i}">$h.hostname</a></li>
-	                                           #else
-	                                               <li><a href="#sidetab${$i}">$h.hostname</a></li>
-	                                           #end if
+	                                        #set $default_tab = True
+	                                        #for $h in $hypervisors.itervalues()
+	                                           <li>
+	                                               <a class="${'default-sidetab' if $default_tab else ''}" 
+	                                                  href="#sidetab-${h.hostname.replace('.', '-')}">
+	                                                   $h.hostname
+	                                               </a>
+	                                           </li>
+	                                           #set $default_tab = False
 	                                        #end for
 	                                    </ul>
 	                                </nav>
 	                                <!-- /Side Tab Navigation -->	                               
 	                                
-	                                #for $i, ($addr, $h) in enumerate($hypervisors.iteritems())
-	                                
-	                                   <!-- Side Tab Content -->
-	                                   #if $i == 0
-	                                       <div class="sidetab default-sidetab" id="sidetab${i}">
-	                                   #else
-	                                       <div class="sidetab" id="sidetab${i}">
-	                                   #end if
-	                                        <h3>
-	                                           $h.hostname
-	                                           <span>$addr[0] : $addr[1]</span>
-	                                        </h3>
-	                                        <ul class="logs">
-	                                            #for $state in $h.states
-	                                               <li>
-                                                    <span class="logs-timestamp">[ $state.time ]</span>
-                                                    <h4 class="logs-event">$state.name</h4>
-                                                </li>
-	                                            #end for    
-	                                        </ul>
-	                                    </div>
-	                                    <!-- /Side Tab Content -->
-	                                
+	                                #set $default_tab = True
+	                                #for $h in $hypervisors.itervalues()
+                                       <div class="sidetab ${'default-sidetab' if $default_tab else ''}" 
+                                            id="sidetab-${h.hostname.replace('.', '-')}">
+                                            <article class="full-block">
+	                                            <div class="article-container">
+	                                                <h3>
+		                                               $h.hostname
+		                                               <span><code>$h.address[0]:$h.address[1]</code></span>
+		                                            </h3>
+		                                            <ul class="logs">
+		                                               <li class="event">
+		                                                   <span class="logs-timestamp">[ $h.state.time ]</span>
+		                                                   <h4 class="logs-event">$h.state.name</h4>
+		                                               </li> 
+		                                            </ul>
+	                                            </div>
+                                            </article>
+                                        
+                                            <article class="full-block">
+	                                            <div class="article-container">
+	                                                <h3>Spawned slaves</h3>
+	                                                <section>
+	                                                    #set $my_slaves = [s for s in $slaves.itervalues() if s.address[0] == $h.address[0]]
+	                                                    #if len($my_slaves)
+	                                                        <table>
+	                                                           <tr>
+	                                                               <th>Hostname</th>
+	                                                               <th>Address</th>
+	                                                               <th>State</th>
+	                                                               <th>Time</th>
+	                                                           </tr>
+	                                                           <tr>
+	                                                               #for $slave in $my_slaves
+		                                                               <td>$slave.hostname</td>
+		                                                               <td>$slave.address[0]:$slave.address[1]</td>
+		                                                               <td>$slave.state.name</td>
+		                                                               <td>$slave.state.time</td>
+	                                                               #end for
+	                                                           </tr>
+	                                                           
+	                                                        </table>
+	                                                    #else
+		                                                    <div class="notification note">
+							                                    <p>
+							                                    <strong>Note:</strong> No slaves connected.
+							                                    </p>
+							                                </div>
+	                                                    #end if
+	                                                </section>
+                                                </div>
+                                            </article>
+                                        
+                                       </div>
+	                                   #set $default_tab = False
 	                                #end for
-
 	                            </div>
 	                            <!-- /Tab Content -->
                             #else

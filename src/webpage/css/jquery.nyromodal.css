@@ -75,7 +75,7 @@
 	position: absolute;
 	width: 100px;
 	height: 100px;
-	background: #fff url('../img/icons/loading/icon_loading_notification_white.gif') no-repeat center;
+	background: #fff url('../img/icons/ajax_loading.gif') no-repeat center;
 	padding: 0;
 }
 .nyroModalPrev, .nyroModalNext {

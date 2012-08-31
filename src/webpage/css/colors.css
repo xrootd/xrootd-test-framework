@@ -127,7 +127,7 @@ body,body.login,body.error-page,tbody tr:hover,.tickets .ticket-data .ticket-det
 
 tbody tr:nth-child(odd),.widget,.stats-summary li,.progress-bar,.logs li,.contacts,.htmlcalendar .day,.tickets .ticket-data:nth-child(2n)
 	{
-	background-color: #f2f2f2;
+	background-color: #f2f2f2 !important;
 }
 
 .sidebar img,.contacts li img,.login #login-box,.table-switch,.toggle-table-switch,.htmlcalendar .week,.htmlcalendar .day.previous-month,.htmlcalendar .day.next-month
@@ -158,6 +158,11 @@ input:focus,textarea:focus {
 
 #main-nav ul li span {
 	background-color: #d1d1d1;
+}
+
+#main-nav ul li span.failure {
+	background-color: #f4e9e7 !important;
+    color: #ae432e !important;
 }
 
 /*  Background Images  */
@@ -215,14 +220,9 @@ header.square nav.leftnav ul li.failure {
 		no-repeat 10px 8px;
 }
 
-header.square nav.leftnav ul li.success {
+header.square nav.leftnav ul li{
 	border: 1px solid #E6E6E6;
-	background-color: #F2F2F2;
-}
-
-header.square nav.leftnav ul li.failure {
-	border: 1px solid #E6E6E6;
-	background-color: #F2F2F2;
+	background-color: #F2F2F2 !important;
 }
 
 article section .sidetab ul li {

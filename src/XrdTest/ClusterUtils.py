@@ -307,6 +307,7 @@ class Disk(object):
     def __init__(self, name, size, device='vda', mountPoint='/data', cache=True):
         self.name = name
         self.size = self.parseDiskSize(size)
+        self.readableSize = size
         self.device = device
         self.mountPoint = mountPoint
         self.cache = cache
@@ -330,8 +331,9 @@ class Cluster(Utils.Stateful):
     S_ERROR = (-4, "Cluster error")
     S_ERROR_START = (-3, "Error at start:")
     S_ERROR_STOP = (-2, "Error at stop:")
-    S_UNKNOWN_NOHYPERV = (-1, "Cluster state unknown: no hypervisor to run cluster.")
+    S_UNKNOWN_NOHYPERV = (0, "Cluster state unknown: no hypervisor to run cluster.")
     S_UNKNOWN = (0, "Cluster state unknown.")
+    S_DEFINED = (0, "Cluster defined correctly.")
     S_DEFINITION_SENT = (1, "Cluster start command sent to hypervisor.")  
     S_STARTING_CLUSTER = (2, 'Starting cluster.')
     S_CREATING_NETWORK = (3, 'Creating network.')
@@ -549,6 +551,7 @@ def loadClustersDefs(path):
                 try:
                     clu = loadClusterDef(cp, clusters)
                     if clu:
+                        clu.state = State(Cluster.S_DEFINED)
                         clusters.append(clu)
                 except ClusterManagerException, e:
                     clu = Cluster()

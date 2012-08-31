@@ -18,16 +18,6 @@ def getCluster():
     cluster.defaultHost.arch = 'x86_64'
     cluster.defaultHost.ramSize = '1048576'
     cluster.defaultHost.net = network_name
-    
-    #---------------------------------------------------------------------------
-    # Network definition
-    #---------------------------------------------------------------------------
-    net = Network()
-    net.bridgeName = 'virbr_example'
-    net.name = network_name
-    net.ip = '192.168.127.1'
-    net.netmask = '255.255.255.0'
-    net.DHCPRange = ('192.168.127.2', '192.168.127.254')
 
     #---------------------------------------------------------------------------
     # Host definitions
@@ -58,12 +48,21 @@ def getCluster():
     client1.disks =  [Disk('disk1', '5G', device='vda', mountPoint='/data')]
     
     #---------------------------------------------------------------------------
+    # Network definition
+    #---------------------------------------------------------------------------
+    net = Network()
+    net.bridgeName = 'virbr_example'
+    net.name = network_name
+    net.ip = '192.168.127.1'
+    net.netmask = '255.255.255.0'
+    net.DHCPRange = ('192.168.127.2', '192.168.127.254')
+    #---------------------------------------------------------------------------
     # Optional load balancing configuration
     #---------------------------------------------------------------------------
     # The DNS alias to be used
-    #net.lbAlias = 'lb.xrd.test'
+    net.lbAlias = 'lb.xrd.test'
     # The machines that will be load balanced (round-robin) under the alias
-    #net.lbHosts = [ds1, ds2, ds3, ds4]
+    net.lbHosts = [ds1, ds2, ds3, ds4]
  
     # Hosts to be included in the cluster
     hosts = [metamanager1, manager1, manager2, ds1, ds2, ds3, ds4, client1]

@@ -136,7 +136,9 @@ class TestSuite(Stateful):
         self.defComplete = True 
         # Handle to function that will be used by scheduler. Has to be kept in case of
         # unscheduling.
-        self.jobFun = None      
+        self.jobFun = None
+        # Reference to the job object inside the scheduler
+        self.job = None  
         # If machines were empty, system has to remember to reload them every time 
         # cluster definition changes
         self.machinesAutoFilled = False 
@@ -203,6 +205,15 @@ class TestSuite(Stateful):
                 LOGGER.info(("Host list for suite %s " + \
                             "filled automatically with %s") % \
                             (self.name, self.machines))
+                
+    def getNextRunTime(self):
+        '''Get the next scheduled run time for this suite.'''
+        if self.job:
+            return self.job.compute_next_run_time(datetime.datetime.now())
+        else: return '-'
+        
+    def has_failure(self):
+        return self.state.id < 0
 
 class TestCase:
     '''

@@ -155,7 +155,8 @@ class WebInterface:
     def testsuites(self, ts_name=None):
         if ts_name:
             tvars = self.vars()
-            tvars['testsuite'] = self.testMaster.testSuites[ts_name]
+            tvars['testsuite'] = self.testMaster.testSuites[ts_name] \
+                if self.testMaster.testSuites.has_key(ts_name) else ts_name
             tvars['run_hist'] = [run for run in self.testMaster.suiteSessions.itervalues() if run.name == ts_name]
             return self.disp("testsuite.html", tvars)
         
@@ -234,13 +235,22 @@ class WebInterface:
         return "%s: not found in any repository" % path
     
     @cherrypy.expose
-    def runTestSuite(self, password=None, testsuite=None): 
-        if not password == self.suiteRunPass:
-            return 'Incorrect password.'
+    def auth(self, password=None, testsuite=None):
+        if not self.testMaster.testSuites.has_key(testsuite):
+            return 'Not authorized: unknown test suite'
+        elif not password == self.suiteRunPass:
+            return 'Not authorized: incorrect password'
         else:
             self.testMaster.enqueueJob(testsuite)
             self.testMaster.startNextJob()
-            raise cherrypy.HTTPRedirect("index")
+            return 'Password OK'
+    
+    @cherrypy.expose
+    def runTestSuite(self, testsuite=None): 
+        tvars = self.vars()
+        tvars['testsuite'] = testsuite if self.testMaster.testSuites.has_key(testsuite) else None
+        return self.disp("auth.html", tvars)
+        
 
 def handleCherrypyError():
         cherrypy.response.status = 500

@@ -224,7 +224,7 @@ class WebInterface:
 
         @param script_name:
         '''        
-        path = self.config.get('webserver', 'webpage_dir')
+        path = self.webroot
         
         for i in xrange(0, len(script_name)):
             path += os.sep + script_name[i]

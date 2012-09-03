@@ -172,14 +172,14 @@
 	                                                               <th>State</th>
 	                                                               <th>Time</th>
 	                                                           </tr>
-	                                                           <tr>
-	                                                               #for $slave in $my_slaves
+	                                                           #for $slave in $my_slaves
+		                                                           <tr>
 		                                                               <td>$slave.hostname</td>
 		                                                               <td>$slave.address[0]:$slave.address[1]</td>
 		                                                               <td>$slave.state.name</td>
 		                                                               <td>$slave.state.time</td>
-	                                                               #end for
-	                                                           </tr>
+		                                                           </tr>
+	                                                           #end for
 	                                                           
 	                                                        </table>
 	                                                    #else

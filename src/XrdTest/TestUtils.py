@@ -48,7 +48,7 @@ try:
     
     from Utils import State, Stateful
     from string import maketrans 
-    from copy import deepcopy
+    from copy import copy
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
@@ -147,6 +147,11 @@ class TestSuite(Stateful):
         self.testCases = []    
 
         self.state = ''
+        
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        if 'job' in state: del state['job']
+        return state
 
     def validateStatic(self):
         '''
@@ -270,7 +275,7 @@ class TestSuiteSession(Stateful):
         # name of test suite
         self.name = suiteDef.name
         # test suite definition copy
-        self.suite = deepcopy(suiteDef)
+        self.suite = copy(suiteDef)
         self.suite.jobFun = None
         # date of initialization
         self.initDate = datetime.datetime.now()

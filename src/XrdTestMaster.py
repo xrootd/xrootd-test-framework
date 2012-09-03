@@ -1403,7 +1403,6 @@ class XrdTestMaster(Runnable):
             
         # Load cluster and test suite definitions
         self.loadDefinitions()
-        j = self.sched.get_jobs()[0]
 
         # Process events incoming to the system MasterEvents
         self.procEvents()

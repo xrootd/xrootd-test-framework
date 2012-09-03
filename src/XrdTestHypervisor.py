@@ -289,14 +289,14 @@ class XrdTestHypervisor(Runnable):
                 LOGGER.debug("Sent msg: " + str(resp))
             except SocketDisconnectedError, e:
                 LOGGER.error(e)
-                LOGGER.info("Connection to XrdTestMaster closed.")  
+                LOGGER.info("Connection to XrdTestMaster closed.")
                 
                 # Try to reconnect
                 self.tryConnect()
                 
                 # Remove clusters
                 if self.clusterManager:
-                    clusters = self.clusterManager.clusters
+                    clusters = self.clusterManager.clusters.keys()
                     for cluster in clusters:
                         self.clusterManager.removeCluster(cluster)
                     try:

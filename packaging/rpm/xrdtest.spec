@@ -1,5 +1,4 @@
-# %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
-%define python_sitelib /usr/lib/python2.6/site-packages
+%{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name:           xrdtest
 Version:        0.0.1
@@ -58,6 +57,9 @@ install -pm 644 src/conf/XrdTestSlave.conf %{buildroot}%{_sysconfdir}/XrdTest
 mkdir -p %{buildroot}%{_datadir}/XrdTest
 cp -r src/webpage %{buildroot}%{_datadir}/XrdTest
 
+# docs
+cp -r docs %{buildroot}%{_datadir}/XrdTest/webpage
+
 #-------------------------------------------------------------------------------
 # XrdTestLib
 #-------------------------------------------------------------------------------
@@ -73,6 +75,7 @@ Shared library files for XrdTestFramework.
 %files lib
 %defattr(-,root,root,-)
 %{python_sitelib}/XrdTest
+%{_datadir}/XrdTest/webpage/*
 
 #-------------------------------------------------------------------------------
 # XrdTestMaster

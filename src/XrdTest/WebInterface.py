@@ -177,7 +177,7 @@ class WebInterface:
     
     @cherrypy.expose
     def documentation(self):
-        return self.disp("documentation.html", self.vars())
+        return self.disp('docs/docs/build/html/index.html', {})
 
     @cherrypy.expose
     def indexRedirect(self):

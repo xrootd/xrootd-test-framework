@@ -29,6 +29,15 @@
 #         information of all created clusters during the session and can remove
 #         all of them on demand - come back to state before it began.
 #-------------------------------------------------------------------------------
+"""
+.. module:: ClusterManager
+   :platform: Linux
+   :synopsis: Module description here
+
+.. moduleauthor:: Justin Lewis Salmon <jsalmon@cern.ch>
+
+
+"""
 from Utils import Logger
 LOGGER = Logger(__name__).setup()
 

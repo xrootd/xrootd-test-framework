@@ -23,6 +23,7 @@ mkdir -p ${DEST}/examples/clusters
 mkdir -p ${DEST}/examples/test-suites
 mkdir -p ${DEST}/packaging
 mkdir -p ${DEST}/packaging/rpm
+mkdir -p ${DEST}/docs
 
 for n in Slave Master Hypervisor; do
   cp $CP_OPTS ${SRC}/src/XrdTest$n.py ${DEST}/src
@@ -30,6 +31,7 @@ for n in Slave Master Hypervisor; do
 done
 
 cp $CP_OPTS ${SRC}/src/webpage ${DEST}/src
+cp $CP_OPTS ${SRC}/docs ${DEST}/docs
 
 cp -R $CP_OPTS ${SRC}/examples/clusters/ ${DEST}/examples/clusters
 cp -R $CP_OPTS ${SRC}/examples/test-suites/ ${DEST}/examples/test-suites

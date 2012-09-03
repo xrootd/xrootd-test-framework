@@ -1309,6 +1309,14 @@ class XrdTestMaster(Runnable):
                         '/webpage/img': {
                         'tools.staticdir.on': True,
                         'tools.staticdir.dir' : webInterface.webroot + "/img",
+                        },
+                       '/_static': {
+                        'tools.staticdir.on': True,
+                        'tools.staticdir.dir' : webInterface.webroot + "/docs/docs/build/html/_static",
+                        },
+                       '/': {
+                        'tools.staticdir.on': True,
+                        'tools.staticdir.dir' : webInterface.webroot + "/docs/docs/build/html/",
                         }
                        }
         

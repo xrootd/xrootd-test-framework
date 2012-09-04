@@ -218,7 +218,7 @@
                     <li><a href="/index" title="Back to Homepage">Back to Home</a></li>
                     <li><a href="/index">Dashboard</a></li>
                     <li><a href="/testsuites">Test Suites</a></li>
-                    <li>${testsuite.name if hasattr($testsuite, 'name') else $testsuite}</li>
+                    <li>${testsuite.name if hasattr($testsuite, 'name') else ''}</li>
                 </ul>
                 <!-- /Breadcrumbs -->
 
@@ -232,10 +232,11 @@
                             <h2>Run History : $testsuite.name</h2>
                             <!-- Article Header Tab Navigation -->
                             <nav>
-                                <ul class="tab-switch">
-                                    <li><a class="default-tab" href="#tab0">Run History</a></li>
-                                    <li><a href="#tab1">Definition</a></li>
-                                </ul>
+	                            #set $disabled = 'disabled' if $testsuite.state.id < 0 else ''
+	                            <form action="/runTestSuite" method="post">
+	                                <button $disabled>Run Now</button>
+	                                <input type="hidden" name="testsuite" value="$testsuite.name" />
+	                            </form>
                             </nav>
                             <!-- /Article Header Tab Navigation -->
 
@@ -245,7 +246,6 @@
                         <!-- Article Content -->
                         <section>
                             <!-- Tab Content -->
-                            <div class="tab default-tab" id="tab0">
                                 #if len($run_hist)
                                     <div class="sidetabs">
                                     
@@ -282,6 +282,7 @@
                                             
                                             <div class="sidetab ${'default-sidetab' if $default_outer_tab else ''}" 
                                                  id="sidetab-outer-${run.uid}">
+                                                
                                                 #set $default_outer_tab = False
                                                 <div class="widgets">
 		                                            <div class="widget increase" id="successes">
@@ -818,17 +819,7 @@
                                         #end for
                                     #end if 
                                 </div>
-                            </div>
                             <!-- /Tab Content -->
-                            
-                            <!-- Tab Content -->
-                            <div class="tab" id="tab1">
-                            
-                                
-                                
-                            </div>
-                            <!-- /Tab Content -->
-
                         </section>
                         <!-- /Article Content -->
                     #else

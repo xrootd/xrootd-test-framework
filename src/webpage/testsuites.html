@@ -151,8 +151,8 @@
                                             <li class="ticket-data-ts-nextrun">
                                                 #set $disabled = 'disabled' if $ts.state.id < 0 else ''
                                                 <button onclick="location.href='/testsuites/$ts.name'">View History</button>
-                                                <form action="runTestSuite" method="post">
-                                                    <button $disabled>Run Me</button>
+                                                <form action="/runTestSuite" method="post">
+                                                    <button $disabled>Run Now</button>
                                                     <input type="hidden" name="testsuite" value="$ts.name" />
                                                 </form>
                                             </li>

@@ -102,10 +102,21 @@ class WebInterface:
         if self.config.has_option('webserver', 'suite_run_pass'):
             self.suiteRunPass = self.config.get('webserver', 'suite_run_pass')    
         
-        self.cp_config = {'request.error_response': handleCherrypyError,
-                          'error_page.404': \
-                          self.webroot + \
-                          os.sep + "page_404.tmpl"}
+        cherrypy.config.update({'request.error_response': self.handleCherrypyError,
+                                'error_page.401': os.path.join(self.webroot, 'err/401.html'),
+                                'error_page.403': os.path.join(self.webroot, 'err/403.html'),
+                                'error_page.404': os.path.join(self.webroot, 'err/404.html'),
+                                'error_page.500': os.path.join(self.webroot, 'err/500.html'),
+                                'error_page.503': os.path.join(self.webroot, 'err/503.html')
+                                })
+        
+        cherrypy.tools.allow = cherrypy.Tool('on_start_resource', self.http_methods_allowed)
+    
+    def http_methods_allowed(self, methods=['GET', 'POST']):
+        method = cherrypy.request.method.upper()
+        if method not in methods:
+            cherrypy.response.headers['Allow'] = ", ".join(methods)
+            raise cherrypy.HTTPError(405)
 
     def disp(self, tfile, tvars):
         '''
@@ -148,10 +159,12 @@ class WebInterface:
         return tvars
 
     @cherrypy.expose
+    @cherrypy.tools.allow()
     def index(self):
         return self.disp("index.html", self.vars())
     
     @cherrypy.expose
+    @cherrypy.tools.allow()
     def testsuites(self, ts_name=None):
         if ts_name:
             tvars = self.vars()
@@ -164,22 +177,22 @@ class WebInterface:
             return self.disp("testsuites.html", self.vars())
     
     @cherrypy.expose
+    @cherrypy.tools.allow()
     def clusters(self):
         return self.disp("clusters.html", self.vars())
     
     @cherrypy.expose
+    @cherrypy.tools.allow()
     def hypervisors(self):
         return self.disp("hypervisors.html", self.vars())
     
     @cherrypy.expose
-    def slaves(self):
-        return self.disp("slaves.html", self.vars())
-    
-    @cherrypy.expose
+    @cherrypy.tools.allow()
     def documentation(self):
         return self.disp('docs/docs/build/html/index.html', {})
 
     @cherrypy.expose
+    @cherrypy.tools.allow()
     def indexRedirect(self):
         '''
         Page that at once redirects user to index. Used to clear URL parameters.
@@ -192,6 +205,7 @@ class WebInterface:
         return self.disp("index_redirect.tmpl", tvars)
 
     @cherrypy.expose
+    @cherrypy.tools.allow()
     def downloadScript(self, *script_name):
         '''
         Enable slave to download some script as a regular file from master and
@@ -217,6 +231,7 @@ class WebInterface:
         return "%s: not found in any repository" % path
 
     @cherrypy.expose
+    @cherrypy.tools.allow()
     def showScript(self, *script_name):
         '''
         Enable slave to view some script as text from master and
@@ -235,6 +250,7 @@ class WebInterface:
         return "%s: not found in any repository" % path
     
     @cherrypy.expose
+    @cherrypy.tools.allow()
     def auth(self, password=None, testsuite=None):
         if not self.testMaster.testSuites.has_key(testsuite):
             return 'Not authorized: unknown test suite'
@@ -246,16 +262,14 @@ class WebInterface:
             return 'Password OK'
     
     @cherrypy.expose
+    @cherrypy.tools.allow()
     def runTestSuite(self, testsuite=None): 
         tvars = self.vars()
         tvars['testsuite'] = testsuite if self.testMaster.testSuites.has_key(testsuite) else None
         return self.disp("auth.html", tvars)
-        
 
-def handleCherrypyError():
-        cherrypy.response.status = 500
-        cherrypy.response.body = \
-                        ["An error occured. Check log for details."]
-        LOGGER.error("Cherrypy error: " + \
-                     str(cherrypy._cperror.format_exc(None)))
+    def handleCherrypyError(self):
+            cherrypy.response.status = 500
+            cherrypy.response.body = ["An error occurred. Check log for details."]
+            LOGGER.error("Cherrypy error: %s" % str(cherrypy._cperror.format_exc()))
     

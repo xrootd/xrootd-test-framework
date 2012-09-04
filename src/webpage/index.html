@@ -129,12 +129,10 @@
 	                                        <p class="stats-meta">
 	                                           (${len([t for t in $testsuites.itervalues() if t.state.id > 0])} defined correctly)
 	                                        </p>
-	                                        <a href="/testsuites" class="button stats-view" rel="tooltip" title="View test suites">View</a>
 	                                    </li>
 	                                    <li>
 	                                        <strong class="stats-count">${len($tcs)}</strong>
 	                                        <p>Total test cases</p>
-	                                        <a href="/testsuites" class="button stats-view" rel="tooltip" title="View test cases">View</a>
 	                                    </li>
 	                                    <li>
                                             <strong class="stats-count">$nc</strong>
@@ -142,27 +140,58 @@
                                             <p class="stats-meta">
                                                (${len([c for c in $clusters.itervalues() if c.state.id >= 0])} defined correctly)
                                             </p>
-                                            <a href="/testsuites" class="button stats-view" rel="tooltip" title="View clusters">View</a>
                                         </li>
-                                        <li>   
-                                            <p>Currently running test suite:&nbsp;</p>
-                                            <p><strong></strong></p>
+                                        <li>
+                                            #set $failed_runs = len([run for run in $suite_hist.itervalues() if $run.failed])
+                                            #set $success_runs = len($suite_hist) - $failed_runs
+                                            <strong class="stats-count">$success_runs</strong>
+                                            <p>Total successful test suite runs</p>
                                         </li>
-                                        <li>   
-                                            <p>Currently active cluster:&nbsp;</p>
-                                            <p><strong></strong></p>
-                                        </li>
-                                        <li>   
-                                            <p>Currently running job:&nbsp;</p>
-                                            <p><strong>${pending_jobs_dbg[0] if $pending_jobs_dbg else 'None'}</strong></p>
+                                        <li>
+                                            <strong class="stats-count">$failed_runs</strong>
+                                            <p>Total failed test suite runs</p>
                                         </li>
 	                                </ul>
 	                            </div>
 	                        </article>
 	                        
+	                        <article class="third-block">
+	                           <div class="article-container">
+	                               <ul class="stats-summary">
+	                                   <li>
+                                            <strong class="stats-count"></strong>
+                                            <p>Currently running test suite:&nbsp;</p>
+                                            <p>
+                                                <strong>
+                                                    ${running_suite_uids.keys()[0] if len($running_suite_uids) else 'None'}
+                                                </strong>
+                                            </p>
+                                        </li>
+                                        <li>
+                                            <strong class="stats-count"></strong>
+                                            <p>Currently active cluster:&nbsp;</p>
+                                            <p>
+                                                <strong>
+                                                    #set $ac = [c for c in $clusters.itervalues() if 0 < c.state.id < 11 ]
+                                                    ${ac[0].name if len(ac) else 'None'}
+                                                </strong>
+                                                #if len($hypervisors) and len($ac)
+                                                    #set $ah = [h for h in $hypervisors.values() if 0 < h.state.id < 11 ]
+                                                    ${'on hypervisor <strong>%s</strong>' % ah[0].hostname if len(ah) else 'None'}
+                                                #end if 
+                                            </p>
+                                        </li>
+                                        <li>
+                                            <strong class="stats-count"></strong>
+                                            <p>Currently running job:&nbsp;</p>
+                                            <p><strong>${pending_jobs_dbg[0] if $pending_jobs_dbg else 'None'}</strong></p>
+                                        </li>
+	                               </ul>
+	                           </div>
+	                        </article>
+	                        
                         </section>
                         <!-- /Article Content -->
-pending test suites? currently active hypervisor? total successful/failed test runs? schedule test run? select which hypervisor to run suite on?
                     </div>
                     <!-- /Article Container -->
                     

@@ -156,11 +156,16 @@ class XrdTestMaster(Runnable):
         
         LOGGER.info("Using config file: %s" % configFile)
         
+        self.loadSuiteSessions()
+        
         if self.config.has_option('general', 'suite_sessions_file'):
                 self.suiteSessions = shelve.open(\
                              self.config.get('general', 'suite_sessions_file'))
         else:
             LOGGER.error('Cannot open suite session storage file.')
+            
+    def loadSuiteSessions(self):
+        '''Load '''
 
     def retrieveSuiteSession(self, suite_name):
         '''

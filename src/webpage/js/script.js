@@ -146,16 +146,4 @@ $(document).ready(function () {
 			$(this).parent().parent().find('section, footer').toggle();
 		}
 	);
-	
-	// Password submit ajax callback
-	$('#askpass').submit(function() {
-		alert("lol")
-		$.ajax({
-		  type: 'POST',
-		  async: false,
-		  url: 'runTestSuite',
-		  data: { password: "John", testsuite: "ts_001_mm" },
-		  success: function(data) { $('.error').show() },
-		});
-	});
 });

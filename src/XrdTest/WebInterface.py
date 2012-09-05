@@ -203,6 +203,11 @@ class WebInterface:
                     'port': self.port
                 }
         return self.disp("index_redirect.tmpl", tvars)
+    
+    @cherrypy.expose
+    @cherrypy.tools.allow()
+    def unsupported(self):
+        return self.disp('err/unsupported.html', {})
 
     @cherrypy.expose
     @cherrypy.tools.allow()

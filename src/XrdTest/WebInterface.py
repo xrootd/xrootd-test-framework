@@ -102,7 +102,8 @@ class WebInterface:
         if self.config.has_option('webserver', 'suite_run_pass'):
             self.suiteRunPass = self.config.get('webserver', 'suite_run_pass')    
         
-        cherrypy.config.update({'request.error_response': self.handleCherrypyError,
+        cherrypy.config.update({'tools.allow.on': True,
+                                'request.error_response': self.handleCherrypyError,
                                 'error_page.401': os.path.join(self.webroot, 'err/401.html'),
                                 'error_page.403': os.path.join(self.webroot, 'err/403.html'),
                                 'error_page.404': os.path.join(self.webroot, 'err/404.html'),
@@ -159,44 +160,55 @@ class WebInterface:
         return tvars
 
     @cherrypy.expose
-    @cherrypy.tools.allow()
     def index(self):
+        cherrypy.tools.allow.callable()
         return self.disp("index.html", self.vars())
     
     @cherrypy.expose
-    @cherrypy.tools.allow()
     def testsuites(self, ts_name=None):
+        cherrypy.tools.allow.callable()
         if ts_name:
             tvars = self.vars()
             tvars['testsuite'] = self.testMaster.testSuites[ts_name] \
                 if self.testMaster.testSuites.has_key(ts_name) else ts_name
-            tvars['run_hist'] = [run for run in self.testMaster.suiteSessions.itervalues() if run.name == ts_name]
+            
+            inner = []
+            outer = {}
+            all_runs = self.testMaster.retrieveAllSuiteSessions()
+            for key, runs in all_runs.iteritems():
+                for run in runs.itervalues():
+                    if run.name == ts_name:
+                        inner.append(run)
+                outer.update({key: sorted(inner, key=lambda x: x.initDate, reverse=True)})
+
+            tvars['all_runs'] = outer
+            
             return self.disp("testsuite.html", tvars)
         
         else:
             return self.disp("testsuites.html", self.vars())
     
     @cherrypy.expose
-    @cherrypy.tools.allow()
     def clusters(self):
+        cherrypy.tools.allow.callable()
         return self.disp("clusters.html", self.vars())
     
     @cherrypy.expose
-    @cherrypy.tools.allow()
     def hypervisors(self):
+        cherrypy.tools.allow.callable()
         return self.disp("hypervisors.html", self.vars())
     
     @cherrypy.expose
-    @cherrypy.tools.allow()
     def documentation(self):
+        cherrypy.tools.allow.callable()
         return self.disp('docs/docs/build/html/index.html', {})
 
     @cherrypy.expose
-    @cherrypy.tools.allow()
     def indexRedirect(self):
         '''
         Page that at once redirects user to index. Used to clear URL parameters.
         '''
+        cherrypy.tools.allow.callable()
         tvars = {   
                     'hostname': socket.gethostname(),
                     'protocol': self.protocol,
@@ -205,12 +217,11 @@ class WebInterface:
         return self.disp("index_redirect.tmpl", tvars)
     
     @cherrypy.expose
-    @cherrypy.tools.allow()
     def unsupported(self):
+        cherrypy.tools.allow.callable()
         return self.disp('err/unsupported.html', {})
 
     @cherrypy.expose
-    @cherrypy.tools.allow()
     def downloadScript(self, *script_name):
         '''
         Enable slave to download some script as a regular file from master and
@@ -218,6 +229,7 @@ class WebInterface:
 
         @param script_name:
         '''
+        cherrypy.tools.allow.callable()
         
         for repo in self.config.get('general', 'test-repos').split(','):
             repo = 'test-repo-' + repo
@@ -236,7 +248,6 @@ class WebInterface:
         return "%s: not found in any repository" % path
 
     @cherrypy.expose
-    @cherrypy.tools.allow()
     def showScript(self, *script_name):
         '''
         Enable slave to view some script as text from master and
@@ -244,6 +255,7 @@ class WebInterface:
 
         @param script_name:
         '''        
+        cherrypy.tools.allow.callable()
         path = self.webroot
         
         for i in xrange(0, len(script_name)):
@@ -255,8 +267,8 @@ class WebInterface:
         return "%s: not found in any repository" % path
     
     @cherrypy.expose
-    @cherrypy.tools.allow()
     def auth(self, password=None, testsuite=None):
+        cherrypy.tools.allow.callable()
         if not self.testMaster.testSuites.has_key(testsuite):
             return 'Not authorized: unknown test suite'
         elif not password == self.suiteRunPass:
@@ -267,8 +279,8 @@ class WebInterface:
             return 'Password OK'
     
     @cherrypy.expose
-    @cherrypy.tools.allow()
     def runTestSuite(self, testsuite=None): 
+        cherrypy.tools.allow.callable()
         tvars = self.vars()
         tvars['testsuite'] = testsuite if self.testMaster.testSuites.has_key(testsuite) else None
         return self.disp("auth.html", tvars)

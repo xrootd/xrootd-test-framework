@@ -24,6 +24,7 @@
         <script src="/webpage/js/libs/modernizr-1.7.min.js"></script>
     </head>
     #import re
+    #from datetime import datetime
     
     #set $nt = len($testsuites)
     #set $nc = len($clusters)
@@ -32,7 +33,8 @@
     #set $ts_fail = [t for t in $testsuites.itervalues() if t.state.id < 0]
     #set $cl_fail = [c for c in $clusters.itervalues() if c.state.id < 0]
     
-    #set $run_hist = sorted($run_hist, key=lambda x: $x.initDate, reverse=True)
+    #set $hist_keys = [k for k in $all_runs.iterkeys()]
+    #set $run_hist = $all_runs[$hist_keys[0]]
     
     #set $failed_runs = len([run for run in $run_hist if $run.failed])
     #set $success_runs = len($run_hist) - $failed_runs
@@ -253,6 +255,21 @@
                                     
                                     <!-- Side Tab Navigation -->
                                     <nav class="sidetab-switch">
+<!--                                         <form method="post"> -->
+<!--                                             <label for="history">Select Snapshot:</label> -->
+<!--                                             <br /> -->
+<!--                                             <select name="history"> -->
+<!--                                                 ##for $key in $hist_keys -->
+<!--                                                     <option value="##$key"> -->
+<!--                                                         ##if len($key.split('.')) > 2  -->
+<!--                                                             ##$datetime.strptime($key.split('.')[-1], '%d%m%y-%H%M%S').strftime('%d-%m-%y %H:%M:%S') -->
+<!--                                                         ##else -->
+<!--                                                             Current -->
+<!--                                                         ##end if -->
+<!--                                                     </option> -->
+<!--                                                 ##end for -->
+<!--                                             </select> -->
+<!--                                         </form> -->
                                         <ul>
                                             #set $default_tab = True
                                             #for $i, $run in enumerate($run_hist)

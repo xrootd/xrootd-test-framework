@@ -62,6 +62,7 @@ try:
     from apscheduler.scheduler import Scheduler
     from copy import deepcopy, copy
     from optparse import OptionParser
+    from datetime import datetime
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
@@ -157,28 +158,54 @@ class XrdTestMaster(Runnable):
         LOGGER.info("Using config file: %s" % configFile)
         
         self.loadSuiteSessions()
-        
+            
+    def loadSuiteSessions(self):
         if self.config.has_option('general', 'suite_sessions_file'):
                 self.suiteSessions = shelve.open(\
                              self.config.get('general', 'suite_sessions_file'))
         else:
             LOGGER.error('Cannot open suite session storage file.')
-            
-    def loadSuiteSessions(self):
-        '''Load '''
 
+    def archiveSuiteSessions(self):
+        self.suiteSessions.sync()
+        self.suiteSessions.close()
+        
+        active = self.config.get('general', 'suite_sessions_file')
+        
+        archive = '%s.%s' % (active, datetime.now().strftime('%d%m%y-%H%M%S'))
+        os.rename(active, archive)
+        
+        self.suiteSessions = shelve.open(active)
+        
     def retrieveSuiteSession(self, suite_name):
         '''
         Retrieve test suite session from shelve self.suiteSessions
         @param suite_name:
         '''
         return self.suiteSessions[self.runningSuiteUids[suite_name]]
+    
+    def retrieveAllSuiteSessions(self):
+        all = {}
+        
+        active = self.config.get('general', 'suite_sessions_file')
+        path = os.sep.join(active.split(os.sep)[:-1])
+        prefix = active.split(os.sep)[-1:][0]
+        
+        for f in os.listdir(path):
+            if f.startswith(prefix):
+                s = shelve.open(os.path.join(path, f))
+                all.update({f:s})
+        
+        return all
 
     def storeSuiteSession(self, test_suite_session):
         '''
         Save test suite session to python shelve self.suiteSessions
         @param test_suite_session:
         '''
+        if len(self.suiteSessions) > 30:
+            self.archiveSuiteSessions()
+            
         self.runningSuiteUids[test_suite_session.name] = test_suite_session.uid
         self.suiteSessions[test_suite_session.uid] = test_suite_session
         self.suiteSessions.sync()
@@ -1326,6 +1353,7 @@ class XrdTestMaster(Runnable):
                        }
         
         cherrypy.tree.mount(webInterface, "/", cherrypyCfg)
+            
         cherrypy.config.update({
                                 'server.socket_host': self.serverIP,
                                 'server.socket_port': webInterface.port,

@@ -93,7 +93,7 @@ Xrd Test Master is component of XrdTestFramework.
 %files master
 %defattr(-,root,root,-)
 
-%attr(0400, root, root) %config(noreplace) %{_sysconfdir}/XrdTest/XrdTestMaster.conf
+%attr(0644, root, root) %config(noreplace) %{_sysconfdir}/XrdTest/XrdTestMaster.conf
 %{_sysconfdir}/XrdTest/certs/
 %{_sbindir}/XrdTestMaster.py
 %{_datadir}/XrdTest/webpage/*
@@ -114,7 +114,7 @@ Xrd Test Slave is component of XrdTestFramework. It runs tests provided by Xrd T
 %files slave
 %defattr(-,root,root,-)
 
-%attr(0400, root, root) %config(noreplace) %{_sysconfdir}/XrdTest/XrdTestSlave.conf
+%attr(0644, root, root) %config(noreplace) %{_sysconfdir}/XrdTest/XrdTestSlave.conf
 %{_sysconfdir}/XrdTest/certs/
 %{_sbindir}/XrdTestSlave.py
 %{_initrddir}/xrdtest-slave
@@ -135,7 +135,7 @@ Xrd Test Hypervisor is component of XrdTestFramework. It manages virtual machine
 %files hypervisor
 %defattr(-,root,root,-)
 
-%attr(0400, root, root) %config(noreplace) %{_sysconfdir}/XrdTest/XrdTestHypervisor.conf
+%attr(0644, root, root) %config(noreplace) %{_sysconfdir}/XrdTest/XrdTestHypervisor.conf
 %{_sysconfdir}/XrdTest/certs/
 %{_sbindir}/XrdTestHypervisor.py
 %{_initrddir}/xrdtest-hypervisor

@@ -124,7 +124,7 @@ class Command(object):
         self.cwd = cwd
     
     def execute(self):
-        LOGGER.info('Running command: %s' % self.cmd)
+        LOGGER.debug('Running command: %s' % self.cmd)
         proc = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE,
                                              cwd=self.cwd)
         stdout = proc.communicate()[0]

@@ -62,13 +62,11 @@ def sync_remote_git(repo, config):
             git_clone(remote_repo, local_repo, local_repo)
         
         output = git_fetch(local_repo)
-        diff = ''
-        if output[0]: 
-            diff = git_diff(local_branch, remote_branch, local_repo)
+        diff = git_diff(local_branch, remote_branch, local_repo)
         
         # If git-diff prints to stdout, then we have changes (or an error).
         # TODO: handle errors with incorrect branch names
-        if diff:
+        if diff[0]:
             LOGGER.info('Remote branch has changes. Pulling.')
             git_pull(local_repo)
         return diff

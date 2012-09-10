@@ -1437,6 +1437,10 @@ class XrdTestMaster(Runnable):
         # Load cluster and test suite definitions
         self.loadDefinitions()
 
+        # Prepare notifiers for cluster and test suite definition 
+        # directory monitoring (local and remote)
+        self.watchDirectories()
+        
         # Process events incoming to the system MasterEvents
         self.procEvents()
 

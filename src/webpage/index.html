@@ -121,6 +121,7 @@
 
                         <!-- Article Content -->
                         <section>
+                        
 	                        <article class="half-block">
 	                            <div class="article-container">
 	                            
@@ -128,7 +129,7 @@
                                     <li class="no-bg">
                                         <h4>
                                             <strong class="stats-count">$nt&nbsp;</strong>Test suites
-                                            <span>(${len([t for t in $testsuites.itervalues() if t.state.id > 0])} ready to run)</span>
+                                            <span>(${len([t for t in $testsuites.itervalues() if t.state.id > 0])} correctly defined)</span>
                                         </h4>
                                         
                                         <ul class="stats-summary">
@@ -196,14 +197,7 @@
 	                        
 	                        <article class="full-block">
                                <div class="article-container">
-                               
-                                   <ul class="stats-summary">
-                                        <li>
-                                            <strong class="stats-count"></strong>
-                                            <p>Next job:&nbsp;</p>
-                                            <p><strong>${pending_jobs_dbg[0] if $pending_jobs_dbg else 'None'}</strong></p>
-                                        </li>
-                                   </ul>
+
                                </div>
                             </article>
 	                        

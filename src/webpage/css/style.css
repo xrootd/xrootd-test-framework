@@ -1314,6 +1314,35 @@ div.tab>img,div.tab>.image-frame img {
 	padding: 0;
 }
 
+.logs .stats-count {
+    min-width: 30px;
+    font-size: 197%;
+    padding: 8px 0px 0 0;
+}
+
+.logs.stats li {
+	padding: 10px;
+}
+
+.logs.stats li h4 {
+    vertical-align: top;
+    font-size: 130%
+}
+
+.logs.stats li h4 span {
+    vertical-align: top;
+    font-weight: normal;
+}
+
+.logs.stats ul.stats-summary li.event {
+    background-color: #f7f7f7 !important;
+    padding-bottom: 0;
+}
+
+.logs .no-bg {
+	background-image: none;
+}
+
 .logs li {
 	background-position: 10px 8px;
 	background-repeat: no-repeat;

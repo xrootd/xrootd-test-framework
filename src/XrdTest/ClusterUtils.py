@@ -331,7 +331,7 @@ class Cluster(Utils.Stateful):
     S_ERROR = (-4, "Cluster error")
     S_ERROR_START = (-3, "Error at start:")
     S_ERROR_STOP = (-2, "Error at stop:")
-    S_UNKNOWN_NOHYPERV = (0, "Cluster state unknown: no hypervisor to run cluster.")
+    S_UNKNOWN_NOHYPERV = (-1, "Cluster state unknown: no hypervisor to run cluster.")
     S_UNKNOWN = (0, "Cluster state unknown.")
     S_DEFINED = (0, "Cluster defined correctly.")
     S_DEFINITION_SENT = (1, "Cluster start command sent to hypervisor.")  

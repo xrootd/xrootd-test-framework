@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # xrootd-tests documentation build configuration file, created by
-# sphinx-quickstart on Mon Sep  3 10:03:27 2012.
+# sphinx-quickstart on Tue Sep 11 10:04:39 2012.
 #
 # This file is execfile()d with the current directory set to its containing dir.
 #
@@ -25,7 +25,7 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.ifconfig']
+extensions = ['sphinx.ext.autodoc']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['.templates']
@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'xrootd-tests'
-copyright = u'2012, European Organization for Nuclear Research (CERN), Justin Lewis Salmon <jsalmon@cern.ch>'
+copyright = u'2012, CERN, Justin Lewis Salmon'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -184,7 +184,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'xrootd-tests.tex', u'xrootd-tests Documentation',
-   u'European Organization for Nuclear Research (CERN), Justin Lewis Salmon \\textless{}jsalmon@cern.ch\\textgreater{}', 'manual'),
+   u'CERN, Justin Lewis Salmon', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -214,7 +214,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'xrootd-tests', u'xrootd-tests Documentation',
-     [u'European Organization for Nuclear Research (CERN), Justin Lewis Salmon <jsalmon@cern.ch>'], 1)
+     [u'CERN, Justin Lewis Salmon'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -228,7 +228,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'xrootd-tests', u'xrootd-tests Documentation',
-   u'European Organization for Nuclear Research (CERN), Justin Lewis Salmon <jsalmon@cern.ch>', 'xrootd-tests', 'One line description of project.',
+   u'CERN, Justin Lewis Salmon', 'xrootd-tests', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -240,7 +240,3 @@ texinfo_documents = [
 
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 #texinfo_show_urls = 'footnote'
-
-
-# Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'http://docs.python.org/': None}

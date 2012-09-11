@@ -1025,6 +1025,7 @@ article section p a.button {
 	clear: both;
 	overflow: hidden;
 	margin: 0 0 25px 0;
+	float: left;
 }
 
 #breadcrumbs li {
@@ -1060,6 +1061,10 @@ article section p a.button {
 
 #breadcrumbs li:first-child a:hover {
 	background-position: 0 -16px;
+}
+
+#corner-stats {
+	float: right;
 }
 
 /*  Prgoress Bars  */
@@ -1315,9 +1320,9 @@ div.tab>img,div.tab>.image-frame img {
 }
 
 .logs .stats-count {
-    min-width: 30px;
-    font-size: 197%;
-    padding: 8px 0px 0 0;
+	min-width: 30px;
+	font-size: 197%;
+	padding: 8px 0px 0 0;
 }
 
 .logs.stats li {
@@ -1325,19 +1330,19 @@ div.tab>img,div.tab>.image-frame img {
 }
 
 .logs.stats li h4 {
-    vertical-align: top;
-    font-size: 130%;
-    padding-top: 5px;
+	vertical-align: top;
+	font-size: 130%;
+	padding-top: 5px;
 }
 
 .logs.stats li h4 span {
-    vertical-align: top;
-    font-weight: normal;
+	vertical-align: top;
+	font-weight: normal;
 }
 
 .logs.stats ul.stats-summary li.event {
-    background-color: #f7f7f7 !important;
-    padding-bottom: 0;
+	background-color: #f7f7f7 !important;
+	padding-bottom: 0;
 }
 
 .logs .no-bg {
@@ -1882,7 +1887,7 @@ form span.invalid-side-note {
 	box-shadow: none;
 }
 
-.ie7 .checkbox        .,.ie8 .checkbox        .],.ie9 .checkbox {
+.ie7 .checkbox          .,.ie8 .checkbox          .],.ie9 .checkbox {
 	top: -7px;
 }
 

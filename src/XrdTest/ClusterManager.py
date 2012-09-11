@@ -545,7 +545,7 @@ class ClusterManager:
             pools = con.listStoragePools()
             for p in pools:
                 if p == poolname:
-                    pool = con.storagePoolLookupByName(pool)
+                    pool = con.storagePoolLookupByName(poolname)
             
             if not pool:
                 LOGGER.warning('Storage pool %s not found. Using default.' % poolname)
@@ -571,7 +571,7 @@ class ClusterManager:
             pools = con.listStoragePools()
             for p in pools:
                 if p == poolname:
-                    pool = con.storagePoolLookupByName(pool)
+                    pool = con.storagePoolLookupByName(poolname)
             
             if not pool:
                 LOGGER.warning('Storage pool %s not found. Using default.' % poolname)

@@ -1,0 +1,1626 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>XrdTest Package &mdash; xrootd-tests 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="xrootd-tests 0.0.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">xrootd-tests 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="xrdtest-package">
+<h1>XrdTest Package<a class="headerlink" href="#xrdtest-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2><a class="reference internal" href="#module-XrdTest" title="XrdTest"><tt class="xref py py-mod docutils literal"><span class="pre">XrdTest</span></tt></a> Package<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-XrdTest"></span><p>Library files for the XrdTest Framework</p>
+</div>
+<div class="section" id="module-XrdTest.ClusterManager">
+<span id="clustermanager-module"></span><h2><a class="reference internal" href="#module-ClusterManager" title="ClusterManager: Module description here (Linux)"><tt class="xref py py-mod docutils literal"><span class="pre">ClusterManager</span></tt></a> Module<a class="headerlink" href="#module-XrdTest.ClusterManager" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-ClusterManager"></span><dl class="class">
+<dt id="XrdTest.ClusterManager.ClusterManager">
+<em class="property">class </em><tt class="descclassname">XrdTest.ClusterManager.</tt><tt class="descname">ClusterManager</tt><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Virtual machines clusters&#8217; manager</p>
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.attachDisk">
+<tt class="descname">attachDisk</tt><big>(</big><em>host</em>, <em>diskName</em>, <em>diskSize</em>, <em>cache</em>, <em>device</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.attachDisk" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.attachDisks">
+<tt class="descname">attachDisks</tt><big>(</big><em>host</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.attachDisks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.copyImg">
+<tt class="descname">copyImg</tt><big>(</big><em>huName</em>, <em>safeCounter=None</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.copyImg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method runnable in separate threads, to separate copying of source
+operating system image to a temporary image.</p>
+<p>&#64;param huName: host.uname - host unique name
+&#64;param safeCounter: thread safe counter to signalize this run finished</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.createCluster">
+<tt class="descname">createCluster</tt><big>(</big><em>cluster</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.createCluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates cluster: first network, then virtual machines - hosts.
+If it get request to create machine (host) that already exists (with the
+same name) - it removes it completely. The same story regards network.
+&#64;param cluster: cluster definition object</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.createNetwork">
+<tt class="descname">createNetwork</tt><big>(</big><em>networkObj</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.createNetwork" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates and starts cluster&#8217;s network. It utilizes defineNetwork
+at first and doesn&#8217;t create network definition if it already exists.
+&#64;param networkObj: Network object
+&#64;raise ClusterManagerException: when fails
+&#64;return: None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.defineHost">
+<tt class="descname">defineHost</tt><big>(</big><em>host</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.defineHost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines virtual host in a cluster using given host object,
+not starting it. Host with the given name may be defined once
+in the system. Stores hosts objects in class property self.hosts.</p>
+<p>&#64;param host: ClusterManager.Host object
+&#64;raise ClusterManagerException: when fails
+&#64;return: host object from libvirt lib</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.defineNetwork">
+<tt class="descname">defineNetwork</tt><big>(</big><em>netObj</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.defineNetwork" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines network object without starting it.
+&#64;param xml: libvirt XML cluster definition
+&#64;raise ClusterManagerException: when fails
+&#64;return: None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.disconnect">
+<tt class="descname">disconnect</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.disconnect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Undefines and removes all virtual machines and networks created
+by this cluster manager and disconnects from libvirt manager.
+&#64;raise ClusterManagerException: when fails</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.findStoragePool">
+<tt class="descname">findStoragePool</tt><big>(</big><em>poolname</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.findStoragePool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempt to find a storage pool with the given name.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.findStorageVolume">
+<tt class="descname">findStorageVolume</tt><big>(</big><em>poolname</em>, <em>volumename</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.findStorageVolume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempt to find a storage volume (file) in the specified libvirt storage
+pool. If the volume is not found, the default pool will be searched. Return
+the full path to the volume.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.getPoolPath">
+<tt class="descname">getPoolPath</tt><big>(</big><em>poolXML</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.getPoolPath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse the given storage pool XML description and return its
+path.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.removeCluster">
+<tt class="descname">removeCluster</tt><big>(</big><em>clusterName</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.removeCluster" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.removeDanglingHost">
+<tt class="descname">removeDanglingHost</tt><big>(</big><em>hostObj</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.removeDanglingHost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove already defined host, if it has name the same as hostObj.
+&#64;param hostObj:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.removeDanglingNetwork">
+<tt class="descname">removeDanglingNetwork</tt><big>(</big><em>netObj</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.removeDanglingNetwork" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove already defined network, if it has name the same as netObj.
+&#64;param hostObj:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.removeHost">
+<tt class="descname">removeHost</tt><big>(</big><em>hostUName</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.removeHost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Can not be used inside loop iterating over hosts!
+&#64;param hostUName: host.uname host unique name</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.removeHosts">
+<tt class="descname">removeHosts</tt><big>(</big><em>hostsUnameList</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.removeHosts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove multiple hosts.
+&#64;param hostsUnameList: list of unames of defined hosts.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.removeNetwork">
+<tt class="descname">removeNetwork</tt><big>(</big><em>netUName</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.removeNetwork" title="Permalink to this definition">¶</a></dt>
+<dd><p>Can not be used inside loop iterating over networks!
+&#64;param hostName:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.updateState">
+<tt class="descname">updateState</tt><big>(</big><em>state</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.updateState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a progress update message to the master.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterManager.ClusterManager.virtconnect">
+<tt class="descname">virtconnect</tt><big>(</big><em>url='qemu:///system'</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterManager.ClusterManager.virtconnect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates and returns connection to virtual machines manager
+&#64;param url: connection url
+&#64;raise ClusterManagerException: when fails to connect
+&#64;return: None</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-XrdTest.ClusterUtils">
+<span id="clusterutils-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">ClusterUtils</span></tt> Module<a class="headerlink" href="#module-XrdTest.ClusterUtils" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="XrdTest.ClusterUtils.Cluster">
+<em class="property">class </em><tt class="descclassname">XrdTest.ClusterUtils.</tt><tt class="descname">Cluster</tt><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#XrdTest.Utils.Stateful" title="XrdTest.Utils.Stateful"><tt class="xref py py-class docutils literal"><span class="pre">XrdTest.Utils.Stateful</span></tt></a></p>
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_ACTIVE">
+<tt class="descname">S_ACTIVE</tt><em class="property"> = (8, 'Cluster active.')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_ACTIVE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_ATTACHING_DISKS">
+<tt class="descname">S_ATTACHING_DISKS</tt><em class="property"> = (6, 'Attaching slave disks.')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_ATTACHING_DISKS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_COPYING_IMAGES">
+<tt class="descname">S_COPYING_IMAGES</tt><em class="property"> = (5, 'Copying slave images.')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_COPYING_IMAGES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_CREATING_NETWORK">
+<tt class="descname">S_CREATING_NETWORK</tt><em class="property"> = (3, 'Creating network.')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_CREATING_NETWORK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_CREATING_SLAVES">
+<tt class="descname">S_CREATING_SLAVES</tt><em class="property"> = (4, 'Creating slaves.')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_CREATING_SLAVES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_DEFINED">
+<tt class="descname">S_DEFINED</tt><em class="property"> = (0, 'Cluster defined correctly.')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_DEFINED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_DEFINITION_SENT">
+<tt class="descname">S_DEFINITION_SENT</tt><em class="property"> = (1, 'Cluster start command sent to hypervisor.')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_DEFINITION_SENT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_DESTROYING_CLUSTER">
+<tt class="descname">S_DESTROYING_CLUSTER</tt><em class="property"> = (10, 'Destroying cluster')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_DESTROYING_CLUSTER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_ERROR">
+<tt class="descname">S_ERROR</tt><em class="property"> = (-4, 'Cluster error')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_ERROR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_ERROR_START">
+<tt class="descname">S_ERROR_START</tt><em class="property"> = (-3, 'Error at start:')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_ERROR_START" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_ERROR_STOP">
+<tt class="descname">S_ERROR_STOP</tt><em class="property"> = (-2, 'Error at stop:')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_ERROR_STOP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_STARTING_CLUSTER">
+<tt class="descname">S_STARTING_CLUSTER</tt><em class="property"> = (2, 'Starting cluster.')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_STARTING_CLUSTER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_STOPCOMMAND_SENT">
+<tt class="descname">S_STOPCOMMAND_SENT</tt><em class="property"> = (9, 'Cluster stop command sent to hypervisor.')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_STOPCOMMAND_SENT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_STOPPED">
+<tt class="descname">S_STOPPED</tt><em class="property"> = (11, 'Cluster stopped.')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_STOPPED" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a cluster comprised of hosts connected through network.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_UNKNOWN">
+<tt class="descname">S_UNKNOWN</tt><em class="property"> = (0, 'Cluster state unknown.')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_UNKNOWN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_UNKNOWN_NOHYPERV">
+<tt class="descname">S_UNKNOWN_NOHYPERV</tt><em class="property"> = (0, 'Cluster state unknown: no hypervisor to run cluster.')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_UNKNOWN_NOHYPERV" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.S_WAITING_BOOT">
+<tt class="descname">S_WAITING_BOOT</tt><em class="property"> = (7, 'Cluster active. Waiting for slaves to boot.')</em><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.S_WAITING_BOOT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterUtils.Cluster.addHost">
+<tt class="descname">addHost</tt><big>(</big><em>host</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.addHost" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterUtils.Cluster.addHosts">
+<tt class="descname">addHosts</tt><big>(</big><em>hosts</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.addHosts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Cluster.network">
+<tt class="descname">network</tt><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.network" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterUtils.Cluster.networkGet">
+<tt class="descname">networkGet</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.networkGet" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterUtils.Cluster.networkSet">
+<tt class="descname">networkSet</tt><big>(</big><em>net</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.networkSet" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterUtils.Cluster.randMac">
+<tt class="descname">randMac</tt><big>(</big><em>history=</em><span class="optional">[</span><span class="optional">]</span><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.randMac" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterUtils.Cluster.setEmulatorPath">
+<tt class="descname">setEmulatorPath</tt><big>(</big><em>emulator_path</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.setEmulatorPath" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterUtils.Cluster.validateAgainstSystem">
+<tt class="descname">validateAgainstSystem</tt><big>(</big><em>clusters</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.validateAgainstSystem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if cluster definition is correct with other
+clusters defined in the system. This correctness is critical for
+cluster definition to be added.
+&#64;param clusters:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterUtils.Cluster.validateDynamic">
+<tt class="descname">validateDynamic</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.validateDynamic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if Cluster definition is semantically correct i.e. on the
+hypervisor&#8217;s machine e.g. if disk images really exists on
+the machine it&#8217;s to be planted.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterUtils.Cluster.validateStatic">
+<tt class="descname">validateStatic</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.Cluster.validateStatic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if Cluster definition is correct and sufficient
+to create a cluster.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="XrdTest.ClusterUtils.ClusterManagerException">
+<em class="property">exception </em><tt class="descclassname">XrdTest.ClusterUtils.</tt><tt class="descname">ClusterManagerException</tt><big>(</big><em>desc</em>, <em>typeFlag=1</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.ClusterManagerException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+<p>General Exception raised by module</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.ClusterUtils.Disk">
+<em class="property">class </em><tt class="descclassname">XrdTest.ClusterUtils.</tt><tt class="descname">Disk</tt><big>(</big><em>name</em>, <em>size</em>, <em>device='vda'</em>, <em>mountPoint='/data'</em>, <em>cache=True</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.Disk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="XrdTest.ClusterUtils.Disk.parseDiskSize">
+<tt class="descname">parseDiskSize</tt><big>(</big><em>size</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.Disk.parseDiskSize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a size in readable format, e.g. 50G or 200M and returns the size in bytes.</p>
+<p>If a purely numeric string is given, a byte value will be assumed.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.ClusterUtils.Host">
+<em class="property">class </em><tt class="descclassname">XrdTest.ClusterUtils.</tt><tt class="descname">Host</tt><big>(</big><em>name=''</em>, <em>ip=''</em>, <em>mac=''</em>, <em>net=''</em>, <em>ramSize=''</em>, <em>arch=''</em>, <em>bootImage=None</em>, <em>cacheBootImage=True</em>, <em>emulatorPath=''</em>, <em>uuid=''</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.Host" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Represents a virtual host which may be added to network</p>
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Host.uname">
+<tt class="descname">uname</tt><a class="headerlink" href="#XrdTest.ClusterUtils.Host.uname" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return unique name of the machine within cluster&#8217;s namespace.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Host.xmlDesc">
+<tt class="descname">xmlDesc</tt><a class="headerlink" href="#XrdTest.ClusterUtils.Host.xmlDesc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Host.xmlDomainPattern">
+<tt class="descname">xmlDomainPattern</tt><em class="property"> = &quot;\n&lt;domain type='kvm'&gt;\n  &lt;name&gt;%(uname)s&lt;/name&gt;\n  &lt;uuid&gt;%(uuid)s&lt;/uuid&gt;\n  &lt;memory&gt;%(ramSize)s&lt;/memory&gt;\n  &lt;vcpu&gt;1&lt;/vcpu&gt;\n  &lt;os&gt;\n    &lt;type arch='%(arch)s' machine='pc'&gt;hvm&lt;/type&gt;\n    &lt;boot dev='hd'/&gt;\n  &lt;/os&gt;\n  &lt;features&gt;\n    &lt;acpi/&gt;\n    &lt;apic/&gt;\n    &lt;pae/&gt;\n  &lt;/features&gt;\n  &lt;on_poweroff&gt;destroy&lt;/on_poweroff&gt;\n  &lt;on_reboot&gt;restart&lt;/on_reboot&gt;\n  &lt;on_crash&gt;restart&lt;/on_crash&gt;\n  &lt;devices&gt;\n    &lt;emulator&gt;%(emulatorPath)s&lt;/emulator&gt;\n    &lt;disk type='file' device='disk'&gt;\n      &lt;driver name='qemu' type='raw'/&gt;\n      &lt;source file='%(runningDiskImage)s'/&gt;\n      &lt;target dev='hda' bus='ide'/&gt;\n      &lt;address type='drive' controller='0' bus='0' unit='0'/&gt;\n    &lt;/disk&gt;\n    &lt;disk type='block' device='cdrom'&gt;\n      &lt;driver name='qemu' type='raw'/&gt;\n      &lt;target dev='hdc' bus='ide'/&gt;\n      &lt;readonly/&gt;\n      &lt;address type='drive' controller='0' bus='1' unit='0'/&gt;\n    &lt;/disk&gt;\n    &lt;controller type='ide' index='0'&gt;\n      &lt;address type='pci' domain='0x0000' bus='0x00' slot='0x01'\n      function='0x1'/&gt;\n    &lt;/controller&gt;\n    &lt;interface type='network'&gt;\n      &lt;mac address='%(mac)s'/&gt;\n      &lt;source network='%(net)s'/&gt;\n      &lt;address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/&gt;\n      &lt;model type='virtio'/&gt;\n    &lt;/interface&gt;\n    &lt;input type='mouse' bus='ps2'/&gt;\n    &lt;!-- VIDEO SECTION - NORMALLY NOT NEEDED --&gt;\n    &lt;graphics type='vnc' port='5900' autoport='yes' keymap='en-us'/&gt;\n    &lt;video&gt;\n    &lt;model type='cirrus' vram='9216' heads='1' /&gt;\n    &lt;address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0' /&gt;\n    &lt;/video&gt;\n    &lt;!-- END OF VIDEO SECTION --&gt;\n    &lt;memballoon model='virtio'&gt;\n      &lt;address type='pci' domain='0x0000' bus='0x00' slot='0x04'\n      function='0x0'/&gt;\n    &lt;/memballoon&gt;\n  &lt;/devices&gt;\n&lt;/domain&gt;\n\n&quot;</em><a class="headerlink" href="#XrdTest.ClusterUtils.Host.xmlDomainPattern" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.ClusterUtils.Network">
+<em class="property">class </em><tt class="descclassname">XrdTest.ClusterUtils.</tt><tt class="descname">Network</tt><a class="headerlink" href="#XrdTest.ClusterUtils.Network" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Represents a virtual network</p>
+<dl class="method">
+<dt id="XrdTest.ClusterUtils.Network.addDHCPHost">
+<tt class="descname">addDHCPHost</tt><big>(</big><em>host</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.Network.addDHCPHost" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterUtils.Network.addDnsHost">
+<tt class="descname">addDnsHost</tt><big>(</big><em>host</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.Network.addDnsHost" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterUtils.Network.addHost">
+<tt class="descname">addHost</tt><big>(</big><em>host</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.Network.addHost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add host to network. First to DHCP and then to DNS.
+&#64;param host: tuple (MAC address, IP address, HOST fqdn)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.ClusterUtils.Network.addHosts">
+<tt class="descname">addHosts</tt><big>(</big><em>hostsList</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.Network.addHosts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add hosts to network.
+&#64;param param: hostsList</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Network.uname">
+<tt class="descname">uname</tt><a class="headerlink" href="#XrdTest.ClusterUtils.Network.uname" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return unique name of the machine within cluster&#8217;s namespace.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Network.xmlDesc">
+<tt class="descname">xmlDesc</tt><a class="headerlink" href="#XrdTest.ClusterUtils.Network.xmlDesc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Network.xmlDescPattern">
+<tt class="descname">xmlDescPattern</tt><em class="property"> = '\n&lt;network&gt;\n  &lt;name&gt;%(name)s&lt;/name&gt;\n  &lt;dns&gt;\n      &lt;txt name=&quot;xrd.test&quot; value=&quot;Welcome to xrd testing framework domain.&quot; /&gt;\n      &lt;host ip=&quot;%(xrdTestMasterIP)s&quot;&gt;\n          &lt;hostname&gt;master.xrd.test&lt;/hostname&gt;\n      &lt;/host&gt;\n      %(dnshostsxml)s\n  &lt;/dns&gt;\n  &lt;forward mode=&quot;nat&quot;/&gt;\n  &lt;bridge name=&quot;%(bridgename)s&quot; /&gt;\n  &lt;ip address=&quot;%(ip)s&quot; netmask=&quot;%(netmask)s&quot;&gt;\n    &lt;dhcp&gt;\n      &lt;range start=&quot;%(rangestart)s&quot; end=&quot;%(rangeend)s&quot; /&gt;\n    %(hostsxml)s\n    &lt;/dhcp&gt;\n  &lt;/ip&gt;\n&lt;/network&gt;\n'</em><a class="headerlink" href="#XrdTest.ClusterUtils.Network.xmlDescPattern" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Network.xmlDnsHostPattern">
+<tt class="descname">xmlDnsHostPattern</tt><em class="property"> = '\n      &lt;host ip=&quot;%(ip)s&quot;&gt;\n          %(lbalias)s\n          &lt;hostname&gt;%(hostname)s&lt;/hostname&gt;\n      &lt;/host&gt;\n'</em><a class="headerlink" href="#XrdTest.ClusterUtils.Network.xmlDnsHostPattern" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.ClusterUtils.Network.xmlHostPattern">
+<tt class="descname">xmlHostPattern</tt><em class="property"> = '\n      &lt;host mac=&quot;%(mac)s&quot; name=&quot;%(name)s&quot; ip=&quot;%(ip)s&quot; /&gt;\n'</em><a class="headerlink" href="#XrdTest.ClusterUtils.Network.xmlHostPattern" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="XrdTest.ClusterUtils.extractClusterName">
+<tt class="descclassname">XrdTest.ClusterUtils.</tt><tt class="descname">extractClusterName</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.extractClusterName" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="XrdTest.ClusterUtils.getFileContent">
+<tt class="descclassname">XrdTest.ClusterUtils.</tt><tt class="descname">getFileContent</tt><big>(</big><em>filePath</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.getFileContent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read and return whole file content as a string
+&#64;param filePath:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="XrdTest.ClusterUtils.loadClusterDef">
+<tt class="descclassname">XrdTest.ClusterUtils.</tt><tt class="descname">loadClusterDef</tt><big>(</big><em>fp</em>, <em>clusters</em>, <em>validateWithRest=True</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.loadClusterDef" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="XrdTest.ClusterUtils.loadClustersDefs">
+<tt class="descclassname">XrdTest.ClusterUtils.</tt><tt class="descname">loadClustersDefs</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#XrdTest.ClusterUtils.loadClustersDefs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads cluster definitions from .py files stored in path directory
+&#64;param path: path for .py files, storing cluster definitions</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-XrdTest.Daemon">
+<span id="daemon-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">Daemon</span></tt> Module<a class="headerlink" href="#module-XrdTest.Daemon" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="XrdTest.Daemon.Daemon">
+<em class="property">class </em><tt class="descclassname">XrdTest.Daemon.</tt><tt class="descname">Daemon</tt><big>(</big><em>progName</em>, <em>pidFile</em>, <em>logFile</em><big>)</big><a class="headerlink" href="#XrdTest.Daemon.Daemon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents and manages running daemon of a given runnable object.
+For initialization it requires object that inherits class Runnable.</p>
+<dl class="method">
+<dt id="XrdTest.Daemon.Daemon.check">
+<tt class="descname">check</tt><big>(</big><em>pid=None</em><big>)</big><a class="headerlink" href="#XrdTest.Daemon.Daemon.check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if process with given pid is currently running. If no pid is
+given, it tries to retrieve pid from the pidFile given in the
+constructor of this class.</p>
+<p>&#64;param pid: pid of process to be checked
+&#64;return: pid (if process runs), None (otherwise)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.Daemon.Daemon.reload">
+<tt class="descname">reload</tt><big>(</big><em>pid=None</em><big>)</big><a class="headerlink" href="#XrdTest.Daemon.Daemon.reload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reloads the daemon by sending SIGHUM</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.Daemon.Daemon.removePidFile">
+<tt class="descname">removePidFile</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.Daemon.Daemon.removePidFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove pid file if it exists</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.Daemon.Daemon.start">
+<tt class="descname">start</tt><big>(</big><em>runnable</em><big>)</big><a class="headerlink" href="#XrdTest.Daemon.Daemon.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts the daemon as a separate process.</p>
+<p>&#64;param runnable: instance of runnable object (inherits Runnable).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.Daemon.Daemon.stop">
+<tt class="descname">stop</tt><big>(</big><em>pid=None</em><big>)</big><a class="headerlink" href="#XrdTest.Daemon.Daemon.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop the deamon</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="XrdTest.Daemon.DaemonException">
+<em class="property">exception </em><tt class="descclassname">XrdTest.Daemon.</tt><tt class="descname">DaemonException</tt><big>(</big><em>desc</em><big>)</big><a class="headerlink" href="#XrdTest.Daemon.DaemonException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+<p>General Exception raised by Daemon.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.Daemon.Runnable">
+<em class="property">class </em><tt class="descclassname">XrdTest.Daemon.</tt><tt class="descname">Runnable</tt><a class="headerlink" href="#XrdTest.Daemon.Runnable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Abstract basic class for object to be runned as a daemon.
+&#64;note: children class it should handle SIGUP signal or it will suspend</p>
+<dl class="method">
+<dt id="XrdTest.Daemon.Runnable.run">
+<tt class="descname">run</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.Daemon.Runnable.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main jobs of programme. Has to be implemented.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-XrdTest.DirectoryWatch">
+<span id="directorywatch-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">DirectoryWatch</span></tt> Module<a class="headerlink" href="#module-XrdTest.DirectoryWatch" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="XrdTest.DirectoryWatch.ClustersDefinitionsChangeHandler">
+<em class="property">class </em><tt class="descclassname">XrdTest.DirectoryWatch.</tt><tt class="descname">ClustersDefinitionsChangeHandler</tt><big>(</big><em>pevent=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#XrdTest.DirectoryWatch.ClustersDefinitionsChangeHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">pyinotify.ProcessEvent</span></tt></p>
+<p>If cluster definition file changes - it runs.</p>
+<dl class="method">
+<dt id="XrdTest.DirectoryWatch.ClustersDefinitionsChangeHandler.process_default">
+<tt class="descname">process_default</tt><big>(</big><em>event</em><big>)</big><a class="headerlink" href="#XrdTest.DirectoryWatch.ClustersDefinitionsChangeHandler.process_default" title="Permalink to this definition">¶</a></dt>
+<dd><p>Actual method that handle incoming dir change event.
+&#64;param event:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.DirectoryWatch.DirectoryWatch">
+<em class="property">class </em><tt class="descclassname">XrdTest.DirectoryWatch.</tt><tt class="descname">DirectoryWatch</tt><big>(</big><em>repo</em>, <em>config</em>, <em>callback</em>, <em>watch_type=None</em><big>)</big><a class="headerlink" href="#XrdTest.DirectoryWatch.DirectoryWatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base class for monitoring directories and invoking callback on change.
+Instantiation of this class defines which type of watch will happen (local
+or remote)</p>
+<dl class="attribute">
+<dt id="XrdTest.DirectoryWatch.DirectoryWatch.IN_CREATE">
+<tt class="descname">IN_CREATE</tt><em class="property"> = 256L</em><a class="headerlink" href="#XrdTest.DirectoryWatch.DirectoryWatch.IN_CREATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.DirectoryWatch.DirectoryWatch.IN_DELETE">
+<tt class="descname">IN_DELETE</tt><em class="property"> = 512L</em><a class="headerlink" href="#XrdTest.DirectoryWatch.DirectoryWatch.IN_DELETE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.DirectoryWatch.DirectoryWatch.IN_MODIFY">
+<tt class="descname">IN_MODIFY</tt><em class="property"> = 2L</em><a class="headerlink" href="#XrdTest.DirectoryWatch.DirectoryWatch.IN_MODIFY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.DirectoryWatch.DirectoryWatch.IN_MOVED">
+<tt class="descname">IN_MOVED</tt><em class="property"> = 192L</em><a class="headerlink" href="#XrdTest.DirectoryWatch.DirectoryWatch.IN_MOVED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.DirectoryWatch.DirectoryWatch.mask">
+<tt class="descname">mask</tt><em class="property"> = 962L</em><a class="headerlink" href="#XrdTest.DirectoryWatch.DirectoryWatch.mask" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.DirectoryWatch.DirectoryWatch.watch">
+<tt class="descname">watch</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.DirectoryWatch.DirectoryWatch.watch" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.DirectoryWatch.DirectoryWatch.watch_localfs">
+<tt class="descname">watch_localfs</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.DirectoryWatch.DirectoryWatch.watch_localfs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Monitor a local directory for changes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.DirectoryWatch.DirectoryWatch.watch_remote_git">
+<tt class="descname">watch_remote_git</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.DirectoryWatch.DirectoryWatch.watch_remote_git" title="Permalink to this definition">¶</a></dt>
+<dd><p>Monitor a remote git repository by polling at a set interval.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.DirectoryWatch.SuiteDefinitionsChangeHandler">
+<em class="property">class </em><tt class="descclassname">XrdTest.DirectoryWatch.</tt><tt class="descname">SuiteDefinitionsChangeHandler</tt><big>(</big><em>pevent=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#XrdTest.DirectoryWatch.SuiteDefinitionsChangeHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">pyinotify.ProcessEvent</span></tt></p>
+<p>If suite definition file changes it runs</p>
+<dl class="method">
+<dt id="XrdTest.DirectoryWatch.SuiteDefinitionsChangeHandler.process_default">
+<tt class="descname">process_default</tt><big>(</big><em>event</em><big>)</big><a class="headerlink" href="#XrdTest.DirectoryWatch.SuiteDefinitionsChangeHandler.process_default" title="Permalink to this definition">¶</a></dt>
+<dd><p>Actual method that handle incoming dir change event.
+&#64;param event:</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-XrdTest.GitUtils">
+<span id="gitutils-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">GitUtils</span></tt> Module<a class="headerlink" href="#module-XrdTest.GitUtils" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="XrdTest.GitUtils.git_clone">
+<tt class="descclassname">XrdTest.GitUtils.</tt><tt class="descname">git_clone</tt><big>(</big><em>remote_repo</em>, <em>local_repo</em>, <em>cwd</em><big>)</big><a class="headerlink" href="#XrdTest.GitUtils.git_clone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clone a remote repository into a new local directory. Must have key-based
+authentication set up for this to work.</p>
+<p>TODO: handle exceptions for no key-based auth</p>
+<p>&#64;param remote_repo: the repository repo on the remote host. 
+&#64;param local_repo: the local repo in which to clone the new repo.
+&#64;param cwd: the working directory in which to execute.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="XrdTest.GitUtils.git_diff">
+<tt class="descclassname">XrdTest.GitUtils.</tt><tt class="descname">git_diff</tt><big>(</big><em>local_branch</em>, <em>remote_branch</em>, <em>cwd</em><big>)</big><a class="headerlink" href="#XrdTest.GitUtils.git_diff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a diff operation between a local and remote repository.</p>
+<p>&#64;param local_branch: the local repository branch name.
+&#64;param remote_branch: the remote branch name.
+&#64;param cwd: the working directory in which to execute.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="XrdTest.GitUtils.git_fetch">
+<tt class="descclassname">XrdTest.GitUtils.</tt><tt class="descname">git_fetch</tt><big>(</big><em>cwd</em><big>)</big><a class="headerlink" href="#XrdTest.GitUtils.git_fetch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch objects and refs from a remote repository.</p>
+<p>&#64;param cwd: the working directory in which to execute.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="XrdTest.GitUtils.git_pull">
+<tt class="descclassname">XrdTest.GitUtils.</tt><tt class="descname">git_pull</tt><big>(</big><em>cwd</em><big>)</big><a class="headerlink" href="#XrdTest.GitUtils.git_pull" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch from and merge with a remote repository.</p>
+<p>&#64;param cwd: the working directory in which to execute.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="XrdTest.GitUtils.sync_remote_git">
+<tt class="descclassname">XrdTest.GitUtils.</tt><tt class="descname">sync_remote_git</tt><big>(</big><em>repo</em>, <em>config</em><big>)</big><a class="headerlink" href="#XrdTest.GitUtils.sync_remote_git" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the status of a remote git repository for new commits. If
+new commits, pull the new changes.</p>
+<p>Need key-based SSH authentication for this method to work. Also, on AFS
+systems like lxplus, a valid kerberos ticket is needed.</p>
+<p>&#64;param repo: 
+&#64;param config: configuration file containing repository information</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-XrdTest.Job">
+<span id="job-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">Job</span></tt> Module<a class="headerlink" href="#module-XrdTest.Job" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="XrdTest.Job.Job">
+<em class="property">class </em><tt class="descclassname">XrdTest.Job.</tt><tt class="descname">Job</tt><big>(</big><em>job</em>, <em>groupId=''</em>, <em>args=None</em><big>)</big><a class="headerlink" href="#XrdTest.Job.Job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Keeps information about job, that is to be run. It&#8217;s enqueued by scheduler
+and dequeued if fore coming job was handled.</p>
+<dl class="attribute">
+<dt id="XrdTest.Job.Job.FINALIZE_TEST_CASE">
+<tt class="descname">FINALIZE_TEST_CASE</tt><em class="property"> = 5</em><a class="headerlink" href="#XrdTest.Job.Job.FINALIZE_TEST_CASE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.Job.Job.FINALIZE_TEST_SUITE">
+<tt class="descname">FINALIZE_TEST_SUITE</tt><em class="property"> = 2</em><a class="headerlink" href="#XrdTest.Job.Job.FINALIZE_TEST_SUITE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.Job.Job.INITIALIZE_TEST_CASE">
+<tt class="descname">INITIALIZE_TEST_CASE</tt><em class="property"> = 3</em><a class="headerlink" href="#XrdTest.Job.Job.INITIALIZE_TEST_CASE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.Job.Job.INITIALIZE_TEST_SUITE">
+<tt class="descname">INITIALIZE_TEST_SUITE</tt><em class="property"> = 1</em><a class="headerlink" href="#XrdTest.Job.Job.INITIALIZE_TEST_SUITE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.Job.Job.RUN_TEST_CASE">
+<tt class="descname">RUN_TEST_CASE</tt><em class="property"> = 4</em><a class="headerlink" href="#XrdTest.Job.Job.RUN_TEST_CASE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.Job.Job.START_CLUSTER">
+<tt class="descname">START_CLUSTER</tt><em class="property"> = 6</em><a class="headerlink" href="#XrdTest.Job.Job.START_CLUSTER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.Job.Job.STOP_CLUSTER">
+<tt class="descname">STOP_CLUSTER</tt><em class="property"> = 7</em><a class="headerlink" href="#XrdTest.Job.Job.STOP_CLUSTER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.Job.Job.S_ADDED">
+<tt class="descname">S_ADDED</tt><em class="property"> = (0, 'Job added to jobs list.')</em><a class="headerlink" href="#XrdTest.Job.Job.S_ADDED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.Job.Job.S_STARTED">
+<tt class="descname">S_STARTED</tt><em class="property"> = (1, 'Job started. In progress.')</em><a class="headerlink" href="#XrdTest.Job.Job.S_STARTED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.Job.Job.TEST_JOB">
+<tt class="descname">TEST_JOB</tt><em class="property"> = 0</em><a class="headerlink" href="#XrdTest.Job.Job.TEST_JOB" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="XrdTest.Job.Job.genJobGroupId">
+<em class="property">static </em><tt class="descname">genJobGroupId</tt><big>(</big><em>suite_name</em><big>)</big><a class="headerlink" href="#XrdTest.Job.Job.genJobGroupId" title="Permalink to this definition">¶</a></dt>
+<dd><p>Utility function to create unique name for group of jobs.
+&#64;param suite_name:</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-XrdTest.SocketUtils">
+<span id="socketutils-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">SocketUtils</span></tt> Module<a class="headerlink" href="#module-XrdTest.SocketUtils" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="XrdTest.SocketUtils.FixedSockStream">
+<em class="property">class </em><tt class="descclassname">XrdTest.SocketUtils.</tt><tt class="descname">FixedSockStream</tt><big>(</big><em>sock</em><big>)</big><a class="headerlink" href="#XrdTest.SocketUtils.FixedSockStream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Wrapper for socket to ensure correct behaviour of send and recv.</p>
+<dl class="method">
+<dt id="XrdTest.SocketUtils.FixedSockStream.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.SocketUtils.FixedSockStream.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.SocketUtils.FixedSockStream.recv">
+<tt class="descname">recv</tt><big>(</big><em>recvRaw=False</em><big>)</big><a class="headerlink" href="#XrdTest.SocketUtils.FixedSockStream.recv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.SocketUtils.FixedSockStream.recvBounded">
+<tt class="descname">recvBounded</tt><big>(</big><em>toRecvLen</em><big>)</big><a class="headerlink" href="#XrdTest.SocketUtils.FixedSockStream.recvBounded" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.SocketUtils.FixedSockStream.send">
+<tt class="descname">send</tt><big>(</big><em>obj</em>, <em>sendRaw=False</em><big>)</big><a class="headerlink" href="#XrdTest.SocketUtils.FixedSockStream.send" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.SocketUtils.FixedSockStream.sendBounded">
+<tt class="descname">sendBounded</tt><big>(</big><em>msg</em>, <em>toSendLen</em><big>)</big><a class="headerlink" href="#XrdTest.SocketUtils.FixedSockStream.sendBounded" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.SocketUtils.PriorityBlockingQueue">
+<em class="property">class </em><tt class="descclassname">XrdTest.SocketUtils.</tt><tt class="descname">PriorityBlockingQueue</tt><a class="headerlink" href="#XrdTest.SocketUtils.PriorityBlockingQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Synchronized priority queue.
+Pattern for entries is a tuple in the form: (priority_number, data).
+Lowest valued entries are retrieved first.</p>
+<dl class="method">
+<dt id="XrdTest.SocketUtils.PriorityBlockingQueue.get">
+<tt class="descname">get</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.SocketUtils.PriorityBlockingQueue.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves data of an element from (priority, data)
+with the lowest priority from the queue.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.SocketUtils.PriorityBlockingQueue.put">
+<tt class="descname">put</tt><big>(</big><em>elem</em><big>)</big><a class="headerlink" href="#XrdTest.SocketUtils.PriorityBlockingQueue.put" title="Permalink to this definition">¶</a></dt>
+<dd><p>Puts element to the queue.
+&#64;param elem: a tuple in the form: (priority_number[int], data).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.SocketUtils.PriorityBlockingQueue.rawGet">
+<tt class="descname">rawGet</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.SocketUtils.PriorityBlockingQueue.rawGet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves tuple element (priority, data)
+with the lowest priority from the queue.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="XrdTest.SocketUtils.SocketDisconnectedError">
+<em class="property">exception </em><tt class="descclassname">XrdTest.SocketUtils.</tt><tt class="descname">SocketDisconnectedError</tt><big>(</big><em>desc</em><big>)</big><a class="headerlink" href="#XrdTest.SocketUtils.SocketDisconnectedError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+<p>TODO</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.SocketUtils.XrdMessage">
+<em class="property">class </em><tt class="descclassname">XrdTest.SocketUtils.</tt><tt class="descname">XrdMessage</tt><big>(</big><em>name</em>, <em>msg_sender=None</em><big>)</big><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Network message passed between Xrd Testing Framework nodes.</p>
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.M_CLUSTER_STATE">
+<tt class="descname">M_CLUSTER_STATE</tt><em class="property"> = 'cluster_state'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.M_CLUSTER_STATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.M_DISCONNECT">
+<tt class="descname">M_DISCONNECT</tt><em class="property"> = 'disconnect'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.M_DISCONNECT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.M_HELLO">
+<tt class="descname">M_HELLO</tt><em class="property"> = 'hello'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.M_HELLO" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.M_HYPERVISOR_STATE">
+<tt class="descname">M_HYPERVISOR_STATE</tt><em class="property"> = 'hypervisor_state'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.M_HYPERVISOR_STATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.M_START_CLUSTER">
+<tt class="descname">M_START_CLUSTER</tt><em class="property"> = 'start_cluster'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.M_START_CLUSTER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.M_STOP_CLUSTER">
+<tt class="descname">M_STOP_CLUSTER</tt><em class="property"> = 'stop_cluster'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.M_STOP_CLUSTER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.M_TAG_REPLY">
+<tt class="descname">M_TAG_REPLY</tt><em class="property"> = 'tag_reply'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.M_TAG_REPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.M_TAG_REQUEST">
+<tt class="descname">M_TAG_REQUEST</tt><em class="property"> = 'tag_request'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.M_TAG_REQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.M_TESTCASE_FINALIZE">
+<tt class="descname">M_TESTCASE_FINALIZE</tt><em class="property"> = 'test_case_finalize'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.M_TESTCASE_FINALIZE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.M_TESTCASE_INIT">
+<tt class="descname">M_TESTCASE_INIT</tt><em class="property"> = 'test_case_init'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.M_TESTCASE_INIT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.M_TESTCASE_RUN">
+<tt class="descname">M_TESTCASE_RUN</tt><em class="property"> = 'test_case_run'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.M_TESTCASE_RUN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.M_TESTCASE_STAGE_RESULT">
+<tt class="descname">M_TESTCASE_STAGE_RESULT</tt><em class="property"> = 'test_case_stage_result'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.M_TESTCASE_STAGE_RESULT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.M_TESTSUITE_FINALIZE">
+<tt class="descname">M_TESTSUITE_FINALIZE</tt><em class="property"> = 'test_suite_finalize'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.M_TESTSUITE_FINALIZE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.M_TESTSUITE_INIT">
+<tt class="descname">M_TESTSUITE_INIT</tt><em class="property"> = 'test_suite_init'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.M_TESTSUITE_INIT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.M_TESTSUITE_STATE">
+<tt class="descname">M_TESTSUITE_STATE</tt><em class="property"> = 'test_case_state'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.M_TESTSUITE_STATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.M_UNKNOWN">
+<tt class="descname">M_UNKNOWN</tt><em class="property"> = 'unknown'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.M_UNKNOWN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.name">
+<tt class="descname">name</tt><em class="property"> = 'unknown'</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.SocketUtils.XrdMessage.sender">
+<tt class="descname">sender</tt><em class="property"> = None</em><a class="headerlink" href="#XrdTest.SocketUtils.XrdMessage.sender" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-XrdTest.TCPClient">
+<span id="tcpclient-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">TCPClient</span></tt> Module<a class="headerlink" href="#module-XrdTest.TCPClient" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="XrdTest.TCPClient.Hypervisor">
+<em class="property">class </em><tt class="descclassname">XrdTest.TCPClient.</tt><tt class="descname">Hypervisor</tt><big>(</big><em>socket</em>, <em>hostname</em>, <em>address</em>, <em>state</em><big>)</big><a class="headerlink" href="#XrdTest.TCPClient.Hypervisor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#XrdTest.TCPClient.TCPClient" title="XrdTest.TCPClient.TCPClient"><tt class="xref py py-class docutils literal"><span class="pre">XrdTest.TCPClient.TCPClient</span></tt></a></p>
+<p>Wrapper for any hypervisor connection established.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.TCPClient.Slave">
+<em class="property">class </em><tt class="descclassname">XrdTest.TCPClient.</tt><tt class="descname">Slave</tt><big>(</big><em>socket</em>, <em>hostname</em>, <em>address</em>, <em>state</em><big>)</big><a class="headerlink" href="#XrdTest.TCPClient.Slave" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#XrdTest.TCPClient.TCPClient" title="XrdTest.TCPClient.TCPClient"><tt class="xref py py-class docutils literal"><span class="pre">XrdTest.TCPClient.TCPClient</span></tt></a></p>
+<p>Wrapper for any slave connection established.</p>
+<dl class="attribute">
+<dt id="XrdTest.TCPClient.Slave.S_SUITE_FINALIZE_SENT">
+<tt class="descname">S_SUITE_FINALIZE_SENT</tt><em class="property"> = (12, 'Test suite finalize sent to slave')</em><a class="headerlink" href="#XrdTest.TCPClient.Slave.S_SUITE_FINALIZE_SENT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPClient.Slave.S_SUITE_INITIALIZED">
+<tt class="descname">S_SUITE_INITIALIZED</tt><em class="property"> = (11, 'Test suite initialized')</em><a class="headerlink" href="#XrdTest.TCPClient.Slave.S_SUITE_INITIALIZED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPClient.Slave.S_SUITE_INIT_SENT">
+<tt class="descname">S_SUITE_INIT_SENT</tt><em class="property"> = (10, 'Test suite init sent to slave')</em><a class="headerlink" href="#XrdTest.TCPClient.Slave.S_SUITE_INIT_SENT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPClient.Slave.S_TEST_FINALIZE_SENT">
+<tt class="descname">S_TEST_FINALIZE_SENT</tt><em class="property"> = (25, 'Sent test case finalize to slave')</em><a class="headerlink" href="#XrdTest.TCPClient.Slave.S_TEST_FINALIZE_SENT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPClient.Slave.S_TEST_INITIALIZED">
+<tt class="descname">S_TEST_INITIALIZED</tt><em class="property"> = (22, 'Test case initialized')</em><a class="headerlink" href="#XrdTest.TCPClient.Slave.S_TEST_INITIALIZED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPClient.Slave.S_TEST_INIT_SENT">
+<tt class="descname">S_TEST_INIT_SENT</tt><em class="property"> = (21, 'Sent test case init to slave')</em><a class="headerlink" href="#XrdTest.TCPClient.Slave.S_TEST_INIT_SENT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPClient.Slave.S_TEST_RUN_FINISHED">
+<tt class="descname">S_TEST_RUN_FINISHED</tt><em class="property"> = (24, 'Test case run finished')</em><a class="headerlink" href="#XrdTest.TCPClient.Slave.S_TEST_RUN_FINISHED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPClient.Slave.S_TEST_RUN_SENT">
+<tt class="descname">S_TEST_RUN_SENT</tt><em class="property"> = (23, 'Sent test case run to slave')</em><a class="headerlink" href="#XrdTest.TCPClient.Slave.S_TEST_RUN_SENT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.TCPClient.TCPClient">
+<em class="property">class </em><tt class="descclassname">XrdTest.TCPClient.</tt><tt class="descname">TCPClient</tt><big>(</big><em>socket</em>, <em>hostname</em>, <em>address</em>, <em>state</em><big>)</big><a class="headerlink" href="#XrdTest.TCPClient.TCPClient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#XrdTest.Utils.Stateful" title="XrdTest.Utils.Stateful"><tt class="xref py py-class docutils literal"><span class="pre">XrdTest.Utils.Stateful</span></tt></a></p>
+<p>Represents any type of TCP client that connects to XrdTestMaster. Base
+class for Hypervisor and Slave.</p>
+<dl class="attribute">
+<dt id="XrdTest.TCPClient.TCPClient.S_CONNECTED_IDLE">
+<tt class="descname">S_CONNECTED_IDLE</tt><em class="property"> = (1, 'Connected')</em><a class="headerlink" href="#XrdTest.TCPClient.TCPClient.S_CONNECTED_IDLE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPClient.TCPClient.S_NOT_CONNECTED">
+<tt class="descname">S_NOT_CONNECTED</tt><em class="property"> = (2, 'Not connected')</em><a class="headerlink" href="#XrdTest.TCPClient.TCPClient.S_NOT_CONNECTED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.TCPClient.TCPClient.send">
+<tt class="descname">send</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#XrdTest.TCPClient.TCPClient.send" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.TCPClient.TCPReceiveThread">
+<em class="property">class </em><tt class="descclassname">XrdTest.TCPClient.</tt><tt class="descname">TCPReceiveThread</tt><big>(</big><em>sock</em>, <em>recvQueue</em><big>)</big><a class="headerlink" href="#XrdTest.TCPClient.TCPReceiveThread" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>TODO:</p>
+<dl class="method">
+<dt id="XrdTest.TCPClient.TCPReceiveThread.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.TCPClient.TCPReceiveThread.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.TCPClient.TCPReceiveThread.run">
+<tt class="descname">run</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.TCPClient.TCPReceiveThread.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO:</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-XrdTest.TCPServer">
+<span id="tcpserver-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">TCPServer</span></tt> Module<a class="headerlink" href="#module-XrdTest.TCPServer" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="XrdTest.TCPServer.MasterEvent">
+<em class="property">class </em><tt class="descclassname">XrdTest.TCPServer.</tt><tt class="descname">MasterEvent</tt><big>(</big><em>e_type</em>, <em>e_data</em>, <em>msg_sender_addr=None</em><big>)</big><a class="headerlink" href="#XrdTest.TCPServer.MasterEvent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Wrapper for all events that comes to XrdTestMaster. MasterEvent can
+be message from slave or hypervisor, system event like socket disconnection,
+cluster or test suite definition file change or scheduler job initiation.
+It has priorities. PRIO_IMPORTANT is processed before PRIO_NORMAL.</p>
+<dl class="attribute">
+<dt id="XrdTest.TCPServer.MasterEvent.M_CLIENT_CONNECTED">
+<tt class="descname">M_CLIENT_CONNECTED</tt><em class="property"> = 2</em><a class="headerlink" href="#XrdTest.TCPServer.MasterEvent.M_CLIENT_CONNECTED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPServer.MasterEvent.M_CLIENT_DISCONNECTED">
+<tt class="descname">M_CLIENT_DISCONNECTED</tt><em class="property"> = 3</em><a class="headerlink" href="#XrdTest.TCPServer.MasterEvent.M_CLIENT_DISCONNECTED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPServer.MasterEvent.M_HYPERV_MSG">
+<tt class="descname">M_HYPERV_MSG</tt><em class="property"> = 4</em><a class="headerlink" href="#XrdTest.TCPServer.MasterEvent.M_HYPERV_MSG" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPServer.MasterEvent.M_JOB_ENQUEUE">
+<tt class="descname">M_JOB_ENQUEUE</tt><em class="property"> = 6</em><a class="headerlink" href="#XrdTest.TCPServer.MasterEvent.M_JOB_ENQUEUE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPServer.MasterEvent.M_RELOAD_CLUSTER_DEF">
+<tt class="descname">M_RELOAD_CLUSTER_DEF</tt><em class="property"> = 7</em><a class="headerlink" href="#XrdTest.TCPServer.MasterEvent.M_RELOAD_CLUSTER_DEF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPServer.MasterEvent.M_RELOAD_SUITE_DEF">
+<tt class="descname">M_RELOAD_SUITE_DEF</tt><em class="property"> = 8</em><a class="headerlink" href="#XrdTest.TCPServer.MasterEvent.M_RELOAD_SUITE_DEF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPServer.MasterEvent.M_SLAVE_MSG">
+<tt class="descname">M_SLAVE_MSG</tt><em class="property"> = 5</em><a class="headerlink" href="#XrdTest.TCPServer.MasterEvent.M_SLAVE_MSG" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPServer.MasterEvent.M_UNKNOWN">
+<tt class="descname">M_UNKNOWN</tt><em class="property"> = 1</em><a class="headerlink" href="#XrdTest.TCPServer.MasterEvent.M_UNKNOWN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPServer.MasterEvent.PRIO_IMPORTANT">
+<tt class="descname">PRIO_IMPORTANT</tt><em class="property"> = 1</em><a class="headerlink" href="#XrdTest.TCPServer.MasterEvent.PRIO_IMPORTANT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPServer.MasterEvent.PRIO_NORMAL">
+<tt class="descname">PRIO_NORMAL</tt><em class="property"> = 9</em><a class="headerlink" href="#XrdTest.TCPServer.MasterEvent.PRIO_NORMAL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.TCPServer.ThreadedTCPRequestHandler">
+<em class="property">class </em><tt class="descclassname">XrdTest.TCPServer.</tt><tt class="descname">ThreadedTCPRequestHandler</tt><big>(</big><em>request</em>, <em>client_address</em>, <em>server</em><big>)</big><a class="headerlink" href="#XrdTest.TCPServer.ThreadedTCPRequestHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">SocketServer.BaseRequestHandler</span></tt></p>
+<p>Client&#8217;s TCP request handler.</p>
+<dl class="attribute">
+<dt id="XrdTest.TCPServer.ThreadedTCPRequestHandler.C_HYPERV">
+<tt class="descname">C_HYPERV</tt><em class="property"> = 'hypervisor'</em><a class="headerlink" href="#XrdTest.TCPServer.ThreadedTCPRequestHandler.C_HYPERV" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TCPServer.ThreadedTCPRequestHandler.C_SLAVE">
+<tt class="descname">C_SLAVE</tt><em class="property"> = 'slave'</em><a class="headerlink" href="#XrdTest.TCPServer.ThreadedTCPRequestHandler.C_SLAVE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.TCPServer.ThreadedTCPRequestHandler.authClient">
+<tt class="descname">authClient</tt><big>(</big><em>clientType</em><big>)</big><a class="headerlink" href="#XrdTest.TCPServer.ThreadedTCPRequestHandler.authClient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if hypervisor is authentic. It will provide the connection password.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.TCPServer.ThreadedTCPRequestHandler.handle">
+<tt class="descname">handle</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.TCPServer.ThreadedTCPRequestHandler.handle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle new incoming connection and keep it to receive messages.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.TCPServer.ThreadedTCPRequestHandler.setup">
+<tt class="descname">setup</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.TCPServer.ThreadedTCPRequestHandler.setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initiate class properties</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.TCPServer.ThreadedTCPServer">
+<em class="property">class </em><tt class="descclassname">XrdTest.TCPServer.</tt><tt class="descname">ThreadedTCPServer</tt><big>(</big><em>server_address</em>, <em>RequestHandlerClass</em>, <em>bind_and_activate=True</em><big>)</big><a class="headerlink" href="#XrdTest.TCPServer.ThreadedTCPServer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">SocketServer.ThreadingMixIn</span></tt>, <a class="reference internal" href="#XrdTest.TCPServer.XrdTCPServer" title="XrdTest.TCPServer.XrdTCPServer"><tt class="xref py py-class docutils literal"><span class="pre">XrdTest.TCPServer.XrdTCPServer</span></tt></a></p>
+<p>Wrapper to create threaded TCP Server.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.TCPServer.XrdTCPServer">
+<em class="property">class </em><tt class="descclassname">XrdTest.TCPServer.</tt><tt class="descname">XrdTCPServer</tt><big>(</big><em>server_address</em>, <em>RequestHandlerClass</em>, <em>bind_and_activate=True</em><big>)</big><a class="headerlink" href="#XrdTest.TCPServer.XrdTCPServer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">SocketServer.TCPServer</span></tt></p>
+<p>Wrapper for SocketServer.TCPServer, to enable setting beneath params.</p>
+<dl class="attribute">
+<dt id="XrdTest.TCPServer.XrdTCPServer.allow_reuse_address">
+<tt class="descname">allow_reuse_address</tt><em class="property"> = True</em><a class="headerlink" href="#XrdTest.TCPServer.XrdTCPServer.allow_reuse_address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-XrdTest.TestUtils">
+<span id="testutils-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">TestUtils</span></tt> Module<a class="headerlink" href="#module-XrdTest.TestUtils" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="XrdTest.TestUtils.TestCase">
+<em class="property">class </em><tt class="descclassname">XrdTest.TestUtils.</tt><tt class="descname">TestCase</tt><a class="headerlink" href="#XrdTest.TestUtils.TestCase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a single test case object.</p>
+<dl class="method">
+<dt id="XrdTest.TestUtils.TestCase.validateStatic">
+<tt class="descname">validateStatic</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.TestUtils.TestCase.validateStatic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return whether or not definition (e.g given names) is statically correct.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.TestUtils.TestSuite">
+<em class="property">class </em><tt class="descclassname">XrdTest.TestUtils.</tt><tt class="descname">TestSuite</tt><a class="headerlink" href="#XrdTest.TestUtils.TestSuite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#XrdTest.Utils.Stateful" title="XrdTest.Utils.Stateful"><tt class="xref py py-class docutils literal"><span class="pre">XrdTest.Utils.Stateful</span></tt></a></p>
+<p>Represents a single test suite object.</p>
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_ALL_FINALIZED">
+<tt class="descname">S_ALL_FINALIZED</tt><em class="property"> = (32, 'all machines initialized')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_ALL_FINALIZED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_ALL_INITIALIZED">
+<tt class="descname">S_ALL_INITIALIZED</tt><em class="property"> = (22, 'all machines initialized')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_ALL_INITIALIZED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_ALL_TEST_FINALIZED">
+<tt class="descname">S_ALL_TEST_FINALIZED</tt><em class="property"> = (48, 'test finalized on all slaves')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_ALL_TEST_FINALIZED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_ALL_TEST_INITIALIZED">
+<tt class="descname">S_ALL_TEST_INITIALIZED</tt><em class="property"> = (42, 'test initialized on all slaves')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_ALL_TEST_INITIALIZED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_ALL_TEST_RUN_FINISHED">
+<tt class="descname">S_ALL_TEST_RUN_FINISHED</tt><em class="property"> = (45, 'test run finished on all slaves')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_ALL_TEST_RUN_FINISHED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_DEF_OK">
+<tt class="descname">S_DEF_OK</tt><em class="property"> = (1, 'Test suite definition complete')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_DEF_OK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_IDLE">
+<tt class="descname">S_IDLE</tt><em class="property"> = (10, 'idle')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_IDLE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_INIT_ERROR">
+<tt class="descname">S_INIT_ERROR</tt><em class="property"> = (-22, 'initialization error')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_INIT_ERROR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_SLAVE_FINALIZED">
+<tt class="descname">S_SLAVE_FINALIZED</tt><em class="property"> = (31, 'slave finalized')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_SLAVE_FINALIZED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_SLAVE_INITIALIZED">
+<tt class="descname">S_SLAVE_INITIALIZED</tt><em class="property"> = (21, 'slave initialized')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_SLAVE_INITIALIZED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_SLAVE_TEST_FINALIZED">
+<tt class="descname">S_SLAVE_TEST_FINALIZED</tt><em class="property"> = (47, 'test finalized on a slave')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_SLAVE_TEST_FINALIZED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_SLAVE_TEST_INITIALIZED">
+<tt class="descname">S_SLAVE_TEST_INITIALIZED</tt><em class="property"> = (41, 'test initialized on a slave')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_SLAVE_TEST_INITIALIZED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_SLAVE_TEST_RUN_FINISHED">
+<tt class="descname">S_SLAVE_TEST_RUN_FINISHED</tt><em class="property"> = (44, 'test run finished on a slave')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_SLAVE_TEST_RUN_FINISHED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_WAIT_4_FINALIZE">
+<tt class="descname">S_WAIT_4_FINALIZE</tt><em class="property"> = (30, 'wait for suite finalization')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_WAIT_4_FINALIZE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_WAIT_4_INIT">
+<tt class="descname">S_WAIT_4_INIT</tt><em class="property"> = (20, 'wait for suite initialization')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_WAIT_4_INIT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_WAIT_4_TEST_FINALIZE">
+<tt class="descname">S_WAIT_4_TEST_FINALIZE</tt><em class="property"> = (46, 'send test to finalize')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_WAIT_4_TEST_FINALIZE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_WAIT_4_TEST_INIT">
+<tt class="descname">S_WAIT_4_TEST_INIT</tt><em class="property"> = (40, 'sent test init')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_WAIT_4_TEST_INIT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuite.S_WAIT_4_TEST_RUN">
+<tt class="descname">S_WAIT_4_TEST_RUN</tt><em class="property"> = (43, 'sent test to run')</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.S_WAIT_4_TEST_RUN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.TestUtils.TestSuite.checkIfDefComplete">
+<tt class="descname">checkIfDefComplete</tt><big>(</big><em>clusters</em><big>)</big><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.checkIfDefComplete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes sure all cluster definitions are complete.</p>
+<p>&#64;param clusters: all currently defined clusters.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.TestUtils.TestSuite.getNextRunTime">
+<tt class="descname">getNextRunTime</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.getNextRunTime" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the next scheduled run time for this suite.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.TestUtils.TestSuite.has_failure">
+<tt class="descname">has_failure</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.has_failure" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.TestUtils.TestSuite.validateStatic">
+<tt class="descname">validateStatic</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.TestUtils.TestSuite.validateStatic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if definition (e.g given names) is statically correct.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="XrdTest.TestUtils.TestSuiteException">
+<em class="property">exception </em><tt class="descclassname">XrdTest.TestUtils.</tt><tt class="descname">TestSuiteException</tt><big>(</big><em>desc</em>, <em>typeFlag=1</em><big>)</big><a class="headerlink" href="#XrdTest.TestUtils.TestSuiteException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+<p>General exception raised by module.</p>
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuiteException.ERR_CRITICAL">
+<tt class="descname">ERR_CRITICAL</tt><em class="property"> = 2</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuiteException.ERR_CRITICAL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.TestUtils.TestSuiteException.ERR_UNKNOWN">
+<tt class="descname">ERR_UNKNOWN</tt><em class="property"> = 1</em><a class="headerlink" href="#XrdTest.TestUtils.TestSuiteException.ERR_UNKNOWN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.TestUtils.TestSuiteSession">
+<em class="property">class </em><tt class="descclassname">XrdTest.TestUtils.</tt><tt class="descname">TestSuiteSession</tt><big>(</big><em>suiteDef</em><big>)</big><a class="headerlink" href="#XrdTest.TestUtils.TestSuiteSession" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#XrdTest.Utils.Stateful" title="XrdTest.Utils.Stateful"><tt class="xref py py-class docutils literal"><span class="pre">XrdTest.Utils.Stateful</span></tt></a></p>
+<p>Represents run of Test Suite from the moment of its initialization.
+It stores all information required for test suite to be run as well as
+results of test stages. It has unique id (uid parameter) for recognition,
+because there will be for sure many test suites with the same name.</p>
+<dl class="method">
+<dt id="XrdTest.TestUtils.TestSuiteSession.addCaseRun">
+<tt class="descname">addCaseRun</tt><big>(</big><em>tc</em><big>)</big><a class="headerlink" href="#XrdTest.TestUtils.TestSuiteSession.addCaseRun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers run of test case. Gives unique id (uid) for started
+test case, because one test case can be run many time within test
+suite session.
+&#64;param tc: TestCase definition object</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.TestUtils.TestSuiteSession.addStageResult">
+<tt class="descname">addStageResult</tt><big>(</big><em>state</em>, <em>result</em>, <em>uid=None</em>, <em>slave_name=None</em><big>)</big><a class="headerlink" href="#XrdTest.TestUtils.TestSuiteSession.addStageResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds all information about stage that has finished to test suite session
+object. Stage are e.g.: initialize suite on some slave, run test case
+on some slave etc.
+&#64;param state: state that happened
+&#64;param result: result of test run (code, stdout, stderr)
+&#64;param uid: uid of test case or test suite init/finalize
+&#64;param slave_name: where stage ended</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.TestUtils.TestSuiteSession.getTestCaseStages">
+<tt class="descname">getTestCaseStages</tt><big>(</big><em>test_case_uid</em><big>)</big><a class="headerlink" href="#XrdTest.TestUtils.TestSuiteSession.getTestCaseStages" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve test case stages for given test case unique id.
+&#64;param test_case_uid:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="XrdTest.TestUtils.extractSuiteName">
+<tt class="descclassname">XrdTest.TestUtils.</tt><tt class="descname">extractSuiteName</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#XrdTest.TestUtils.extractSuiteName" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the suite name from the given path.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="XrdTest.TestUtils.loadTestCasesDefs">
+<tt class="descclassname">XrdTest.TestUtils.</tt><tt class="descname">loadTestCasesDefs</tt><big>(</big><em>path</em>, <em>tests</em><big>)</big><a class="headerlink" href="#XrdTest.TestUtils.loadTestCasesDefs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads TestCase definitions from .py file. Search for getTestCases function
+in the file and expects list of testCases to be returned.</p>
+<p>&#64;param path: path for .py files, storing cluster definitions</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="XrdTest.TestUtils.loadTestSuiteDef">
+<tt class="descclassname">XrdTest.TestUtils.</tt><tt class="descname">loadTestSuiteDef</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#XrdTest.TestUtils.loadTestSuiteDef" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a single test suite definition.</p>
+<p>&#64;param path: path to the suite definition to be loaded.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="XrdTest.TestUtils.loadTestSuiteDefs">
+<tt class="descclassname">XrdTest.TestUtils.</tt><tt class="descname">loadTestSuiteDefs</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#XrdTest.TestUtils.loadTestSuiteDefs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads TestSuite and TestCase definitions from .py files
+stored in path directory.</p>
+<p>&#64;param path: path for .py files, storing cluster definitions</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="XrdTest.TestUtils.readFile">
+<tt class="descclassname">XrdTest.TestUtils.</tt><tt class="descname">readFile</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#XrdTest.TestUtils.readFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="XrdTest.TestUtils.resolveScript">
+<tt class="descclassname">XrdTest.TestUtils.</tt><tt class="descname">resolveScript</tt><big>(</big><em>definition</em>, <em>root_path</em><big>)</big><a class="headerlink" href="#XrdTest.TestUtils.resolveScript" title="Permalink to this definition">¶</a></dt>
+<dd><p>Grabs a script from some arbitrary path.</p>
+<p>TODO: add more error handling</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-XrdTest.Utils">
+<span id="utils-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">Utils</span></tt> Module<a class="headerlink" href="#module-XrdTest.Utils" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="XrdTest.Utils.Command">
+<em class="property">class </em><tt class="descclassname">XrdTest.Utils.</tt><tt class="descname">Command</tt><big>(</big><em>cmd</em>, <em>cwd</em><big>)</big><a class="headerlink" href="#XrdTest.Utils.Command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Execute a subprocess command.</p>
+<dl class="method">
+<dt id="XrdTest.Utils.Command.execute">
+<tt class="descname">execute</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.Utils.Command.execute" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.Utils.Logger">
+<em class="property">class </em><tt class="descclassname">XrdTest.Utils.</tt><tt class="descname">Logger</tt><big>(</big><em>filename</em><big>)</big><a class="headerlink" href="#XrdTest.Utils.Logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Generic logging class</p>
+<dl class="method">
+<dt id="XrdTest.Utils.Logger.setup">
+<tt class="descname">setup</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.Utils.Logger.setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.Utils.SafeCounter">
+<em class="property">class </em><tt class="descclassname">XrdTest.Utils.</tt><tt class="descname">SafeCounter</tt><a class="headerlink" href="#XrdTest.Utils.SafeCounter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>TODO:</p>
+<dl class="method">
+<dt id="XrdTest.Utils.SafeCounter.get">
+<tt class="descname">get</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.Utils.SafeCounter.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.Utils.SafeCounter.inc">
+<tt class="descname">inc</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.Utils.SafeCounter.inc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.Utils.State">
+<em class="property">class </em><tt class="descclassname">XrdTest.Utils.</tt><tt class="descname">State</tt><big>(</big><em>status_tuple</em>, <em>additDesc=''</em><big>)</big><a class="headerlink" href="#XrdTest.Utils.State" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Represents current state of some entity.</p>
+<dl class="method">
+<dt id="XrdTest.Utils.State.addDesc">
+<tt class="descname">addDesc</tt><big>(</big><em>anyStr</em><big>)</big><a class="headerlink" href="#XrdTest.Utils.State.addDesc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.Utils.State.isError">
+<tt class="descname">isError</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.Utils.State.isError" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="XrdTest.Utils.Stateful">
+<em class="property">class </em><tt class="descclassname">XrdTest.Utils.</tt><tt class="descname">Stateful</tt><a class="headerlink" href="#XrdTest.Utils.Stateful" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Represents stateful entity and remember its previous states.</p>
+<dl class="method">
+<dt id="XrdTest.Utils.Stateful.getState">
+<tt class="descname">getState</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.Utils.Stateful.getState" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.Utils.Stateful.setState">
+<tt class="descname">setState</tt><big>(</big><em>state</em><big>)</big><a class="headerlink" href="#XrdTest.Utils.Stateful.setState" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="XrdTest.Utils.Stateful.state">
+<tt class="descname">state</tt><a class="headerlink" href="#XrdTest.Utils.Stateful.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="XrdTest.Utils.redirectOutput">
+<tt class="descclassname">XrdTest.Utils.</tt><tt class="descname">redirectOutput</tt><big>(</big><em>logFile</em><big>)</big><a class="headerlink" href="#XrdTest.Utils.redirectOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Redirect the stderr and stdout to a file</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-XrdTest.WebInterface">
+<span id="webinterface-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">WebInterface</span></tt> Module<a class="headerlink" href="#module-XrdTest.WebInterface" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="XrdTest.WebInterface.WebInterface">
+<em class="property">class </em><tt class="descclassname">XrdTest.WebInterface.</tt><tt class="descname">WebInterface</tt><big>(</big><em>config</em>, <em>test_master_ref</em><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.WebInterface" title="Permalink to this definition">¶</a></dt>
+<dd><p>All pages and files available via Web Interface,
+defined as methods of this class.</p>
+<dl class="method">
+<dt id="XrdTest.WebInterface.WebInterface.auth">
+<tt class="descname">auth</tt><big>(</big><em>password=None</em>, <em>testsuite=None</em><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.WebInterface.auth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.WebInterface.WebInterface.clusters">
+<tt class="descname">clusters</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.WebInterface.clusters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.WebInterface.WebInterface.disp">
+<tt class="descname">disp</tt><big>(</big><em>tfile</em>, <em>tvars</em><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.WebInterface.disp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Utility method for displying a Cheetah template file with the
+supplied variables.</p>
+<p>&#64;param tfile: to be displayed as HTML page
+&#64;param tvars: variables to be used in HTML page, Cheetah style</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.WebInterface.WebInterface.documentation">
+<tt class="descname">documentation</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.WebInterface.documentation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.WebInterface.WebInterface.downloadScript">
+<tt class="descname">downloadScript</tt><big>(</big><em>*script_name</em><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.WebInterface.downloadScript" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable slave to download some script as a regular file from master and
+run it.</p>
+<p>&#64;param script_name:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.WebInterface.WebInterface.handleCherrypyError">
+<tt class="descname">handleCherrypyError</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.WebInterface.handleCherrypyError" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.WebInterface.WebInterface.http_methods_allowed">
+<tt class="descname">http_methods_allowed</tt><big>(</big><em>methods=['GET', 'POST']</em><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.WebInterface.http_methods_allowed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.WebInterface.WebInterface.hypervisors">
+<tt class="descname">hypervisors</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.WebInterface.hypervisors" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.WebInterface.WebInterface.index">
+<tt class="descname">index</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.WebInterface.index" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.WebInterface.WebInterface.indexRedirect">
+<tt class="descname">indexRedirect</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.WebInterface.indexRedirect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Page that at once redirects user to index. Used to clear URL parameters.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.WebInterface.WebInterface.runTestSuite">
+<tt class="descname">runTestSuite</tt><big>(</big><em>testsuite=None</em><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.WebInterface.runTestSuite" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.WebInterface.WebInterface.showScript">
+<tt class="descname">showScript</tt><big>(</big><em>*script_name</em><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.WebInterface.showScript" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable slave to view some script as text from master and
+run it.</p>
+<p>&#64;param script_name:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.WebInterface.WebInterface.testsuites">
+<tt class="descname">testsuites</tt><big>(</big><em>ts_name=None</em><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.WebInterface.testsuites" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.WebInterface.WebInterface.unsupported">
+<tt class="descname">unsupported</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.WebInterface.unsupported" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTest.WebInterface.WebInterface.vars">
+<tt class="descname">vars</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.WebInterface.vars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the variables necessary for a webpage template.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="XrdTest.WebInterface.XrdWebInterfaceException">
+<em class="property">exception </em><tt class="descclassname">XrdTest.WebInterface.</tt><tt class="descname">XrdWebInterfaceException</tt><big>(</big><em>desc</em><big>)</big><a class="headerlink" href="#XrdTest.WebInterface.XrdWebInterfaceException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+<p>General Exception raised by WebInterface.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">XrdTest Package</a><ul>
+<li><a class="reference internal" href="#id1"><tt class="docutils literal"><span class="pre">XrdTest</span></tt> Package</a></li>
+<li><a class="reference internal" href="#module-XrdTest.ClusterManager"><tt class="docutils literal"><span class="pre">ClusterManager</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-XrdTest.ClusterUtils"><tt class="docutils literal"><span class="pre">ClusterUtils</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-XrdTest.Daemon"><tt class="docutils literal"><span class="pre">Daemon</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-XrdTest.DirectoryWatch"><tt class="docutils literal"><span class="pre">DirectoryWatch</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-XrdTest.GitUtils"><tt class="docutils literal"><span class="pre">GitUtils</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-XrdTest.Job"><tt class="docutils literal"><span class="pre">Job</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-XrdTest.SocketUtils"><tt class="docutils literal"><span class="pre">SocketUtils</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-XrdTest.TCPClient"><tt class="docutils literal"><span class="pre">TCPClient</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-XrdTest.TCPServer"><tt class="docutils literal"><span class="pre">TCPServer</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-XrdTest.TestUtils"><tt class="docutils literal"><span class="pre">TestUtils</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-XrdTest.Utils"><tt class="docutils literal"><span class="pre">Utils</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-XrdTest.WebInterface"><tt class="docutils literal"><span class="pre">WebInterface</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/XrdTest.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">xrootd-tests 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CERN, Justin Lewis Salmon.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

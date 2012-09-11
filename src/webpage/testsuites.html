@@ -106,6 +106,20 @@
                 </ul>
                 <!-- /Breadcrumbs -->
                 
+                <section id="corner-stats">
+                    <span>
+                        Currently active cluster:&nbsp;
+                        <strong>
+                            #set $ac = [c for c in $clusters.itervalues() if 0 < c.state.id < 11 ]
+                            ${ac[0].name if len(ac) else 'None'}
+                        </strong>
+                        #if len($hypervisors) and len($ac)
+                            #set $ah = [h for h in $hypervisors.values() if 0 < h.state.id < 11 ]
+                            ${'on hypervisor <strong>%s</strong>' % ah[0].hostname if len(ah) else 'None'}
+                        #end if 
+                    </span>
+                </section>
+                
                 <article class="full-block clearfix">
                     <div class="article-container">
                         <header>

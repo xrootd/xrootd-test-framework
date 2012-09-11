@@ -195,7 +195,7 @@ class XrdTestHypervisor(Runnable):
         '''
         Handle start cluster message from a master - start a cluster.
         '''
-        self.updateState(Cluster.S_STARTING_CLUSTER)
+        self.updateState(Cluster.S_STARTING_CLUSTER, msg.clusterDef.name)
         
         resp = XrdMessage(XrdMessage.M_CLUSTER_STATE)
         # rewrite important parameters to response message
@@ -226,8 +226,8 @@ class XrdTestHypervisor(Runnable):
                             "Starting cluster.")
                 self.clusterManager.createCluster(cluster)
                 
-                resp.state = State(Cluster.S_ACTIVE)                   
-                self.updateState(Cluster.S_WAITING_BOOT)
+                resp.state = State(Cluster.S_WAITING_SLAVES)
+                #self.updateState(Cluster.S_WAITING_SLAVES, resp.clusterName)
             except ClusterManagerException, e:
                 LOGGER.error("Error occured during cluster start: %s" % e)
                 resp.state = State(Cluster.S_ERROR_START, e)
@@ -332,10 +332,11 @@ class XrdTestHypervisor(Runnable):
                 raise XrdTestHypervisorException("Config file %s could not be read" % confFile)
             return config
         
-    def updateState(self, state):
+    def updateState(self, state, clusterName):
         ''' Send a progress update message to the master. '''
-        msg = XrdMessage(XrdMessage.M_HYPERVISOR_STATE)
+        msg = XrdMessage(XrdMessage.M_CLUSTER_STATE)
         msg.state = State(state)
+        msg.clusterName = clusterName
         self.sockStream.send(msg)
 
 def main():

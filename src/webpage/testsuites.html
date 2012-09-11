@@ -118,6 +118,11 @@
                             ${'on hypervisor <strong>%s</strong>' % ah[0].hostname if len(ah) else 'None'}
                         #end if 
                     </span>
+                    <br />
+                    <span>
+                        Currently running test suite:
+                        <strong>${$current_run.name if $current_run else 'None'}</strong>
+                    </span>
                 </section>
                 
                 <article class="full-block clearfix">
@@ -129,80 +134,129 @@
                         <section>                 
                         #if len($testsuites)
 
-                            <ul class="tickets">
-                                <!-- Ticket Headers -->
-                                <li class="ticket-header">
+                            <div class="sidetabs">
+                                <nav class="sidetab-switch">
                                     <ul>
-                                        <li class="ticket-header-ts-name">Name</li>
-                                        <li class="ticket-header-ts-state">State</li>
-                                        <li class="ticket-header-ts-timedef">Time Defined</li>
-                                        <li class="ticket-header-ts-nextrun">Next Run</li>
-                                        <li class="ticket-header-ts-actions">Actions</li>
-                                    </ul>
-                                </li>
-                                <!-- /Ticket Headers -->
-                                
-                                #for $ts in $testsuites.itervalues()
-                                
-                                <!-- Ticket Data -->
-                                <li class="ticket-data">
-                                    <div class="ticket-overview">
-                                        <ul>
-                                            <li class="ticket-data-ts-name">
-                                                $ts.name
-                                            </li>
-                                            <li class="ticket-data-ts-state">
-                                                <a href="#" 
-                                                   class="ticket-open-details ${'success' if $ts.state.id > 0 else 'failure'}">
-                                                   $ts.state.name
+                                        #set $default_tab = True
+                                        #for $ts in $testsuites.itervalues()
+                                            <li class="${'success' if $ts.state.id >= 0 else 'failure'}">
+                                                <a href="#sidetab-$ts.name"
+                                                   class="${'default-sidetab' if $default_tab else ''}">
+                                                    $ts.name
+                                                    
+                                                    #if $current_run and $current_run.name == $ts.name
+                                                        <span class="tag green">Running</span>
+                                                    #else 
+                                                        <span class="tag gray">Idle</span>
+                                                    #end if
                                                 </a>
                                             </li>
-                                            <li class="ticket-data-ts-timedef">
-                                                <strong>$ts.state.datetime.strftime("%d-%m-%Y")</strong>
-                                                $ts.state.datetime.strftime("%H:%M:%S")
-                                            </li>
-                                            <li class="ticket-data-ts-actions">
-                                                $ts.getNextRunTime()
-                                            </li>
-                                            <li class="ticket-data-ts-nextrun">
-                                                #set $disabled = 'disabled' if $ts.state.id < 0 else ''
-                                                <button onclick="location.href='/testsuites/$ts.name'">View History</button>
-                                                <form action="/runTestSuite" method="post">
-                                                    <button $disabled>Run Now</button>
-                                                    <input type="hidden" name="testsuite" value="$ts.name" />
-                                                </form>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <div class="ticket-details" style="display: none; ">
-                                        <h4>Definition</h4>
-                                        #if $ts.state.id > 0
-                                            <dl>
-                                                <dt>Scheduler expression:</dt>
-                                                <dd><strong>$ts.schedule</strong></dd>
-                                                <dt class="clear">Test cases: </dt>
-                                                <dd><strong>${', '.join([t for t in $ts.tests])}</strong></dd>
-                                                <dt class="clear">Required clusters:</dt>
-                                                <dd><strong>${', '.join([c for c in $ts.clusters])}</strong></dd>
-                                                <dt class="clear">Required machines:</dt>
-                                                <dd><strong>${', '.join([m for m in $ts.machines])}</strong></dd>
-                                            </dl>
-                                        #else
-                                           <div class="notification attention">
-                                              <p>
-                                              <strong>Warning:</strong> Test suite not defined, or defined incorrectly.
-                                              </p>
-                                           </div>
-                                        #end if
-                                    </div>
-                                    <!-- /Ticket Details -->
-                                    
-                                </li>
-                                <!-- /Ticket Data -->
+                                            #set $default_tab = False
+                                        #end for
+                                    </ul>
+                                </nav>
                                 
-                                #end for
-                            </ul>
-                            
+                                <section>
+                                    #set $default_tab = True
+                                    #for $ts in $testsuites.itervalues()
+	                                    <div class="sidetab ${'default-sidetab' if $default_tab else ''}" 
+	                                         id="sidetab-$ts.name">
+	                                        
+	                                        <h3>$ts.name <span><a href="/testsuites/$ts.name">View History</a></span></h3>
+                                            
+	                                        <ul class="logs">
+	                                            #if $current_run and $current_run.name == $ts.name
+
+	                                               <li class="event">
+                                                        <span class="logs-timestamp">[ $current_run.state.time ]</span>
+                                                        <h4 class="logs-event">$current_run.state.name</h4>
+                                                    </li>
+	                                            #else
+		                                            <li class="event ${'success' if $ts.state.id >= 0 else 'failure'}">
+	                                                    <span class="logs-timestamp">[ $ts.state.time ]</span>
+	                                                    <h4 class="logs-event">$ts.state.name</h4>
+	                                                </li>
+	                                            #end if         
+                                            </ul>
+
+                                            <article class="full-block">
+                                                <div class="article-container">
+                                                #if $ts.state.id > 0
+	                                                <form action="/runTestSuite" method="post">
+						                                <fieldset>
+						                                    <legend>Definition</legend>
+						                                    
+						                                    <div class="actions">
+				                                                #set $disabled = 'disabled' if $ts.state.id < 0 else ''
+				                                                <button $disabled>Run Now</button>
+				                                                <button disabled>Cancel Run</button>
+				                                                
+	                                                            <input type="hidden" name="testsuite" value="$ts.name" />
+				                                            </div> 
+						                                    <dl>
+						                                        <dt>
+						                                            <label>Next scheduled run: </label>
+						                                        </dt>
+						                                        <dd class="text">
+						                                            <p>$ts.getNextRunTime()</p>
+						                                        </dd>
+						                                    </dl>
+						                                    <dl>
+	                                                            <dt>
+	                                                                <label>Scheduler expression: </label>
+	                                                            </dt>
+	                                                            <dd class="text">
+	                                                                <p>$ts.schedule</p>
+	                                                            </dd>
+	                                                        </dl>
+	                                                        <dl>
+	                                                            <dt>
+	                                                                <label>Test cases: </label>
+	                                                            </dt>
+	                                                            <dd class="text">
+	                                                                <p>${'<br />'.join([t for t in $ts.tests])}</p>
+	                                                            </dd>
+	                                                        </dl>
+	                                                        <dl>
+	                                                            <dt>
+	                                                                <label>Required clusters: </label>
+	                                                            </dt>
+	                                                            <dd class="text">
+	                                                                <p>
+	                                                                   #for $c in $ts.clusters
+	                                                                       <span>$c </span>
+	                                                                       <span class="${'success' if $clusters[c].state.id >= 0 else 'failure'}">
+	                                                                           ($clusters[c].state.name)
+	                                                                       </span>
+	                                                                   #end for
+	                                                                </p>
+	                                                            </dd>
+	                                                        </dl>
+	                                                        <dl>
+	                                                            <dt>
+	                                                                <label>Required machines: </label>
+	                                                            </dt>
+	                                                            <dd class="text">
+	                                                                <p>${'<br />'.join([m for m in $ts.machines])}</p>
+	                                                            </dd>
+	                                                        </dl>
+						                                </fieldset>
+						                            </form>
+					                            #else
+                                                   <div class="notification attention">
+                                                      <p>
+                                                      <strong>Warning:</strong> Test suite not defined, or defined incorrectly.
+                                                      </p>
+                                                   </div>
+                                                #end if
+	                                           
+                                                </div>
+                                            </article>
+	                                    </div>
+	                                    #set $default_tab = False
+                                    #end for
+                                </section>
+                            </div>
                         #else
                             <div class="notification attention">
                                 <p>

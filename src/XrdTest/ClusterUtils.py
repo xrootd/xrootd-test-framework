@@ -340,7 +340,7 @@ class Cluster(Utils.Stateful):
     S_CREATING_SLAVES = (4, 'Creating slaves.')
     S_COPYING_IMAGES = (5, 'Copying slave images.')
     S_ATTACHING_DISKS = (6, 'Attaching slave disks.')
-    S_WAITING_BOOT = (7, 'Cluster active. Waiting for slaves to boot.')
+    S_WAITING_SLAVES = (7, 'Waiting for slaves to connect.')
     S_ACTIVE = (8, "Cluster active.")
     S_STOPCOMMAND_SENT = (9, "Cluster stop command sent to hypervisor.")
     S_DESTROYING_CLUSTER = (10, 'Destroying cluster')
@@ -361,12 +361,8 @@ class Cluster(Utils.Stateful):
         self.hosts = []
         self.name = None
         self.info = None
-
         self.defaultHost = Host()
-        
         self.__network = Network()
-        
-        self.state = ''
 
     def addHost(self, host):
         from uuid import uuid1

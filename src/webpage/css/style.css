@@ -761,6 +761,7 @@ article footer {
     display: block;
     padding: 10px 0;
     text-decoration: none;
+    padding-right: 10px;
 }
 
 section .sidetab-switch li {
@@ -1065,6 +1066,7 @@ article section p a.button {
 
 #corner-stats {
     float: right;
+    text-align: right;
 }
 
 /*  Prgoress Bars  */
@@ -1200,7 +1202,6 @@ div.tab>img,div.tab>.image-frame img {
 
 /*  Tags  */
 .tag {
-    display: block;
     color: #fff;
     font-size: 93%;
     padding: 2px 0;
@@ -1214,6 +1215,7 @@ div.tab>img,div.tab>.image-frame img {
     -webkit-box-shadow: 0 0 2px #b3b3b3;
     -moz-box-shadow: 0 0 2px #b3b3b3;
     box-shadow: 0 0 2px #b3b3b3;
+    float: right;
 }
 
 .tag.red {
@@ -1405,6 +1407,19 @@ div.tab>img,div.tab>.image-frame img {
 
 .logs li .logs-meta a {
     text-decoration: none;
+}
+
+.actions {
+    float: right;
+}
+
+.scrollable {
+    height: 600px;
+    overflow-y: auto;
+    position: static;
+    border: 1px solid #E6E6E6;
+    padding: 10px;
+    background-color: #f2f2f2;
 }
 
 /*  Contacts  */
@@ -1887,7 +1902,8 @@ form span.invalid-side-note {
     box-shadow: none;
 }
 
-.ie7 .checkbox          .,.ie8 .checkbox          .],.ie9 .checkbox {
+.ie7 .checkbox            .,.ie8 .checkbox            .],.ie9 .checkbox
+    {
     top: -7px;
 }
 

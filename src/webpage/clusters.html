@@ -170,7 +170,8 @@
                                                   <header class="square">
                                                       <nav class="leftnav">
                                                        <ul class="tab-switch">
-                                                           <li><a href="#tab-$cluster.name-vm" class="default-tab">Virtual Machines</a></li>
+                                                           <li><a href="#tab-$cluster.name-log" class="default-tab">Activity Log</a></li>
+                                                           <li><a href="#tab-$cluster.name-vm">Virtual Machines</a></li>
                                                            <li><a href="#tab-$cluster.name-network">Network</a></li>
                                                        </ul>
                                                       </nav>
@@ -178,7 +179,16 @@
                                           
                                                   <section>
                                                   
-                                                  <div class="tab default-tab" id="tab-$cluster.name-vm">
+                                                  <div class="tab default-tab" id="tab-$cluster.name-log">
+                                                      <p>Most recent log entries are shown first.</p>
+                                                      <div class="scrollable">
+                                                          #for $s in sorted($cluster.states, key=lambda x: x.time, reverse=True)
+                                                             <p>[ $s.time ] $s.name</p>
+                                                          #end for
+                                                      </div>  
+                                                  </div>
+                                                  
+                                                  <div class="tab" id="tab-$cluster.name-vm">
                                                                   #if len($cluster.hosts)
                                                           <div class="sidetabs">
                                                            

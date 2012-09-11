@@ -148,6 +148,7 @@ class WebInterface:
                     'clusters' : self.testMaster.clusters,
                     'hypervisors': self.testMaster.hypervisors,
                     'suite_hist' : self.testMaster.suiteSessions,
+                    'current_run': self.testMaster.retrieveSuiteSession(self.testMaster.runningSuiteName),
                     'running_suite_uids' : self.testMaster.runningSuiteUids,
                     'slaves': self.testMaster.slaves,
                     'hostname': socket.gethostname(),

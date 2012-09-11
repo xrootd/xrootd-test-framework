@@ -146,4 +146,10 @@ $(document).ready(function () {
             $(this).parent().parent().find('section, footer').toggle();
         }
     );
+    
+ // Progress bar animation
+	$('.progress-bar').each(function() {
+		var progress = $(this).children().width();
+		$(this).children().css({ 'width':0 }).animate({width:progress},3000);
+	});
 });

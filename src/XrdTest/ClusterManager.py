@@ -115,11 +115,10 @@ class ClusterManager:
         @param huName: host.uname - host unique name
         @param safeCounter: thread safe counter to signalize this run finished
         '''
-        self.updateState(Cluster.S_COPYING_IMAGES)
-        
         (host, cacheImg, hostObj) = self.hosts[huName]
-
         dip = self.clusters[hostObj.clusterName].defaultHost.bootImage
+        
+        self.updateState(Cluster.S_COPYING_IMAGES, hostObj.clusterName)
         LOGGER.info(("Start copying %s (for %s) to cache image %s") \
                     % (dip, hostObj.uname, cacheImg))
         try:
@@ -256,7 +255,7 @@ class ClusterManager:
 
         return self.nets[netObj.uname]
 
-    def createNetwork(self, networkObj):
+    def createNetwork(self, networkObj, clusterName):
         '''
         Creates and starts cluster's network. It utilizes defineNetwork
         at first and doesn't create network definition if it already exists.
@@ -264,7 +263,7 @@ class ClusterManager:
         @raise ClusterManagerException: when fails
         @return: None
         '''
-        self.updateState(Cluster.S_CREATING_NETWORK)
+        self.updateState(Cluster.S_CREATING_NETWORK, clusterName)
         
         net = None
         try:
@@ -359,7 +358,7 @@ class ClusterManager:
         self.clusters[cluster.name] = cluster
         try:
             self.removeDanglingNetwork(cluster.network)
-            net = self.createNetwork(cluster.network)
+            net = self.createNetwork(cluster.network, cluster.name)
         except ClusterManagerException, e:
             LOGGER.error(e)
             raise e
@@ -370,7 +369,7 @@ class ClusterManager:
                                           (cluster.network.uname, cluster.name))
             return
 
-        self.updateState(Cluster.S_CREATING_SLAVES)
+        self.updateState(Cluster.S_CREATING_SLAVES, cluster.name)
         try:
             if cluster.hosts and len(cluster.hosts):
                 copyThreads = {}
@@ -445,7 +444,7 @@ class ClusterManager:
                           "creation of machine %s: %s. %s" % \
                           (h.uname, e, innerErrMsg))
                 
-                self.updateState(Cluster.S_ATTACHING_DISKS)
+                self.updateState(Cluster.S_ATTACHING_DISKS, cluster.name)
                 try:
                     for host in cluster.hosts:
                         self.attachDisks(host)
@@ -520,10 +519,11 @@ class ClusterManager:
             raise ClusterManagerException('Attaching disk failed: %s' % output)
 
             
-    def updateState(self, state):
+    def updateState(self, state, clusterName):
         ''' Send a progress update message to the master. '''
-        msg = XrdMessage(XrdMessage.M_HYPERVISOR_STATE)
+        msg = XrdMessage(XrdMessage.M_CLUSTER_STATE)
         msg.state = State(state)
+        msg.clusterName = clusterName
         try:
             self.sockStream.send(msg)
         except Exception, e:

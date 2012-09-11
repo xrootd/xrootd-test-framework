@@ -6,9 +6,10 @@ if [ -z "$1" ]; then
 fi
 echo "Copying files from $1"
 
-ARCHIVE_DEST=$PWD
-NAME=xrdtest-latest
+VERSION=0.1
+NAME=xrdtest-$VERSION
 
+ARCHIVE_DEST=$PWD
 DEST=${ARCHIVE_DEST}/${NAME}
 SRC=$1
 CP_OPTS=-r

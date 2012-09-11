@@ -2,11 +2,11 @@
 set -e
 
 function log () {
-	echo `date +['%T']` $@
+    echo `date +['%T']` $@
 }
 
 function stamp () {
-	$@ | perl -p -MPOSIX -e 'BEGIN {$!=1} $_ = strftime("[%T]", localtime) . "\t" . $_'
+    $@ | perl -p -MPOSIX -e 'BEGIN {$!=1} $_ = strftime("[%T]", localtime) . "\t" . $_'
 }
 
 #---------------------------------------------------------------------------------------------------------
@@ -65,7 +65,7 @@ rm -rf tmp_inittest/*
 cd tmp_inittest
 
 if [ -f $CONFIG_PATH ]; then
-	rm $CONFIG_PATH
+    rm $CONFIG_PATH
 fi
 curl -sSkO "@proto@://master.xrd.test:@port@/downloadScript/clusters/${CLUSTER_NAME}/${CONFIG_FILE}" > /dev/null
 mv $CONFIG_FILE $CONFIG_PATH

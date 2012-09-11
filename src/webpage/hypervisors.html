@@ -137,83 +137,83 @@
                         <!-- Article Content -->
                         <section>
                             #if len($hypervisors)
-	                            <!-- Tab Content with class. sidetabs for side tabs container -->
-	                            <div class="sidetabs">
-	                                <!-- Side Tab Navigation -->
-	                                <nav class="sidetab-switch">
-	                                    <ul>
-	                                        #set $default_tab = True
-	                                        #for $h in $hypervisors.itervalues()
-	                                           <li>
-	                                               <a class="${'default-sidetab' if $default_tab else ''}" 
-	                                                  href="#sidetab-${h.hostname.replace('.', '-')}">
-	                                                   $h.hostname
-	                                               </a>
-	                                           </li>
-	                                           #set $default_tab = False
-	                                        #end for
-	                                    </ul>
-	                                </nav>
-	                                <!-- /Side Tab Navigation -->	                               
-	                                
-	                                #set $default_tab = True
-	                                #for $h in $hypervisors.itervalues()
+                                <!-- Tab Content with class. sidetabs for side tabs container -->
+                                <div class="sidetabs">
+                                    <!-- Side Tab Navigation -->
+                                    <nav class="sidetab-switch">
+                                        <ul>
+                                            #set $default_tab = True
+                                            #for $h in $hypervisors.itervalues()
+                                               <li>
+                                                   <a class="${'default-sidetab' if $default_tab else ''}" 
+                                                      href="#sidetab-${h.hostname.replace('.', '-')}">
+                                                       $h.hostname
+                                                   </a>
+                                               </li>
+                                               #set $default_tab = False
+                                            #end for
+                                        </ul>
+                                    </nav>
+                                    <!-- /Side Tab Navigation -->                                   
+                                    
+                                    #set $default_tab = True
+                                    #for $h in $hypervisors.itervalues()
                                        <div class="sidetab ${'default-sidetab' if $default_tab else ''}" 
                                             id="sidetab-${h.hostname.replace('.', '-')}">
                                             <article class="full-block">
-	                                            <div class="article-container">
-	                                                <h3>
-		                                               $h.hostname
-		                                               <span><code>$h.address[0]:$h.address[1]</code></span>
-		                                            </h3>
-		                                            <ul class="logs">
-		                                               <li class="event">
-		                                                   <span class="logs-timestamp">[ $h.state.time ]</span>
-		                                                   <h4 class="logs-event">$h.state.name</h4>
-		                                               </li> 
-		                                            </ul>
-	                                            </div>
+                                                <div class="article-container">
+                                                    <h3>
+                                                       $h.hostname
+                                                       <span><code>$h.address[0]:$h.address[1]</code></span>
+                                                    </h3>
+                                                    <ul class="logs">
+                                                       <li class="event">
+                                                           <span class="logs-timestamp">[ $h.state.time ]</span>
+                                                           <h4 class="logs-event">$h.state.name</h4>
+                                                       </li> 
+                                                    </ul>
+                                                </div>
                                             </article>
                                         
                                             <article class="full-block">
-	                                            <div class="article-container">
-	                                                <h3>Spawned slaves</h3>
-	                                                <section>
-	                                                    #set $my_slaves = [s for s in $slaves.itervalues() if s.address[0] == $h.address[0]]
-	                                                    #if len($my_slaves)
-	                                                        <table>
-	                                                           <tr>
-	                                                               <th>Hostname</th>
-	                                                               <th>Address</th>
-	                                                               <th>State</th>
-	                                                               <th>Time</th>
-	                                                           </tr>
-	                                                           #for $slave in $my_slaves
-		                                                           <tr>
-		                                                               <td>$slave.hostname</td>
-		                                                               <td>$slave.address[0]:$slave.address[1]</td>
-		                                                               <td>$slave.state.name</td>
-		                                                               <td>$slave.state.time</td>
-		                                                           </tr>
-	                                                           #end for
-	                                                           
-	                                                        </table>
-	                                                    #else
-		                                                    <div class="notification note">
-							                                    <p>
-							                                    <strong>Note:</strong> No slaves connected.
-							                                    </p>
-							                                </div>
-	                                                    #end if
-	                                                </section>
+                                                <div class="article-container">
+                                                    <h3>Spawned slaves</h3>
+                                                    <section>
+                                                        #set $my_slaves = [s for s in $slaves.itervalues() if s.address[0] == $h.address[0]]
+                                                        #if len($my_slaves)
+                                                            <table>
+                                                               <tr>
+                                                                   <th>Hostname</th>
+                                                                   <th>Address</th>
+                                                                   <th>State</th>
+                                                                   <th>Time</th>
+                                                               </tr>
+                                                               #for $slave in $my_slaves
+                                                                   <tr>
+                                                                       <td>$slave.hostname</td>
+                                                                       <td>$slave.address[0]:$slave.address[1]</td>
+                                                                       <td>$slave.state.name</td>
+                                                                       <td>$slave.state.time</td>
+                                                                   </tr>
+                                                               #end for
+                                                               
+                                                            </table>
+                                                        #else
+                                                            <div class="notification note">
+                                                                <p>
+                                                                <strong>Note:</strong> No slaves connected.
+                                                                </p>
+                                                            </div>
+                                                        #end if
+                                                    </section>
                                                 </div>
                                             </article>
                                         
                                        </div>
-	                                   #set $default_tab = False
-	                                #end for
-	                            </div>
-	                            <!-- /Tab Content -->
+                                       #set $default_tab = False
+                                    #end for
+                                </div>
+                                <!-- /Tab Content -->
                             #else
                                 <div class="notification attention">
                                     <p>

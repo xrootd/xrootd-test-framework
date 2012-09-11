@@ -129,7 +129,7 @@ Requires: python >= 2.4
 Requires: libvirt >= 0.9.3, libvirt-python >= 0.9.3
 Requires: xrdtest-lib, openssl
 
-Group:	 Development/Tools
+Group:     Development/Tools
 %description hypervisor
 Xrd Test Hypervisor is component of XrdTestFramework. It manages virtual machines clusters, on master's requests.
 %files hypervisor

@@ -1,21 +1,21 @@
 .tipsy {
-	padding:5px;
-	font-size:10px;
-	opacity:.8;
-	filter:alpha(opacity=80);
-	background:url(../img/jquery/tooltip.gif) no-repeat;
+    padding:5px;
+    font-size:10px;
+    opacity:.8;
+    filter:alpha(opacity=80);
+    background:url(../img/jquery/tooltip.gif) no-repeat;
 }
 .tipsy-inner {
-	padding:5px 8px 4px;
-	background-color:black;
-	color:white;
-	max-width:200px;
-	text-align:center;
+    padding:5px 8px 4px;
+    background-color:black;
+    color:white;
+    max-width:200px;
+    text-align:center;
 }
 .tipsy-inner {
-	-moz-border-radius:3px;
-	-webkit-border-radius:3px;
-	border-radius:3px;
+    -moz-border-radius:3px;
+    -webkit-border-radius:3px;
+    border-radius:3px;
 }
 .tipsy-north { background-position:top center; }
 .tipsy-south { background-position:bottom center; }

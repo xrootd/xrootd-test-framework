@@ -107,17 +107,17 @@
                 <!-- /Breadcrumbs -->
                 
                 <section id="corner-stats">
-	                <span>
-	                    Currently active cluster:&nbsp;
-	                    <strong>
-	                        #set $ac = [c for c in $clusters.itervalues() if 0 < c.state.id < 11 ]
-	                        ${ac[0].name if len(ac) else 'None'}
-	                    </strong>
-	                    #if len($hypervisors) and len($ac)
-	                        #set $ah = [h for h in $hypervisors.values() if 0 < h.state.id < 11 ]
-	                        ${'on hypervisor <strong>%s</strong>' % ah[0].hostname if len(ah) else 'None'}
-	                    #end if 
-	                </span>
+                    <span>
+                        Currently active cluster:&nbsp;
+                        <strong>
+                            #set $ac = [c for c in $clusters.itervalues() if 0 < c.state.id < 11 ]
+                            ${ac[0].name if len(ac) else 'None'}
+                        </strong>
+                        #if len($hypervisors) and len($ac)
+                            #set $ah = [h for h in $hypervisors.values() if 0 < h.state.id < 11 ]
+                            ${'on hypervisor <strong>%s</strong>' % ah[0].hostname if len(ah) else 'None'}
+                        #end if 
+                    </span>
                 </section>
 
                 <!-- Full Content Block -->
@@ -136,10 +136,10 @@
                         <!-- Article Content -->
                         <section>
                         
-	                        <article class="half-block">
-	                            <div class="article-container">
-	                            
-	                            <ul class="logs stats">
+                            <article class="half-block">
+                                <div class="article-container">
+                                
+                                <ul class="logs stats">
                                     <li class="no-bg">
                                         <h4>
                                             <strong class="stats-count">$nt&nbsp;</strong>Test suites
@@ -167,13 +167,13 @@
                                             </p>
                                         </li>
                                    </ul>
-	                            </div>
-	                        </article>
-	                        
-	                        <article class="full-block">
-	                           <div class="article-container">
-	                           
-	                           <ul class="logs stats">
+                                </div>
+                            </article>
+                            
+                            <article class="full-block">
+                               <div class="article-container">
+                               
+                               <ul class="logs stats">
                                     <li class="no-bg">
                                         <h4>
                                             <strong class="stats-count">$nc&nbsp;</strong>Clusters
@@ -190,7 +190,7 @@
                                     </li>
                                 </ul>
 
-	                               <ul class="stats-summary">
+                                   <ul class="stats-summary">
                                         <li>
                                             <strong class="stats-count"></strong>
                                             <p>Currently active cluster:&nbsp;</p>
@@ -205,18 +205,18 @@
                                                 #end if 
                                             </p>
                                         </li>
-	                               </ul>
-	                           </div>
-	                        </article>
-	                        
-	                        <article class="full-block">
+                                   </ul>
+                               </div>
+                            </article>
+                            
+                            <article class="full-block">
                                <div class="article-container">
 
                                </div>
                             </article>
-	                        
+                            
                                         
-	                        
+                            
                         </section>
                         <!-- /Article Content -->
                     </div>

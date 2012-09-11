@@ -2,7 +2,7 @@
 set -e
 
 function log () {
-	echo `date +['%T']` $@
+    echo `date +['%T']` $@
 }
 
 log "Finalizing test case on slave" @slavename@ "..."

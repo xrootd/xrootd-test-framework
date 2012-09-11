@@ -30,34 +30,34 @@
 
         <article id="login-box">
             #if $testsuite
-	            <div class="article-container">
-	                <p>You must enter the administration password to run the test suite $testsuite.</p>
-	                
-	                <!-- Notification -->
-	                <div class="notification error" style="display: none;">
-	                    <a href="#" class="close-notification" rel="tooltip" title="Hide Notification">x</a>
-	                    <p><strong>Error: </strong><span class="error-message"></span></p>
-	                </div>
-	                <!-- /Notification -->
-	            
-	                <form id="askpass" method="post" action="#">
-	                    <fieldset>
-	                        <dl>
-	                            <dt>
-	                                <label>Password</label>
-	                            </dt>
-	                            <dd>
-	                                <input id="password" type="password" placeholder="Enter password" autofocus="autofocus">
-	                            </dd>
-	                            <dt class="checkbox"><label>Remember password</label></dt>
-	                            <dd><input type="checkbox"></dd>
-	                        </dl>
-	                        <input type="hidden" id="testsuite" name="testsuite" value="$testsuite" />
-	                    </fieldset>
-	                    <button type="submit" class="right">Submit</button>
-	                </form>
-	
-	            </div>
+                <div class="article-container">
+                    <p>You must enter the administration password to run the test suite $testsuite.</p>
+                    
+                    <!-- Notification -->
+                    <div class="notification error" style="display: none;">
+                        <a href="#" class="close-notification" rel="tooltip" title="Hide Notification">x</a>
+                        <p><strong>Error: </strong><span class="error-message"></span></p>
+                    </div>
+                    <!-- /Notification -->
+                
+                    <form id="askpass" method="post" action="#">
+                        <fieldset>
+                            <dl>
+                                <dt>
+                                    <label>Password</label>
+                                </dt>
+                                <dd>
+                                    <input id="password" type="password" placeholder="Enter password" autofocus="autofocus">
+                                </dd>
+                                <dt class="checkbox"><label>Remember password</label></dt>
+                                <dd><input type="checkbox"></dd>
+                            </dl>
+                            <input type="hidden" id="testsuite" name="testsuite" value="$testsuite" />
+                        </fieldset>
+                        <button type="submit" class="right">Submit</button>
+                    </form>
+    
+                </div>
             #else 
                 <div class="notification error">
                     <p><strong>Error: </strong>Test suite not found.</p>

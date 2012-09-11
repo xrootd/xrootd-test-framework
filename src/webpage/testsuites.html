@@ -177,23 +177,23 @@
                                     <div class="ticket-details" style="display: none; ">
                                         <h4>Definition</h4>
                                         #if $ts.state.id > 0
-	                                        <dl>
-	                                            <dt>Scheduler expression:</dt>
-	                                            <dd><strong>$ts.schedule</strong></dd>
-	                                            <dt class="clear">Test cases: </dt>
-	                                            <dd><strong>${', '.join([t for t in $ts.tests])}</strong></dd>
-	                                            <dt class="clear">Required clusters:</dt>
-	                                            <dd><strong>${', '.join([c for c in $ts.clusters])}</strong></dd>
-	                                            <dt class="clear">Required machines:</dt>
-	                                            <dd><strong>${', '.join([m for m in $ts.machines])}</strong></dd>
-	                                        </dl>
-	                                    #else
-	                                       <div class="notification attention">
-				                              <p>
-				                              <strong>Warning:</strong> Test suite not defined, or defined incorrectly.
-				                              </p>
-				                           </div>
-	                                    #end if
+                                            <dl>
+                                                <dt>Scheduler expression:</dt>
+                                                <dd><strong>$ts.schedule</strong></dd>
+                                                <dt class="clear">Test cases: </dt>
+                                                <dd><strong>${', '.join([t for t in $ts.tests])}</strong></dd>
+                                                <dt class="clear">Required clusters:</dt>
+                                                <dd><strong>${', '.join([c for c in $ts.clusters])}</strong></dd>
+                                                <dt class="clear">Required machines:</dt>
+                                                <dd><strong>${', '.join([m for m in $ts.machines])}</strong></dd>
+                                            </dl>
+                                        #else
+                                           <div class="notification attention">
+                                              <p>
+                                              <strong>Warning:</strong> Test suite not defined, or defined incorrectly.
+                                              </p>
+                                           </div>
+                                        #end if
                                     </div>
                                     <!-- /Ticket Details -->
                                     

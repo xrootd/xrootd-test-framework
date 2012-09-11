@@ -7,7 +7,7 @@ fi
 echo "Copying files from $1"
 
 ARCHIVE_DEST=$PWD
-NAME=xrdtest-0.0.1
+NAME=xrdtest-latest
 
 DEST=${ARCHIVE_DEST}/${NAME}
 SRC=$1

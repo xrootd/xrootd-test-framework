@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name:           xrdtest
-Version:        0.0.1
+Version:        0.1
 Release:        1%{?dist}
 License:        GPL3
 Summary:        Xrootd Testing Framework consists of 4 components (packages): test master, test slave, test hypervisor and a library package.
@@ -211,6 +211,8 @@ fi
 #-------------------------------------------------------------------------------
 
 %changelog
+* Tue Sep 11 2012 Justin Salmon <jsalmon@cern.ch>
+- Tagged as v0.1
 * Thu Jul 5 2012 Justin Salmon <jsalmon@cern.ch>
 - Edited to build new folder structure
 * Wed Feb 15 2012 Lukasz Trzaska <ltrzaska@cern.ch>

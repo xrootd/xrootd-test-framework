@@ -140,6 +140,10 @@ class WebInterface:
         
     def vars(self):
         '''Return the variables necessary for a webpage template.'''
+        current_run = None
+        if self.testMaster.runningSuite:
+            current_run = self.testMaster.retrieveSuiteSession(self.testMaster.runningSuite.name)
+            
         tvars = {   
                     'title' : self.title,
                     'webroot' : self.webroot,
@@ -148,7 +152,7 @@ class WebInterface:
                     'clusters' : self.testMaster.clusters,
                     'hypervisors': self.testMaster.hypervisors,
                     'suite_hist' : self.testMaster.suiteSessions,
-                    'current_run': self.testMaster.retrieveSuiteSession(self.testMaster.runningSuiteName),
+                    'current_run': current_run,
                     'running_suite_uids' : self.testMaster.runningSuiteUids,
                     'slaves': self.testMaster.slaves,
                     'hostname': socket.gethostname(),
@@ -268,28 +272,26 @@ class WebInterface:
         return "%s: not found in any repository" % path
     
     @cherrypy.expose
-    def auth(self, password=None, testsuite=None):
+    def auth(self, password=None, testsuite=None, type=None):
         cherrypy.tools.allow.callable()
         if not self.testMaster.testSuites.has_key(testsuite):
             return 'Not authorized: unknown test suite'
         elif not password == self.suiteRunPass:
             return 'Not authorized: incorrect password'
+        elif not type or not type in ('run', 'cancel'):
+            return 'Not authorized: invalid action'
         else:
-            self.testMaster.enqueueJob(testsuite)
-            self.testMaster.startNextJob()
+            if type == 'run':
+                self.testMaster.runTestSuite(testsuite)
+            elif type == 'cancel':
+                self.testMaster.cancelTestSuite(testsuite)
             return 'Password OK'
     
     @cherrypy.expose
-    def runTestSuite(self, testsuite=None): 
+    def action(self, type=None, testsuite=None): 
         cherrypy.tools.allow.callable()
         tvars = self.vars()
-        tvars['testsuite'] = testsuite if self.testMaster.testSuites.has_key(testsuite) else None
-        return self.disp("auth.html", tvars)
-    
-    @cherrypy.expose
-    def cancelTestSuite(self, testsuite=None): 
-        cherrypy.tools.allow.callable()
-        tvars = self.vars()
+        tvars['type'] = type if type else None
         tvars['testsuite'] = testsuite if self.testMaster.testSuites.has_key(testsuite) else None
         return self.disp("auth.html", tvars)
 

@@ -118,6 +118,11 @@
                             ${'on hypervisor <strong>%s</strong>' % ah[0].hostname if len(ah) else 'None'}
                         #end if 
                     </span>
+                    <br />
+                    <span>
+                        Currently running test suite:&nbsp;
+                        <strong>${$current_run.name if $current_run else 'None&nbsp;'}</strong>
+                    </span>
                 </section>
 
                 <!-- Full Content Block -->
@@ -139,73 +144,38 @@
                             <article class="half-block">
                                 <div class="article-container">
                                 
-                                <ul class="logs stats">
-                                    <li class="no-bg">
-                                        <h4>
-                                            <strong class="stats-count">$nt&nbsp;</strong>Test suites
-                                            <span>(${len([t for t in $testsuites.itervalues() if t.state.id > 0])} correctly defined)</span>
-                                        </h4>
-                                        
-                                        <ul class="stats-summary">
-                                            #for $ts in $testsuites.itervalues()
-                                               #set $state = 'success' if $ts.state.id > 0 else 'failure'
-                                               <li class="event $state"><span><strong>$ts.name:</strong> $ts.state.name</span></li>
-                                            #end for
-                                        </ul>
-                                                                                         
-                                    </li>
-                                </ul>
+                                <fieldset class="compact">
+                                    <legend>Test Suites</legend>
+                                    <ul class="logs">                                    
+                                        #for $ts in $testsuites.itervalues()
+                                            <li class="event success">
+                                                #set $state = 'success' if $ts.state.id > 0 else 'failure'
+                                                <span class="logs-timestamp">$ts.state.time</span>
+                                                <h4 class="logs-event"><strong>$ts.name:</strong> $ts.state.name</h4>
+                                            </li>
+                                        #end for
+                                    </ul>
+                                </fieldset>
                                 
-                                <ul class="stats-summary">
-                                       <li>
-                                            <strong class="stats-count"></strong>
-                                            <p>Currently running test suite:&nbsp;</p>
-                                            <p>
-                                                <strong>
-                                                    ${running_suite_uids.keys()[0] if len($running_suite_uids) else 'None'}
-                                                </strong>
-                                            </p>
-                                        </li>
-                                   </ul>
                                 </div>
                             </article>
                             
                             <article class="full-block">
                                <div class="article-container">
                                
-                               <ul class="logs stats">
-                                    <li class="no-bg">
-                                        <h4>
-                                            <strong class="stats-count">$nc&nbsp;</strong>Clusters
-                                            <span>(${len([c for c in $clusters.itervalues() if c.state.id >= 0])} ready to run)</span>
-                                        </h4>
-                                        
-                                        <ul class="stats-summary">
-                                            #for $c in $clusters.itervalues()
-                                               #set $state = 'success' if $c.state.id >= 0 else 'failure'
-                                               <li class="event $state"><span><strong>$c.name:</strong> $c.state.name</span></li>
-                                            #end for
-                                        </ul>
-                                                                                         
-                                    </li>
-                                </ul>
-
-                                   <ul class="stats-summary">
-                                        <li>
-                                            <strong class="stats-count"></strong>
-                                            <p>Currently active cluster:&nbsp;</p>
-                                            <p>
-                                                <strong>
-                                                    #set $ac = [c for c in $clusters.itervalues() if 0 < c.state.id < 11 ]
-                                                    ${ac[0].name if len(ac) else 'None'}
-                                                </strong>
-                                                #if len($hypervisors) and len($ac)
-                                                    #set $ah = [h for h in $hypervisors.values() if 0 < h.state.id < 11 ]
-                                                    ${'on hypervisor <strong>%s</strong>' % ah[0].hostname if len(ah) else 'None'}
-                                                #end if 
-                                            </p>
-                                        </li>
-                                   </ul>
+                                    <fieldset class="compact">
+	                                    <legend>Clusters</legend>
+	                                    <ul class="logs">                                    
+	                                        #for $c in $clusters.itervalues()
+	                                            <li class="event success">
+	                                                #set $state = 'success' if $c.state.id >= 0 else 'failure'
+	                                                <span class="logs-timestamp">$c.state.time</span>
+	                                                <h4 class="logs-event"><strong>$c.name:</strong> $c.state.name</h4>
+	                                            </li>
+	                                        #end for
+	                                    </ul>
+	                                </fieldset>
+	                                
                                </div>
                             </article>
                             

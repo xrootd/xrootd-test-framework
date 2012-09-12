@@ -119,6 +119,11 @@
                             ${'on hypervisor <strong>%s</strong>' % ah[0].hostname if len(ah) else 'None'}
                         #end if 
                     </span>
+                    <br />
+                    <span>
+                        Currently running test suite:&nbsp;
+                        <strong>${$current_run.name if $current_run else 'None&nbsp;'}</strong>
+                    </span>
                 </section>
 
                 <!-- Full Content Block -->

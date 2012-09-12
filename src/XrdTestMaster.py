@@ -115,8 +115,8 @@ class XrdTestMaster(Runnable):
         self.slaves = {}
         # TestSuites that have ever run, synchronized with a HDD, key is session.uid
         self.suiteSessions = None
-        # Name of the currently running test suite, if any.
-        self.runningSuiteName = ''
+        # Currently running test suite object, if any.
+        self.runningSuite = None
         # Mapping from names to uids of running test suits. For retrieval of 
         # TestSuiteSessions saved in suiteSessions python shelve. 
         self.runningSuiteUids = {}
@@ -493,7 +493,7 @@ class XrdTestMaster(Runnable):
         tss.state = State(TestSuite.S_IDLE)
         self.storeSuiteSession(tss)
 
-        self.runningSuiteName = suiteName
+        self.runningSuite = tss
         
         clusterFound = False
         if self.clusters.has_key(clusterName):
@@ -541,9 +541,9 @@ class XrdTestMaster(Runnable):
         if self.clusters.has_key(clusterName):
             if self.clusters[clusterName].name == clusterName:
                 clusterFound = True
-                if self.clusters[clusterName].state != State(Cluster.S_ACTIVE):
-                    LOGGER.error("Cluster is not active so it can't be stopped")
-                    return
+#                if self.clusters[clusterName].state != State(Cluster.S_ACTIVE):
+#                    LOGGER.error("Cluster is not active so it can't be stopped")
+#                    return
 
                 msg = XrdMessage(XrdMessage.M_STOP_CLUSTER)
                 hyperv = self.clustersHypervisor[clusterName]
@@ -852,6 +852,31 @@ class XrdTestMaster(Runnable):
         '''
         evt = MasterEvent(MasterEvent.M_JOB_ENQUEUE, test_suite_name)
         self.recvQueue.put((MasterEvent.PRIO_NORMAL, evt))
+        
+    def runTestSuite(self, test_suite_name):
+        '''Run a particular test suite '''
+        self.enqueueJob(test_suite_name)
+        self.startNextJob()
+    
+    def cancelTestSuite(self, test_suite_name):
+        '''Cancel a running test suite '''
+        if len(self.pendingJobs):
+            # Remove the suite's jobs from the queue.
+            job = self.pendingJobs[0]
+            self.removeJobs(job.groupId)
+            
+            # Remove this run from the history.
+            if self.runningSuite and self.suiteSessions.has_key(self.runningSuite.uid):
+                del self.suiteSessions[self.runningSuite.uid]
+                self.suiteSessions.sync()
+                
+            if self.runningSuite.name == test_suite_name:
+                self.runningSuite = None
+            
+            # Stop this suite's clusters.
+            for cluster in self.testSuites[test_suite_name].clusters:
+                self.stopCluster(cluster)
+                
 
     def executeJob(self, test_suite_name):
         '''
@@ -1132,7 +1157,7 @@ class XrdTestMaster(Runnable):
                     self.removeJob(Job(Job.FINALIZE_TEST_SUITE, \
                                        args=tss.name))
                     del self.runningSuiteUids[tss.name]
-                    self.runningSuiteName = ''
+                    self.runningSuite = ''
 
                 self.storeSuiteSession(tss)
                 LOGGER.info("%s finalized in test suite: %s" % \

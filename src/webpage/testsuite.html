@@ -241,7 +241,7 @@
                     <br />
                     <span>
                         Currently running test suite:&nbsp;
-                        <strong>${$current_run.name if $current_run else 'None&nbsp;'}</strong>
+                        <strong>${$current_run.name if $current_run else 'None'}&nbsp;</strong>
                     </span>
                 </section>
 
@@ -255,9 +255,12 @@
                             <h2>Run History : $testsuite.name</h2>
                             <!-- Article Header Tab Navigation -->
                             <nav>
-                                #set $disabled = 'disabled' if $testsuite.state.id < 0 else ''
-                                <form action="/runTestSuite" method="post">
-                                    <button $disabled>Run Now</button>
+                                <form action="/action" method="post">
+                                    #set $runnable = 'disabled' if $testsuite.state.id < 0 or $current_run and $current_run.name else ''
+                                    <button name="type" value="run" $runnable>Run Now</button>
+                                    #set $cancelable = '' if $current_run and $current_run.name == $testsuite.name else 'disabled'
+                                    <button name="type" value="cancel" $cancelable>Cancel Run</button>
+                                    
                                     <input type="hidden" name="testsuite" value="$testsuite.name" />
                                 </form>
                             </nav>
@@ -334,7 +337,12 @@
                                                     </div>
                                                 </div>
                                                 
-                                                <h4>Run: <span>$run.initDate.strftime("%a %d-%m-%Y %H:%M:%S")</span></h4>
+                                                <h4>
+                                                    Run: <span>$run.initDate.strftime("%a %d-%m-%Y %H:%M:%S")</span>
+                                                    #if $run.timeout
+                                                        <span>RUN TIMED OUT</span>
+                                                    #end if
+                                                </h4>
                                                 
                                                 <header class="square">
                                                     <!-- Article Header Tab Navigation -->

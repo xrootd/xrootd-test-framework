@@ -296,6 +296,7 @@ class TestSuiteSession(Stateful):
         # if result of any stage i.a. init, test case stages or finalize
         # ended with non-zero status code 
         self.failed = False
+        self.timeout = False
 
     def addCaseRun(self, tc):
         '''

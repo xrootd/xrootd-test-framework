@@ -62,7 +62,7 @@ try:
     from apscheduler.scheduler import Scheduler
     from copy import deepcopy, copy
     from optparse import OptionParser
-    from datetime import datetime
+    from datetime import datetime, timedelta
 except ImportError, e:
     LOGGER.error(str(e))
     sys.exit(1)
@@ -492,7 +492,12 @@ class XrdTestMaster(Runnable):
         tss = TestSuiteSession(testSuite)
         tss.state = State(TestSuite.S_IDLE)
         self.storeSuiteSession(tss)
-
+        
+        # Set one hour timeout
+        # TODO: make timeout value configurable per-suite
+        self.sched.add_date_job(self.cancelTestSuite, 
+                           datetime.now() + timedelta(hours=1), 
+                           [suiteName, True])
         self.runningSuite = tss
         
         clusterFound = False
@@ -858,15 +863,24 @@ class XrdTestMaster(Runnable):
         self.enqueueJob(test_suite_name)
         self.startNextJob()
     
-    def cancelTestSuite(self, test_suite_name):
+    def cancelTestSuite(self, test_suite_name, timeout=False):
         '''Cancel a running test suite '''
         if len(self.pendingJobs):
             # Remove the suite's jobs from the queue.
             job = self.pendingJobs[0]
             self.removeJobs(job.groupId)
             
-            # Remove this run from the history.
-            if self.runningSuite and self.suiteSessions.has_key(self.runningSuite.uid):
+            # Remove this run from the history, unless it timed out
+            if timeout:
+                LOGGER.warning('Test suite %s timed out ' % test_suite_name)
+                if self.runningSuite and self.suiteSessions.has_key(self.runningSuite.uid):
+                    tss = self.suiteSessions[self.runningSuite.uid]
+                    tss.timeout = True
+                    tss.failed = True
+                    self.suiteSessions[self.runningSuite.uid] = tss
+                self.suiteSessions.sync()
+                
+            elif self.runningSuite and self.suiteSessions.has_key(self.runningSuite.uid):
                 del self.suiteSessions[self.runningSuite.uid]
                 self.suiteSessions.sync()
                 

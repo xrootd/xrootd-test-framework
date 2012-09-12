@@ -1,286 +1,180 @@
-<!doctype html>
-<!--[if lt IE 9 ]>             <html lang="en" class="no-js" id="ie">     <![endif]-->
-<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js">         <!--<![endif]-->
-    <head>
-        <title>XRootD Testing Framework</title>
-        <meta charset="UTF-8">
-        <meta name="description" content="${title}">
-        <meta name="author" content="Justin Salmon <jsalmon@cern.ch>">
+<div id="fixed-wrapper">
 
-        <link rel="shortcut icon" href="/webpage/img/favicon.ico">
+    <!-- Main Content -->
+    <section role="main">
 
-        <!-- CSS Styles -->
-        <link rel="stylesheet" href="/webpage/css/style.css">
-        <link rel="stylesheet" href="/webpage/css/colors.css">
-        <link rel="stylesheet" href="/webpage/css/jquery.tipsy.css">
-        <link rel="stylesheet" href="/webpage/css/jquery.datatables.css">
-        <link rel="stylesheet" href="/webpage/css/jquery.nyromodal.css">
-        <link rel="stylesheet" href="/webpage/css/jquery.datepicker.css">
-
-        <!-- Google WebFonts -->
-        <link href='https://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic' rel='stylesheet' type='application/x-font-woff'>
+        <!-- Breadcrumbs -->
+        <ul id="breadcrumbs">
+            <li><a href="/index" title="Back to Homepage">Back to Home</a></li>
+            <li><a href="/index">Dashboard</a></li>
+            <li>Test Suites</li>
+        </ul>
+        <!-- /Breadcrumbs -->
         
-        <script src="/webpage/js/support.js"></script>
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
-        <script>!window.jQuery && document.write(unescape('%3Cscript src="/webpage/js/jquery/jquery-1.5.1.min.js"%3E%3C/script%3E'))</script>
-        <script src="/webpage/js/libs/modernizr-1.7.min.js"></script>
-    </head>
-    
-    #set $nt = len($testsuites)
-    #set $nc = len($clusters)
-    #set $nh = len($hypervisors)
-    
-    #set $ts_fail = [t for t in $testsuites.itervalues() if t.state.id < 0]
-    #set $cl_fail = [c for c in $clusters.itervalues() if c.state.id < 0]
-    
-    <body>
-        <!-- Fixed Layout Wrapper -->
-        <div class="fixed-wrapper">
+        <section id="corner-stats">
+            <span>
+                Currently active cluster:&nbsp;
+                <strong>
+                    #set $ac = [c for c in $clusters.itervalues() if 0 < c.state.id < 11 ]
+                    ${ac[0].name if len(ac) else 'None'}
+                </strong>
+                #if len($hypervisors) and len($ac)
+                    #set $ah = [h for h in $hypervisors.values() if 0 < h.state.id < 11 ]
+                    ${'on hypervisor <strong>%s</strong>' % ah[0].hostname if len(ah) else 'None'}
+                #end if 
+            </span>
+            <br />
+            <span>
+                Currently running test suite:&nbsp;
+                <strong>${$current_run.name if $current_run else 'None'}&nbsp;</strong>
+            </span>
+        </section>
         
-            <!-- Aside Block -->
-            <section role="navigation">
+        <article class="full-block clearfix">
+            <div class="article-container">
                 <header>
-                    <h1><a href="index" title="Back to Homepage"></a>XRootD</h1>
-                    <h2>Testing Framework</h2>
+                    <h2>Test Suites</h2>
                 </header>
+            
+                <section>                 
+                #if len($testsuites)
 
-                <!-- Main Navigation -->
-                <nav id="main-nav">
-                    <ul>
-                        <!-- Use class .no-submenu to open link instead of a sub menu-->
-                        <!-- Use class .current to open submenu on page load -->
-                        <li>
-                            <a href="/index" class="dashboard no-submenu">Dashboard</a>
-                        </li>
-                        <li>
-                            <a href="testsuites" class="projects no-submenu">Test Suites</a>
-                            <span title="${nt} test suite(s) ${'('+str(len(ts_fail)) + 
-                                        ' defined incorrectly)' if len(ts_fail) else ''}" 
-                                  class="${'failure' if len($ts_fail) else 'success'}">
-                                  $nt
-                            </span>
-                            #if len($testsuites)
-                                <ul>
-                                    #for $ts_name in $testsuites.iterkeys()
-                                        <li><a href="testsuites/${ts_name}">$ts_name</a></li>
-                                    #end for
-                                </ul>
-                            #end if
-                        </li>
-                        <li>
-                            <a href="clusters" class="products no-submenu">Clusters</a>
-                            <span title="${nc} defined cluster(s) ${'('+str(len(ts_fail)) + 
-                                        ' defined incorrectly)' if len(ts_fail) else ''}"
-                                  class="${'failure' if len($cl_fail) else 'success'}">
-                                  $nc
-                            </span>
-                        </li>
-                        <li>
-                            <a href="/hypervisors" class="articles no-submenu">Hypervisors</a>
-                            <span title="${nh} connected hypervisor(s)">$nh</span>
-                        </li>
-                    </ul>
-                </nav>
-                <!-- /Main Navigation -->
-                
-                <footer>
-                    <p>
-                        Copyright &copy; 
-                        <a href="http://slac.stanford.edu/">SLAC</a>/<a href="http://cern.ch">CERN</a>
-                    </p><br />
-                    <span class="valid-images">
-                        <img src="/webpage/img/valid_html5.png" alt="HTML5 valid"/>
-                        <img src="/webpage/img/valid_css3.png" alt="CSS3 valid"/>
-                    </span>
-                </footer>
+                    <div class="sidetabs">
+                        <nav class="sidetab-switch">
+                            <ul>
+                                #set $default_tab = True
+                                #for $ts in $testsuites.itervalues()
+                                    <li class="${'success' if $ts.state.id >= 0 else 'failure'}">
+                                        <a href="#sidetab-$ts.name"
+                                           class="${'default-sidetab' if $default_tab else ''}">
+                                            $ts.name
+                                            
+                                            #if $current_run and $current_run.name == $ts.name
+                                                <span class="tag green">Running</span>
+                                            #else 
+                                                <span class="tag gray">Idle</span>
+                                            #end if
+                                        </a>
+                                    </li>
+                                    #set $default_tab = False
+                                #end for
+                            </ul>
+                        </nav>
+                        
+                        <section>
+                            #set $default_tab = True
+                            #for $ts in $testsuites.itervalues()
+                             <div class="sidetab ${'default-sidetab' if $default_tab else ''}" 
+                                  id="sidetab-$ts.name">
+                                 
+                                 <h3>$ts.name <span><a href="/testsuites/$ts.name">View History</a></span></h3>
+                                    
+                                 <ul class="logs">
+                                     #if $current_run and $current_run.name == $ts.name
 
-            </section>
-            <!-- /Aside Block -->
+                                        <li class="event" id="ts-state">
+                                            <span class="logs-timestamp">[ $current_run.state.time ]</span>
+                                            <h4 class="logs-event">$current_run.state.name</h4>
+                                        </li>
+                                     #else
+                                      <li class="event ${'success' if $ts.state.id >= 0 else 'failure'}"
+                                          id="ts-state">
+                                             <span class="logs-timestamp">[ $ts.state.time ]</span>
+                                             <h4 class="logs-event">$ts.state.name</h4>
+                                         </li>
+                                     #end if         
+                                    </ul>
 
-            <!-- Main Content -->
-            <section role="main">
+                                    <article class="full-block">
+                                        <div class="article-container">
+                                        #if $ts.state.id < 0
+                                            <div class="notification attention">
+                                              <p>
+                                              <strong>Warning:</strong> Test suite not defined, or defined incorrectly.
+                                              </p>
+                                           </div>
+                                        #end if
+                                        <form action="/action" method="post">
+				                             <fieldset>
+				                                 <legend>Definition</legend>
+				                                       <dl>
+				                                           <dt>
+				                                               <label>Actions</label>
+				                                           </dt>
+				                                           <dd class="text">
+				                                               #set $runnable = 'disabled' if $ts.state.id < 0 or $current_run and $current_run.name else ''
+				                                                        <button name="type" value="run" $runnable>Run Now</button>
+				                                                        #set $cancelable = '' if $current_run and $current_run.name == $ts.name else 'disabled'
+				                                                        <button name="type" value="cancel" $cancelable>Cancel Run</button>
+				                                                        
+				                                                        <input type="hidden" name="testsuite" value="$ts.name" />
+				                                           </dd>
+				                                           <dt>
+				                                                        <label>Required clusters: </label>
+				                                                    </dt>
+				                                                    <dd class="text large">
+				                                                        <ul class="logs">
+				                                                           #for $c in $ts.clusters
+				                                                                <fieldset class="compact">
+				                                                                    <legend>$c</legend>
+				                                                                    <li class="event ${'success' if $clusters[c].state.id >= 0 else 'failure'}">
+				                                                                     <span class="logs-timestamp">[ $clusters[c].state.time ]</span>
+				                                                                     <small class="logs-event">$clusters[c].state.name</small>
+				                                                                 </li>
+				                                                                </fieldset>
+				                                                           #end for
+				                                                        </ul>
+				                                                    </dd>
+				                                     <dt>
+				                                         <label>Next scheduled run: </label>
+				                                     </dt>
+				                                     <dd class="text">
+				                                         <p>$ts.getNextRunTime()</p>
+				                                     </dd>
+				                                                    <dt>
+				                                                        <label>Scheduler expression: </label>
+				                                                    </dt>
+				                                                    <dd class="text">
+				                                                        <p>$ts.schedule</p>
+				                                                    </dd>
+				                                                    <dt>
+				                                                        <label>Test cases: </label>
+				                                                    </dt>
+				                                                    <dd class="text">
+				                                                        <p>${'<br />'.join([t for t in $ts.tests])}</p>
+				                                                    </dd>
+				                                                    
+				                                                    <dt>
+				                                                        <label>Required machines: </label>
+				                                                    </dt>
+				                                                    <dd class="text">
+				                                                        <p>${'<br />'.join([m for m in $ts.machines])}</p>
+				                                                    </dd>
+				                                                </dl>
+				                             </fieldset>
+                                        </form>                
+                                        </div>
+                                    </article>
+                             </div>
+                             #set $default_tab = False
+                            #end for
+                        </section>
+                    </div>
+                #else
+                    <div class="notification attention">
+                        <p>
+                        <strong>Warning:</strong> No test suites defined.
+                        </p>
+                    </div>
+                #end if
 
-                <!-- Breadcrumbs -->
-                <ul id="breadcrumbs">
-                    <li><a href="/index" title="Back to Homepage">Back to Home</a></li>
-                    <li><a href="/index">Dashboard</a></li>
-                    <li>Test Suites</li>
-                </ul>
-                <!-- /Breadcrumbs -->
-                
-                <section id="corner-stats">
-                    <span>
-                        Currently active cluster:&nbsp;
-                        <strong>
-                            #set $ac = [c for c in $clusters.itervalues() if 0 < c.state.id < 11 ]
-                            ${ac[0].name if len(ac) else 'None'}
-                        </strong>
-                        #if len($hypervisors) and len($ac)
-                            #set $ah = [h for h in $hypervisors.values() if 0 < h.state.id < 11 ]
-                            ${'on hypervisor <strong>%s</strong>' % ah[0].hostname if len(ah) else 'None'}
-                        #end if 
-                    </span>
-                    <br />
-                    <span>
-                        Currently running test suite:&nbsp;
-                        <strong>${$current_run.name if $current_run else 'None'}&nbsp;</strong>
-                    </span>
                 </section>
                 
-                <article class="full-block clearfix">
-                    <div class="article-container">
-                        <header>
-                            <h2>Test Suites</h2>
-                        </header>
-                    
-                        <section>                 
-                        #if len($testsuites)
-
-                            <div class="sidetabs">
-                                <nav class="sidetab-switch">
-                                    <ul>
-                                        #set $default_tab = True
-                                        #for $ts in $testsuites.itervalues()
-                                            <li class="${'success' if $ts.state.id >= 0 else 'failure'}">
-                                                <a href="#sidetab-$ts.name"
-                                                   class="${'default-sidetab' if $default_tab else ''}">
-                                                    $ts.name
-                                                    
-                                                    #if $current_run and $current_run.name == $ts.name
-                                                        <span class="tag green">Running</span>
-                                                    #else 
-                                                        <span class="tag gray">Idle</span>
-                                                    #end if
-                                                </a>
-                                            </li>
-                                            #set $default_tab = False
-                                        #end for
-                                    </ul>
-                                </nav>
-                                
-                                <section>
-                                    #set $default_tab = True
-                                    #for $ts in $testsuites.itervalues()
-	                                    <div class="sidetab ${'default-sidetab' if $default_tab else ''}" 
-	                                         id="sidetab-$ts.name">
-	                                        
-	                                        <h3>$ts.name <span><a href="/testsuites/$ts.name">View History</a></span></h3>
-                                            
-	                                        <ul class="logs">
-	                                            #if $current_run and $current_run.name == $ts.name
-
-	                                               <li class="event">
-                                                        <span class="logs-timestamp">[ $current_run.state.time ]</span>
-                                                        <h4 class="logs-event">$current_run.state.name</h4>
-                                                    </li>
-	                                            #else
-		                                            <li class="event ${'success' if $ts.state.id >= 0 else 'failure'}">
-	                                                    <span class="logs-timestamp">[ $ts.state.time ]</span>
-	                                                    <h4 class="logs-event">$ts.state.name</h4>
-	                                                </li>
-	                                            #end if         
-                                            </ul>
-
-                                            <article class="full-block">
-                                                <div class="article-container">
-                                                #if $ts.state.id < 0
-                                                    <div class="notification attention">
-                                                      <p>
-                                                      <strong>Warning:</strong> Test suite not defined, or defined incorrectly.
-                                                      </p>
-                                                   </div>
-                                                #end if
-                                                <form action="/action" method="post">
-					                                <fieldset>
-					                                    <legend>Definition</legend>
-			                                            <dl>
-			                                                <dt>
-			                                                    <label>Actions</label>
-			                                                </dt>
-			                                                <dd class="text">
-			                                                    #set $runnable = 'disabled' if $ts.state.id < 0 or $current_run and $current_run.name else ''
-                                                                <button name="type" value="run" $runnable>Run Now</button>
-                                                                #set $cancelable = '' if $current_run and $current_run.name == $ts.name else 'disabled'
-                                                                <button name="type" value="cancel" $cancelable>Cancel Run</button>
-                                                                
-                                                                <input type="hidden" name="testsuite" value="$ts.name" />
-			                                                </dd>
-			                                                <dt>
-                                                                <label>Required clusters: </label>
-                                                            </dt>
-                                                            <dd class="text large">
-                                                                <ul class="logs">
-                                                                   #for $c in $ts.clusters
-                                                                        <fieldset class="compact">
-                                                                            <legend>$c</legend>
-                                                                            <li class="event ${'success' if $clusters[c].state.id >= 0 else 'failure'}">
-                                                                             <span class="logs-timestamp">[ $clusters[c].state.time ]</span>
-                                                                             <small class="logs-event">$clusters[c].state.name</small>
-                                                                         </li>
-                                                                        </fieldset>
-                                                                   #end for
-                                                                </ul>
-                                                            </dd>
-					                                        <dt>
-					                                            <label>Next scheduled run: </label>
-					                                        </dt>
-					                                        <dd class="text">
-					                                            <p>$ts.getNextRunTime()</p>
-					                                        </dd>
-                                                            <dt>
-                                                                <label>Scheduler expression: </label>
-                                                            </dt>
-                                                            <dd class="text">
-                                                                <p>$ts.schedule</p>
-                                                            </dd>
-                                                            <dt>
-                                                                <label>Test cases: </label>
-                                                            </dt>
-                                                            <dd class="text">
-                                                                <p>${'<br />'.join([t for t in $ts.tests])}</p>
-                                                            </dd>
-                                                            
-                                                            <dt>
-                                                                <label>Required machines: </label>
-                                                            </dt>
-                                                            <dd class="text">
-                                                                <p>${'<br />'.join([m for m in $ts.machines])}</p>
-                                                            </dd>
-                                                        </dl>
-					                                </fieldset>
-					                            </form>                
-                                                </div>
-                                            </article>
-	                                    </div>
-	                                    #set $default_tab = False
-                                    #end for
-                                </section>
-                            </div>
-                        #else
-                            <div class="notification attention">
-                                <p>
-                                <strong>Warning:</strong> No test suites defined.
-                                </p>
-                            </div>
-                        #end if
-
-                        </section>
+            </div>
+        </article>
+        
+    </section>
+    <!-- /Main Content -->
                         
-                    </div>
-                </article>
-                
-            </section>
-            <!-- /Main Content -->
-                                
-        </div>
-        <!-- /Fixed Layout Wrapper -->
+</div>
 
-        <!-- JS Libs at the end for faster loading -->
-        <script src="/webpage/js/jquery/jquery.nyromodal.js"></script>
-        <script src="/webpage/js/jquery/jquery.tipsy.js"></script>
-        <script src="/webpage/js/jquery/jquery.datatables.js"></script>
-        <script src="/webpage/js/jquery/jquery.datepicker.js"></script>
-        <script src="/webpage/js/script.js"></script>
-
-    </body>
-</html>

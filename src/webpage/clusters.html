@@ -1,379 +1,342 @@
-<!doctype html>
-<!--[if lt IE 9 ]>             <html lang="en" class="no-js" id="ie">     <![endif]-->
-<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js">         <!--<![endif]-->
-    <head>
-        <title>XRootD Testing Framework</title>
-        <meta charset="UTF-8">
-        <meta name="description" content="${title}">
-        <meta name="author" content="Justin Salmon <jsalmon@cern.ch>">
-
-        <link rel="shortcut icon" href="/webpage/img/favicon.ico">
-
-        <!-- CSS Styles -->
-        <link rel="stylesheet" href="/webpage/css/style.css">
-        <link rel="stylesheet" href="/webpage/css/colors.css">
-        <link rel="stylesheet" href="/webpage/css/jquery.tipsy.css">
-        <link rel="stylesheet" href="/webpage/css/jquery.datatables.css">
-        <link rel="stylesheet" href="/webpage/css/jquery.nyromodal.css">
-        <link rel="stylesheet" href="/webpage/css/jquery.datepicker.css">
-
-        <!-- Google WebFonts -->
-        <link href='https://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic' rel='stylesheet' type='application/x-font-woff'>
-
-        <script src="/webpage/js/support.js"></script>
-        <script src="/webpage/js/libs/modernizr-1.7.min.js"></script>
-    </head>
-
+<!-- Fixed Layout Wrapper -->
+<div class="fixed-wrapper">
+    
     #set $nt = len($testsuites)
     #set $nc = len($clusters)
     #set $nh = len($hypervisors)
+        
+    #set $tcs = [t for t in $testsuites.itervalues() for t in t.tests]
     
     #set $ts_fail = [t for t in $testsuites.itervalues() if t.state.id < 0]
     #set $cl_fail = [c for c in $clusters.itervalues() if c.state.id < 0]
     
-    <body>
-        <!-- Fixed Layout Wrapper -->
-        <div class="fixed-wrapper">
+    <!-- Aside Block -->
+    <section role="navigation">
+        <header>
+            <h1><a href="index" title="Back to Homepage"></a>XRootD</h1>
+            <h2>Testing Framework</h2>
+        </header>
 
-            <!-- Aside Block -->
-            <section role="navigation">
+        <!-- Main Navigation -->
+        <nav id="main-nav">
+            <ul>
+                <!-- Use class .no-submenu to open link instead of a sub menu-->
+                <!-- Use class .current to open submenu on page load -->
+                <li>
+                    <a href="index" class="dashboard no-submenu">Dashboard</a>
+                </li>
+                <li>
+                    <a href="testsuites" class="projects no-submenu">Test Suites</a>
+                    <span title="${nt} test suite(s) ${'('+str(len(ts_fail)) + 
+                                ' defined incorrectly)' if len(ts_fail) else ''}" 
+                          class="${'failure' if len($ts_fail) else 'success'}">
+                          $nt
+                    </span>
+                    #if len($testsuites)
+                        <ul>
+                            #for $ts_name in $testsuites.iterkeys()
+                                <li><a href="testsuites/${ts_name}">$ts_name</a></li>
+                            #end for
+                        </ul>
+                    #end if
+                </li>
+                <li class="current">
+                    <a href="clusters" class="products no-submenu">Clusters</a>
+                    <span title="${nc} defined cluster(s) ${'('+str(len(ts_fail)) + 
+                                ' defined incorrectly)' if len(ts_fail) else ''}"
+                          class="${'failure' if len($cl_fail) else 'success'}">
+                          $nc
+                    </span>
+                </li>
+                <li>
+                    <a href="hypervisors" class="articles no-submenu">Hypervisors</a>
+                    <span title="${nh} connected hypervisor(s)">$nh</span>
+                </li>
+            </ul>
+        </nav>
+        <!-- /Main Navigation -->
+        
+        <footer>
+            <p>
+                Copyright &copy; <a href="http://cern.ch">CERN</a>
+            </p><br />
+            <span class="valid-images">
+                <img src="/webpage/img/valid_html5.png" alt="HTML5 valid"/>
+                <img src="/webpage/img/valid_css3.png" alt="CSS3 valid"/>
+            </span>
+        </footer>
+
+    </section>
+    <!-- /Aside Block -->
+
+    <!-- Main Content -->
+    <section role="main">
+
+        <!-- Breadcrumbs -->
+        <ul id="breadcrumbs">
+            <li><a href="index" title="Back to Homepage">Back to Home</a></li>
+            <li><a href="index">Dashboard</a></li>
+            <li>Clusters</li>
+        </ul>
+        <!-- /Breadcrumbs -->
+        
+        <section id="corner-stats">
+            <span>
+                Currently active cluster:&nbsp;
+                <strong>
+                    #set $ac = [c for c in $clusters.itervalues() if 0 < c.state.id < 11 ]
+                    ${ac[0].name if len(ac) else 'None'}
+                </strong>
+                #if len($hypervisors) and len($ac)
+                    #set $ah = [h for h in $hypervisors.values() if 0 < h.state.id < 11 ]
+                    ${'on hypervisor <strong>%s</strong>' % ah[0].hostname if len(ah) else 'None'}
+                #end if 
+            </span>
+            <br />
+            <span>
+                Currently running test suite:&nbsp;
+                <strong>${$current_run.name if $current_run else 'None'}&nbsp;</strong>
+            </span>
+        </section>
+
+        <article class="full-block clearfix">
+
+            <div class="article-container">
+                <!-- Article Header -->
                 <header>
-                    <h1><a href="index" title="Back to Homepage"></a>XRootD</h1>
-                    <h2>Testing Framework</h2>
+                    <h2>Clusters</h2>
                 </header>
+                <!-- /Article Header -->
 
-                <!-- Main Navigation -->
-                <nav id="main-nav">
-                    <ul>
-                        <!-- Use class .no-submenu to open link instead of a sub menu-->
-                        <!-- Use class .current to open submenu on page load -->
-                        <li>
-                            <a href="index" class="dashboard no-submenu">Dashboard</a>
-                        </li>
-                        <li>
-                            <a href="testsuites" class="projects no-submenu">Test Suites</a>
-                            <span title="${nt} test suite(s) ${'('+str(len(ts_fail)) + 
-                                        ' defined incorrectly)' if len(ts_fail) else ''}" 
-                                  class="${'failure' if len($ts_fail) else 'success'}">
-                                  $nt
-                            </span>
-                            #if len($testsuites)
-                                <ul>
-                                    #for $ts_name in $testsuites.iterkeys()
-                                        <li><a href="testsuites/${ts_name}">$ts_name</a></li>
-                                    #end for
-                                </ul>
-                            #end if
-                        </li>
-                        <li class="current">
-                            <a href="clusters" class="products no-submenu">Clusters</a>
-                            <span title="${nc} defined cluster(s) ${'('+str(len(ts_fail)) + 
-                                        ' defined incorrectly)' if len(ts_fail) else ''}"
-                                  class="${'failure' if len($cl_fail) else 'success'}">
-                                  $nc
-                            </span>
-                        </li>
-                        <li>
-                            <a href="hypervisors" class="articles no-submenu">Hypervisors</a>
-                            <span title="${nh} connected hypervisor(s)">$nh</span>
-                        </li>
-                    </ul>
-                </nav>
-                <!-- /Main Navigation -->
+                <!-- Article Content -->
+                <section>
+
+                #if len($clusters)
                 
-                <footer>
-                    <p>
-                        Copyright &copy; 
-                        <a href="http://slac.stanford.edu/">SLAC</a>/<a href="http://cern.ch">CERN</a>
-                    </p><br />
-                    <span class="valid-images">
-                        <img src="/webpage/img/valid_html5.png" alt="HTML5 valid"/>
-                        <img src="/webpage/img/valid_css3.png" alt="CSS3 valid"/>
-                    </span>
-                </footer>
-
-            </section>
-            <!-- /Aside Block -->
-
-            <!-- Main Content -->
-            <section role="main">
-
-                <!-- Breadcrumbs -->
-                <ul id="breadcrumbs">
-                    <li><a href="index" title="Back to Homepage">Back to Home</a></li>
-                    <li><a href="index">Dashboard</a></li>
-                    <li>Clusters</li>
-                </ul>
-                <!-- /Breadcrumbs -->
-                
-                <section id="corner-stats">
-                    <span>
-                        Currently active cluster:&nbsp;
-                        <strong>
-                            #set $ac = [c for c in $clusters.itervalues() if 0 < c.state.id < 11 ]
-                            ${ac[0].name if len(ac) else 'None'}
-                        </strong>
-                        #if len($hypervisors) and len($ac)
-                            #set $ah = [h for h in $hypervisors.values() if 0 < h.state.id < 11 ]
-                            ${'on hypervisor <strong>%s</strong>' % ah[0].hostname if len(ah) else 'None'}
-                        #end if 
-                    </span>
-                    <br />
-                    <span>
-                        Currently running test suite:&nbsp;
-                        <strong>${$current_run.name if $current_run else 'None'}&nbsp;</strong>
-                    </span>
-                </section>
-
-                <article class="full-block clearfix">
-
-                    <div class="article-container">
-                        <!-- Article Header -->
-                        <header>
-                            <h2>Clusters</h2>
-                        </header>
-                        <!-- /Article Header -->
-
-                        <!-- Article Content -->
-                        <section>
-
-                        #if len($clusters)
-                        
-                            <div class="sidetabs">
-                                <nav class="sidetab-switch">
-                                    <ul>
-                                        #set $default_tab = True
-                                        #for $cluster in $clusters.itervalues()
-                                        
-                                            <li class="${'success' if $cluster.state.id >= 0 else 'failure'}">
-                                                <a href="#sidetab-$cluster.name"
-                                                   class="${'default-sidetab' if $default_tab else ''}">
-                                                    $cluster.name
-                                                </a>
-                                            </li>
-                                            #set $default_tab = False
-                                        #end for
-                                    </ul>
-                                </nav>
+                    <div class="sidetabs">
+                        <nav class="sidetab-switch">
+                            <ul>
+                                #set $default_tab = True
+                                #for $cluster in $clusters.itervalues()
                                 
-                                <section>
-                                    #set $default_tab = True
-                                    #for $cluster in $clusters.itervalues()
-                                    
-                                        <div class="sidetab ${'default-sidetab' if $default_tab else ''}"
-                                             id="sidetab-$cluster.name">
+                                    <li class="${'success' if $cluster.state.id >= 0 else 'failure'}">
+                                        <a href="#sidetab-$cluster.name"
+                                           class="${'default-sidetab' if $default_tab else ''}">
+                                            $cluster.name
+                                        </a>
+                                    </li>
+                                    #set $default_tab = False
+                                #end for
+                            </ul>
+                        </nav>
+                        
+                        <section>
+                            #set $default_tab = True
+                            #for $cluster in $clusters.itervalues()
+                            
+                                <div class="sidetab ${'default-sidetab' if $default_tab else ''}"
+                                     id="sidetab-$cluster.name">
 
-                                            <article class="full-block">
-                                                <div class="article-container">
-                                                    <h3>$cluster.name</h3>
-                                                    <ul class="logs">
-                                                        <li class="event ${'success' if $cluster.state.id >= 0 else 'failure'}">
-                                                            <span class="logs-timestamp">[ $cluster.state.time ]</span>
-                                                            <h4 class="logs-event">$cluster.state.name</h4>
-                                                        </li>
-                                                    </ul>
-                                                  
-                                                  #if $cluster.state.id >= 0
-                                                  <header class="square">
-                                                      <nav class="leftnav">
-                                                       <ul class="tab-switch">
-                                                           <li><a href="#tab-$cluster.name-log" class="default-tab">Activity Log</a></li>
-                                                           <li><a href="#tab-$cluster.name-vm">Virtual Machines</a></li>
-                                                           <li><a href="#tab-$cluster.name-network">Network</a></li>
-                                                       </ul>
-                                                      </nav>
-                                                  </header>
+                                    <article class="full-block">
+                                        <div class="article-container">
+                                            <h3>$cluster.name</h3>
+                                            <ul class="logs">
+                                                <li class="event ${'success' if $cluster.state.id >= 0 else 'failure'}">
+                                                    <span class="logs-timestamp">[ $cluster.state.time ]</span>
+                                                    <h4 class="logs-event">$cluster.state.name</h4>
+                                                </li>
+                                            </ul>
                                           
-                                                  <section>
-                                                  
-                                                  <div class="tab default-tab" id="tab-$cluster.name-log">
-                                                      <p>Most recent log entries are shown first.</p>
-                                                      <div class="scrollable">
-                                                          #for $s in sorted($cluster.states, key=lambda x: x.time, reverse=True)
-                                                             <p>[ $s.time ] $s.name</p>
+                                          #if $cluster.state.id >= 0
+                                          <header class="square">
+                                              <nav class="leftnav">
+                                               <ul class="tab-switch">
+                                                   <li><a href="#tab-$cluster.name-log" class="default-tab">Activity Log</a></li>
+                                                   <li><a href="#tab-$cluster.name-vm">Virtual Machines</a></li>
+                                                   <li><a href="#tab-$cluster.name-network">Network</a></li>
+                                               </ul>
+                                              </nav>
+                                          </header>
+                                  
+                                          <section>
+                                          
+                                          <div class="tab default-tab" id="tab-$cluster.name-log">
+                                              <p>Most recent log entries are shown first.</p>
+                                              <div class="scrollable">
+                                                  #for $s in sorted($cluster.states, key=lambda x: x.time, reverse=True)
+                                                     <p>[ $s.time ] $s.name</p>
+                                                  #end for
+                                              </div>  
+                                          </div>
+                                          
+                                          <div class="tab" id="tab-$cluster.name-vm">
+                                                          #if len($cluster.hosts)
+                                                  <div class="sidetabs">
+                                                   
+                                                  <nav class="sidetab-switch">
+                                                      <ul>
+                                                          #set $default_tab = True
+                                                          #for $host in $cluster.hosts
+                                                              <li>
+                                                                  <a href='#sidetab-$host.uuid'
+                                                                     class="${'default-sidetab' if $default_tab else ''}">
+                                                                      $host.name
+                                                                  </a>
+                                                              </li>
+                                                              #set $default_tab = False
                                                           #end for
-                                                      </div>  
-                                                  </div>
+                                                      </ul>
+                                                  </nav>
+                                                      
+                                                  <section>
+                                                      #set $default_tab = True
+                                                      #for $host in $cluster.hosts
+                                                          <div class="sidetab ${'default-sidetab' if $default_tab else ''}"
+                                                               id="sidetab-$host.uuid">
+                                                               <article class="full-block">
+                                                                  <div class="article-container">
                                                   
-                                                  <div class="tab" id="tab-$cluster.name-vm">
-                                                                  #if len($cluster.hosts)
-                                                          <div class="sidetabs">
-                                                           
-                                                          <nav class="sidetab-switch">
-                                                              <ul>
-                                                                  #set $default_tab = True
-                                                                  #for $host in $cluster.hosts
-                                                                      <li>
-                                                                          <a href='#sidetab-$host.uuid'
-                                                                             class="${'default-sidetab' if $default_tab else ''}">
-                                                                              $host.name
-                                                                          </a>
-                                                                      </li>
-                                                                      #set $default_tab = False
-                                                                  #end for
-                                                              </ul>
-                                                          </nav>
+                                                                      <table>
+                                                                          <tr>
+                                                                              <th>Name</th>
+                                                                              <th>MAC</th>
+                                                                              <th>Ram size</th>
+                                                                              <th>Boot image</th>
+                                                                              <th>Cached</th>
+                                                                              <th>Arch</th>
+                                                                              <th>uuid</th>
+                                                                              <th>Load balanced</th>   
+                                                                          </tr>
+                                                                          <tr>
+                                                                              <td>$host.name</td>
+                                                                              <td>$host.mac</td>
+                                                                              <td>$host.ramSize</td>
+                                                                              #if $host.bootImage
+                                                                                  <td>$host.bootImage</td>
+                                                                              #else
+                                                                                  <td>default ($cluster.defaultHost.bootImage)</td>
+                                                                              #end if
+                                                                              <td>$host.cacheBootImage</td>
+                                                                              <td>$host.arch</td>
+                                                                              <td>$host.uuid</td>
+                                                                              <td>${'yes' if $host in $cluster.network.lbHosts else 'no'}</td>
+                                                                          </tr>
+                                                                      </table>
+                                                                  </div>
+                                                              </article>
                                                               
-                                                          <section>
-                                                              #set $default_tab = True
-                                                              #for $host in $cluster.hosts
-                                                                  <div class="sidetab ${'default-sidetab' if $default_tab else ''}"
-                                                                       id="sidetab-$host.uuid">
-                                                                       <article class="full-block">
-                                                                          <div class="article-container">
-                                                          
-                                                                              <table>
-                                                                                  <tr>
-                                                                                      <th>Name</th>
-                                                                                      <th>MAC</th>
-                                                                                      <th>Ram size</th>
-                                                                                      <th>Boot image</th>
-                                                                                      <th>Cached</th>
-                                                                                      <th>Arch</th>
-                                                                                      <th>uuid</th>
-                                                                                      <th>Load balanced</th>   
-                                                                                  </tr>
-                                                                                  <tr>
-                                                                                      <td>$host.name</td>
-                                                                                      <td>$host.mac</td>
-                                                                                      <td>$host.ramSize</td>
-                                                                                      #if $host.bootImage
-                                                                                          <td>$host.bootImage</td>
-                                                                                      #else
-                                                                                          <td>default ($cluster.defaultHost.bootImage)</td>
-                                                                                      #end if
-                                                                                      <td>$host.cacheBootImage</td>
-                                                                                      <td>$host.arch</td>
-                                                                                      <td>$host.uuid</td>
-                                                                                      <td>${'yes' if $host in $cluster.network.lbHosts else 'no'}</td>
-                                                                                  </tr>
-                                                                              </table>
-                                                                          </div>
-                                                                      </article>
-                                                                      
-                                                                      #if len($host.disks)
-                                                                          <h5>Disks</h5>
-                                                                          <div class="sidetabs">
-                                                                              <nav class="sidetab-switch">
-                                                                                  <ul>
-                                                                                      #set $default_tab = True
-                                                                                      #for $disk in $host.disks
-                                                                                          <li>
-                                                                                              <a href='#sidetab-disk-$disk.name-$host.uuid'
-                                                                                                 class="${'default-sidetab' if $default_tab else ''}">
-                                                                                                  $disk.name
-                                                                                              </a>
-                                                                                          </li>
-                                                                                          #set $default_tab = False
-                                                                                      #end for
-                                                                                  </ul>
-                                                                              </nav>
-                                                                              
+                                                              #if len($host.disks)
+                                                                  <h5>Disks</h5>
+                                                                  <div class="sidetabs">
+                                                                      <nav class="sidetab-switch">
+                                                                          <ul>
                                                                               #set $default_tab = True
                                                                               #for $disk in $host.disks
-                                                                                  <div class="sidetab ${'default-sidetab' if $default_tab else ''}"
-                                                                                          id="sidetab-disk-$disk.name-$host.uuid">
-                                                                                      <section>
-                                                                                          <table>
-                                                                                             <tr>
-                                                                                                 <th>Name</th>
-                                                                                                 <th>Size</th>
-                                                                                                 <th>Device</th>
-                                                                                                 <th>Mount point</th>
-                                                                                                 <th>Cached</th>
-                                                                                             </tr>
-                                                                                             <tr>
-                                                                                                 <td>$disk.name</td>
-                                                                                                 <td>$disk.readableSize<br/>( $disk.size bytes )</td>
-                                                                                                 <td>$disk.device</td>
-                                                                                                 <td>$disk.mountPoint</td>
-                                                                                                 <td>$disk.cache</td>
-                                                                                             </tr>
-                                                                                          </table>
-                                                                                      </section>
-                                                                                  </div>
+                                                                                  <li>
+                                                                                      <a href='#sidetab-disk-$disk.name-$host.uuid'
+                                                                                         class="${'default-sidetab' if $default_tab else ''}">
+                                                                                          $disk.name
+                                                                                      </a>
+                                                                                  </li>
                                                                                   #set $default_tab = False
                                                                               #end for
-                                                                          </div>
-                                                                      #end if
+                                                                          </ul>
+                                                                      </nav>
                                                                       
+                                                                      #set $default_tab = True
+                                                                      #for $disk in $host.disks
+                                                                          <div class="sidetab ${'default-sidetab' if $default_tab else ''}"
+                                                                                  id="sidetab-disk-$disk.name-$host.uuid">
+                                                                              <section>
+                                                                                  <table>
+                                                                                     <tr>
+                                                                                         <th>Name</th>
+                                                                                         <th>Size</th>
+                                                                                         <th>Device</th>
+                                                                                         <th>Mount point</th>
+                                                                                         <th>Cached</th>
+                                                                                     </tr>
+                                                                                     <tr>
+                                                                                         <td>$disk.name</td>
+                                                                                         <td>$disk.readableSize<br/>( $disk.size bytes )</td>
+                                                                                         <td>$disk.device</td>
+                                                                                         <td>$disk.mountPoint</td>
+                                                                                         <td>$disk.cache</td>
+                                                                                     </tr>
+                                                                                  </table>
+                                                                              </section>
+                                                                          </div>
+                                                                          #set $default_tab = False
+                                                                      #end for
                                                                   </div>
-                                                                  #set $default_tab = False
-                                                              #end for
-                                                          </section>
+                                                              #end if
                                                               
                                                           </div>
-        
-                                                      #end if                        
-                                                  </div>
-                                                  
-                                                  <div class="tab" id="tab-$cluster.name-network">
-                                                        <table>
-                                                            <tr>
-                                                                <th>Name</th>
-                                                                <th>Bridge name</th>
-                                                                <th>Bridge IP</th>
-                                                                <th>Netmask</th>
-                                                                <th>DHCP range</th>
-                                                                <th>Load balancing alias</th>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>$cluster.network.name</td>
-                                                                <td>$cluster.network.bridgeName</td>
-                                                                <td>$cluster.network.ip</td>
-                                                                <td>$cluster.network.netmask</td>
-                                                                <td>($cluster.network.DHCPRange[0],
-                                                                    $cluster.network.DHCPRange[1])
-                                                                </td>
-                                                                <td>${cluster.network.lbAlias if cluster.network.lbAlias else '-'}</td>
-                                                            </tr>
-                                                        </table>
-                                                  </div>
+                                                          #set $default_tab = False
+                                                      #end for
                                                   </section>
-                                               </div>
-                                               
-                                               #else
-                                                    <div class="notification attention">
-                                                        <p>
-                                                        <strong>Warning:</strong> Cluster not defined, defined incorrectly or not ready to run.
-                                                        </p>
-                                                    </div>
-                                               #end if
-                                              </article>
-                                        </div>
-                                        #set $default_tab = False
-                                    #end for
-                                </section>        
-                            </div>                 
-                        #else
-                            <div class="notification attention">
-                                <p>
-                                <strong>Warning:</strong> No clusters defined.
-                                </p>
-                            </div>
-                        #end if
+                                                      
+                                                  </div>
 
-                        </section>
-                        <!-- /Article Content -->
-
+                                              #end if                        
+                                          </div>
+                                          
+                                          <div class="tab" id="tab-$cluster.name-network">
+                                                <table>
+                                                    <tr>
+                                                        <th>Name</th>
+                                                        <th>Bridge name</th>
+                                                        <th>Bridge IP</th>
+                                                        <th>Netmask</th>
+                                                        <th>DHCP range</th>
+                                                        <th>Load balancing alias</th>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>$cluster.network.name</td>
+                                                        <td>$cluster.network.bridgeName</td>
+                                                        <td>$cluster.network.ip</td>
+                                                        <td>$cluster.network.netmask</td>
+                                                        <td>($cluster.network.DHCPRange[0],
+                                                            $cluster.network.DHCPRange[1])
+                                                        </td>
+                                                        <td>${cluster.network.lbAlias if cluster.network.lbAlias else '-'}</td>
+                                                    </tr>
+                                                </table>
+                                          </div>
+                                          </section>
+                                       </div>
+                                       
+                                       #else
+                                            <div class="notification attention">
+                                                <p>
+                                                <strong>Warning:</strong> Cluster not defined, defined incorrectly or not ready to run.
+                                                </p>
+                                            </div>
+                                       #end if
+                                      </article>
+                                </div>
+                                #set $default_tab = False
+                            #end for
+                        </section>        
+                    </div>                 
+                #else
+                    <div class="notification attention">
+                        <p>
+                        <strong>Warning:</strong> No clusters defined.
+                        </p>
                     </div>
+                #end if
 
-                </article>              
+                </section>
+                <!-- /Article Content -->
 
-            </section>
-            <!-- /Main Content -->
+            </div>
 
-        </div>
-        <!-- /Fixed Layout Wrapper -->
+        </article>              
 
-        <!-- JS Libs at the end for faster loading -->
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
-        <script>!window.jQuery && document.write(unescape('%3Cscript src="/webpage/js/jquery/jquery-1.5.1.min.js"%3E%3C/script%3E'))</script>
-        <script src="/webpage/js/jquery/jquery.nyromodal.js"></script>
-        <script src="/webpage/js/jquery/jquery.tipsy.js"></script>
-        <script src="/webpage/js/jquery/jquery.datatables.js"></script>
-        <script src="/webpage/js/jquery/jquery.datepicker.js"></script>
-        <script src="/webpage/js/script.js"></script>
+    </section>
+    <!-- /Main Content -->
 
-    </body>
-</html>
+</div>
+<!-- /Fixed Layout Wrapper -->
+

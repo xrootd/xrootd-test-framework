@@ -1,0 +1,95 @@
+<!doctype html>
+<!--[if lt IE 9 ]>             <html lang="en" class="no-js" id="ie">     <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js">         <!--<![endif]-->
+    <head>
+        <title>${title}</title>
+        <meta charset="UTF-8">
+        <meta name="description" content="${title}">
+        <meta name="author" content="Justin Salmon <jsalmon@cern.ch>">
+
+        <link rel="shortcut icon" href="/webpage/img/favicon.ico">
+
+        <!-- CSS Styles -->
+        <link rel="stylesheet" href="/webpage/css/style.css">
+        <link rel="stylesheet" href="/webpage/css/colors.css">
+        <link rel="stylesheet" href="/webpage/css/jquery.tipsy.css">
+        <link rel="stylesheet" href="/webpage/css/jquery.datatables.css">
+        <link rel="stylesheet" href="/webpage/css/jquery.nyromodal.css">
+        <link rel="stylesheet" href="/webpage/css/jquery.datepicker.css">
+
+        <!-- Google WebFonts -->
+        <link href='https://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic' rel='stylesheet' type='application/x-font-woff'>
+
+        <script src="/webpage/js/support.js"></script>
+        <script src="/webpage/js/libs/modernizr-1.7.min.js"></script>
+    </head>
+    
+    <body>
+    
+    #set $nt = len($testsuites)
+    #set $nc = len($clusters)
+    #set $nh = len($hypervisors)
+        
+    #set $tcs = [t for t in $testsuites.itervalues() for t in t.tests]
+    
+    #set $ts_fail = [t for t in $testsuites.itervalues() if t.state.id < 0]
+    #set $cl_fail = [c for c in $clusters.itervalues() if c.state.id < 0]
+    
+    <!-- Aside Block -->
+    <section role="navigation">
+        <header>
+            <h1><a href="index" title="Back to Homepage"></a>XRootD</h1>
+            <h2>Testing Framework</h2>
+        </header>
+
+        <!-- Main Navigation -->
+        <nav id="main-nav">
+            <ul>
+                <!-- Use class .no-submenu to open link instead of a sub menu-->
+                <!-- Use class .current to open submenu on page load -->
+                <li>
+                    <a href="/index" class="dashboard no-submenu">Dashboard</a>
+                </li>
+                <li>
+                    <a href="testsuites" class="projects no-submenu">Test Suites</a>
+                    <span title="${nt} test suite(s) ${'('+str(len(ts_fail)) + 
+                                ' defined incorrectly)' if len(ts_fail) else ''}" 
+                          class="${'failure' if len($ts_fail) else 'success'}">
+                          $nt
+                    </span>
+                    #if len($testsuites)
+                        <ul>
+                            #for $ts_name in $testsuites.iterkeys()
+                                <li><a href="testsuites/${ts_name}">$ts_name</a></li>
+                            #end for
+                        </ul>
+                    #end if
+                </li>
+                <li>
+                    <a href="clusters" class="products no-submenu">Clusters</a>
+                    <span title="${nc} defined cluster(s) ${'('+str(len(ts_fail)) + 
+                                ' defined incorrectly)' if len(ts_fail) else ''}"
+                          class="${'failure' if len($cl_fail) else 'success'}">
+                          $nc
+                    </span>
+                </li>
+                <li>
+                    <a href="/hypervisors" class="articles no-submenu">Hypervisors</a>
+                    <span title="${nh} connected hypervisor(s)">$nh</span>
+                </li>
+            </ul>
+        </nav>
+        <!-- /Main Navigation -->
+        
+        <footer>
+            <p>
+                Copyright &copy; <a href="http://cern.ch">CERN</a>
+            </p><br />
+            <span class="valid-images">
+                <img src="/webpage/img/valid_html5.png" alt="HTML5 valid"/>
+                <img src="/webpage/img/valid_css3.png" alt="CSS3 valid"/>
+            </span>
+        </footer>
+
+    </section>
+    <!-- /Aside Block -->

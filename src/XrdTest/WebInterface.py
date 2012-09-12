@@ -119,19 +119,21 @@ class WebInterface:
             cherrypy.response.headers['Allow'] = ", ".join(methods)
             raise cherrypy.HTTPError(405)
 
-    def disp(self, tfile, tvars):
+    def disp(self, body, tvars):
         '''
         Utility method for displying a Cheetah template file with the
         supplied variables.
 
-        @param tfile: to be displayed as HTML page
+        @param body: to be displayed as HTML page
         @param tvars: variables to be used in HTML page, Cheetah style
         '''
-        template = None
-        tfile = os.path.join(self.webroot, tfile)
-
         try:
-            template = Template(file=tfile, searchList=[tvars])
+            head = open(os.path.join(self.webroot, 'header.html'), 'r').read()
+            body = open(os.path.join(self.webroot, body), 'r').read()
+            foot = open(os.path.join(self.webroot, 'footer.html'), 'r').read()
+        
+            template = head + body + foot
+            template = Template(source=template, searchList=[tvars])
         except Exception, e:
             LOGGER.error(str(e))
             return "An error occurred. Check log for details."
@@ -293,7 +295,27 @@ class WebInterface:
         tvars = self.vars()
         tvars['type'] = type if type else None
         tvars['testsuite'] = testsuite if self.testMaster.testSuites.has_key(testsuite) else None
-        return self.disp("auth.html", tvars)
+        
+        template = os.path.join(self.webroot, 'auth.html')
+        template = Template(file=template, searchList = [tvars])
+        return template.respond()
+    
+    @cherrypy.expose
+    def update(self, path):
+        cherrypy.tools.allow.callable()
+        
+        file = path.split(os.sep)[-1] + '.html'
+        
+        template = None
+        tfile = os.path.join(self.webroot, file)
+
+        try:
+            template = Template(file=tfile, searchList=[self.vars()])
+        except Exception, e:
+            LOGGER.error(str(e))
+            return "An error occurred. Check log for details."
+        else:
+            return template.respond()
 
     def handleCherrypyError(self):
             cherrypy.response.status = 500

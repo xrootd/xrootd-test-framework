@@ -55,7 +55,7 @@ def sync_remote_git(repo, config):
         local_repo = config.get(repo, 'local_path')
         local_branch = config.get(repo, 'local_branch')
         remote_branch = config.get(repo, 'remote_branch')
-        LOGGER.info('Syncing %s' % remote_repo)
+        LOGGER.debug('Syncing %s' % remote_repo)
         
         # Clone the repo if we don't have it yet.
         if not os.path.exists(local_repo):
@@ -67,7 +67,8 @@ def sync_remote_git(repo, config):
         # If git-diff prints to stdout, then we have changes (or an error).
         # TODO: handle errors with incorrect branch names
         if diff[0]:
-            LOGGER.info('Remote branch has changes. Pulling.')
+            LOGGER.info('Remote branch on repository %s has changes. Pulling.' \
+                        % remote_repo)
             git_pull(local_repo)
         return diff
 

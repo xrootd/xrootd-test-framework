@@ -1,4 +1,17 @@
-$(document).ready(function () {
+$(document).ready(main);
+
+// Content update ajax request
+// Just reloads the whole page, should really load individual divs for speed
+setInterval(function() {
+	var postdata = {path: $(location).attr('href')};
+	$.post('update', postdata, function(data) {
+        $('#fixed-wrapper').replaceWith(data);
+        main();
+    });
+	return false;
+}, 2000);
+		
+function main() {
     
     // Notification Close Button
     $('.close-notification').click(
@@ -147,9 +160,10 @@ $(document).ready(function () {
         }
     );
     
- // Progress bar animation
+    // Progress bar animation
 	$('.progress-bar').each(function() {
 		var progress = $(this).children().width();
 		$(this).children().css({ 'width':0 }).animate({width:progress},3000);
 	});
-});
+	
+}

@@ -1239,6 +1239,13 @@ div.tab>img,div.tab>.image-frame img {
     background-color: #b3b3b3;
 }
 
+.tag.red.timeout {
+    background-color: #ae432e;
+    float: none;
+    font-size: 70%;
+    padding: 5px
+}
+
 /*  Ajax Loading Gif  */
 .loader {
     display: block;

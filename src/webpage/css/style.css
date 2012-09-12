@@ -250,10 +250,11 @@ section[role=navigation] header h2 {
     text-shadow: none;
 }
 
-section[role=navigation] span.valid-images {
+section[role=navigation] footer {
     position: fixed;
     bottom: 20px;
     left: 50px;
+    text-align: center;
 }
 
 /*  Navigation Layout :: Nav  */

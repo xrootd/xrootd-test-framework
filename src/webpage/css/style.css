@@ -216,7 +216,7 @@ body.fixed {
 }
 
 .large {
-    width: 99%;
+    width: 88%;
 }
 
 .left {
@@ -1205,6 +1205,7 @@ div.tab>img,div.tab>.image-frame img {
     color: #fff;
     font-size: 93%;
     padding: 2px 0;
+    padding-bottom: 4px;
     margin: 0 auto;
     text-align: center;
     width: 60px;
@@ -1370,7 +1371,13 @@ div.tab>img,div.tab>.image-frame img {
 .logs li h4 {
     text-shadow: none;
     font-size: 100%;
-    margin-bottom: .3em;
+    margin-bottom: 0;
+}
+
+.logs li small {
+    text-shadow: none;
+    font-size: 100% !important;
+    margin-bottom: 0;
 }
 
 .logs li.event {
@@ -1747,6 +1754,11 @@ fieldset {
     border: 1px solid;
 }
 
+fieldset.compact {
+    padding-top: 10px;
+    padding-bottom: 8px;
+}
+
 legend {
     font-size: 116%;
     padding: 0 1em;
@@ -1867,7 +1879,6 @@ select {
 form dd.text {
     top: -18px;
     color: #666;
-    width: 490px;
 }
 
 form dd.text p {

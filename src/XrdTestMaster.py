@@ -408,6 +408,9 @@ class XrdTestMaster(Runnable):
                 self.checkIfSuitsDefsComplete()
             except TestSuiteException, e:
                 LOGGER.error("Error while undefining: %s" % e)
+                for ts in self.testSuites.itervalues():
+                    if modName in ts.clusters:
+                        ts.state = State((-1, e.desc))
             except ClusterManagerException, e:
                 LOGGER.error("Error while undefining: %s" % e)
         # cluster definition added or modified (same things in both cases)

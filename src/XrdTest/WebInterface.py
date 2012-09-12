@@ -285,6 +285,13 @@ class WebInterface:
         tvars = self.vars()
         tvars['testsuite'] = testsuite if self.testMaster.testSuites.has_key(testsuite) else None
         return self.disp("auth.html", tvars)
+    
+    @cherrypy.expose
+    def cancelTestSuite(self, testsuite=None): 
+        cherrypy.tools.allow.callable()
+        tvars = self.vars()
+        tvars['testsuite'] = testsuite if self.testMaster.testSuites.has_key(testsuite) else None
+        return self.disp("auth.html", tvars)
 
     def handleCherrypyError(self):
             cherrypy.response.status = 500

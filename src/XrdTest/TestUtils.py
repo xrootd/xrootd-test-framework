@@ -195,7 +195,7 @@ class TestSuite(Stateful):
             self.machines = []
 
         for cl in self.clusters:
-            if not cl in clusters:
+            if not cl in clusters or not clusters[cl].state.id >= 0:
                 self.defEnabled = False
                 raise TestSuiteException(\
                 ("Cluster %s in suite %s definition " + \
@@ -210,6 +210,8 @@ class TestSuite(Stateful):
                 LOGGER.info(("Host list for suite %s " + \
                             "filled automatically with %s") % \
                             (self.name, self.machines))
+        
+        self.state = State(TestSuite.S_DEF_OK)
                 
     def getNextRunTime(self):
         '''Get the next scheduled run time for this suite.'''

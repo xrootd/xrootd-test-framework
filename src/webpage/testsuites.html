@@ -120,8 +120,8 @@
                     </span>
                     <br />
                     <span>
-                        Currently running test suite:
-                        <strong>${$current_run.name if $current_run else 'None'}</strong>
+                        Currently running test suite:&nbsp;
+                        <strong>${$current_run.name if $current_run else 'None&nbsp;'}</strong>
                     </span>
                 </section>
                 
@@ -181,75 +181,72 @@
 
                                             <article class="full-block">
                                                 <div class="article-container">
-                                                #if $ts.state.id > 0
-	                                                <form action="/runTestSuite" method="post">
-						                                <fieldset>
-						                                    <legend>Definition</legend>
-						                                    
-						                                    <div class="actions">
-				                                                #set $disabled = 'disabled' if $ts.state.id < 0 else ''
-				                                                <button $disabled>Run Now</button>
-				                                                <button disabled>Cancel Run</button>
-				                                                
-	                                                            <input type="hidden" name="testsuite" value="$ts.name" />
-				                                            </div> 
-						                                    <dl>
-						                                        <dt>
-						                                            <label>Next scheduled run: </label>
-						                                        </dt>
-						                                        <dd class="text">
-						                                            <p>$ts.getNextRunTime()</p>
-						                                        </dd>
-						                                    </dl>
-						                                    <dl>
-	                                                            <dt>
-	                                                                <label>Scheduler expression: </label>
-	                                                            </dt>
-	                                                            <dd class="text">
-	                                                                <p>$ts.schedule</p>
-	                                                            </dd>
-	                                                        </dl>
-	                                                        <dl>
-	                                                            <dt>
-	                                                                <label>Test cases: </label>
-	                                                            </dt>
-	                                                            <dd class="text">
-	                                                                <p>${'<br />'.join([t for t in $ts.tests])}</p>
-	                                                            </dd>
-	                                                        </dl>
-	                                                        <dl>
-	                                                            <dt>
-	                                                                <label>Required clusters: </label>
-	                                                            </dt>
-	                                                            <dd class="text">
-	                                                                <p>
-	                                                                   #for $c in $ts.clusters
-	                                                                       <span>$c </span>
-	                                                                       <span class="${'success' if $clusters[c].state.id >= 0 else 'failure'}">
-	                                                                           ($clusters[c].state.name)
-	                                                                       </span>
-	                                                                   #end for
-	                                                                </p>
-	                                                            </dd>
-	                                                        </dl>
-	                                                        <dl>
-	                                                            <dt>
-	                                                                <label>Required machines: </label>
-	                                                            </dt>
-	                                                            <dd class="text">
-	                                                                <p>${'<br />'.join([m for m in $ts.machines])}</p>
-	                                                            </dd>
-	                                                        </dl>
-						                                </fieldset>
-						                            </form>
-					                            #else
-                                                   <div class="notification attention">
+                                                #if $ts.state.id < 0
+                                                    <div class="notification attention">
                                                       <p>
                                                       <strong>Warning:</strong> Test suite not defined, or defined incorrectly.
                                                       </p>
                                                    </div>
                                                 #end if
-	                                           
+                                                <form action="/runTestSuite" method="post">
+					                                <fieldset>
+					                                    <legend>Definition</legend>
+			                                            <dl>
+			                                                <dt>
+			                                                    <label>Actions</label>
+			                                                </dt>
+			                                                <dd class="text">
+			                                                    #set $runnable = 'disabled' if $ts.state.id < 0 or $current_run and $current_run.name else ''
+                                                                <button $runnable>Run Now</button>
+                                                                #set $cancelable = '' if $current_run and $current_run.name == $ts.name else 'disabled'
+                                                                <button $cancelable>Cancel Run</button>
+                                                                
+                                                                <input type="hidden" name="testsuite" value="$ts.name" />
+			                                                </dd>
+			                                                <dt>
+                                                                   <label>Required clusters: </label>
+                                                               </dt>
+                                                               <dd class="text large">
+                                                                   <ul class="logs">
+                                                                      #for $c in $ts.clusters
+                                                                           <fieldset class="compact">
+                                                                               <legend>$c</legend>
+                                                                               <li class="event ${'success' if $clusters[c].state.id >= 0 else 'failure'}">
+                                                                                <span class="logs-timestamp">[ $clusters[c].state.time ]</span>
+                                                                                <small class="logs-event">$clusters[c].state.name</small>
+                                                                            </li>
+                                                                           </fieldset>
+                                                                      #end for
+                                                                   </ul>
+                                                               </dd>
+					                                        <dt>
+					                                            <label>Next scheduled run: </label>
+					                                        </dt>
+					                                        <dd class="text">
+					                                            <p>$ts.getNextRunTime()</p>
+					                                        </dd>
+                                                            <dt>
+                                                                <label>Scheduler expression: </label>
+                                                            </dt>
+                                                            <dd class="text">
+                                                                <p>$ts.schedule</p>
+                                                            </dd>
+                                                            <dt>
+                                                                <label>Test cases: </label>
+                                                            </dt>
+                                                            <dd class="text">
+                                                                <p>${'<br />'.join([t for t in $ts.tests])}</p>
+                                                            </dd>
+                                                            
+                                                            <dt>
+                                                                <label>Required machines: </label>
+                                                            </dt>
+                                                            <dd class="text">
+                                                                <p>${'<br />'.join([m for m in $ts.machines])}</p>
+                                                            </dd>
+                                                        </dl>
+					                                </fieldset>
+					                            </form>                
                                                 </div>
                                             </article>
 	                                    </div>

@@ -637,6 +637,10 @@ article section ul li,article section ol li {
     line-height: 150%;
 }
 
+header.compact {
+    margin-bottom: 5px;
+}
+
 header.square {
     border-bottom: 1px solid #e6e6e6;
 }
@@ -666,6 +670,42 @@ header.square nav.leftnav ul li.failure {
 
 header.square nav.leftnav ul li a {
     background-image: none;
+}
+
+header.small {
+    width: 100%;
+    border-bottom: 1px solid #e6e6e6;
+    padding-left: 11px;
+}
+
+header.small nav.leftnav {
+    float: left;
+}
+
+header.small nav.leftnav ul {
+    
+}
+
+header.small nav.leftnav ul li {
+    
+}
+
+header.small nav.leftnav ul li.success {
+    background:
+        url('/webpage/img/icons/list-style/icon_list_style_checkmark.png')
+        no-repeat 0 2px;
+    padding-left: 20px;
+}
+
+header.small nav.leftnav ul li.failure {
+    background:
+        url('/webpage/img/icons/list-style/icon_list_style_cross.png')
+        no-repeat 0 2px;
+    padding-left: 20px;
+}
+
+header.small nav.leftnav ul li a {
+    
 }
 
 article section .sidetab .widgets {
@@ -1921,7 +1961,7 @@ form span.invalid-side-note {
     box-shadow: none;
 }
 
-.ie7 .checkbox            .,.ie8 .checkbox            .],.ie9 .checkbox
+.ie7 .checkbox               .,.ie8 .checkbox               .],.ie9 .checkbox
     {
     top: -7px;
 }

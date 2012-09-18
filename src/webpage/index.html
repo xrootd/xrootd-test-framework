@@ -1,4 +1,5 @@
-<div class="fixed-wrapper">
+<body>
+<div id="fixed-wrapper" class="update">
  
     #set $nt = len($testsuites)
     #set $nc = len($clusters)
@@ -120,8 +121,7 @@
                             <legend>Test Suites</legend>
                             <ul class="logs">                                    
                                 #for $ts in $testsuites.itervalues()
-                                    <li class="event success">
-                                        #set $state = 'success' if $ts.state.id > 0 else 'failure'
+                                    <li class="event ${'success' if $ts.state.id > 0 else 'failure'}">
                                         <span class="logs-timestamp">$ts.state.time</span>
                                         <h4 class="logs-event"><strong>$ts.name:</strong> $ts.state.name</h4>
                                     </li>
@@ -139,8 +139,7 @@
                              <legend>Clusters</legend>
                              <ul class="logs">                                    
                                  #for $c in $clusters.itervalues()
-                                     <li class="event success">
-                                         #set $state = 'success' if $c.state.id >= 0 else 'failure'
+                                     <li class="event ${'success' if $c.state.id >= 0 else 'failure'}">
                                          <span class="logs-timestamp">$c.state.time</span>
                                          <h4 class="logs-event"><strong>$c.name:</strong> $c.state.name</h4>
                                      </li>
@@ -171,3 +170,4 @@
     <!-- /Main Content -->
 
 </div>
+</body>

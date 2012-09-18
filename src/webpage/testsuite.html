@@ -1,5 +1,5 @@
-<!-- Fixed Layout Wrapper -->
-   <div class="fixed-wrapper">
+<body>
+<div id="fixed-wrapper" class="no-update">
        
     #set $nt = len($testsuites)
     #set $nc = len($clusters)
@@ -130,7 +130,7 @@
 	            }     
 	#end def
 
-       <!-- Aside Block -->
+<!-- Aside Block -->
 <section role="navigation">
     <header>
         <h1><a href="index" title="Back to Homepage"></a>XRootD</h1>
@@ -145,7 +145,7 @@
             <li>
                 <a href="/index" class="dashboard no-submenu">Dashboard</a>
             </li>
-            <li>
+            <li class="current">
                 <a href="/testsuites" class="projects no-submenu">Test Suites</a>
                 <span title="${nt} test suite(s) ${'('+str(len(ts_fail)) + 
                             ' defined incorrectly)' if len(ts_fail) else ''}" 
@@ -314,14 +314,17 @@
                                                     <a class="default-tab" href="#tab-suite-init-${run.uid}">Suite Initialization</a>
                                                 </li>
                                                 
-                                                #for $i, $case in enumerate($run.cases.itervalues())
-                                                    
+                                                #set $failure = False
+                                                #for $i, $case in enumerate($run.cases.itervalues())        
                                                     #set $case_stages = $run.getTestCaseStages($case.uid)
-                                                    #set $failure = self.has_failures($case_stages)
-                                                    <li class="${'failure' if $failure else 'success'}">
-                                                        <a href="#tab-case-run-${case.uid}">Test Case: <strong>$case.name</strong></a>
-                                                    </li>
+                                                    #if self.has_failures($case_stages)
+                                                        #set $failure = True
+                                                    #end if
                                                 #end for
+                                                
+                                                <li class="${'failure' if $failure else 'success'}">
+                                                    <a href="#tab-case-run-${run.uid}">Test Cases</a>
+                                                </li>
                                                 
                                                 #set $fin_stages = $run.getTestCaseStages("suite_finalized")
                                                 #set $failure = self.has_failures($fin_stages)
@@ -341,11 +344,12 @@
                                                         <ul>
                                                             #set $default_tab = True
                                                             #for $i, $stage in enumerate($init_stages)
-                                                                    
+                                                                
                                                                 #if self.participates($stage)
                                                                     #set $failure = self.has_failure($stage)
+                                                                    #set $host = $stage[3].replace('.', '-')
                                                                     <li class="${'failure' if $failure else 'success'}">
-                                                                        <a href="#sidetab-inner-suite-init-${stage[3]}-${run.uid}" 
+                                                                        <a href="#sidetab-inner-suite-init-${host}-${run.uid}" 
                                                                            class="${'default-sidetab' if $default_tab else ''}">
                                                                             $stage[3]
                                                                         </a>
@@ -360,10 +364,11 @@
                                                     <section>
                                                     #set $default_tab = True
                                                     #for $i, $stage in enumerate($init_stages)
+                                                        #set $host = $stage[3].replace('.', '-')
                                                         
                                                         #if self.participates($stage)
                                                             <div class="sidetab ${'default-sidetab' if $default_tab else ''}" 
-                                                                 id="sidetab-inner-suite-init-${stage[3]}-${run.uid}">        
+                                                                 id="sidetab-inner-suite-init-${host}-${run.uid}">        
                                                                 <article class="full-block nested light">                                       
                                                                     <div class="article-container">
                                                                        <section>
@@ -374,33 +379,45 @@
                                                                                 <nav>
                                                                                     <ul class="tab-switch">
                                                                                         <li>
-                                                                                        <a class="default-tab" href="#tab-log-init-all-${$stage[3]}-${run.uid}">All</a>
+                                                                                        <a class="default-tab" href="#tab-log-init-all-${host}-${run.uid}">All</a>
                                                                                         </li>
                                                                                         <li>
-                                                                                        <a href="#tab-log-init-important-${$stage[3]}-${run.uid}">Important</a>
+                                                                                        <a href="#tab-log-init-important-${host}-${run.uid}">Important</a>
                                                                                         </li>
                                                                                         <li>
-                                                                                        <a href="#tab-log-init-error-${$stage[3]}-${run.uid}">Errors</a>
+                                                                                        <a href="#tab-log-init-error-${host}-${run.uid}">Errors</a>
                                                                                         </li>
                                                                                         <li>
-                                                                                        <a href="#tab-log-init-warning-${$stage[3]}-${run.uid}">Warnings</a>
+                                                                                        <a href="#tab-log-init-warning-${host}-${run.uid}">Warnings</a>
+                                                                                        </li>
+                                                                                        <li>
+                                                                                        <a href="#tab-log-init-xrd-${host}-${run.uid}">xrootd log</a>
+                                                                                        </li>
+                                                                                        <li>
+                                                                                        <a href="#tab-log-init-cmsd-${host}-${run.uid}">cmsd log</a>
                                                                                         </li>
                                                                                     </ul>
                                                                                 </nav>
                                                                             </header>
                                                                             
                                                                             <section>
-                                                                                <div class="tab default-tab" id="tab-log-init-all-${$stage[3]}-${run.uid}">
+                                                                                <div class="tab default-tab" id="tab-log-init-all-${host}-${run.uid}">
                                                                                     <code>$logs['all']</code>
                                                                                 </div>
-                                                                                <div class="tab" id="tab-log-init-important-${$stage[3]}-${run.uid}">
+                                                                                <div class="tab" id="tab-log-init-important-${host}-${run.uid}">
                                                                                     <code>$logs['important']</code>
                                                                                 </div>
-                                                                                <div class="tab" id="tab-log-init-error-${$stage[3]}-${run.uid}">
+                                                                                <div class="tab" id="tab-log-init-error-${host}-${run.uid}">
                                                                                     <code>$logs['error']</code>
                                                                                 </div>
-                                                                                <div class="tab" id="tab-log-init-warning-${$stage[3]}-${run.uid}">
+                                                                                <div class="tab" id="tab-log-init-warning-${host}-${run.uid}">
                                                                                     <code>$logs['warning']</code>
+                                                                                </div>
+                                                                                <div class="tab" id="tab-log-init-xrd-${host}-${run.uid}">
+                                                                                    <code>$stage[1][3]</code>
+                                                                                </div>
+                                                                                <div class="tab" id="tab-log-init-cmsd-${host}-${run.uid}">
+                                                                                    <code>$stage[1][4]</code>
                                                                                 </div>
                                                                             </section>
                                                                        
@@ -424,311 +441,378 @@
 
                                         </div>   
                                         
-                                        #for $i, $case in enumerate($run.cases.itervalues())
-                                            #set $case_stages = $run.getTestCaseStages($case.uid)
-                                            <div class="tab" id="tab-case-run-${case.uid}">
-
-                                                <header class="square">
-                                                    <nav class="leftnav">
-                                                          <ul class="tab-switch">
-                                                              
-                                                              #set $init_stages = self.get_case_init_stages($case_stages)
-                                                              #set $failure = self.has_failures($init_stages)
-                                                              <li class="${'failure' if $failure else 'success'}">
-                                                                  <a href="#tab-inner-case-init-${case.uid}" class="default-tab">Case Initialization</a>
-                                                              </li>
-                                                              
-                                                              #set $run_stages = self.get_case_run_stages($case_stages)
-                                                              #set $failure = self.has_failures($run_stages)
-                                                              <li class="${'failure' if $failure else 'success'}">
-                                                                  <a href="#tab-inner-case-run-${case.uid}">Case Run</a>
-                                                              </li>
-                                                              
-                                                              #set $fin_stages = self.get_case_finalize_stages($case_stages)
-                                                              #set $failure = self.has_failures($fin_stages)
-                                                              <li class="${'failure' if $failure else 'success'}">
-                                                                  <a href="#tab-inner-case-fin-${case.uid}">Case Finalization</a>
-                                                              </li>
-                                                              
-                                                          </ul>
-                                                    </nav>
-                                                </header>
-                                                
-                                                <section>
-                                                    <div class="tab default-tab" id="tab-inner-case-init-${case.uid}">
-                                                        
-                                                        #set $init_stages = self.get_case_init_stages($case_stages)
-                                                           #if len($init_stages)
-                                                               <div class="sidetabs">
-                                                                <nav class="sidetab-switch">
-                                                                    <ul>
-                                                                        #set $default_tab = True
-                                                                        #for $i, $stage in enumerate($init_stages)
-
-                                                                            #if self.participates($stage)
-                                                                                #set $failure = self.has_failure($stage)
-                                                                                <li class="${'failure' if $failure else 'success'}">
-                                                                                   <a href="#sidetab-inner-case-init-${stage[3]}-${case.uid}"
-                                                                                      class="${'default-sidetab' if $default_tab else ''}">
-                                                                                      $stage[3]
-                                                                                   </a>
-                                                                                </li>
-                                                                                #set $default_tab = False
-                                                                            #end if
-                                                                        #end for
-                                                                    </ul>
-                                                                </nav>
+                                        <div class="tab" id="tab-case-run-${run.uid}">
+                                            <header class="square compact">
+                                                <!-- Article Header Tab Navigation -->
+                                                <nav class="leftnav">
+                                                    <ul class="tab-switch">
+                                                        #set $default_tab = True
+                                                        #for $i, $case in enumerate($run.cases.itervalues())
                                                             
-                                                                <section>
-                                                                    #set $default_tab = True 
-                                                                    #for $i, $stage in enumerate($init_stages)
-                                                                        
-                                                                        #if self.participates($stage)
-                                                                            <div class="sidetab ${'default-sidetab' if $default_tab else ''}" 
-                                                                                 id="sidetab-inner-case-init-${stage[3]}-${case.uid}">
-                                                                                <article class="full-block nested light">                                       
-                                                                                    <div class="article-container">
-                                                                                    <section>
-                                                                                          #set $logs = self.format_log($stage)
-                                                                                          
-                                                                                            <header>
-                                                                                                <h2><span>initialized at $stage[0].time[:8] with return code $stage[1][2]</span></h2>
-                                                                                                <nav>
-                                                                                                    <ul class="tab-switch">
-                                                                                                        <li>
-                                                                                                        <a class="default-tab" href="#tab-log-case-init-all-${$stage[3]}-${case.uid}">All</a>
-                                                                                                        </li>
-                                                                                                        <li>
-                                                                                                        <a href="#tab-log-case-init-important-${$stage[3]}-${case.uid}">Important</a>
-                                                                                                        </li>
-                                                                                                        <li>
-                                                                                                        <a href="#tab-log-case-init-error-${$stage[3]}-${case.uid}">Errors</a>
-                                                                                                        </li>
-                                                                                                        <li>
-                                                                                                        <a href="#tab-log-case-init-warning-${$stage[3]}-${case.uid}">Warnings</a>
-                                                                                                        </li>
-                                                                                                    </ul>
-                                                                                                </nav>
-                                                                                            </header>
-                                                                                            
-                                                                                            <section>
-                                                                                                <div class="tab default-tab" id="tab-log-case-init-all-${$stage[3]}-${case.uid}">
-                                                                                                    <code>$logs['all']</code>
-                                                                                                </div>
-                                                                                                <div class="tab" id="tab-log-case-init-important-${$stage[3]}-${case.uid}">
-                                                                                                    <code>$logs['important']</code>
-                                                                                                </div>
-                                                                                                <div class="tab" id="tab-log-case-init-error-${$stage[3]}-${case.uid}">
-                                                                                                    <code>$logs['error']</code>
-                                                                                                </div>
-                                                                                                <div class="tab" id="tab-log-case-init-warning-${$stage[3]}-${case.uid}">
-                                                                                                    <code>$logs['warning']</code>
-                                                                                                </div>
-                                                                                            </section>
-                                                                                       
-                                                                                       </section>
-                                                                                    </div>
-                                                                                </article>
-                                                                            </div>
-                                                                            #set $default_tab = False
-                                                                        #end if                                                                                    
-                                                                    #end for
-                                                                </section>
-                                                            </div>
-                                                            #else
-                                                                <div class="notification note">
-                                                                    <p>
-                                                                        <strong>Note:</strong> No test case initialization information.
-                                                                    </p>
-                                                                </div>
-                                                            #end if 
-                                                    </div>
-                                                    
-                                                    <div class="tab" id="tab-inner-case-run-${case.uid}">
-                                                        #set $run_stages = self.get_case_run_stages($case_stages)
-                                                        
-                                                        #if len($run_stages)
-                                                            <div class="sidetabs">
-                                                                <nav class="sidetab-switch">
-                                                                    <ul>
-                                                                        #set $default_tab = True
-                                                                        #for $i, $stage in enumerate($run_stages)
-
-                                                                            #if self.participates($stage)
-                                                                                #set $failure = self.has_failure($stage)
-                                                                                <li class="${'failure' if $failure else 'success'}">
-                                                                                   <a href="#sidetab-inner-case-run-${stage[3]}-${case.uid}"
-                                                                                      class="${'default-sidetab' if $default_tab else ''}">
-                                                                                       $stage[3]
-                                                                                   </a>
-                                                                                </li>
-                                                                                #set $default_tab = False
-                                                                            #end if
-                                                                        #end for
-                                                                    </ul>
-                                                                </nav>
-                                                                
-                                                                <section>
-                                                                    #set $default_tab = True     
-                                                                    #for $i, $stage in enumerate($run_stages)
-                                                                        
-                                                                        #if self.participates($stage)
-                                                                            <div class="sidetab ${'default-sidetab' if $default_tab else ''}" 
-                                                                                 id="sidetab-inner-case-run-${stage[3]}-${case.uid}">
-                                                                                <article class="full-block nested light">                                       
-                                                                                    <div class="article-container">
-                                                                                    <section>
-                                                                                          #set $logs = self.format_log($stage)
-                                                                                          
-                                                                                            <header>
-                                                                                                <h2><span>initialized at $stage[0].time[:8] with return code $stage[1][2]</span></h2>
-                                                                                                <nav>
-                                                                                                    <ul class="tab-switch">
-                                                                                                        <li>
-                                                                                                        <a class="default-tab" href="#tab-log-case-run-all-${$stage[3]}-${case.uid}">All</a>
-                                                                                                        </li>
-                                                                                                        <li>
-                                                                                                        <a href="#tab-log-case-run-important-${$stage[3]}-${case.uid}">Important</a>
-                                                                                                        </li>
-                                                                                                        <li>
-                                                                                                        <a href="#tab-log-case-run-error-${$stage[3]}-${case.uid}">Errors</a>
-                                                                                                        </li>
-                                                                                                        <li>
-                                                                                                        <a href="#tab-log-case-run-warning-${$stage[3]}-${case.uid}">Warnings</a>
-                                                                                                        </li>
-                                                                                                    </ul>
-                                                                                                </nav>
-                                                                                            </header>
-                                                                                            
-                                                                                            <section>
-                                                                                                <div class="tab default-tab" id="tab-log-case-run-all-${$stage[3]}-${case.uid}">
-                                                                                                    <code>$logs['all']</code>
-                                                                                                </div>
-                                                                                                <div class="tab" id="tab-log-case-run-important-${$stage[3]}-${case.uid}">
-                                                                                                    <code>$logs['important']</code>
-                                                                                                </div>
-                                                                                                <div class="tab" id="tab-log-case-run-error-${$stage[3]}-${case.uid}">
-                                                                                                    <code>$logs['error']</code>
-                                                                                                </div>
-                                                                                                <div class="tab" id="tab-log-case-run-warning-${$stage[3]}-${case.uid}">
-                                                                                                    <code>$logs['warning']</code>
-                                                                                                </div>
-                                                                                            </section>
-                                                                                       
-                                                                                       </section>
-                                                                                    </div>
-                                                                                </article>
-                                                                            </div>
-                                                                            #set $default_tab = False
-                                                                        #end if
-                                                                    #end for
-                                                                </section>
-                                                            </div>
-                                                        #else
-                                                            <div class="notification note">
-                                                                <p>
-                                                                    <strong>Note:</strong> No test case run information.
-                                                                </p>
-                                                            </div>
-                                                        #end if 
-                                                        
-                                                    </div>
-                                                    
-                                                    <div class="tab" id="tab-inner-case-fin-${case.uid}">
-                                                        #set $fin_stages = self.get_case_finalize_stages($case_stages)
-                                                        
-                                                        #if len($fin_stages) and self.has_action($fin_stages)
-                                                            <div class="sidetabs">
-                                                                <nav class="sidetab-switch">
-                                                                    <ul>
-                                                                        #set $default_tab = True
-                                                                        #for $i, $stage in enumerate($fin_stages)
-                                                                            
-                                                                            #if self.participates($stage)
-                                                                                #set $failure = self.has_failure($stage)
-                                                                                <li class="${'failure' if $failure else 'success'}">
-                                                                                   <a href="#sidetab-inner-case-fin-${stage[3]}-${case.uid}"
-                                                                                      class="${'default-sidetab' if $default_tab else ''}">
-                                                                                       $stage[3]
-                                                                                   </a>
-                                                                                </li>
-                                                                                #set $default_tab = False
-                                                                            #end if
-                                                                        #end for
-                                                                    </ul>
-                                                                </nav>
-                                                                
-                                                                <section>
-                                                                    #set $default_tab = True
-                                                                    #for $i, $stage in enumerate($fin_stages)
-                                                                        
-                                                                        #if self.participates($stage)
-                                                                            <div class="sidetab ${'default-sidetab' if $default_tab else ''}" 
-                                                                                 id="sidetab-inner-case-fin-${stage[3]}-${case.uid}">
-                                                                                <article class="full-block nested light">                                       
-                                                                                    <div class="article-container">
-                                                                                    <section>
-                                                                                          #set $logs = self.format_log($stage)
-                                                                                          
-                                                                                            <header>
-                                                                                                <h2><span>initialized at $stage[0].time[:8] with return code $stage[1][2]</span></h2>
-                                                                                                <nav>
-                                                                                                    <ul class="tab-switch">
-                                                                                                        <li>
-                                                                                                        <a class="default-tab" href="#tab-log-case-fin-all-${$stage[3]}-${run.uid}">All</a>
-                                                                                                        </li>
-                                                                                                        <li>
-                                                                                                        <a href="#tab-log-case-fin-important-${$stage[3]}-${run.uid}">Important</a>
-                                                                                                        </li>
-                                                                                                        <li>
-                                                                                                        <a href="#tab-log-case-fin-error-${$stage[3]}-${run.uid}">Errors</a>
-                                                                                                        </li>
-                                                                                                        <li>
-                                                                                                        <a href="#tab-log-case-fin-warning-${$stage[3]}-${run.uid}">Warnings</a>
-                                                                                                        </li>
-                                                                                                    </ul>
-                                                                                                </nav>
-                                                                                            </header>
-                                                                                            
-                                                                                            <section>
-                                                                                                <div class="tab default-tab" id="tab-log-case-fin-all-${$stage[3]}-${run.uid}">
-                                                                                                    <code>$logs['all']</code>
-                                                                                                </div>
-                                                                                                <div class="tab" id="tab-log-case-fin-important-${$stage[3]}-${run.uid}">
-                                                                                                    <code>$logs['important']</code>
-                                                                                                </div>
-                                                                                                <div class="tab" id="tab-log-case-fin-error-${$stage[3]}-${run.uid}">
-                                                                                                    <code>$logs['error']</code>
-                                                                                                </div>
-                                                                                                <div class="tab" id="tab-log-case-fin-warning-${$stage[3]}-${run.uid}">
-                                                                                                    <code>$logs['warning']</code>
-                                                                                                </div>
-                                                                                            </section>
-                                                                                       
-                                                                                       </section>
-                                                                                    </div>
-                                                                                </article>
-                                                                            </div>
-                                                                            #set $default_tab = False
-                                                                        #end if
-                                                                    #end for
-                                                                </section>
-                                                            </div>
-                                                        #else
-                                                            <div class="notification note">
-                                                                <p>
-                                                                    <strong>Note:</strong> No test case finalization information.
-                                                                </p>
-                                                            </div>
-                                                        #end if 
-                                                        
-                                                    </div>
-                                                </section>
-
-                                            </div>  
+                                                            #set $case_stages = $run.getTestCaseStages($case.uid)
+                                                            #set $failure = self.has_failures($case_stages)
+                                                            <li class="${'failure' if $failure else 'success'}">
+                                                                <a href="#tab-case-run-${case.uid}"
+                                                                   class="${'default-tab' if $default_tab else ''}">
+                                                                    <strong>$case.name</strong>
+                                                                </a>
+                                                            </li>
+                                                            #set $default_tab = False
+                                                        #end for
+                                                    </ul>
+                                                </nav>
+                                            </header>
                                             
-                                        #end for
-                                        
+                                            <section>
+                                                #set $default_tab = True
+                                                #for $i, $case in enumerate($run.cases.itervalues())
+                                                    #set $case_stages = $run.getTestCaseStages($case.uid)
+                                                    <div class="tab ${'default-tab' if $default_tab else ''}" id="tab-case-run-${case.uid}">
+        
+                                                        <header class="small">
+                                                            <nav class="leftnav">
+                                                                  <ul class="tab-switch">
+                                                                      
+                                                                      #set $init_stages = self.get_case_init_stages($case_stages)
+                                                                      #set $failure = self.has_failures($init_stages)
+                                                                      <li class="${'failure' if $failure else 'success'}">
+                                                                          <a href="#tab-inner-case-init-${case.uid}" class="default-tab">Initialization</a>
+                                                                      </li>
+                                                                      
+                                                                      #set $run_stages = self.get_case_run_stages($case_stages)
+                                                                      #set $failure = self.has_failures($run_stages)
+                                                                      <li class="${'failure' if $failure else 'success'}">
+                                                                          <a href="#tab-inner-case-run-${case.uid}">Run</a>
+                                                                      </li>
+                                                                      
+                                                                      #set $fin_stages = self.get_case_finalize_stages($case_stages)
+                                                                      #set $failure = self.has_failures($fin_stages)
+                                                                      <li class="${'failure' if $failure else 'success'}">
+                                                                          <a href="#tab-inner-case-fin-${case.uid}">Finalization</a>
+                                                                      </li>
+                                                                      
+                                                                  </ul>
+                                                            </nav>
+                                                        </header>
+                                                        
+                                                        <section>
+                                                            <div class="tab default-tab" id="tab-inner-case-init-${case.uid}">
+                                                                
+                                                                #set $init_stages = self.get_case_init_stages($case_stages)
+                                                                   #if len($init_stages)
+                                                                       <div class="sidetabs">
+                                                                        <nav class="sidetab-switch">
+                                                                            <ul>
+                                                                                #set $default_tab = True
+                                                                                #for $i, $stage in enumerate($init_stages)
+                            
+                                                                                    #if self.participates($stage)
+                                                                                        #set $failure = self.has_failure($stage)
+                                                                                        #set $host = $stage[3].replace('.', '-')
+                                                                                        <li class="${'failure' if $failure else 'success'}">
+                                                                                           <a href="#sidetab-inner-case-init-${host}-${case.uid}"
+                                                                                              class="${'default-sidetab' if $default_tab else ''}">
+                                                                                              $stage[3]
+                                                                                           </a>
+                                                                                        </li>
+                                                                                        #set $default_tab = False
+                                                                                    #end if
+                                                                                #end for
+                                                                            </ul>
+                                                                        </nav>
+                                                                    
+                                                                        <section>
+                                                                            #set $default_tab = True 
+                                                                            #for $i, $stage in enumerate($init_stages)
+                                                                                #set $host = $stage[3].replace('.', '-')
+                                                                                
+                                                                                #if self.participates($stage)
+                                                                                    <div class="sidetab ${'default-sidetab' if $default_tab else ''}" 
+                                                                                         id="sidetab-inner-case-init-${host}-${case.uid}">
+                                                                                        <article class="full-block nested light">                                       
+                                                                                            <div class="article-container">
+                                                                                            <section>
+                                                                                                  #set $logs = self.format_log($stage)
+                                                                                                    <header>
+                                                                                                        <h2><span>initialized at $stage[0].time[:8] with return code $stage[1][2]</span></h2>
+                                                                                                        <nav>
+                                                                                                            <ul class="tab-switch">
+                                                                                                                <li>
+                                                                                                                <a class="default-tab" href="#tab-log-case-init-all-${host}-${case.uid}">All</a>
+                                                                                                                </li>
+                                                                                                                <li>
+                                                                                                                <a href="#tab-log-case-init-important-${host}-${case.uid}">Important</a>
+                                                                                                                </li>
+                                                                                                                <li>
+                                                                                                                <a href="#tab-log-case-init-error-${host}-${case.uid}">Errors</a>
+                                                                                                                </li>
+                                                                                                                <li>
+                                                                                                                <a href="#tab-log-case-init-warning-${host}-${case.uid}">Warnings</a>
+                                                                                                                </li>
+                                                                                                                <li>
+                                                                                                                <a href="#tab-log-case-init-xrd-${host}-${case.uid}">xrootd log</a>
+                                                                                                                </li>
+                                                                                                                <li>
+                                                                                                                <a href="#tab-log-case-init-cmsd-${host}-${case.uid}">cmsd log</a>
+                                                                                                                </li>
+                                                                                                            </ul>
+                                                                                                        </nav>
+                                                                                                    </header>
+                                                                                                    
+                                                                                                    <section>
+                                                                                                        <div class="tab default-tab" id="tab-log-case-init-all-${host}-${case.uid}">
+                                                                                                            <code>$logs['all']</code>
+                                                                                                        </div>
+                                                                                                        <div class="tab" id="tab-log-case-init-important-${host}-${case.uid}">
+                                                                                                            <code>$logs['important']</code>
+                                                                                                        </div>
+                                                                                                        <div class="tab" id="tab-log-case-init-error-${host}-${case.uid}">
+                                                                                                            <code>$logs['error']</code>
+                                                                                                        </div>
+                                                                                                        <div class="tab" id="tab-log-case-init-warning-${host}-${case.uid}">
+                                                                                                            <code>$logs['warning']</code>
+                                                                                                        </div>
+                                                                                                        <div class="tab" id="tab-log-case-init-xrd-${host}-${case.uid}">
+                                                                                                            <code>$stage[1][3]</code>
+                                                                                                        </div>
+                                                                                                        <div class="tab" id="tab-log-case-init-cmsd-${host}-${case.uid}">
+                                                                                                            <code>$stage[1][4]</code>
+                                                                                                        </div>
+                                                                                                    </section>
+                                                                                               
+                                                                                               </section>
+                                                                                            </div>
+                                                                                        </article>
+                                                                                    </div>
+                                                                                    #set $default_tab = False
+                                                                                #end if                                                                                    
+                                                                            #end for
+                                                                        </section>
+                                                                    </div>
+                                                                    #else
+                                                                        <div class="notification note">
+                                                                            <p>
+                                                                                <strong>Note:</strong> No test case initialization information.
+                                                                            </p>
+                                                                        </div>
+                                                                    #end if 
+                                                            </div>
+                                                            
+                                                            <div class="tab" id="tab-inner-case-run-${case.uid}">
+                                                                #set $run_stages = self.get_case_run_stages($case_stages)
+                                                                
+                                                                #if len($run_stages)
+                                                                    <div class="sidetabs">
+                                                                        <nav class="sidetab-switch">
+                                                                            <ul>
+                                                                                #set $default_tab = True
+                                                                                #for $i, $stage in enumerate($run_stages)
+        
+                                                                                    #if self.participates($stage)
+                                                                                        #set $failure = self.has_failure($stage)
+                                                                                        #set $host = $stage[3].replace('.', '-')
+                                                                                        <li class="${'failure' if $failure else 'success'}">
+                                                                                           <a href="#sidetab-inner-case-run-${host}-${case.uid}"
+                                                                                              class="${'default-sidetab' if $default_tab else ''}">
+                                                                                               $stage[3]
+                                                                                           </a>
+                                                                                        </li>
+                                                                                        #set $default_tab = False
+                                                                                    #end if
+                                                                                #end for
+                                                                            </ul>
+                                                                        </nav>
+                                                                        
+                                                                        <section>
+                                                                            #set $default_tab = True     
+                                                                            #for $i, $stage in enumerate($run_stages)
+                                                                                #set $host = $stage[3].replace('.', '-')
+                                                                                
+                                                                                #if self.participates($stage)
+                                                                                    <div class="sidetab ${'default-sidetab' if $default_tab else ''}" 
+                                                                                         id="sidetab-inner-case-run-${host}-${case.uid}">
+                                                                                        <article class="full-block nested light">                                       
+                                                                                            <div class="article-container">
+                                                                                            <section>
+                                                                                                  #set $logs = self.format_log($stage)
+                                                                                                  
+                                                                                                    <header>
+                                                                                                        <h2><span>run at $stage[0].time[:8] with return code $stage[1][2]</span></h2>
+                                                                                                        <nav>
+                                                                                                            <ul class="tab-switch">
+                                                                                                                <li>
+                                                                                                                <a class="default-tab" href="#tab-log-case-run-all-${host}-${case.uid}">All</a>
+                                                                                                                </li>
+                                                                                                                <li>
+                                                                                                                <a href="#tab-log-case-run-important-${host}-${case.uid}">Important</a>
+                                                                                                                </li>
+                                                                                                                <li>
+                                                                                                                <a href="#tab-log-case-run-error-${host}-${case.uid}">Errors</a>
+                                                                                                                </li>
+                                                                                                                <li>
+                                                                                                                <a href="#tab-log-case-run-warning-${host}-${case.uid}">Warnings</a>
+                                                                                                                </li>
+                                                                                                                <li>
+                                                                                                                <a href="#tab-log-case-run-xrd-${host}-${case.uid}">xrootd log</a>
+                                                                                                                </li>
+                                                                                                                <li>
+                                                                                                                <a href="#tab-log-case-run-cmsd-${host}-${case.uid}">cmsd log</a>
+                                                                                                                </li>
+                                                                                                            </ul>
+                                                                                                        </nav>
+                                                                                                    </header>
+                                                                                                    
+                                                                                                    <section>
+                                                                                                        <div class="tab default-tab" id="tab-log-case-run-all-${host}-${case.uid}">
+                                                                                                            <code>$logs['all']</code>
+                                                                                                        </div>
+                                                                                                        <div class="tab" id="tab-log-case-run-important-${host}-${case.uid}">
+                                                                                                            <code>$logs['important']</code>
+                                                                                                        </div>
+                                                                                                        <div class="tab" id="tab-log-case-run-error-${host}-${case.uid}">
+                                                                                                            <code>$logs['error']</code>
+                                                                                                        </div>
+                                                                                                        <div class="tab" id="tab-log-case-run-warning-${host}-${case.uid}">
+                                                                                                            <code>$logs['warning']</code>
+                                                                                                        </div>
+                                                                                                        <div class="tab" id="tab-log-case-run-xrd-${host}-${case.uid}">
+                                                                                                            <code>$stage[1][3]</code>
+                                                                                                        </div>
+                                                                                                        <div class="tab" id="tab-log-case-run-cmsd-${host}-${case.uid}">
+                                                                                                            <code>$stage[1][4]</code>
+                                                                                                        </div>
+                                                                                                    </section>
+                                                                                               
+                                                                                               </section>
+                                                                                            </div>
+                                                                                        </article>
+                                                                                    </div>
+                                                                                    #set $default_tab = False
+                                                                                #end if
+                                                                            #end for
+                                                                        </section>
+                                                                    </div>
+                                                                #else
+                                                                    <div class="notification note">
+                                                                        <p>
+                                                                            <strong>Note:</strong> No test case run information.
+                                                                        </p>
+                                                                    </div>
+                                                                #end if 
+                                                                
+                                                            </div>
+                                                            
+                                                            <div class="tab" id="tab-inner-case-fin-${case.uid}">
+                                                                #set $fin_stages = self.get_case_finalize_stages($case_stages)
+                                                                
+                                                                #if len($fin_stages) and self.has_action($fin_stages)
+                                                                    <div class="sidetabs">
+                                                                        <nav class="sidetab-switch">
+                                                                            <ul>
+                                                                                #set $default_tab = True
+                                                                                #for $i, $stage in enumerate($fin_stages)
+                                                                                    
+                                                                                    #if self.participates($stage)
+                                                                                        #set $failure = self.has_failure($stage)
+                                                                                        #set $host = $stage[3].replace('.', '-')
+                                                                                        <li class="${'failure' if $failure else 'success'}">
+                                                                                           <a href="#sidetab-inner-case-fin-${host}-${case.uid}"
+                                                                                              class="${'default-sidetab' if $default_tab else ''}">
+                                                                                               $stage[3]
+                                                                                           </a>
+                                                                                        </li>
+                                                                                        #set $default_tab = False
+                                                                                    #end if
+                                                                                #end for
+                                                                            </ul>
+                                                                        </nav>
+                                                                        
+                                                                        <section>
+                                                                            #set $default_tab = True
+                                                                            #for $i, $stage in enumerate($fin_stages)
+                                                                                #set $host = $stage[3].replace('.', '-')
+                                                                                
+                                                                                #if self.participates($stage)
+                                                                                    <div class="sidetab ${'default-sidetab' if $default_tab else ''}" 
+                                                                                         id="sidetab-inner-case-fin-${host}-${case.uid}">
+                                                                                        <article class="full-block nested light">                                       
+                                                                                            <div class="article-container">
+                                                                                            <section>
+                                                                                                  #set $logs = self.format_log($stage)
+                                                                                                  
+                                                                                                    <header>
+                                                                                                        <h2><span>finalized at $stage[0].time[:8] with return code $stage[1][2]</span></h2>
+                                                                                                        <nav>
+                                                                                                            <ul class="tab-switch">
+                                                                                                                <li>
+                                                                                                                <a class="default-tab" href="#tab-log-case-fin-all-${host}-${case.uid}">All</a>
+                                                                                                                </li>
+                                                                                                                <li>
+                                                                                                                <a href="#tab-log-case-fin-important-${host}-${case.uid}">Important</a>
+                                                                                                                </li>
+                                                                                                                <li>
+                                                                                                                <a href="#tab-log-case-fin-error-${host}-${case.uid}">Errors</a>
+                                                                                                                </li>
+                                                                                                                <li>
+                                                                                                                <a href="#tab-log-case-fin-warning-${host}-${case.uid}">Warnings</a>
+                                                                                                                </li>
+                                                                                                                <li>
+                                                                                                                <a href="#tab-log-case-fin-xrd-${host}-${case.uid}">xrootd log</a>
+                                                                                                                </li>
+                                                                                                                <li>
+                                                                                                                <a href="#tab-log-case-fin-cmsd-${host}-${case.uid}">cmsd log</a>
+                                                                                                                </li>
+                                                                                                            </ul>
+                                                                                                        </nav>
+                                                                                                    </header>
+                                                                                                    
+                                                                                                    <section>
+                                                                                                        <div class="tab default-tab" id="tab-log-case-fin-all-${host}-${case.uid}">
+                                                                                                            <code>$logs['all']</code>
+                                                                                                        </div>
+                                                                                                        <div class="tab" id="tab-log-case-fin-important-${host}-${case.uid}">
+                                                                                                            <code>$logs['important']</code>
+                                                                                                        </div>
+                                                                                                        <div class="tab" id="tab-log-case-fin-error-${host}-${case.uid}">
+                                                                                                            <code>$logs['error']</code>
+                                                                                                        </div>
+                                                                                                        <div class="tab" id="tab-log-case-fin-warning-${host}-${case.uid}">
+                                                                                                            <code>$logs['warning']</code>
+                                                                                                        </div>
+                                                                                                        <div class="tab" id="tab-log-case-fin-xrd-${host}-${case.uid}">
+                                                                                                            <code>$stage[1][3]</code>
+                                                                                                        </div>
+                                                                                                        <div class="tab" id="tab-log-case-fin-cmsd-${host}-${case.uid}">
+                                                                                                            <code>$stage[1][4]</code>
+                                                                                                        </div>
+                                                                                                    </section>
+                                                                                               
+                                                                                               </section>
+                                                                                            </div>
+                                                                                        </article>
+                                                                                    </div>
+                                                                                    #set $default_tab = False
+                                                                                #end if
+                                                                            #end for
+                                                                        </section>
+                                                                    </div>
+                                                                #else
+                                                                    <div class="notification note">
+                                                                        <p>
+                                                                            <strong>Note:</strong> No test case finalization information.
+                                                                        </p>
+                                                                    </div>
+                                                                #end if 
+                                                                
+                                                            </div>
+                                                        </section>
+        
+                                                    </div>  
+                                                    #set $default_tab = False
+                                                #end for
+                                            </section>
+                                        </div>
+        
                                         <div class="tab" id="tab-suite-fin-${run.uid}">
                                             #set $fin_stages = $run.getTestCaseStages("suite_finalized") 
                                             
@@ -741,8 +825,9 @@
                                                                 
                                                                 #if self.participates($stage)
                                                                     #set $failure = self.has_failure($stage)
+                                                                    #set $host = $stage[3].replace('.', '-')
                                                                     <li class="${'failure' if $failure else 'success'}">
-                                                                        <a href="#sidetab-inner-suite-fin-${stage[3]}-${run.uid}" 
+                                                                        <a href="#sidetab-inner-suite-fin-${host}-${run.uid}" 
                                                                            class="${'default-sidetab' if $default_tab else ''}">
                                                                                 $stage[3]
                                                                         </a>
@@ -757,47 +842,60 @@
                                                     <section>
                                                     #set $default_tab = True
                                                     #for $i, $stage in enumerate($fin_stages)
+                                                        #set $host = $stage[3].replace('.', '-')
                                                         
                                                         #if self.participates($stage)
                                                             <div class="sidetab ${'default-sidetab' if $default_tab else ''}" 
-                                                                 id="sidetab-inner-suite-fin-${stage[3]}-${run.uid}">        
+                                                                 id="sidetab-inner-suite-fin-${host}-${run.uid}">        
                                                                 <article class="full-block nested light">                                       
                                                                     <div class="article-container">
                                                                        <section>
                                                                             #set $logs = self.format_log($stage)
                                                                             
                                                                               <header>
-                                                                                  <h2><span>initialized at $stage[0].time[:8] with return code $stage[1][2]</span></h2>
+                                                                                  <h2><span>finalized at $stage[0].time[:8] with return code $stage[1][2]</span></h2>
                                                                                   <nav>
                                                                                       <ul class="tab-switch">
                                                                                           <li>
-                                                                                          <a class="default-tab" href="#tab-log-fin-all-${$stage[3]}-${run.uid}">All</a>
+                                                                                          <a class="default-tab" href="#tab-log-fin-all-${host}-${run.uid}">All</a>
                                                                                           </li>
                                                                                           <li>
-                                                                                          <a href="#tab-log-fin-important-${$stage[3]}-${run.uid}">Important</a>
+                                                                                          <a href="#tab-log-fin-important-${host}-${run.uid}">Important</a>
                                                                                           </li>
                                                                                           <li>
-                                                                                          <a href="#tab-log-fin-error-${$stage[3]}-${run.uid}">Errors</a>
+                                                                                          <a href="#tab-log-fin-error-${host}-${run.uid}">Errors</a>
                                                                                           </li>
                                                                                           <li>
-                                                                                          <a href="#tab-log-fin-warning-${$stage[3]}-${run.uid}">Warnings</a>
+                                                                                          <a href="#tab-log-fin-warning-${host}-${run.uid}">Warnings</a>
+                                                                                          </li>
+                                                                                          <li>
+                                                                                          <a href="#tab-log-fin-xrd-${host}-${run.uid}">xrootd log</a>
+                                                                                          </li>
+                                                                                          <li>
+                                                                                          <a href="#tab-log-fin-cmsd-${host}-${run.uid}">cmsd log</a>
                                                                                           </li>
                                                                                       </ul>
                                                                                   </nav>
                                                                               </header>
                                                                               
                                                                               <section>
-                                                                                  <div class="tab default-tab" id="tab-log-fin-all-${$stage[3]}-${run.uid}">
+                                                                                  <div class="tab default-tab" id="tab-log-fin-all-${host}-${run.uid}">
                                                                                       <code>$logs['all']</code>
                                                                                   </div>
-                                                                                  <div class="tab" id="tab-log-fin-important-${$stage[3]}-${run.uid}">
+                                                                                  <div class="tab" id="tab-log-fin-important-${host}-${run.uid}">
                                                                                       <code>$logs['important']</code>
                                                                                   </div>
-                                                                                  <div class="tab" id="tab-log-fin-error-${$stage[3]}-${run.uid}">
+                                                                                  <div class="tab" hostid="tab-log-fin-error-${host}-${run.uid}">
                                                                                       <code>$logs['error']</code>
                                                                                   </div>
-                                                                                  <div class="tab" id="tab-log-fin-warning-${$stage[3]}-${run.uid}">
+                                                                                  <div class="tab" id="tab-log-fin-warning-${host}-${run.uid}">
                                                                                       <code>$logs['warning']</code>
+                                                                                  </div>
+                                                                                  <div class="tab" id="tab-log-fin-xrd-${host}-${run.uid}">
+                                                                                      <code>$stage[1][3]</code>
+                                                                                  </div>
+                                                                                  <div class="tab" id="tab-log-fin-cmsd-${host}-${run.uid}">
+                                                                                      <code>$stage[1][4]</code>
                                                                                   </div>
                                                                               </section>
                                                                          
@@ -846,4 +944,4 @@
 <!-- /Main Content -->
 
 </div>
-<!-- /Fixed Layout Wrapper -->
+</body>

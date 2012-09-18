@@ -132,7 +132,7 @@ class XrdTestSlave(Runnable):
             else:
                 LOGGER.info("Running script from file: " + cmd)
 
-        command = command.replace("@slavename@", socket.gethostname())
+        command = command.replace("@slavename@", socket.getfqdn())
 
         res = ('Nothing executed', '', '0')
         localError = ''
@@ -140,9 +140,24 @@ class XrdTestSlave(Runnable):
             process = Popen(command, shell="None", \
                         stdout=subprocess.PIPE, \
                         stderr=subprocess.STDOUT)
-
             stdout, stderr = process.communicate()
-            res = (stdout, stderr, str(process.returncode))
+            retcode = str(process.returncode)
+            
+            LOGGER.info("Grabbing current xrootd and cmsd logs ...")
+            
+            command = 'cat /var/log/xrootd/%s/xrootd.log' % socket.gethostname()
+            process = Popen(command, shell="None", \
+                        stdout=subprocess.PIPE, \
+                        stderr=subprocess.STDOUT)
+            xrdlog, junk = process.communicate()
+            
+            command = 'cat /var/log/xrootd/%s/cmsd.log' % socket.gethostname()
+            process = Popen(command, shell="None", \
+                        stdout=subprocess.PIPE, \
+                        stderr=subprocess.STDOUT)
+            cmsdlog, junk = process.communicate()
+            
+            res = (stdout, stderr, retcode, xrdlog, cmsdlog)
         except ValueError, e:
             localError += str(e)
             LOGGER.error("Execution of shell script failed: %s" % e)
@@ -154,9 +169,9 @@ class XrdTestSlave(Runnable):
             LOGGER.error("Execution of shell script failed: %s" % e)
 
         if localError:
-            (a, b, c) = res
+            (a, b, c, d) = res
             t = "\nERRORS THAT OCCURED ON TEST SLAVE:\n "
-            res = (a, b + t + str(localError), '1')
+            res = (a, b + t + str(localError), '1', d)
 
         return res
 
@@ -210,7 +225,7 @@ class XrdTestSlave(Runnable):
             LOGGER.debug("Connected to master.")
         try:
             self.sockStream = FixedSockStream(self.sockStream)
-            self.sockStream.send(("slave", socket.gethostname()))
+            self.sockStream.send(("slave", socket.getfqdn()))
         except socket.error, e:
             LOGGER.exception(e)
             return None
@@ -236,7 +251,7 @@ class XrdTestSlave(Runnable):
         msg.state = State(TestSuite.S_SLAVE_TEST_INITIALIZED)
 
         LOGGER.info("Initialized test %s [%s] with result %s:" % \
-                    (testName, suiteName, msg.result))
+                    (testName, suiteName, msg.result[2]))
 
         return msg
 
@@ -255,7 +270,7 @@ class XrdTestSlave(Runnable):
         msg.state = State(TestSuite.S_SLAVE_TEST_RUN_FINISHED)
 
         LOGGER.info("Run finished test %s [%s] with result %s:" % \
-                    (testName, suiteName, msg.result))
+                    (testName, suiteName, msg.result[2]))
 
         return msg
 
@@ -274,7 +289,7 @@ class XrdTestSlave(Runnable):
         msg.state = State(TestSuite.S_SLAVE_TEST_FINALIZED)
 
         LOGGER.info("Finalized test %s [%s] with result %s:" % \
-                    (testName, suiteName, msg.result))
+                    (testName, suiteName, msg.result[2]))
 
         return msg
 
@@ -286,7 +301,7 @@ class XrdTestSlave(Runnable):
         
         # Ask the master for the necessary tags so we can replace them in
         # the script
-        cmd = self.requestTags(cmd, socket.gethostname())
+        cmd = self.requestTags(cmd, socket.getfqdn())
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
         msg.suiteName = suiteName

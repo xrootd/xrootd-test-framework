@@ -1,19 +1,34 @@
-$(document).ready(main);
-
-// Content update ajax request
-// Just reloads the whole page, should really load individual divs for speed
-setInterval(function() {
-	var postdata = {path: $(location).attr('href')};
-	$.post('update', postdata, function(data) {
-        $('#fixed-wrapper').replaceWith(data);
-        main();
+$(function() {
+    $(document).ready(function(){
+        main()
+        $('html').show();
     });
-	return false;
-}, 2000);
-		
-function main() {
-    
-    // Notification Close Button
+});
+
+//Content update ajax request. Only update pages with class "update".
+if ($('#fixed-wrapper').hasClass('update')) {
+    setInterval(function() {
+        
+        var anchors = new Array();
+        $('a.current').each(function () {
+            anchors.push($(this).attr('href'));
+        });
+
+        var postdata = {
+            path : window.location.href
+        };
+
+        $.post('/update', postdata, function(data) {
+            $('#fixed-wrapper').replaceWith(data);
+            main(anchors);
+        });
+        return false;
+    }, 1000);
+}
+
+function main(anchors) {
+
+ // Notification Close Button
     $('.close-notification').click(
         function () {
             $(this).parent().fadeTo(350, 0, function () {$(this).slideUp(600);});
@@ -88,54 +103,68 @@ function main() {
     );
 
     // Content box tabs and sidetabs
-    $('.tab, .sidetab').hide(); // Hide the content divs
-    $('.default-tab, .default-sidetab').show(); // Show the div with class 'default-tab'
-    $('.tab-switch a.default-tab, .sidetab-switch a.default-sidetab').addClass('current'); // Set the class of the default tab link to 'current'
+    $('.tab, .sidetab').hide();
+    $('.default-tab, .default-sidetab').show(); 
+    $('.tab-switch a.default-tab, .sidetab-switch a.default-sidetab').addClass('current');
 
+    if ($('#fixed-wrapper').hasClass('update')) {
+        if (anchors instanceof Array) {
+            var i;
+            for (i = 0; i < anchors.length; i++) {
+                
+                $('.tab, .sidetab').hide();
+                $('.tab-switch a.default-tab, .sidetab-switch a.default-sidetab').removeClass('current');
+                
+                $("a[href='"+anchors[i]+"']").addClass('current');
+                $(anchors[i]).show();
+            }
+        }
+    }
+    
     if (window.location.hash && window.location.hash.match(/^#tab\d+/)) {
         var tabID = window.location.hash;
         
-        $('.tab-switch a[href='+tabID+']').addClass('current').parent().siblings().find('a').removeClass('current');
+        $(".tab-switch a[href='"+tabID+"']").addClass('current').parent().siblings().find('a').removeClass('current');
         $('div'+tabID).parent().find('.tab').hide();
         $('div'+tabID).show();
     } else if (window.location.hash && window.location.hash.match(/^#sidetab\d+/)) {
         var sidetabID = window.location.hash;
         
-        $('.sidetab-switch a[href='+sidetabID+']').addClass('current');
+        $(".sidetab-switch a[href='"+sidetabID+"']").addClass('current');
         $('div'+sidetabID).parent().find('.sidetab').hide();
         $('div'+sidetabID).show();
     } else if (window.location.hash && window.location.hash.match(/^#tab.+/)) {
-        var sidetabID = window.location.hash;
+        var tabID = window.location.hash;
         
-        $('.sidetab-switch a[href='+sidetabID+']').addClass('current');
+        $(".tab-switch a[href='"+tabID+"']").addClass('current');
         $('div'+sidetabID).parent().find('.sidetab').hide();
         $('div'+sidetabID).show();
     } else if (window.location.hash && window.location.hash.match(/^#sidetab.+/)) {
         var sidetabID = window.location.hash;
         
-        $('.sidetab-switch a[href='+sidetabID+']').addClass('current');
+        $(".sidetab-switch a[href='"+sidetabID+"']").addClass('current');
         $('div'+sidetabID).parent().find('.sidetab').hide();
         $('div'+sidetabID).show();
     }
     
     $('.tab-switch a').click(
         function() { 
-            var tab = $(this).attr('href'); // Set variable 'tab' to the value of href of clicked tab
-            $(this).parent().siblings().find('a').removeClass('current'); // Remove 'current' class from all tabs
-            $(this).addClass('current'); // Add class 'current' to clicked tab
-            $(tab).siblings('.tab').hide(); // Hide all content divs
-            $(tab).show(); // Show the content div with the id equal to the id of clicked tab
+            var tab = $(this).attr('href');
+            $(this).parent().siblings().find('a').removeClass('current');
+            $(this).addClass('current');
+            $(tab).siblings('.tab').hide();
+            $(tab).show(); 
             return false;
         }
     );
 
     $('.sidetab-switch a').click(
         function() { 
-            var sidetab = $(this).attr('href'); // Set variable 'sidetab' to the value of href of clicked sidetab
-            $(this).parent().siblings().find('a').removeClass('current'); // Remove 'current' class from all sidetabs
-            $(this).addClass('current'); // Add class 'current' to clicked sidetab
-            $(sidetab).siblings('.sidetab').hide(); // Hide all content divs
-            $(sidetab).show(); // Show the content div with the id equal to the id of clicked tab
+            var sidetab = $(this).attr('href');
+            $(this).parent().siblings().find('a').removeClass('current');
+            $(this).addClass('current');
+            $(sidetab).siblings('.sidetab').hide(); 
+            $(sidetab).show();
             return false;
         }
     );
@@ -160,10 +189,10 @@ function main() {
         }
     );
     
-    // Progress bar animation
-	$('.progress-bar').each(function() {
-		var progress = $(this).children().width();
-		$(this).children().css({ 'width':0 }).animate({width:progress},3000);
-	});
-	
+ // Progress bar animation
+    $('.progress-bar').each(function() {
+        var progress = $(this).children().width();
+        $(this).children().css({ 'width':0 }).animate({width:progress},3000);
+    });
+
 }

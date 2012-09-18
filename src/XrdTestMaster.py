@@ -305,65 +305,82 @@ class XrdTestMaster(Runnable):
                     except Exception, e:
                         LOGGER.error(("Error while scheduling job " + \
                                    "for test suite %s: %s") % (ts.name, e))
-    
+
     def handleSuiteDefinitionChanged(self, dirEvent):
         '''
         Handle event created any time definition of test suite changes.
         @param dirEvent:
         '''
         p = os.path.join(dirEvent.path, dirEvent.name)
-        (modName, ext, modPath, modFile) = extractSuiteName(p)
-
-        if ext != ".py":
-            return
-
-        LOGGER.info("Suit def changed (%s) in %s" % (dirEvent.maskname, p))
-
-        remMasks = ["IN_DELETE", "IN_MOVED_FROM"]
-        addMasks = ["IN_CREATE", "IN_MOVED_TO"]
-
-        # if removed of modified do tasks necessary while removing job
-        if dirEvent.maskname in remMasks or dirEvent.maskname == "IN_MODIFY":
-            try:
-                LOGGER.info("Undefining test suite: %s" % modName)
-                if self.testSuites.has_key(modName):
-                    # unschedule job connected to this test suite
-                    if self.testSuites[modName].jobFun:
-                        self.sched.unschedule_func(\
-                                                self.testSuites[modName].jobFun)
-                    # remove module from imports
-                    del sys.modules[modName]
-                    # remove testSuite from test suits' definitions
-                    del self.testSuites[modName]
-            except TestSuiteException, e:
-                LOGGER.error("Error while undefining: %s" % str(e))
-            except Exception, e:
-                LOGGER.error(("Error while defining test suite %s") % e)
-
-        #if file added or modified do tasks necessary while adding jobs 
-        if dirEvent.maskname in addMasks or \
-            dirEvent.maskname == "IN_MODIFY":
-            try:
-                # load single test suite definition
-                LOGGER.info("Defining test suite: %s" % modName)
-                suite = loadTestSuiteDef(p)
-                if suite:
-                    suite.checkIfDefComplete(self.clusters)
-                    suite.state = State(TestSuite.S_DEF_OK)
-                    # add job connected to added test suite
-                    suite.jobFun = self.executeJob(suite.name)
-                    self.sched.add_cron_job(suite.jobFun, **(suite.schedule))
-                    self.testSuites[suite.name] = suite
-            except TestSuiteException, e:
-                LOGGER.error("Error while defining: %s" % e)
-                suite = TestSuite()
-                suite.name = modName
-                suite.state = State((-1, e.desc))
-                self.testSuites[suite.name] = suite
-            except Exception, e:
-                # in case of any exception thron e.g. from scheduler
-                LOGGER.error(("Error while defining " + \
-                            " test suite %s") % e)
+        
+        # The APScheduler event masks are highly unreliable. Also, we might want
+        # to have a definition reloaded when a change is made to a non-uniquely
+        # named file, such as suite_init.sh. So, when a change is detected, 
+        # all definitions are reloaded from scratch.
+        
+        LOGGER.info("Suite definition changed (%s) in %s" % (dirEvent.maskname, p))
+        
+        for ts in self.testSuites.itervalues():
+            if ts.jobFun:
+                self.sched.unschedule_func(ts.jobFun)
+                
+        self.testSuites = dict()
+        
+        self.loadDefinitions()
+        
+        
+#        (modName, ext, modPath, modFile) = extractSuiteName(p)
+#
+#        if ext != ".py":
+#            return
+#
+#        LOGGER.info("Suit def changed (%s) in %s" % (dirEvent.maskname, p))
+#
+#        remMasks = ["IN_DELETE", "IN_MOVED_FROM"]
+#        addMasks = ["IN_CREATE", "IN_MOVED_TO"]
+#
+#        # if removed of modified do tasks necessary while removing job
+#        if dirEvent.maskname in remMasks or dirEvent.maskname == "IN_MODIFY":
+#            try:
+#                LOGGER.info("Undefining test suite: %s" % modName)
+#                if self.testSuites.has_key(modName):
+#                    # unschedule job connected to this test suite
+#                    if self.testSuites[modName].jobFun:
+#                        self.sched.unschedule_func(\
+#                                                self.testSuites[modName].jobFun)
+#                    # remove module from imports
+#                    del sys.modules[modName]
+#                    # remove testSuite from test suits' definitions
+#                    del self.testSuites[modName]
+#            except TestSuiteException, e:
+#                LOGGER.error("Error while undefining: %s" % str(e))
+#            except Exception, e:
+#                LOGGER.error(("Error while defining test suite %s") % e)
+#
+#        #if file added or modified do tasks necessary while adding jobs 
+#        if dirEvent.maskname in addMasks or \
+#            dirEvent.maskname == "IN_MODIFY":
+#            try:
+#                # load single test suite definition
+#                LOGGER.info("Defining test suite: %s" % modName)
+#                suite = loadTestSuiteDef(p)
+#                if suite:
+#                    suite.checkIfDefComplete(self.clusters)
+#                    suite.state = State(TestSuite.S_DEF_OK)
+#                    # add job connected to added test suite
+#                    suite.jobFun = self.executeJob(suite.name)
+#                    self.sched.add_cron_job(suite.jobFun, **(suite.schedule))
+#                    self.testSuites[suite.name] = suite
+#            except TestSuiteException, e:
+#                LOGGER.error("Error while defining: %s" % e)
+#                suite = TestSuite()
+#                suite.name = modName
+#                suite.state = State((-1, e.desc))
+#                self.testSuites[suite.name] = suite
+#            except Exception, e:
+#                # in case of any exception thron e.g. from scheduler
+#                LOGGER.error(("Error while defining " + \
+#                            " test suite %s") % e)
 
     def checkIfSuitsDefsComplete(self):
         '''
@@ -385,48 +402,55 @@ class XrdTestMaster(Runnable):
         @param dirEvent:
         '''
         p = os.path.join(dirEvent.path, dirEvent.name)
-        (modName, ext, modPath, modFile) = extractClusterName(p)
-
-        if ext != ".py":
-            return
-
-        LOGGER.info("Cluster def changed (%s) in %s: " % (dirEvent.maskname, p))
-
-        remMasks = ["IN_DELETE", "IN_MOVED_FROM"]
-        addMasks = ["IN_CREATE", "IN_MOVED_TO"]
-
-        # cluster definition removed or modified (same things in both cases)
-        if dirEvent.maskname in remMasks or dirEvent.maskname == "IN_MODIFY":
-            try:
-                LOGGER.info("Undefining cluster: %s" % modName)
-                if self.clusters.has_key(modName):
-                    # remove module from imports
-                    del sys.modules[modName]
-                    # remove cluster definition
-                    del self.clusters[modName]
-                # check if after deletion all test suits definitions are valid
-                self.checkIfSuitsDefsComplete()
-            except TestSuiteException, e:
-                LOGGER.error("Error while undefining: %s" % e)
-                for ts in self.testSuites.itervalues():
-                    if modName in ts.clusters:
-                        ts.state = State((-1, e.desc))
-            except ClusterManagerException, e:
-                LOGGER.error("Error while undefining: %s" % e)
-        # cluster definition added or modified (same things in both cases)
-        if dirEvent.maskname in addMasks or dirEvent.maskname == "IN_MODIFY":
-            try:
-                LOGGER.info("Defining cluster: %s" % modName)
-                clu = loadClusterDef(p, self.clusters.values(), True)
-                self.clusters[clu.name] = clu
-                # check if after adding some test suits definitions become valid
-                self.checkIfSuitsDefsComplete()
-            except (TestSuiteException, ClusterManagerException), e:
-                LOGGER.error("Error while defining: %s" % e)
-                clu = Cluster()
-                clu.name = modName
-                clu.state = State((-1, e.desc))
-                self.clusters[clu.name] = clu
+        
+        LOGGER.info("Cluster definition changed (%s) in %s: " % (dirEvent.maskname, p))
+        
+        self.clusters = dict()
+        self.loadDefinitions()
+        
+        
+#        (modName, ext, modPath, modFile) = extractClusterName(p)
+#
+#        if ext != ".py":
+#            return
+#
+#        LOGGER.info("Cluster def changed (%s) in %s: " % (dirEvent.maskname, p))
+#
+#        remMasks = ["IN_DELETE", "IN_MOVED_FROM"]
+#        addMasks = ["IN_CREATE", "IN_MOVED_TO"]
+#
+#        # cluster definition removed or modified (same things in both cases)
+#        if dirEvent.maskname in remMasks or dirEvent.maskname == "IN_MODIFY":
+#            try:
+#                LOGGER.info("Undefining cluster: %s" % modName)
+#                if self.clusters.has_key(modName):
+#                    # remove module from imports
+#                    del sys.modules[modName]
+#                    # remove cluster definition
+#                    del self.clusters[modName]
+#                # check if after deletion all test suits definitions are valid
+#                self.checkIfSuitsDefsComplete()
+#            except TestSuiteException, e:
+#                LOGGER.error("Error while undefining: %s" % e)
+#                for ts in self.testSuites.itervalues():
+#                    if modName in ts.clusters:
+#                        ts.state = State((-1, e.desc))
+#            except ClusterManagerException, e:
+#                LOGGER.error("Error while undefining: %s" % e)
+#        # cluster definition added or modified (same things in both cases)
+#        if dirEvent.maskname in addMasks or dirEvent.maskname == "IN_MODIFY":
+#            try:
+#                LOGGER.info("Defining cluster: %s" % modName)
+#                clu = loadClusterDef(p, self.clusters.values(), True)
+#                self.clusters[clu.name] = clu
+#                # check if after adding some test suits definitions become valid
+#                self.checkIfSuitsDefsComplete()
+#            except (TestSuiteException, ClusterManagerException), e:
+#                LOGGER.error("Error while defining: %s" % e)
+#                clu = Cluster()
+#                clu.name = modName
+#                clu.state = State((-1, e.desc))
+#                self.clusters[clu.name] = clu
 
 
     def slaveState(self, slave_name):
@@ -883,13 +907,14 @@ class XrdTestMaster(Runnable):
             elif self.runningSuite and self.suiteSessions.has_key(self.runningSuite.uid):
                 del self.suiteSessions[self.runningSuite.uid]
                 self.suiteSessions.sync()
-                
-            if self.runningSuite.name == test_suite_name:
-                self.runningSuite = None
             
             # Stop this suite's clusters.
             for cluster in self.testSuites[test_suite_name].clusters:
-                self.stopCluster(cluster)
+                if self.clustersHypervisor.has_key(cluster):
+                    self.stopCluster(cluster)
+                    
+        if self.runningSuite.name == test_suite_name:
+            self.runningSuite = None
                 
 
     def executeJob(self, test_suite_name):
@@ -1138,6 +1163,7 @@ class XrdTestMaster(Runnable):
 
                         self.removeJobs(msg.jobGroupId, \
                                         Job.INITIALIZE_TEST_SUITE)
+                        self.runningSuite = None
                 else:
                     slave.state = State(Slave.S_SUITE_INITIALIZED)
                     slave.state.suiteName = msg.suiteName
@@ -1253,7 +1279,7 @@ class XrdTestMaster(Runnable):
                 for cluster in self.clusters.itervalues():
                     if cluster.state == Cluster.S_ACTIVE:
                         for host in cluster.hosts:
-                            if host.name.split('.')[0] == slavename \
+                            if host.name == slavename \
                             and host.clusterName == cluster.name:
                                 disks = host.disks
                 

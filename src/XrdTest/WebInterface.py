@@ -165,6 +165,23 @@ class WebInterface:
                     'test_master': self.testMaster, 
                 }
         return tvars
+    
+    def ts_vars(self, ts_name):
+        vars = self.vars()
+        vars['testsuite'] = self.testMaster.testSuites[ts_name] \
+            if self.testMaster.testSuites.has_key(ts_name) else ts_name
+        
+        inner = []
+        outer = {}
+        all_runs = self.testMaster.retrieveAllSuiteSessions()
+        for key, runs in all_runs.iteritems():
+            for run in runs.itervalues():
+                if run.name == ts_name:
+                    inner.append(run)
+            outer.update({key: sorted(inner, key=lambda x: x.initDate, reverse=True)})
+
+        vars['all_runs'] = outer
+        return vars
 
     @cherrypy.expose
     def index(self):
@@ -175,23 +192,8 @@ class WebInterface:
     def testsuites(self, ts_name=None):
         cherrypy.tools.allow.callable()
         if ts_name:
-            tvars = self.vars()
-            tvars['testsuite'] = self.testMaster.testSuites[ts_name] \
-                if self.testMaster.testSuites.has_key(ts_name) else ts_name
-            
-            inner = []
-            outer = {}
-            all_runs = self.testMaster.retrieveAllSuiteSessions()
-            for key, runs in all_runs.iteritems():
-                for run in runs.itervalues():
-                    if run.name == ts_name:
-                        inner.append(run)
-                outer.update({key: sorted(inner, key=lambda x: x.initDate, reverse=True)})
-
-            tvars['all_runs'] = outer
-            
-            return self.disp("testsuite.html", tvars)
-        
+            vars = self.ts_vars(ts_name)
+            return self.disp("testsuite.html", vars)
         else:
             return self.disp("testsuites.html", self.vars())
     
@@ -293,8 +295,8 @@ class WebInterface:
     def action(self, type=None, testsuite=None): 
         cherrypy.tools.allow.callable()
         tvars = self.vars()
-        tvars['type'] = type if type else None
-        tvars['testsuite'] = testsuite if self.testMaster.testSuites.has_key(testsuite) else None
+        tvars['type'] = type
+        tvars['testsuite'] = testsuite
         
         template = os.path.join(self.webroot, 'auth.html')
         template = Template(file=template, searchList = [tvars])
@@ -303,14 +305,21 @@ class WebInterface:
     @cherrypy.expose
     def update(self, path):
         cherrypy.tools.allow.callable()
-        
-        file = path.split(os.sep)[-1] + '.html'
-        
         template = None
-        tfile = os.path.join(self.webroot, file)
+        vars = self.vars()
+        
+        if '#' in path:
+            path = path.split('#')[0]
+
+        file = path.split(os.sep)[-1]
+        if file in self.testMaster.testSuites.keys():
+            vars.update(self.ts_vars(file))
+            file = 'testsuite'
+        
+        tfile = os.path.join(self.webroot, file + '.html')
 
         try:
-            template = Template(file=tfile, searchList=[self.vars()])
+            template = Template(file=tfile, searchList=[vars])
         except Exception, e:
             LOGGER.error(str(e))
             return "An error occurred. Check log for details."

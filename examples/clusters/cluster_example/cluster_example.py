@@ -37,15 +37,18 @@ def getCluster():
     # As per the libvirt docs, the device name given here is not guaranteed to 
     # map to the same name in the guest OS. Incrementing the device name works
     # (i.e. disk1 = vda, disk2 = vdb etc.).
+    #
+    # Disk sizes should be larger than 10GB for data server nodes, otherwise 
+    # the node might not be selected by the cmsd.
     #---------------------------------------------------------------------------
-    metamanager1.disks =  [Disk('disk1', '5G', device='vda', mountPoint='/data')]
-    manager1.disks =  [Disk('disk1', '5G', device='vda', mountPoint='/data')]
-    manager2.disks =  [Disk('disk1', '5G', device='vda', mountPoint='/data')]
-    ds1.disks =  [Disk('disk1', '5G', device='vda', mountPoint='/data')]
-    ds2.disks =  [Disk('disk1', '5G', device='vda', mountPoint='/data')]
-    ds3.disks =  [Disk('disk1', '5G', device='vda', mountPoint='/data')]
-    ds4.disks =  [Disk('disk1', '5G', device='vda', mountPoint='/data')]
-    client1.disks =  [Disk('disk1', '5G', device='vda', mountPoint='/data')]
+    metamanager1.disks =  [Disk('disk1', '20G', device='vda', mountPoint='/data')]
+    manager1.disks =  [Disk('disk1', '20G', device='vda', mountPoint='/data')]
+    manager2.disks =  [Disk('disk1', '20G', device='vda', mountPoint='/data')]
+    ds1.disks =  [Disk('disk1', '20G', device='vda', mountPoint='/data')]
+    ds2.disks =  [Disk('disk1', '20G', device='vda', mountPoint='/data')]
+    ds3.disks =  [Disk('disk1', '20G', device='vda', mountPoint='/data')]
+    ds4.disks =  [Disk('disk1', '20G', device='vda', mountPoint='/data')]
+    client1.disks =  [Disk('disk1', '20G', device='vda', mountPoint='/data')]
     
     #---------------------------------------------------------------------------
     # Network definition

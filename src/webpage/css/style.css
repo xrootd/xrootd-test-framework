@@ -67,7 +67,7 @@ input,select {
 
 pre,code,kbd,samp {
     font-family: monospace, sans-serif;
-    white-space: pre;
+    white-space: pre-wrap;
 }
 
 html {
@@ -676,6 +676,12 @@ header.small {
     width: 100%;
     border-bottom: 1px solid #e6e6e6;
     padding-left: 11px;
+}
+
+header.small.sublog {
+    margin-left: 0px;
+    margin-top: 0px;
+    width: 99%
 }
 
 header.small nav.leftnav {
@@ -1989,6 +1995,11 @@ input.datepicker {
 
 .ie9 input.datepicker {
     background-position: 6px 5px;
+}
+
+form.log-select {
+    float: right;
+    margin-right: 20px;
 }
 
 /*  jQuery Datepicker  */

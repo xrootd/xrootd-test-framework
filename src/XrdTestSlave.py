@@ -107,6 +107,8 @@ class XrdTestSlave(Runnable):
         self.stopEvent = threading.Event()
         # Ran test cases, indexed by test.uid
         self.cases = {}
+        # Values to replace @tags@ with
+        self.tags = {}
 
     def executeSh(self, cmd):
         '''
@@ -115,7 +117,6 @@ class XrdTestSlave(Runnable):
         command = ""
         cmd = cmd.strip()
 
-        LOGGER.debug("executeSh: %s" % cmd)
         #reading a file contents
         if cmd[0:2] == "#!":
             LOGGER.info("Direct shell script to be executed.")
@@ -132,36 +133,32 @@ class XrdTestSlave(Runnable):
             else:
                 LOGGER.info("Running script from file: " + cmd)
 
-        command = command.replace("@slavename@", socket.getfqdn())
+        command = self.parseTags(command)
 
         res = ('Nothing executed', '', '0')
         localError = ''
         try:
-            process = Popen(command, shell="None", \
-                        stdout=subprocess.PIPE, \
-                        stderr=subprocess.STDOUT)
-            stdout, stderr = process.communicate()
-            retcode = str(process.returncode)
-            
-            LOGGER.info("Grabbing current xrootd and cmsd logs ...")
-            
-            command = 'cat /var/log/xrootd/%s/xrootd.log' % socket.gethostname()
-            process = Popen(command, shell="None", \
-                        stdout=subprocess.PIPE, \
-                        stderr=subprocess.STDOUT)
-            xrdlog, junk = process.communicate()
-            
-            command = 'cat /var/log/xrootd/%s/cmsd.log' % socket.gethostname()
-            process = Popen(command, shell="None", \
-                        stdout=subprocess.PIPE, \
-                        stderr=subprocess.STDOUT)
-            cmsdlog, junk = process.communicate()
-            
-            res = (stdout, stderr, retcode, xrdlog, cmsdlog)
+            process = Popen(command, shell=True, stdout=subprocess.PIPE)
+
+            output = "".join(process.stdout.readlines())
+            retcode = process.returncode
+            if retcode is None: retcode = 0
+
+            if self.tags.has_key('@logfiles@'):
+                LOGGER.info("Grabbing current logs ...")
+
+                logs = {}
+                for log in self.tags['@logfiles@']:
+                    log = log.replace('@slavename@', socket.gethostname())
+                    command = 'tail -100 %s' % log
+                    process = Popen(command, shell=True, executable="/bin/bash", \
+                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    logtext = process.communicate()[0]
+                    logs[log] = logtext
+
+            res = (output, '', str(retcode), logs)
+
         except ValueError, e:
-            localError += str(e)
-            LOGGER.error("Execution of shell script failed: %s" % e)
-        except e:
             localError += str(e)
             LOGGER.error("Execution of shell script failed: %s" % e)
         except Exception, e:
@@ -175,7 +172,7 @@ class XrdTestSlave(Runnable):
 
         return res
 
-    def requestTags(self, script, hostname):
+    def requestTags(self, hostname):
         ''' TODO: '''
         LOGGER.info('Requesting tags from master ...')
         
@@ -186,21 +183,38 @@ class XrdTestSlave(Runnable):
         resp = self.recvQueue.get(block=True, timeout=1000)
         if resp:
             LOGGER.info('Received tags.')
-                         
-            script = script.replace('@proto@', resp.proto)
-            script = script.replace('@port@', str(resp.port))
+            
+            # Compulsory tags
+            self.tags['@proto@'] = resp.proto
+            self.tags['@port@'] = str(resp.port)
+            self.tags['@slavename@'] = socket.getfqdn()
             
             if hasattr(resp, 'diskMounts'):
-                LOGGER.info('Received disk mount tags: %s' % resp.diskMounts)
-                script = script.replace('@diskmounts@', resp.diskMounts)
+                self.tags['@diskmounts@'] = resp.diskMounts
             else:
                 LOGGER.info('No disk mount tags received.')
-                script.replace('@diskmounts@', '')
+                self.tags['@diskmounts@'] = ''
+                
+            if hasattr(resp, 'logFiles'):
+                self.tags['@logfiles@'] = resp.logFiles
+            else:
+                LOGGER.info('No log file tags received.')
+                self.tags['@logfiles@'] = ''
         else:
             raise XrdTestSlaveException('Could not get tag values for slave ' + \
                                         '%s.', hostname)
-        return script
+    
+    def parseTags(self, command):
+        ''' TODO: '''
+        LOGGER.info('Parsing tags ...')
         
+        if self.tags:
+            for tag, value in self.tags.iteritems():
+                if isinstance(value, basestring):
+                    command = command.replace(tag, value)
+                    LOGGER.debug('%s: %s' % (tag, value))
+        return command
+            
     def connectMaster(self, masterName, masterPort):
         ''' TODO: '''
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -300,8 +314,8 @@ class XrdTestSlave(Runnable):
         suiteName = msg.suiteName
         
         # Ask the master for the necessary tags so we can replace them in
-        # the script
-        cmd = self.requestTags(cmd, socket.getfqdn())
+        # the scripts
+        self.requestTags(socket.getfqdn())
 
         msg = XrdMessage(XrdMessage.M_TESTSUITE_STATE)
         msg.suiteName = suiteName

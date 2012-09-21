@@ -81,8 +81,8 @@
 	    #return
 	#end def
 	
-	#def format_log($stage)
-	    #set $log = $stage[1][0].decode('latin-1')
+	#def format_log($log)
+	    #set $log = $log.decode('latin-1')
 	    
 	    #set $all = []
 	    #set $important = []
@@ -372,55 +372,81 @@
                                                                 <article class="full-block nested light">                                       
                                                                     <div class="article-container">
                                                                        <section>
-                                                                          #set $logs = self.format_log($stage)
                                                                           
                                                                             <header>
                                                                                 <h2><span>initialized at $stage[0].time[:8] with return code $stage[1][2]</span></h2>
-                                                                                <nav>
+                                                                                
+                                                                                <nav class="log-select">
                                                                                     <ul class="tab-switch">
                                                                                         <li>
-                                                                                        <a class="default-tab" href="#tab-log-init-all-${host}-${run.uid}">All</a>
+                                                                                        <a class="default-tab" href="#tab-log-init-${host}-${run.uid}-default-all">All</a>
                                                                                         </li>
                                                                                         <li>
-                                                                                        <a href="#tab-log-init-important-${host}-${run.uid}">Important</a>
+                                                                                        <a href="#tab-log-init-${host}-${run.uid}-default-important">Important</a>
                                                                                         </li>
                                                                                         <li>
-                                                                                        <a href="#tab-log-init-error-${host}-${run.uid}">Errors</a>
+                                                                                        <a href="#tab-log-init-${host}-${run.uid}-default-error">Errors</a>
                                                                                         </li>
                                                                                         <li>
-                                                                                        <a href="#tab-log-init-warning-${host}-${run.uid}">Warnings</a>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                        <a href="#tab-log-init-xrd-${host}-${run.uid}">xrootd log</a>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                        <a href="#tab-log-init-cmsd-${host}-${run.uid}">cmsd log</a>
+                                                                                        <a href="#tab-log-init-${host}-${run.uid}-default-warning">Warnings</a>
                                                                                         </li>
                                                                                     </ul>
                                                                                 </nav>
+                                                                                
+                                                                                <form class="log-select">
+                                                                                    <label for="whichlog">Select Log:&nbsp;</label>
+                                                                                    <select id="whichlog">
+                                                                                        
+                                                                                        <option class="default-option"
+                                                                                                value="tab-log-init-$host-$run.uid-default">
+                                                                                            Session Log
+                                                                                        </option>
+                                                                                        
+                                                                                        #for $i, $logname in enumerate($stage[1][3].iterkeys())
+                                                                                            <option value="tab-log-init-$host-$run.uid-$i">
+                                                                                                $logname
+                                                                                            </option>
+                                                                                        #end for
+                                                                                    </select>
+                                                                                </form>
+                                                                                
                                                                             </header>
                                                                             
+                                                                            #set $logs = self.format_log($stage[1][0])
                                                                             <section>
-                                                                                <div class="tab default-tab" id="tab-log-init-all-${host}-${run.uid}">
+                                                                                <div class="tab default-tab default-log" id="tab-log-init-${host}-${run.uid}-default-all">
                                                                                     <code>$logs['all']</code>
                                                                                 </div>
-                                                                                <div class="tab" id="tab-log-init-important-${host}-${run.uid}">
+                                                                                <div class="tab" id="tab-log-init-${host}-${run.uid}-default-important">
                                                                                     <code>$logs['important']</code>
                                                                                 </div>
-                                                                                <div class="tab" id="tab-log-init-error-${host}-${run.uid}">
+                                                                                <div class="tab" id="tab-log-init-${host}-${run.uid}-default-error">
                                                                                     <code>$logs['error']</code>
                                                                                 </div>
-                                                                                <div class="tab" id="tab-log-init-warning-${host}-${run.uid}">
+                                                                                <div class="tab" id="tab-log-init-${host}-${run.uid}-default-warning">
                                                                                     <code>$logs['warning']</code>
                                                                                 </div>
-                                                                                <div class="tab" id="tab-log-init-xrd-${host}-${run.uid}">
-                                                                                    <code>$stage[1][3]</code>
-                                                                                </div>
-                                                                                <div class="tab" id="tab-log-init-cmsd-${host}-${run.uid}">
-                                                                                    <code>$stage[1][4]</code>
-                                                                                </div>
                                                                             </section>
-                                                                       
+                                                                            
+                                                                            
+                                                                            #for $i, $log in enumerate($stage[1][3].itervalues())
+                                                                                #set $logs = self.format_log($log)
+                                                                                <section>
+                                                                                    <div class="tab default-log" id="tab-log-init-${host}-${run.uid}-$i-all">
+                                                                                        <code>$logs['all']</code>
+                                                                                    </div>
+                                                                                    <div class="tab" id="tab-log-init-${host}-${run.uid}-$i-important">
+                                                                                        <code>$logs['important']</code>
+                                                                                    </div>
+                                                                                    <div class="tab" id="tab-log-init-${host}-${run.uid}-$i-error">
+                                                                                        <code>$logs['error']</code>
+                                                                                    </div>
+                                                                                    <div class="tab" id="tab-log-init-${host}-${run.uid}-$i-warning">
+                                                                                        <code>$logs['warning']</code>
+                                                                                    </div>
+                                                                                </section>
+                                                                            #end for
+                                                                            
                                                                        </section>
                                                                     </div>
                                                                 </article>     
@@ -532,53 +558,78 @@
                                                                                         <article class="full-block nested light">                                       
                                                                                             <div class="article-container">
                                                                                             <section>
-                                                                                                  #set $logs = self.format_log($stage)
+                                                                                                  
                                                                                                     <header>
                                                                                                         <h2><span>initialized at $stage[0].time[:8] with return code $stage[1][2]</span></h2>
-                                                                                                        <nav>
+                                                                                                        <nav class="log-select">
                                                                                                             <ul class="tab-switch">
                                                                                                                 <li>
-                                                                                                                <a class="default-tab" href="#tab-log-case-init-all-${host}-${case.uid}">All</a>
+                                                                                                                <a class="default-tab" href="#tab-log-case-init-${host}-${case.uid}-default-all">All</a>
                                                                                                                 </li>
                                                                                                                 <li>
-                                                                                                                <a href="#tab-log-case-init-important-${host}-${case.uid}">Important</a>
+                                                                                                                <a href="#tab-log-case-init-${host}-${case.uid}-default-important">Important</a>
                                                                                                                 </li>
                                                                                                                 <li>
-                                                                                                                <a href="#tab-log-case-init-error-${host}-${case.uid}">Errors</a>
+                                                                                                                <a href="#tab-log-case-init-${host}-${case.uid}-default-error">Errors</a>
                                                                                                                 </li>
                                                                                                                 <li>
-                                                                                                                <a href="#tab-log-case-init-warning-${host}-${case.uid}">Warnings</a>
-                                                                                                                </li>
-                                                                                                                <li>
-                                                                                                                <a href="#tab-log-case-init-xrd-${host}-${case.uid}">xrootd log</a>
-                                                                                                                </li>
-                                                                                                                <li>
-                                                                                                                <a href="#tab-log-case-init-cmsd-${host}-${case.uid}">cmsd log</a>
+                                                                                                                <a href="#tab-log-case-init-${host}-${case.uid}-default-warning">Warnings</a>
                                                                                                                 </li>
                                                                                                             </ul>
                                                                                                         </nav>
+                                                                                                        
+                                                                                                        <form class="log-select">
+                                                                                                            <label for="whichlog">Select Log:&nbsp;</label>
+                                                                                                            <select id="whichlog">
+                                                                                                                
+                                                                                                                <option class="default-option"
+                                                                                                                        value="tab-log-case-init-$host-$case.uid-default">
+                                                                                                                    Session Log
+                                                                                                                </option>
+                                                                                                                
+                                                                                                                #for $i, $logname in enumerate($stage[1][3].iterkeys())
+                                                                                                                    <option value="tab-log-case-init-$host-$case.uid-$i">
+                                                                                                                        $logname
+                                                                                                                    </option>
+                                                                                                                #end for
+                                                                                                            </select>
+                                                                                                        </form>
                                                                                                     </header>
                                                                                                     
-                                                                                                    <section>
-                                                                                                        <div class="tab default-tab" id="tab-log-case-init-all-${host}-${case.uid}">
-                                                                                                            <code>$logs['all']</code>
-                                                                                                        </div>
-                                                                                                        <div class="tab" id="tab-log-case-init-important-${host}-${case.uid}">
-                                                                                                            <code>$logs['important']</code>
-                                                                                                        </div>
-                                                                                                        <div class="tab" id="tab-log-case-init-error-${host}-${case.uid}">
-                                                                                                            <code>$logs['error']</code>
-                                                                                                        </div>
-                                                                                                        <div class="tab" id="tab-log-case-init-warning-${host}-${case.uid}">
-                                                                                                            <code>$logs['warning']</code>
-                                                                                                        </div>
-                                                                                                        <div class="tab" id="tab-log-case-init-xrd-${host}-${case.uid}">
-                                                                                                            <code>$stage[1][3]</code>
-                                                                                                        </div>
-                                                                                                        <div class="tab" id="tab-log-case-init-cmsd-${host}-${case.uid}">
-                                                                                                            <code>$stage[1][4]</code>
-                                                                                                        </div>
-                                                                                                    </section>
+                                                                                                    #set $logs = self.format_log($stage[1][0])
+                                                                                                        <section>
+                                                                                                            <div class="tab default-tab default-log" id="tab-log-case-init-${host}-${case.uid}-default-all">
+                                                                                                                <code>$logs['all']</code>
+                                                                                                            </div>
+                                                                                                            <div class="tab" id="tab-log-case-init-${host}-${case.uid}-default-important">
+                                                                                                                <code>$logs['important']</code>
+                                                                                                            </div>
+                                                                                                            <div class="tab" id="tab-log-case-init-${host}-${case.uid}-default-error">
+                                                                                                                <code>$logs['error']</code>
+                                                                                                            </div>
+                                                                                                            <div class="tab" id="tab-log-case-init-${host}-${case.uid}-default-warning">
+                                                                                                                <code>$logs['warning']</code>
+                                                                                                            </div>
+                                                                                                        </section>
+                                                                                                        
+                                                                                                        
+                                                                                                        #for $i, $log in enumerate($stage[1][3].itervalues())
+                                                                                                            #set $logs = self.format_log($log)
+                                                                                                            <section>
+                                                                                                                <div class="tab default-log" id="tab-log-case-init-${host}-${case.uid}-$i-all">
+                                                                                                                    <code>$logs['all']</code>
+                                                                                                                </div>
+                                                                                                                <div class="tab" id="tab-log-case-init-${host}-${case.uid}-$i-important">
+                                                                                                                    <code>$logs['important']</code>
+                                                                                                                </div>
+                                                                                                                <div class="tab" id="tab-log-case-init-${host}-${case.uid}-$i-error">
+                                                                                                                    <code>$logs['error']</code>
+                                                                                                                </div>
+                                                                                                                <div class="tab" id="tab-log-case-init-${host}-${case.uid}-$i-warning">
+                                                                                                                    <code>$logs['warning']</code>
+                                                                                                                </div>
+                                                                                                            </section>
+                                                                                                        #end for
                                                                                                
                                                                                                </section>
                                                                                             </div>
@@ -634,54 +685,78 @@
                                                                                         <article class="full-block nested light">                                       
                                                                                             <div class="article-container">
                                                                                             <section>
-                                                                                                  #set $logs = self.format_log($stage)
                                                                                                   
                                                                                                     <header>
                                                                                                         <h2><span>run at $stage[0].time[:8] with return code $stage[1][2]</span></h2>
-                                                                                                        <nav>
+                                                                                                        <nav class="log-select">
                                                                                                             <ul class="tab-switch">
                                                                                                                 <li>
-                                                                                                                <a class="default-tab" href="#tab-log-case-run-all-${host}-${case.uid}">All</a>
+                                                                                                                <a class="default-tab" href="#tab-log-case-run-${host}-${case.uid}-default-all">All</a>
                                                                                                                 </li>
                                                                                                                 <li>
-                                                                                                                <a href="#tab-log-case-run-important-${host}-${case.uid}">Important</a>
+                                                                                                                <a href="#tab-log-case-run-${host}-${case.uid}-default-important">Important</a>
                                                                                                                 </li>
                                                                                                                 <li>
-                                                                                                                <a href="#tab-log-case-run-error-${host}-${case.uid}">Errors</a>
+                                                                                                                <a href="#tab-log-case-run-${host}-${case.uid}-default-error">Errors</a>
                                                                                                                 </li>
                                                                                                                 <li>
-                                                                                                                <a href="#tab-log-case-run-warning-${host}-${case.uid}">Warnings</a>
-                                                                                                                </li>
-                                                                                                                <li>
-                                                                                                                <a href="#tab-log-case-run-xrd-${host}-${case.uid}">xrootd log</a>
-                                                                                                                </li>
-                                                                                                                <li>
-                                                                                                                <a href="#tab-log-case-run-cmsd-${host}-${case.uid}">cmsd log</a>
+                                                                                                                <a href="#tab-log-case-run-${host}-${case.uid}-default-warning">Warnings</a>
                                                                                                                 </li>
                                                                                                             </ul>
                                                                                                         </nav>
+                                                                                                        
+                                                                                                        <form class="log-select">
+                                                                                                            <label for="whichlog">Select Log:&nbsp;</label>
+                                                                                                            <select id="whichlog">
+                                                                                                                
+                                                                                                                <option class="default-option"
+                                                                                                                        value="tab-log-case-run-$host-$case.uid-default">
+                                                                                                                    Session Log
+                                                                                                                </option>
+                                                                                                                
+                                                                                                                #for $i, $logname in enumerate($stage[1][3].iterkeys())
+                                                                                                                    <option value="tab-log-case-run-$host-$case.uid-$i">
+                                                                                                                        $logname
+                                                                                                                    </option>
+                                                                                                                #end for
+                                                                                                            </select>
+                                                                                                        </form>
                                                                                                     </header>
                                                                                                     
-                                                                                                    <section>
-                                                                                                        <div class="tab default-tab" id="tab-log-case-run-all-${host}-${case.uid}">
-                                                                                                            <code>$logs['all']</code>
-                                                                                                        </div>
-                                                                                                        <div class="tab" id="tab-log-case-run-important-${host}-${case.uid}">
-                                                                                                            <code>$logs['important']</code>
-                                                                                                        </div>
-                                                                                                        <div class="tab" id="tab-log-case-run-error-${host}-${case.uid}">
-                                                                                                            <code>$logs['error']</code>
-                                                                                                        </div>
-                                                                                                        <div class="tab" id="tab-log-case-run-warning-${host}-${case.uid}">
-                                                                                                            <code>$logs['warning']</code>
-                                                                                                        </div>
-                                                                                                        <div class="tab" id="tab-log-case-run-xrd-${host}-${case.uid}">
-                                                                                                            <code>$stage[1][3]</code>
-                                                                                                        </div>
-                                                                                                        <div class="tab" id="tab-log-case-run-cmsd-${host}-${case.uid}">
-                                                                                                            <code>$stage[1][4]</code>
-                                                                                                        </div>
-                                                                                                    </section>
+                                                                                                    #set $logs = self.format_log($stage[1][0])
+                                                                                                        <section>
+                                                                                                            <div class="tab default-tab default-log" id="tab-log-case-run-${host}-${case.uid}-default-all">
+                                                                                                                <code>$logs['all']</code>
+                                                                                                            </div>
+                                                                                                            <div class="tab" id="tab-log-case-run-${host}-${case.uid}-default-important">
+                                                                                                                <code>$logs['important']</code>
+                                                                                                            </div>
+                                                                                                            <div class="tab" id="tab-log-case-run-${host}-${case.uid}-default-error">
+                                                                                                                <code>$logs['error']</code>
+                                                                                                            </div>
+                                                                                                            <div class="tab" id="tab-log-case-run-${host}-${case.uid}-default-warning">
+                                                                                                                <code>$logs['warning']</code>
+                                                                                                            </div>
+                                                                                                        </section>
+                                                                                                        
+                                                                                                        
+                                                                                                        #for $i, $log in enumerate($stage[1][3].itervalues())
+                                                                                                            #set $logs = self.format_log($log)
+                                                                                                            <section>
+                                                                                                                <div class="tab default-log" id="tab-log-case-run-${host}-${case.uid}-$i-all">
+                                                                                                                    <code>$logs['all']</code>
+                                                                                                                </div>
+                                                                                                                <div class="tab" id="tab-log-case-run-${host}-${case.uid}-$i-important">
+                                                                                                                    <code>$logs['important']</code>
+                                                                                                                </div>
+                                                                                                                <div class="tab" id="tab-log-case-run-${host}-${case.uid}-$i-error">
+                                                                                                                    <code>$logs['error']</code>
+                                                                                                                </div>
+                                                                                                                <div class="tab" id="tab-log-case-run-${host}-${case.uid}-$i-warning">
+                                                                                                                    <code>$logs['warning']</code>
+                                                                                                                </div>
+                                                                                                            </section>
+                                                                                                        #end for
                                                                                                
                                                                                                </section>
                                                                                             </div>
@@ -738,54 +813,78 @@
                                                                                         <article class="full-block nested light">                                       
                                                                                             <div class="article-container">
                                                                                             <section>
-                                                                                                  #set $logs = self.format_log($stage)
                                                                                                   
                                                                                                     <header>
                                                                                                         <h2><span>finalized at $stage[0].time[:8] with return code $stage[1][2]</span></h2>
-                                                                                                        <nav>
+                                                                                                        <nav class="log-select">
                                                                                                             <ul class="tab-switch">
                                                                                                                 <li>
-                                                                                                                <a class="default-tab" href="#tab-log-case-fin-all-${host}-${case.uid}">All</a>
+                                                                                                                <a class="default-tab" href="#tab-log-case-fin-${host}-${case.uid}-default-all">All</a>
                                                                                                                 </li>
                                                                                                                 <li>
-                                                                                                                <a href="#tab-log-case-fin-important-${host}-${case.uid}">Important</a>
+                                                                                                                <a href="#tab-log-case-fin-${host}-${case.uid}-default-important">Important</a>
                                                                                                                 </li>
                                                                                                                 <li>
-                                                                                                                <a href="#tab-log-case-fin-error-${host}-${case.uid}">Errors</a>
+                                                                                                                <a href="#tab-log-case-fin-${host}-${case.uid}-default-error">Errors</a>
                                                                                                                 </li>
                                                                                                                 <li>
-                                                                                                                <a href="#tab-log-case-fin-warning-${host}-${case.uid}">Warnings</a>
-                                                                                                                </li>
-                                                                                                                <li>
-                                                                                                                <a href="#tab-log-case-fin-xrd-${host}-${case.uid}">xrootd log</a>
-                                                                                                                </li>
-                                                                                                                <li>
-                                                                                                                <a href="#tab-log-case-fin-cmsd-${host}-${case.uid}">cmsd log</a>
+                                                                                                                <a href="#tab-log-case-fin-${host}-${case.uid}-default-warning">Warnings</a>
                                                                                                                 </li>
                                                                                                             </ul>
                                                                                                         </nav>
+                                                                                                        
+                                                                                                        <form class="log-select">
+                                                                                                            <label for="whichlog">Select Log:&nbsp;</label>
+                                                                                                            <select id="whichlog">
+                                                                                                                
+                                                                                                                <option class="default-option"
+                                                                                                                        value="tab-log-case-fin-$host-$case.uid-default">
+                                                                                                                    Session Log
+                                                                                                                </option>
+                                                                                                                
+                                                                                                                #for $i, $logname in enumerate($stage[1][3].iterkeys())
+                                                                                                                    <option value="tab-log-case-fin-$host-$case.uid-$i">
+                                                                                                                        $logname
+                                                                                                                    </option>
+                                                                                                                #end for
+                                                                                                            </select>
+                                                                                                        </form>
                                                                                                     </header>
                                                                                                     
-                                                                                                    <section>
-                                                                                                        <div class="tab default-tab" id="tab-log-case-fin-all-${host}-${case.uid}">
-                                                                                                            <code>$logs['all']</code>
-                                                                                                        </div>
-                                                                                                        <div class="tab" id="tab-log-case-fin-important-${host}-${case.uid}">
-                                                                                                            <code>$logs['important']</code>
-                                                                                                        </div>
-                                                                                                        <div class="tab" id="tab-log-case-fin-error-${host}-${case.uid}">
-                                                                                                            <code>$logs['error']</code>
-                                                                                                        </div>
-                                                                                                        <div class="tab" id="tab-log-case-fin-warning-${host}-${case.uid}">
-                                                                                                            <code>$logs['warning']</code>
-                                                                                                        </div>
-                                                                                                        <div class="tab" id="tab-log-case-fin-xrd-${host}-${case.uid}">
-                                                                                                            <code>$stage[1][3]</code>
-                                                                                                        </div>
-                                                                                                        <div class="tab" id="tab-log-case-fin-cmsd-${host}-${case.uid}">
-                                                                                                            <code>$stage[1][4]</code>
-                                                                                                        </div>
-                                                                                                    </section>
+                                                                                                    #set $logs = self.format_log($stage[1][0])
+                                                                                                        <section>
+                                                                                                            <div class="tab default-tab default-log" id="tab-log-case-fin-${host}-${case.uid}-default-all">
+                                                                                                                <code>$logs['all']</code>
+                                                                                                            </div>
+                                                                                                            <div class="tab" id="tab-log-case-fin-${host}-${case.uid}-default-important">
+                                                                                                                <code>$logs['important']</code>
+                                                                                                            </div>
+                                                                                                            <div class="tab" id="tab-log-case-fin-${host}-${case.uid}-default-error">
+                                                                                                                <code>$logs['error']</code>
+                                                                                                            </div>
+                                                                                                            <div class="tab" id="tab-log-case-fin-${host}-${case.uid}-default-warning">
+                                                                                                                <code>$logs['warning']</code>
+                                                                                                            </div>
+                                                                                                        </section>
+                                                                                                        
+                                                                                                        
+                                                                                                        #for $i, $log in enumerate($stage[1][3].itervalues())
+                                                                                                            #set $logs = self.format_log($log)
+                                                                                                            <section>
+                                                                                                                <div class="tab default-log" id="tab-log-case-fin-${host}-${case.uid}-$i-all">
+                                                                                                                    <code>$logs['all']</code>
+                                                                                                                </div>
+                                                                                                                <div class="tab" id="tab-log-case-fin-${host}-${case.uid}-$i-important">
+                                                                                                                    <code>$logs['important']</code>
+                                                                                                                </div>
+                                                                                                                <div class="tab" id="tab-log-case-fin-${host}-${case.uid}-$i-error">
+                                                                                                                    <code>$logs['error']</code>
+                                                                                                                </div>
+                                                                                                                <div class="tab" id="tab-log-case-fin-${host}-${case.uid}-$i-warning">
+                                                                                                                    <code>$logs['warning']</code>
+                                                                                                                </div>
+                                                                                                            </section>
+                                                                                                        #end for
                                                                                                
                                                                                                </section>
                                                                                             </div>
@@ -850,54 +949,80 @@
                                                                 <article class="full-block nested light">                                       
                                                                     <div class="article-container">
                                                                        <section>
-                                                                            #set $logs = self.format_log($stage)
                                                                             
                                                                               <header>
-                                                                                  <h2><span>finalized at $stage[0].time[:8] with return code $stage[1][2]</span></h2>
-                                                                                  <nav>
-                                                                                      <ul class="tab-switch">
-                                                                                          <li>
-                                                                                          <a class="default-tab" href="#tab-log-fin-all-${host}-${run.uid}">All</a>
-                                                                                          </li>
-                                                                                          <li>
-                                                                                          <a href="#tab-log-fin-important-${host}-${run.uid}">Important</a>
-                                                                                          </li>
-                                                                                          <li>
-                                                                                          <a href="#tab-log-fin-error-${host}-${run.uid}">Errors</a>
-                                                                                          </li>
-                                                                                          <li>
-                                                                                          <a href="#tab-log-fin-warning-${host}-${run.uid}">Warnings</a>
-                                                                                          </li>
-                                                                                          <li>
-                                                                                          <a href="#tab-log-fin-xrd-${host}-${run.uid}">xrootd log</a>
-                                                                                          </li>
-                                                                                          <li>
-                                                                                          <a href="#tab-log-fin-cmsd-${host}-${run.uid}">cmsd log</a>
-                                                                                          </li>
-                                                                                      </ul>
-                                                                                  </nav>
-                                                                              </header>
-                                                                              
-                                                                              <section>
-                                                                                  <div class="tab default-tab" id="tab-log-fin-all-${host}-${run.uid}">
-                                                                                      <code>$logs['all']</code>
-                                                                                  </div>
-                                                                                  <div class="tab" id="tab-log-fin-important-${host}-${run.uid}">
-                                                                                      <code>$logs['important']</code>
-                                                                                  </div>
-                                                                                  <div class="tab" hostid="tab-log-fin-error-${host}-${run.uid}">
-                                                                                      <code>$logs['error']</code>
-                                                                                  </div>
-                                                                                  <div class="tab" id="tab-log-fin-warning-${host}-${run.uid}">
-                                                                                      <code>$logs['warning']</code>
-                                                                                  </div>
-                                                                                  <div class="tab" id="tab-log-fin-xrd-${host}-${run.uid}">
-                                                                                      <code>$stage[1][3]</code>
-                                                                                  </div>
-                                                                                  <div class="tab" id="tab-log-fin-cmsd-${host}-${run.uid}">
-                                                                                      <code>$stage[1][4]</code>
-                                                                                  </div>
-                                                                              </section>
+                                                                                <h2><span>finalized at $stage[0].time[:8] with return code $stage[1][2]</span></h2>
+                                                                                
+                                                                                <nav class="log-select">
+                                                                                    <ul class="tab-switch">
+                                                                                        <li>
+                                                                                        <a class="default-tab" href="#tab-log-fin-${host}-${run.uid}-default-all">All</a>
+                                                                                        </li>
+                                                                                        <li>
+                                                                                        <a href="#tab-log-fin-${host}-${run.uid}-default-important">Important</a>
+                                                                                        </li>
+                                                                                        <li>
+                                                                                        <a href="#tab-log-fin-${host}-${run.uid}-default-error">Errors</a>
+                                                                                        </li>
+                                                                                        <li>
+                                                                                        <a href="#tab-log-fin-${host}-${run.uid}-default-warning">Warnings</a>
+                                                                                        </li>
+                                                                                    </ul>
+                                                                                </nav>
+                                                                                
+                                                                                <form class="log-select">
+                                                                                    <label for="whichlog">Select Log:&nbsp;</label>
+                                                                                    <select id="whichlog">
+                                                                                        
+                                                                                        <option class="default-option"
+                                                                                                value="tab-log-fin-$host-$run.uid-default">
+                                                                                            Session Log
+                                                                                        </option>
+                                                                                        
+                                                                                        #for $i, $logname in enumerate($stage[1][3].iterkeys())
+                                                                                            <option value="tab-log-fin-$host-$run.uid-$i">
+                                                                                                $logname
+                                                                                            </option>
+                                                                                        #end for
+                                                                                    </select>
+                                                                                </form>
+                                                                                
+                                                                            </header>
+                                                                            
+                                                                            #set $logs = self.format_log($stage[1][0])
+                                                                            <section>
+                                                                                <div class="tab default-tab default-log" id="tab-log-fin-${host}-${run.uid}-default-all">
+                                                                                    <code>$logs['all']</code>
+                                                                                </div>
+                                                                                <div class="tab" id="tab-log-fin-${host}-${run.uid}-default-important">
+                                                                                    <code>$logs['important']</code>
+                                                                                </div>
+                                                                                <div class="tab" id="tab-log-fin-${host}-${run.uid}-default-error">
+                                                                                    <code>$logs['error']</code>
+                                                                                </div>
+                                                                                <div class="tab" id="tab-log-fin-${host}-${run.uid}-default-warning">
+                                                                                    <code>$logs['warning']</code>
+                                                                                </div>
+                                                                            </section>
+                                                                            
+                                                                            
+                                                                            #for $i, $log in enumerate($stage[1][3].itervalues())
+                                                                                #set $logs = self.format_log($log)
+                                                                                <section>
+                                                                                    <div class="tab default-log" id="tab-log-fin-${host}-${run.uid}-$i-all">
+                                                                                        <code>$logs['all']</code>
+                                                                                    </div>
+                                                                                    <div class="tab" id="tab-log-fin-${host}-${run.uid}-$i-important">
+                                                                                        <code>$logs['important']</code>
+                                                                                    </div>
+                                                                                    <div class="tab" id="tab-log-fin-${host}-${run.uid}-$i-error">
+                                                                                        <code>$logs['error']</code>
+                                                                                    </div>
+                                                                                    <div class="tab" id="tab-log-fin-${host}-${run.uid}-$i-warning">
+                                                                                        <code>$logs['warning']</code>
+                                                                                    </div>
+                                                                                </section>
+                                                                            #end for
                                                                          
                                                                          </section>
                                                                     </div>

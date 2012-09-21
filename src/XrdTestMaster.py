@@ -586,6 +586,9 @@ class XrdTestMaster(Runnable):
                 
                 # Cluster was stopped - remove all slaves.
                 self.slaves = {}
+                                
+                # Remove timeout job
+                self.sched.unschedule_func(self.cancelTestSuite)
                 
                 return True
             return False
@@ -913,7 +916,7 @@ class XrdTestMaster(Runnable):
                 if self.clustersHypervisor.has_key(cluster):
                     self.stopCluster(cluster)
                     
-        if self.runningSuite.name == test_suite_name:
+        if self.runningSuite and self.runningSuite.name == test_suite_name:
             self.runningSuite = None
                 
 
@@ -1197,7 +1200,7 @@ class XrdTestMaster(Runnable):
                     self.removeJob(Job(Job.FINALIZE_TEST_SUITE, \
                                        args=tss.name))
                     del self.runningSuiteUids[tss.name]
-                    self.runningSuite = ''
+                    self.runningSuite = None
 
                 self.storeSuiteSession(tss)
                 LOGGER.info("%s finalized in test suite: %s" % \
@@ -1297,6 +1300,10 @@ class XrdTestMaster(Runnable):
                         values['mountpoint'] = disk.mountPoint
                         values['device'] = disk.device
                         msg.diskMounts += diskMountTemplate % values
+                        
+                # Add log file paths
+                if self.runningSuite and self.testSuites.has_key(self.runningSuite.name):
+                    msg.logFiles = self.testSuites[self.runningSuite.name].logs
                 
                 slave.send(msg)
         

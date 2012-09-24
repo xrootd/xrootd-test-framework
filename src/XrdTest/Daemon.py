@@ -166,7 +166,7 @@ class Daemon:
 
         # Check if we can access the files
         try:
-            logFile = file(self.logFile, 'a+')
+            logFile = file(self.logFile, 'w')
             logFile.close()
             pidFile = file(self.pidFile, 'w')
         except Exception, e:

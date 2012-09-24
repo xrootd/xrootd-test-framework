@@ -334,20 +334,20 @@ section[role=navigation] footer {
     background-image: url('/webpage/img/icons/icon_nav_dashboard.png');
 }
 
-#main-nav ul li a.projects {
-    background-image: url('/webpage/img/icons/icon_nav_projects.png');
+#main-nav ul li a.testsuite {
+    background-image: url('/webpage/img/icons/icon_nav_testsuite.png');
 }
 
-#main-nav ul li a.products {
-    background-image: url('/webpage/img/icons/icon_nav_products.png');
+#main-nav ul li a.cluster {
+    background-image: url('/webpage/img/icons/icon_nav_cluster.png');
 }
 
 #main-nav ul li a.events {
     background-image: url('/webpage/img/icons/icon_nav_events.png');
 }
 
-#main-nav ul li a.articles {
-    background-image: url('/webpage/img/icons/icon_nav_articles.png');
+#main-nav ul li a.hypervisor {
+    background-image: url('/webpage/img/icons/icon_nav_hypervisor.png');
 }
 
 #main-nav ul li a.gallery {

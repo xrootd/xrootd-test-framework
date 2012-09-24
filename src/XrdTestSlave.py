@@ -140,9 +140,8 @@ class XrdTestSlave(Runnable):
         try:
             process = Popen(command, shell=True, stdout=subprocess.PIPE)
 
-            output = "".join(process.stdout.readlines())
+            output = process.communicate()[0]
             retcode = process.returncode
-            if retcode is None: retcode = 0
 
             if self.tags.has_key('@logfiles@'):
                 LOGGER.info("Grabbing current logs ...")
@@ -186,17 +185,22 @@ class XrdTestSlave(Runnable):
             
             # Compulsory tags
             self.tags['@proto@'] = resp.proto
+            LOGGER.debug('@proto@: %s' % self.tags['@proto@'])
             self.tags['@port@'] = str(resp.port)
+            LOGGER.debug('@port@: %s' % self.tags['@port@'])
             self.tags['@slavename@'] = socket.getfqdn()
+            LOGGER.debug('@slavename@: %s' % self.tags['@slavename@'])
             
             if hasattr(resp, 'diskMounts'):
                 self.tags['@diskmounts@'] = resp.diskMounts
+                LOGGER.debug('@diskmounts@: %s' % self.tags['@diskmounts@'])
             else:
                 LOGGER.info('No disk mount tags received.')
                 self.tags['@diskmounts@'] = ''
                 
             if hasattr(resp, 'logFiles'):
                 self.tags['@logfiles@'] = resp.logFiles
+                LOGGER.debug('@logfiles@: %s' % self.tags['@logfiles@'])
             else:
                 LOGGER.info('No log file tags received.')
                 self.tags['@logfiles@'] = ''
@@ -212,7 +216,6 @@ class XrdTestSlave(Runnable):
             for tag, value in self.tags.iteritems():
                 if isinstance(value, basestring):
                     command = command.replace(tag, value)
-                    LOGGER.debug('%s: %s' % (tag, value))
         return command
             
     def connectMaster(self, masterName, masterPort):

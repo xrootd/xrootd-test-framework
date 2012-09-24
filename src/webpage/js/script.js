@@ -207,12 +207,14 @@ function main(anchors) {
         var newids = $("[id^='" + newloggroup + "']");
         $(newids).each(function(index) {
             var newref = '#' + $(this).attr('id');
-
+            
+            $("a[href='" + oldrefs[index] + "']").removeClass("current");
             $("a[href='" + oldrefs[index] + "']").attr('href', newref);
-
             $(oldrefs[index]).hide();
         });
         
         $("[id^='" + newloggroup + "'].default-log ").show();
+        $("a[href*='" + newloggroup + "'].default-tab ").addClass("current");
+        
     });
 }

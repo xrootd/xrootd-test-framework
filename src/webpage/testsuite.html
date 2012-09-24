@@ -81,7 +81,7 @@
 	    #return
 	#end def
 	
-	#def format_log($log)
+	#def format_log($log, custom=False)
 	    #set $log = $log.decode('latin-1')
 	    
 	    #set $all = []
@@ -106,11 +106,19 @@
 	            $important.append($line)
 	        #end if
 	        
-	        #if re.match(r'(?!<span.*>.*</span>)(?!\[..:..:..\])', $line, re.I)
-	            #set $line = '<span class="warning">' + $line + '</span>'
-	            $warning.append($line)
-	            $important.append($line)
-	        #end if
+            #if not $custom
+    	        #if re.match(r'(?!<span.*>.*</span>)(?!\[..:..:..\])', $line, re.I)
+    	            #set $line = '<span class="warning">' + $line + '</span>'
+    	            $warning.append($line)
+    	            $important.append($line)
+    	        #end if
+            #end if
+            
+            #if re.match(r'(?!<span.*>.*</span>)(warn)', $line, re.I)
+                #set $line = '<span class="warning">' + $line + '</span>'
+                $warning.append($line)
+                $important.append($line)
+            #end if
 	        
 	        $all.append($line)
 	    #end for
@@ -146,7 +154,7 @@
                 <a href="/index" class="dashboard no-submenu">Dashboard</a>
             </li>
             <li class="current">
-                <a href="/testsuites" class="projects no-submenu">Test Suites</a>
+                <a href="/testsuites" class="testsuite no-submenu">Test Suites</a>
                 <span title="${nt} test suite(s) ${'('+str(len(ts_fail)) + 
                             ' defined incorrectly)' if len(ts_fail) else ''}" 
                       class="${'failure' if len($ts_fail) else 'success'}">
@@ -161,7 +169,7 @@
                 #end if
             </li>
             <li>
-                <a href="/clusters" class="products no-submenu">Clusters</a>
+                <a href="/clusters" class="cluster no-submenu">Clusters</a>
                 <span title="${nc} defined cluster(s) ${'('+str(len(ts_fail)) + 
                             ' defined incorrectly)' if len(ts_fail) else ''}"
                       class="${'failure' if len($cl_fail) else 'success'}">
@@ -169,7 +177,7 @@
                 </span>
             </li>
             <li>
-                <a href="/hypervisors" class="articles no-submenu">Hypervisors</a>
+                <a href="/hypervisors" class="hypervisor no-submenu">Hypervisors</a>
                 <span title="${nh} connected hypervisor(s)">$nh</span>
             </li>
         </ul>
@@ -430,7 +438,7 @@
                                                                             
                                                                             
                                                                             #for $i, $log in enumerate($stage[1][3].itervalues())
-                                                                                #set $logs = self.format_log($log)
+                                                                                #set $logs = self.format_log($log, custom=True)
                                                                                 <section>
                                                                                     <div class="tab default-log" id="tab-log-init-${host}-${run.uid}-$i-all">
                                                                                         <code>$logs['all']</code>
@@ -614,7 +622,7 @@
                                                                                                         
                                                                                                         
                                                                                                         #for $i, $log in enumerate($stage[1][3].itervalues())
-                                                                                                            #set $logs = self.format_log($log)
+                                                                                                            #set $logs = self.format_log($log, custom=True)
                                                                                                             <section>
                                                                                                                 <div class="tab default-log" id="tab-log-case-init-${host}-${case.uid}-$i-all">
                                                                                                                     <code>$logs['all']</code>
@@ -741,7 +749,7 @@
                                                                                                         
                                                                                                         
                                                                                                         #for $i, $log in enumerate($stage[1][3].itervalues())
-                                                                                                            #set $logs = self.format_log($log)
+                                                                                                            #set $logs = self.format_log($log, custom=True)
                                                                                                             <section>
                                                                                                                 <div class="tab default-log" id="tab-log-case-run-${host}-${case.uid}-$i-all">
                                                                                                                     <code>$logs['all']</code>
@@ -869,7 +877,7 @@
                                                                                                         
                                                                                                         
                                                                                                         #for $i, $log in enumerate($stage[1][3].itervalues())
-                                                                                                            #set $logs = self.format_log($log)
+                                                                                                            #set $logs = self.format_log($log, custom=True)
                                                                                                             <section>
                                                                                                                 <div class="tab default-log" id="tab-log-case-fin-${host}-${case.uid}-$i-all">
                                                                                                                     <code>$logs['all']</code>
@@ -1007,7 +1015,7 @@
                                                                             
                                                                             
                                                                             #for $i, $log in enumerate($stage[1][3].itervalues())
-                                                                                #set $logs = self.format_log($log)
+                                                                                #set $logs = self.format_log($log, custom=True)
                                                                                 <section>
                                                                                     <div class="tab default-log" id="tab-log-fin-${host}-${run.uid}-$i-all">
                                                                                         <code>$logs['all']</code>

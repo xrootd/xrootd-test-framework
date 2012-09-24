@@ -26,7 +26,7 @@
                     <a href="index" class="dashboard no-submenu">Dashboard</a>
                 </li>
                 <li>
-                    <a href="testsuites" class="projects no-submenu">Test Suites</a>
+                    <a href="testsuites" class="testsuite no-submenu">Test Suites</a>
                     <span title="${nt} test suite(s) ${'('+str(len(ts_fail)) + 
                                 ' defined incorrectly)' if len(ts_fail) else ''}" 
                           class="${'failure' if len($ts_fail) else 'success'}">
@@ -41,7 +41,7 @@
                     #end if
                 </li>
                 <li>
-                    <a href="clusters" class="products no-submenu">Clusters</a>
+                    <a href="clusters" class="cluster no-submenu">Clusters</a>
                     <span title="${nc} defined cluster(s) ${'('+str(len(ts_fail)) + 
                                 ' defined incorrectly)' if len(ts_fail) else ''}"
                           class="${'failure' if len($cl_fail) else 'success'}">
@@ -49,7 +49,7 @@
                     </span>
                 </li>
                 <li class="current">
-                    <a href="hypervisors" class="articles no-submenu">Hypervisors</a>
+                    <a href="hypervisors" class="hypervisor no-submenu">Hypervisors</a>
                     <span title="${nh} connected hypervisor(s)">$nh</span>
                 </li>
             </ul>

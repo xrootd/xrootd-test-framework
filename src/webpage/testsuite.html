@@ -100,7 +100,7 @@
 	        #end if
 	        
 	        
-	        #if re.match(r'.*(ok|\[xrootd\]).*', $line, re.I)
+	        #if re.match(r'.*(ok|\[xrootd\]|complete|success).*', $line, re.I)
 	            #set $line = '<span class="success">' + $line[:-1] + '</span>'
 	            $success.append($line)
 	            $important.append($line)

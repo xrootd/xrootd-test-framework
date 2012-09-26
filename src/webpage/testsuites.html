@@ -108,7 +108,7 @@
                 <section>                 
                 #if len($testsuites)
 
-                    <div class="sidetabs">
+                    <div class="sidetabs wide">
                         <nav class="sidetab-switch">
                             <ul>
                                 #set $default_tab = True
@@ -229,6 +229,24 @@
                                                      </dt>
                                                      <dd class="text">
                                                          <p>${'<br />'.join([m for m in $ts.machines])}</p>
+                                                     </dd>
+                                                     <dt>
+                                                         <label>Alert email addresses: </label>
+                                                     </dt>
+                                                     <dd class="text">
+                                                         <p>${'<br />'.join([e for e in $ts.alert_emails])}</p>
+                                                     </dd>
+                                                     <dt>
+                                                         <label>Success alert policy: </label>
+                                                     </dt>
+                                                     <dd class="text">
+                                                         <p>$ts.alert_success</p>
+                                                     </dd>
+                                                     <dt>
+                                                         <label>Failure alert policy: </label>
+                                                     </dt>
+                                                     <dd class="text">
+                                                         <p>$ts.alert_failure</p>
                                                      </dd>
                                                 </dl>
 				                             </fieldset>

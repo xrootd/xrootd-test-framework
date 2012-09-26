@@ -47,6 +47,7 @@ try:
     import datetime
     
     from Utils import State, Stateful
+    from EmailNotifier import EmailNotifier
     from string import maketrans 
     from copy import copy
 except ImportError, e:
@@ -128,10 +129,7 @@ class TestSuite(Stateful):
         # procedures to be run after all the tests cases are completed
         self.finalize = ""  
         # A list of test case names as defined below
-        self.tests = []     
-
-        # Fields beneath are filled automatically by system
-        
+        self.tests = []
         # Means that all cluster definitions that the cluster depends on are available
         self.defComplete = True 
         # Handle to function that will be used by scheduler. Has to be kept in case of
@@ -145,8 +143,14 @@ class TestSuite(Stateful):
         # Filled automatically by load test suite defs. Holds Python objects 
         # representing test cases
         self.testCases = []    
-
+        # Current state of this suite
         self.state = ''
+        # A list of email addresses to alert, based on the policies below.
+        self.alert_emails = []
+        # Test suite success email alert policy.
+        self.alert_success = ''
+        # Test suite failure email alert policy.
+        self.alert_failure = ''
         
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -211,7 +215,7 @@ class TestSuite(Stateful):
                             "filled automatically with %s") % \
                             (self.name, self.machines))
         
-        self.state = State(TestSuite.S_DEF_OK)
+        #self.state = State(TestSuite.S_DEF_OK)
                 
     def getNextRunTime(self):
         '''Get the next scheduled run time for this suite.'''
@@ -296,7 +300,12 @@ class TestSuiteSession(Stateful):
         # if result of any stage i.a. init, test case stages or finalize
         # ended with non-zero status code 
         self.failed = False
+        # This will be set if the session times out.
         self.timeout = False
+        # Register an email notifier for this session.
+        self.notifier = EmailNotifier(self.suite.alert_emails, \
+                                      self.suite.alert_success, \
+                                      self.suite.alert_failure)
 
     def addCaseRun(self, tc):
         '''
@@ -332,6 +341,9 @@ class TestSuiteSession(Stateful):
 
         if result[2] != '0':
             self.failed = True
+            self.sendEmailAlert(state, result, uid, slave_name, failure=True)
+        else:
+            self.sendEmailAlert(state, result, uid, slave_name, failure=False)
 
         if result[1] == None:
             result = (result[0], "", result[2], result[3])
@@ -345,6 +357,20 @@ class TestSuiteSession(Stateful):
         '''
         stages = [v for v in self.stagesResults if v[2] == test_case_uid]
         return stages
+    
+    def sendEmailAlert(self, state, result, uid, slave_name, failure):
+        args = {
+                'testsuite': self.name,
+                'state': state,
+                'result': result,
+                'uid': uid,
+                'slave': slave_name
+                }
+        
+        if failure:
+            self.notifier.notify_failure(args)
+        else:
+            self.notifier.notify_success(args)
     
 
 def extractSuiteName(path):
@@ -424,8 +450,9 @@ def loadTestSuiteDef(path):
             obj.initialize = resolveScript(obj.initialize, root_path) 
             obj.finalize = resolveScript(obj.finalize, root_path)
             
-            #load TestCases
+            # Load TestCases
             obj.testCases = loadTestCasesDefs(modPath, obj.tests)
+            
             #after load, check if testSuite definition is correct
             obj.validateStatic()
         except TypeError, e:

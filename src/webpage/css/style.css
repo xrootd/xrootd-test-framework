@@ -799,9 +799,17 @@ article footer {
     overflow: hidden;
 }
 
+.sidetabs.wide {
+    background: url('/webpage/img/bgs/bg_sidetab.png') repeat-y 49px 0px;
+}
+
 .sidetab-switch {
     float: left;
     width: 181px;
+}
+
+.sidetabs.wide .sidetab-switch {
+    width: 230px;
 }
 
 .sidetab-switch a {

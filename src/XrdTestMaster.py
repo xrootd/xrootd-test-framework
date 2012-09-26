@@ -587,8 +587,12 @@ class XrdTestMaster(Runnable):
                 # Cluster was stopped - remove all slaves.
                 self.slaves = {}
                                 
-                # Remove timeout job
-                self.sched.unschedule_func(self.cancelTestSuite)
+                # Remove timeout job. If we get here because a timeout job fired,
+                # then the job will have been unscheduled automatically.
+                try:
+                    self.sched.unschedule_func(self.cancelTestSuite)
+                except:
+                    pass
                 
                 return True
             return False

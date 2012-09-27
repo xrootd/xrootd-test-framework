@@ -203,18 +203,28 @@ function main(anchors) {
         $("a[href*='" + refprefix + "']").each(function(index) {
             oldrefs[index] = $(this).attr('href');
         })
-        
+
         var newids = $("[id^='" + newloggroup + "']");
         $(newids).each(function(index) {
             var newref = '#' + $(this).attr('id');
-            
+
             $("a[href='" + oldrefs[index] + "']").removeClass("current");
             $("a[href='" + oldrefs[index] + "']").attr('href', newref);
             $(oldrefs[index]).hide();
         });
-        
+
         $("[id^='" + newloggroup + "'].default-log ").show();
         $("a[href*='" + newloggroup + "'].default-tab ").addClass("current");
-        
+
+    });
+
+    $('[id^="imgselect-"]').each(function() {
+        $(this).ddslick({
+            width: 409,
+            onSelected: function(data){
+                $('#' + data.selectedData.value).siblings('.tab').hide();
+                $('#' + data.selectedData.value).show();
+            }
+        });
     });
 }

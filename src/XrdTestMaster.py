@@ -1205,6 +1205,8 @@ class XrdTestMaster(Runnable):
                                        args=tss.name))
                     del self.runningSuiteUids[tss.name]
                     self.runningSuite = None
+                    
+                    tss.sendEmailAlert(tss.failed, tss.state, tss.uid)
 
                 self.storeSuiteSession(tss)
                 LOGGER.info("%s finalized in test suite: %s" % \

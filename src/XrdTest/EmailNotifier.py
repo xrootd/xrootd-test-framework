@@ -63,6 +63,10 @@ class EmailNotifier(object):
     POLICY_SUITE = "SUITE"
     POLICY_NONE = "NONE"
     
+    SUITE_EVENT = 0
+    CASE_EVENT = 1
+    TIMEOUT_EVENT = 3
+    
     SENDER = 'XRootD Testing Framework <master@xrd.test>'
     
     def __init__(self, emails, success_policy, failure_policy):
@@ -114,43 +118,71 @@ class EmailNotifier(object):
               </style>
           </head>
           <body>
-            <p>
-                Something bad happened in %(testsuite)s
-            </p>
+            <p>Something bad happened in %(testsuite)s</p>
+            <p>%(state)s</p>
+            <p>%(uid)s</p>
+            <p>%(slave)s</p>
           </body>
         </html>
         """
         
-    def notify_success(self, args):
+    def notify_success(self, args, type):
+        msg = self._build_success(args)
+        send = False
+        
+        if self.success_policy == self.POLICY_CASE:
+            send = True
+        elif self.success_policy == self.POLICY_SUITE:
+            if type in (self.SUITE_EVENT, self.TIMEOUT_EVENT):
+                send = True
+        elif self.success_policy == self.POLICY_NONE:
+            return
+        else:
+            raise EmailNotifierException('Invalid success alert policy: %s' \
+                                         % self.success_policy)
+        
+        self._notify(self.success_policy, msg)
+    
+    def notify_failure(self, args, type):
+        msg = self._build_failure(args)
+        send = False
+        
+        if self.failure_policy == self.POLICY_CASE:
+            send = True
+        elif self.failure_policy == self.POLICY_SUITE:
+            if type in (self.SUITE_EVENT, self.TIMEOUT_EVENT):
+                send = True
+        elif self.failure_policy == self.POLICY_NONE:
+            return
+        else:
+            raise EmailNotifierException('Invalid failure alert policy: %s' \
+                                         % self.failure_policy)
+        
+        if send:
+            self._notify(msg)
+    
+    def _notify(self, msg):
+        self._send(msg, self.emails)
+        
+    def _build_success(self, args):
         msg_text = self.template_success_text % args
         msg_html = self.template_success_html % args
-        self._notify(self.success_policy, msg_text, msg_html)
+        return self._build(msg_text, msg_html, args)
     
-    def notify_failure(self, args):
+    def _build_failure(self, args):
         msg_text = self.template_failure_text % args
         msg_html = self.template_failure_html % args
-        self._notify(self.failure_policy, msg_text, msg_html)
+        return self._build(msg_text, msg_html, args)
     
-    def _notify(self, policy, text, html):
-        if policy == self.POLICY_CASE:
-            pass
-        elif policy == self.POLICY_SUITE:
-            pass
-        elif policy == self.POLICY_NONE:
-            pass
-        else:
-            pass
-        
-        self._send(text, html)
-        
-    def _send(self, text, html):
-        recipients = ', '.join([e for e in self.emails])
-        
+    def _build(self, text, html, args):
         # Create message container - correct MIME type is multipart/alternative.
         msg = MIMEMultipart('alternative')
-        msg['Subject'] = "XRootD Testing Framework Event"
+        subject = '%s in suite %s on slave %s: %s' % \
+                    ('Failure' if args['failure'] else 'Success', \
+                    args['testsuite'], args['slave'], args['state'].name)
+        
+        msg['Subject'] = subject % args
         msg['From'] = self.SENDER
-        msg['To'] = recipients
 
         # Record the MIME types of both parts - text/plain and text/html.
         part1 = MIMEText(text, 'plain')
@@ -159,10 +191,13 @@ class EmailNotifier(object):
         # Attach parts into message container.
         msg.attach(part1)
         msg.attach(part2)
+        return msg
         
+    def _send(self, msg, recipients):
+        msg['To'] = ', '.join([r for r in recipients])
         # Send the message via local SMTP server.
         s = smtplib.SMTP('localhost')
-        s.sendmail(self.SENDER, recipients.split(','), msg.as_string())
+        s.sendmail(self.SENDER, recipients, msg.as_string())
         s.quit()
     
     

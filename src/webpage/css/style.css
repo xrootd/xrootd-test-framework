@@ -602,6 +602,10 @@ article section ul li {
     background-repeat: no-repeat;
 }
 
+ul.dd-options li {
+    padding-left: 0px;
+}
+
 article section ul.list-style-checkmark li,article section ul.list-style-cross li,article section ul.list-style-arrow li
     {
     padding-left: 25px;
@@ -673,7 +677,7 @@ header.square nav.leftnav ul li a {
 }
 
 header.small {
-    width: 100%;
+    width: 99%;
     border-bottom: 1px solid #e6e6e6;
     padding-left: 11px;
 }
@@ -1476,6 +1480,14 @@ div.tab>img,div.tab>.image-frame img {
 
 .logs li .logs-meta a {
     text-decoration: none;
+}
+
+select option.success {
+    
+}
+
+select option.failure {
+    
 }
 
 .actions {

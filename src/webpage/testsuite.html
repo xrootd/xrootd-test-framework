@@ -476,33 +476,31 @@
                                         </div>   
                                         
                                         <div class="tab" id="tab-case-run-${run.uid}">
-                                            <header class="square compact">
-                                                <!-- Article Header Tab Navigation -->
-                                                <nav class="leftnav">
-                                                    <ul class="tab-switch">
-                                                        #set $default_tab = True
-                                                        #for $i, $case in enumerate($run.cases.itervalues())
-                                                            
-                                                            #set $case_stages = $run.getTestCaseStages($case.uid)
-                                                            #set $failure = self.has_failures($case_stages)
-                                                            <li class="${'failure' if $failure else 'success'}">
-                                                                <a href="#tab-case-run-${case.uid}"
-                                                                   class="${'default-tab' if $default_tab else ''}">
-                                                                    <strong>$case.name</strong>
-                                                                </a>
-                                                            </li>
-                                                            #set $default_tab = False
-                                                        #end for
-                                                    </ul>
-                                                </nav>
-                                            </header>
-                                            
+                                            <form>
+                                                <select name="testcases" id="imgselect-${run.uid}">
+                                                    <option>Select Test Case: </option>
+                                                    #for $i, $case in enumerate($run.cases.itervalues())
+                                                        #set $case_stages = $run.getTestCaseStages($case.uid)
+                                                        #set $failure = self.has_failures($case_stages)
+                                                        <option value="tab-case-run-${case.uid}"
+                                                                 data-description="${'Failed' if $failure else 'Succeeded'} at 
+                                                                                    ${case.initDate.strftime('%d-%m-%Y %H:%M:%S')}"
+                                                                 data-imageSrc="${'/webpage/img/icons/list-style/icon_list_style_cross.png'
+                                                                                   if $failure else
+                                                                                   '/webpage/img/icons/list-style/icon_list_style_checkmark.png'}">
+                                                            $case.name
+                                                        </option>
+                         
+                                                    #end for
+                                                    
+                                                </select>
+                                            </form>
                                             <section>
                                                 #set $default_tab = True
                                                 #for $i, $case in enumerate($run.cases.itervalues())
                                                     #set $case_stages = $run.getTestCaseStages($case.uid)
                                                     <div class="tab ${'default-tab' if $default_tab else ''}" id="tab-case-run-${case.uid}">
-        
+                                                        
                                                         <header class="small">
                                                             <nav class="leftnav">
                                                                   <ul class="tab-switch">
@@ -563,6 +561,8 @@
                                                                                 #if self.participates($stage)
                                                                                     <div class="sidetab ${'default-sidetab' if $default_tab else ''}" 
                                                                                          id="sidetab-inner-case-init-${host}-${case.uid}">
+                                                                                        
+                                                                                        <h4>$case.name</h4>
                                                                                         <article class="full-block nested light">                                       
                                                                                             <div class="article-container">
                                                                                             <section>

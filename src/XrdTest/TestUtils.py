@@ -275,7 +275,7 @@ class TestSuiteSession(Stateful):
     It stores all information required for test suite to be run as well as
     results of test stages. It has unique id (uid parameter) for recognition,
     because there will be for sure many test suites with the same name.
-    '''
+    '''    
     def __init__(self, suiteDef):
         Stateful.__init__(self)
         # name of test suite
@@ -341,9 +341,8 @@ class TestSuiteSession(Stateful):
 
         if result[2] != '0':
             self.failed = True
-            self.sendEmailAlert(state, result, uid, slave_name, failure=True)
-        else:
-            self.sendEmailAlert(state, result, uid, slave_name, failure=False)
+            
+        self.sendEmailAlert(self.failed, state, uid, result, slave_name)
 
         if result[1] == None:
             result = (result[0], "", result[2], result[3])
@@ -358,19 +357,30 @@ class TestSuiteSession(Stateful):
         stages = [v for v in self.stagesResults if v[2] == test_case_uid]
         return stages
     
-    def sendEmailAlert(self, state, result, uid, slave_name, failure):
+    def sendEmailAlert(self, failure, state, uid, result=None,\
+                        slave_name=None, timeout=False):
         args = {
                 'testsuite': self.name,
+                'failure': failure,
                 'state': state,
-                'result': result,
                 'uid': uid,
-                'slave': slave_name
                 }
+        if slave_name: args['slave'] = slave_name
+        if result: args['result'] = result
+        
+        if state in (TestSuite.S_ALL_FINALIZED, TestSuite.S_INIT_ERROR):
+            type = EmailNotifier.SUITE_EVENT
+        elif state == TestSuite.S_ALL_TEST_FINALIZED:
+            type = EmailNotifier.CASE_EVENT
+        elif timeout:
+            type = EmailNotifier.TIMEOUT_EVENT
+        else:
+            return
         
         if failure:
-            self.notifier.notify_failure(args)
+            self.notifier.notify_failure(args, type)
         else:
-            self.notifier.notify_success(args)
+            self.notifier.notify_success(args, type)
     
 
 def extractSuiteName(path):

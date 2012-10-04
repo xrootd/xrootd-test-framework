@@ -270,7 +270,7 @@ class XrdTestMaster(Runnable):
                 # load test suite definitions
                 if self.config.has_option(repo, 'suite_defs_path'):
                     suiteDefPath = os.path.join(localPath, self.config.get(repo, 'suite_defs_path'))
-                elif os.path.exists(os.path.join(localPath,+ 'test-suites')):
+                elif os.path.exists(os.path.join(localPath, +'test-suites')):
                     suiteDefPath = os.path.join(localPath, 'test-suites')
                 else:
                     LOGGER.error('No test suite definitions found for repository %s' % repo)
@@ -519,8 +519,8 @@ class XrdTestMaster(Runnable):
         
         # Set one hour timeout
         # TODO: make timeout value configurable per-suite
-        self.sched.add_date_job(self.cancelTestSuite, 
-                           datetime.now() + timedelta(hours=1), 
+        self.sched.add_date_job(self.cancelTestSuite,
+                           datetime.now() + timedelta(hours=1),
                            [suiteName, True])
         self.runningSuite = tss
         
@@ -854,6 +854,10 @@ class XrdTestMaster(Runnable):
                         "s list (after handling incoming connection): " + \
                          ', '.join(clients_str))
             
+            for cluster in self.clusters.itervalues():
+                if cluster.state == Cluster.S_UNKNOWN_NOHYPERV:
+                    cluster.state = State(Cluster.S_DEFINED)
+            
             if len(self.pendingJobs):
                 self.startNextJob()
 
@@ -1140,6 +1144,7 @@ class XrdTestMaster(Runnable):
 
         @param msg:
         '''
+        # A slave is telling us the state of its test suite.
         if msg.name == XrdMessage.M_TESTSUITE_STATE:
             
             if not self.slaves.has_key(msg.sender):
@@ -1147,8 +1152,11 @@ class XrdTestMaster(Runnable):
             
             slave = self.slaves[msg.sender]
 
-            # test suite was initialized on slave
+            #===================================================================
+            # Test suite was initialized on slave
+            #===================================================================
             if msg.state == State(TestSuite.S_SLAVE_INITIALIZED):
+                
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 tss.addStageResult(msg.state, msg.result,
                                    uid="suite_inited",
@@ -1160,10 +1168,17 @@ class XrdTestMaster(Runnable):
                 if msg.result[2] != "0":
                     # check if suite init error was already handled
                     if not suiteInError:
+                        
                         tss.state = State(TestSuite.S_INIT_ERROR)
                         LOGGER.error("%s slave initialization error in test suite %s" \
                                      % (slave.hostname, tss.name))
                         LOGGER.error(msg.result)
+                        
+                        tss.sendEmailAlert(tss.failed, tss.state, tss.uid, \
+                                           result=msg.result, \
+                                           slave_name=slave.hostname)
+                        
+                        # Set the state of all slaves to idle.
                         sSlaves = self.getSuiteSlaves(tss.suite)
                         for sSlave in sSlaves:
                             sSlave.state = State(Slave.S_CONNECTED_IDLE)
@@ -1171,15 +1186,18 @@ class XrdTestMaster(Runnable):
                         self.removeJobs(msg.jobGroupId, \
                                         Job.INITIALIZE_TEST_SUITE)
                         self.runningSuite = None
+                
+                # Init completed without error
                 else:
                     slave.state = State(Slave.S_SUITE_INITIALIZED)
                     slave.state.suiteName = msg.suiteName
-
-                    #update SuiteStatus if all slaves are inited
-                    iSlaves = self.getSuiteSlaves(tss.suite,
-                                            State(Slave.S_SUITE_INITIALIZED))
                     LOGGER.info("%s initialized in test suite %s" % \
                                 (slave, tss.name))
+
+                    # Are all slaves initialized? If so, remove the suite_init 
+                    # job.
+                    iSlaves = self.getSuiteSlaves(tss.suite,
+                                            State(Slave.S_SUITE_INITIALIZED))
                     if len(iSlaves) == len(tss.suite.machines):
                         tss.state = State(TestSuite.S_ALL_INITIALIZED)
                         self.removeJob(Job(Job.INITIALIZE_TEST_SUITE, \
@@ -1187,90 +1205,158 @@ class XrdTestMaster(Runnable):
                         LOGGER.info("All slaves initialized in " + \
                                     " test suite %s" % tss.name)
                         
+                        tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
+                                           result=msg.result)
+                        
                 self.storeSuiteSession(tss)
-            # test suite was finalized on slave
+            
+            #===================================================================
+            # Test suite was finalized on slave
+            #===================================================================
             elif msg.state == State(TestSuite.S_SLAVE_FINALIZED):
+                
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 slave.state = State(Slave.S_CONNECTED_IDLE)
+                LOGGER.info("%s finalized in test suite: %s" % \
+                            (slave, tss.name))
+                
                 tss.addStageResult(msg.state, msg.result,
                                    uid="suite_finalized",
                                    slave_name=slave.hostname)
-
-                iSlaves = self.getSuiteSlaves(tss.suite, \
-                                            State(Slave.S_CONNECTED_IDLE))
-
-                if len(iSlaves) >= len(tss.suite.machines):
-                    tss.state = State(TestSuite.S_ALL_FINALIZED)
-                    self.removeJob(Job(Job.FINALIZE_TEST_SUITE, \
-                                       args=tss.name))
-                    del self.runningSuiteUids[tss.name]
-                    self.runningSuite = None
-                    
-                    tss.sendEmailAlert(tss.failed, tss.state, tss.uid)
-
-                self.storeSuiteSession(tss)
-                LOGGER.info("%s finalized in test suite: %s" % \
-                            (slave, tss.name))
-            # test case was initialized on slave
-            elif msg.state == State(TestSuite.S_SLAVE_TEST_INITIALIZED):
-                tss = self.retrieveSuiteSession(msg.suiteName)
-                tss.addStageResult(msg.state, msg.result, msg.testUid,
+                
+                tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
+                                   result=msg.result, \
                                    slave_name=slave.hostname)
 
+                # Has the test suite been finalized on all slaves? If so,
+                # remove the suite_finalize job.
+                iSlaves = self.getSuiteSlaves(tss.suite, \
+                                            State(Slave.S_CONNECTED_IDLE))
+                if len(iSlaves) >= len(tss.suite.machines):
+                    tss.state = State(TestSuite.S_ALL_FINALIZED)
+                    
+                    tss.sendEmailAlert(tss.failed, tss.state, tss.uid, \
+                                       result=msg.result)
+                    
+                    self.removeJob(Job(Job.FINALIZE_TEST_SUITE, \
+                                       args=tss.name))
+                    # Suite has finished running, so unset these
+                    del self.runningSuiteUids[tss.name]
+                    self.runningSuite = None
+
+                self.storeSuiteSession(tss)
+                
+            #===================================================================
+            # Test case was initialized on slave
+            #===================================================================
+            elif msg.state == State(TestSuite.S_SLAVE_TEST_INITIALIZED):
+                
+                tss = self.retrieveSuiteSession(msg.suiteName)
                 slave.state = State(Slave.S_TEST_INITIALIZED)
+                LOGGER.info("%s initialized test %s in suite %s" % \
+                            (slave, msg.testName, tss.name))
+                
+                tss.addStageResult(msg.state, msg.result, msg.testUid,
+                       slave_name=slave.hostname)
+                
                 tc = tss.cases[msg.testUid]
+                tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
+                                   result=msg.result, \
+                                   slave_name=slave.hostname)
+                                
+                # Has the test case been initialized on all slaves? If so,
+                # remove the case_init job.
                 waitSlaves = self.getSuiteSlaves(tss.suite, test_case=tc)
                 readySlaves = self.getSuiteSlaves(tss.suite, \
                                             State(Slave.S_TEST_INITIALIZED),
                                             test_case=tc)
                 if len(waitSlaves) == len(readySlaves):
                     tss.state = State(TestSuite.S_ALL_TEST_INITIALIZED)
+                    
+                    tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
+                                       result=msg.result, test_case=tc)
+                    
                     self.removeJob(Job(Job.INITIALIZE_TEST_CASE, \
                                        args=(tss.name, tc.name)))
+                
                 self.storeSuiteSession(tss)
-                LOGGER.info("%s initialized test %s in suite %s" % \
-                            (slave, msg.testName, tss.name))
-            # test case run finished
+                
+            
+            #===================================================================
+            # Test case finished running on slave
+            #===================================================================
             elif msg.state == State(TestSuite.S_SLAVE_TEST_RUN_FINISHED):
+                
                 tss = self.retrieveSuiteSession(msg.suiteName)
+                slave.state = State(Slave.S_TEST_RUN_FINISHED)
+                LOGGER.info("%s finished run test %s in suite %s" % \
+                            (slave, msg.testName, tss.name))
+                
                 tss.addStageResult(msg.state, msg.result,
                                    slave_name=slave.hostname,
                                    uid=msg.testUid)
-                slave.state = State(Slave.S_TEST_RUN_FINISHED)
+                
                 tc = tss.cases[msg.testUid]
+                tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
+                                   result=msg.result, test_case=tc, \
+                                   slave_name=slave.hostname)
+                
+                # Has the tast case finished running on all slaves? If so, 
+                # remove the case_run job.
                 waitSlaves = self.getSuiteSlaves(tss.suite, test_case=tc)
                 readySlaves = self.getSuiteSlaves(tss.suite, \
                                             State(Slave.S_TEST_RUN_FINISHED),
                                             test_case=tc)
                 if len(waitSlaves) == len(readySlaves):
                     tss.state = State(TestSuite.S_ALL_TEST_RUN_FINISHED)
+                    
+                    tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
+                                   result=msg.result, test_case=tc)
+                    
                     self.removeJob(Job(Job.RUN_TEST_CASE, \
                                        args=(tss.name, tc.name)))
+                
                 self.storeSuiteSession(tss)
-                LOGGER.info("%s finished run test %s in suite %s" % \
-                            (slave, msg.testName, tss.name))
-            # test case finalize finished
+                
+            
+            #===================================================================
+            # Test case was finalized on slave
+            #===================================================================
             elif msg.state == State(TestSuite.S_SLAVE_TEST_FINALIZED):
+                
                 tss = self.retrieveSuiteSession(msg.suiteName)
+                slave.state = State(Slave.S_SUITE_INITIALIZED)
+                slave.state.suiteName = msg.suiteName
+                LOGGER.info("%s finalized test %s in suite %s" % \
+                            (slave, msg.testName, tss.name))
+                
                 tss.addStageResult(msg.state, msg.result, \
                                    slave_name=slave.hostname, \
                                    uid=msg.testUid)
-                slave.state = State(Slave.S_SUITE_INITIALIZED)
-                slave.state.suiteName = msg.suiteName
-
+                
                 tc = tss.cases[msg.testUid]
+                tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
+                                   result=msg.result, test_case=tc)
+
+                # Has the test case been finalized on all slaves? If so,
+                # remove the case_finalize job.
                 waitSlaves = self.getSuiteSlaves(tss.suite, test_case=tc)
                 readySlaves = self.getSuiteSlaves(tss.suite, \
                                             State(Slave.S_SUITE_INITIALIZED),
                                             test_case=tc)
                 if len(waitSlaves) == len(readySlaves):
                     tss.state = State(TestSuite.S_ALL_INITIALIZED)
+                    
+                    tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
+                                       result=msg.result, test_case=tc)
+                    
                     self.removeJob(Job(Job.FINALIZE_TEST_CASE, \
                                        args=(tss.name, tc.name)))
+                
                 self.storeSuiteSession(tss)
-                LOGGER.info("%s finalized test %s in suite %s" % \
-                            (slave, msg.testName, tss.name))
-
+                
+        
+        # A slave is requesting its specific scrip tags.
         elif msg.name == XrdMessage.M_TAG_REQUEST:
             slave = msg.hostname
             self.handleTagRequest(slave)
@@ -1294,7 +1380,7 @@ class XrdTestMaster(Runnable):
                 
                 diskMountTemplate = '''
                     if [ ! -d %(mountpoint)s ]; then mkdir %(mountpoint)s; fi
-                    
+
                     mount -t ext4 -o user_xattr /dev/%(device)s %(mountpoint)s
                     chown $XROOTD_USER.$XROOTD_GROUP %(mountpoint)s
                     '''

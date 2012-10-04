@@ -124,7 +124,7 @@
                                     #for $h in $hypervisors.itervalues()
                                        <li>
                                            <a class="${'default-sidetab' if $default_tab else ''}" 
-                                              href="#sidetab-${h.hostname.replace('.', '-')}">
+                                              href="#sidetab-${h.hostname.replace('.', '-')}-${str($h.address[1])}">
                                                $h.hostname
                                            </a>
                                        </li>
@@ -137,7 +137,7 @@
                             #set $default_tab = True
                             #for $h in $hypervisors.itervalues()
                                <div class="sidetab ${'default-sidetab' if $default_tab else ''}" 
-                                    id="sidetab-${h.hostname.replace('.', '-')}">
+                                    id="sidetab-${h.hostname.replace('.', '-')}-${str($h.address[1])}">
                                     <article class="full-block">
                                         <div class="article-container">
                                             <h3>

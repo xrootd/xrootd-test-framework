@@ -13,7 +13,7 @@
 	#import re
 	#from datetime import datetime
 	
-	#set $hist_keys = [k for k in $all_runs.iterkeys()]
+	#set $hist_keys = [k for k in sorted($all_runs.iterkeys())]
 	#set $run_hist = $all_runs[$hist_keys[0]]
 	
 	#set $failed_runs = len([run for run in $run_hist if $run.failed])
@@ -483,8 +483,6 @@
                                                         #set $case_stages = $run.getTestCaseStages($case.uid)
                                                         #set $failure = self.has_failures($case_stages)
                                                         <option value="tab-case-run-${case.uid}"
-                                                                 data-description="${'Failed' if $failure else 'Succeeded'} at 
-                                                                                    ${case.initDate.strftime('%d-%m-%Y %H:%M:%S')}"
                                                                  data-imageSrc="${'/webpage/img/icons/list-style/icon_list_style_cross.png'
                                                                                    if $failure else
                                                                                    '/webpage/img/icons/list-style/icon_list_style_checkmark.png'}">

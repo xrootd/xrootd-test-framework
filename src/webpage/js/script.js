@@ -1,7 +1,7 @@
 $(function() {
     $(document).ready(function() {
         main()
-        $('html').show();
+        $('html').css('display', 'block');
     });
 });
 

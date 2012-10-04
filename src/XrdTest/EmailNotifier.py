@@ -78,14 +78,34 @@ class EmailNotifier(object):
     def template_success_text(self):
         return \
         """
-        Something good happened in %(testsuite)s
+        Success in test suite %(testsuite)s
+        
+        %(slave)s
+        
+        %(testcase)s
+        
+        %(state)s
+        
+        %(uid)s
+        
+        %(result)s
         """
         
     @property
     def template_failure_text(self):
         return \
         """
-        Something bad happened in %(testsuite)s
+        Failure in test suite %(testsuite)s
+        
+        %(slave)s
+        
+        %(testcase)s
+        
+        %(state)s
+        
+        %(uid)s
+        
+        %(result)s
         """
 
     @property
@@ -95,14 +115,17 @@ class EmailNotifier(object):
         <html>
           <head>
               <style type="text/css">
+                  body { white-space: pre-wrap; }
                   p { font-family: Courier New, Courier, monospace; }
               </style>
           </head>
           <body>
-            <p>Something good happened in %(testsuite)s</p>
+            <p>Success in test suite %(testsuite)s</p>
+            <p>%(slave)s</p>
+            <p>%(testcase)s</p>
+            <p>%(result)s</p>
             <p>%(state)s</p>
             <p>%(uid)s</p>
-            <p>%(slave)s</p>
           </body>
         </html>
         """
@@ -114,14 +137,17 @@ class EmailNotifier(object):
         <html>
           <head>
               <style type="text/css">
+                  body { white-space: pre-wrap; }
                   p { font-family: Courier New, Courier, monospace; }
               </style>
           </head>
           <body>
-            <p>Something bad happened in %(testsuite)s</p>
+            <p>Failure in test suite %(testsuite)s</p>
+            <p>%(slave)s</p>
+            <p>%(testcase)s</p>
+            <p>%(result)s</p>
             <p>%(state)s</p>
             <p>%(uid)s</p>
-            <p>%(slave)s</p>
           </body>
         </html>
         """
@@ -141,7 +167,7 @@ class EmailNotifier(object):
             raise EmailNotifierException('Invalid success alert policy: %s' \
                                          % self.success_policy)
         
-        self._notify(self.success_policy, msg)
+        self._notify(msg)
     
     def notify_failure(self, args, type):
         msg = self._build_failure(args)
@@ -165,11 +191,35 @@ class EmailNotifier(object):
         self._send(msg, self.emails)
         
     def _build_success(self, args):
+        if args.has_key('slave'): 
+            args['slave'] = 'Slave: %s' % args['slave']
+        else: args['slave'] = ''
+        
+        if args.has_key('result'): 
+            args['result'] = 'Result:\n%s' % str(args['result'])
+        else: args['result'] = ''
+        
+        if args.has_key('testcase'): 
+            args['testcase'] = 'Test case::\n%s' % args['testcase']
+        else: args['testcase'] = ''
+        
         msg_text = self.template_success_text % args
         msg_html = self.template_success_html % args
         return self._build(msg_text, msg_html, args)
     
     def _build_failure(self, args):
+        if args.has_key('slave'): 
+            args['slave'] = 'Slave: %s' % args['slave']
+        else: args['slave'] = ''
+        
+        if args.has_key('result'): 
+            args['result'] = 'Result:\n%s' % str(args['result'])
+        else: args['result'] = ''
+        
+        if args.has_key('testcase'): 
+            args['testcase'] = 'Test case::\n%s' % args['testcase']
+        else: args['testcase'] = ''
+        
         msg_text = self.template_failure_text % args
         msg_html = self.template_failure_html % args
         return self._build(msg_text, msg_html, args)
@@ -177,9 +227,10 @@ class EmailNotifier(object):
     def _build(self, text, html, args):
         # Create message container - correct MIME type is multipart/alternative.
         msg = MIMEMultipart('alternative')
-        subject = '%s in suite %s on slave %s: %s' % \
+        subject = '%s in suite %s %s' % \
                     ('Failure' if args['failure'] else 'Success', \
-                    args['testsuite'], args['slave'], args['state'].name)
+                    args['testsuite'], \
+                    'on slave ' + args['slave'] if args['slave'] else '')
         
         msg['Subject'] = subject % args
         msg['From'] = self.SENDER

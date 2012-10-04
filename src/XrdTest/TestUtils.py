@@ -83,23 +83,23 @@ class TestSuite(Stateful):
     
     S_IDLE = (10, "Waiting for cluster to activate")
 
-    S_WAIT_4_INIT = (20, "Waiting for suite initialization")
+    S_WAIT_4_INIT = (20, "Initializing test suite")
     S_SLAVE_INITIALIZED = (21, "Slave initialized")
     S_ALL_INITIALIZED = (22, "All machines initialized")
 
-    S_WAIT_4_FINALIZE = (30, "Waiting for suite finalization")
+    S_WAIT_4_FINALIZE = (30, "Finalizing test suite")
     S_SLAVE_FINALIZED = (31, "Slave finalized")
     S_ALL_FINALIZED = (32, "All machines finalized")
 
-    S_WAIT_4_TEST_INIT = (40, "Sent test case initialization command to slaves")
+    S_WAIT_4_TEST_INIT = (40, "Initializing test case")
     S_SLAVE_TEST_INITIALIZED = (41, "Test case initialized on a slave")
     S_ALL_TEST_INITIALIZED = (42, "Test case initialized on all slaves")
 
-    S_WAIT_4_TEST_RUN = (43, "Sent test case run command to slaves")
+    S_WAIT_4_TEST_RUN = (43, "Running test case")
     S_SLAVE_TEST_RUN_FINISHED = (44, "Test case run finished on a slave")
     S_ALL_TEST_RUN_FINISHED = (45, "Test case run finished on all slaves")
 
-    S_WAIT_4_TEST_FINALIZE = (46, "Sent test case finalization command to slaves")
+    S_WAIT_4_TEST_FINALIZE = (46, "Finalizing test case")
     S_SLAVE_TEST_FINALIZED = (47, "Test case finalized on a slave")
     S_ALL_TEST_FINALIZED = (48, "Test case finalized on all slaves")
 
@@ -341,8 +341,6 @@ class TestSuiteSession(Stateful):
 
         if result[2] != '0':
             self.failed = True
-            
-        self.sendEmailAlert(self.failed, state, uid, result, slave_name)
 
         if result[1] == None:
             result = (result[0], "", result[2], result[3])
@@ -358,7 +356,7 @@ class TestSuiteSession(Stateful):
         return stages
     
     def sendEmailAlert(self, failure, state, uid, result=None,\
-                        slave_name=None, timeout=False):
+                        slave_name=None, test_case=None, timeout=False):
         args = {
                 'testsuite': self.name,
                 'failure': failure,
@@ -366,7 +364,26 @@ class TestSuiteSession(Stateful):
                 'uid': uid,
                 }
         if slave_name: args['slave'] = slave_name
+        if test_case: args['testcase'] = test_case
         if result: args['result'] = result
+        
+        
+        if failure != "0":
+            if state == TestSuite.S_INIT_ERROR:
+                print 'suite init error'
+            elif state == TestSuite.S_ALL_FINALIZED:
+                print 'suite finalize error'
+            elif state == TestSuite.S_ALL_TEST_INITIALIZED:
+                print 'case init error'
+            elif state == TestSuite.S_ALL_TEST_RUN_FINISHED:
+                print 'case run error'
+            elif state == TestSuite.S_ALL_TEST_FINALIZED:
+                print 'case finalize error'
+        else:
+            if state == TestSuite.S_ALL_FINALIZED:
+                print 'suite run success'
+            elif state == TestSuite.S_ALL_TEST_FINALIZED:
+                print 'case run success'
         
         if state in (TestSuite.S_ALL_FINALIZED, TestSuite.S_INIT_ERROR):
             type = EmailNotifier.SUITE_EVENT
@@ -377,7 +394,7 @@ class TestSuiteSession(Stateful):
         else:
             return
         
-        if failure:
+        if failure != "0":
             self.notifier.notify_failure(args, type)
         else:
             self.notifier.notify_success(args, type)

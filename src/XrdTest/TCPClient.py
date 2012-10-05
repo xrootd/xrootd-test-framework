@@ -120,7 +120,7 @@ class Slave(TCPClient):
     S_TEST_RUN_SENT = (23, "Sent test case run to slave")
     S_TEST_RUN_FINISHED = (24, "Test case run finished")
     S_TEST_FINALIZE_SENT = (25, "Sent test case finalize to slave")
-    #S_TEST_FINALIZED        = Slave.S_SUITE_INITIALIZED
+    S_TEST_FINALIZED = (26, "Test case finalized")
 
     def __str__(self):
         return "Slave %s [%s]" % (self.hostname, self.address)

@@ -362,43 +362,60 @@ class TestSuiteSession(Stateful):
                 'failure': failure,
                 'state': state,
                 'uid': uid,
-                }
-        if slave_name: args['slave'] = slave_name
-        if test_case: args['testcase'] = test_case
-        if result: args['result'] = result
+                'slave': slave_name if slave_name else '',
+                'testcase': test_case.name if test_case else '',
+                'result': result if result else ''
+               }
+        type = None
         
-        
-        if failure != "0":
+        if int(failure):
             if state == TestSuite.S_INIT_ERROR:
-                print 'suite init error'
+                desc = 'Error during initialization'
+                type = EmailNotifier.SUITE_EVENT
+            
             elif state == TestSuite.S_ALL_FINALIZED:
-                print 'suite finalize error'
+                desc = 'Error during finalization'
+                type = EmailNotifier.SUITE_EVENT
+            
+            elif state == TestSuite.S_SLAVE_TEST_INITIALIZED:
+                desc = 'Error initializing test case'
+                type = EmailNotifier.CASE_EVENT
+            
+            elif state == TestSuite.S_SLAVE_TEST_RUN_FINISHED:
+                desc = 'Error running test case'
+                type = EmailNotifier.CASE_EVENT
+            
+            elif state == TestSuite.S_SLAVE_TEST_FINALIZED:
+                desc = 'Error finalizing test case'
+                type = EmailNotifier.CASE_EVENT
+                
             elif state == TestSuite.S_ALL_TEST_INITIALIZED:
-                print 'case init error'
+                desc = 'Error initializing test cases'
+                type = EmailNotifier.CASE_EVENT
+                
             elif state == TestSuite.S_ALL_TEST_RUN_FINISHED:
-                print 'case run error'
+                desc = 'Error running test cases'
+                type = EmailNotifier.CASE_EVENT
+                
             elif state == TestSuite.S_ALL_TEST_FINALIZED:
-                print 'case finalize error'
+                desc = 'Error finalizing test cases'
+                type = EmailNotifier.CASE_EVENT
+            
+            elif timeout:
+                type = EmailNotifier.TIMEOUT_EVENT
+            
+            if type is not None: self.notifier.notify_failure(args, desc, type)
+            
         else:
             if state == TestSuite.S_ALL_FINALIZED:
                 print 'suite run success'
+                type = EmailNotifier.SUITE_EVENT
             elif state == TestSuite.S_ALL_TEST_FINALIZED:
-                print 'case run success'
-        
-        if state in (TestSuite.S_ALL_FINALIZED, TestSuite.S_INIT_ERROR):
-            type = EmailNotifier.SUITE_EVENT
-        elif state == TestSuite.S_ALL_TEST_FINALIZED:
-            type = EmailNotifier.CASE_EVENT
-        elif timeout:
-            type = EmailNotifier.TIMEOUT_EVENT
-        else:
-            return
-        
-        if failure != "0":
-            self.notifier.notify_failure(args, type)
-        else:
-            self.notifier.notify_success(args, type)
-    
+                desc = 'Test case ran successfully'
+                type = EmailNotifier.CASE_EVENT
+            
+            if type: self.notifier.notify_success(args, desc, type)
+           
 
 def extractSuiteName(path):
     '''

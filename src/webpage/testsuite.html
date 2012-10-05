@@ -256,7 +256,7 @@
             <section>
                 <!-- Tab Content -->
                     #if len($run_hist)
-                        <div class="sidetabs">
+                        <div class="sidetabs thin">
                         
                         <!-- Side Tab Navigation -->
                         <nav class="sidetab-switch">
@@ -306,7 +306,7 @@
                                     </div>
                                     
                                     <h4>
-                                        Run: <span>$run.initDate.strftime("%a %d-%m-%Y %H:%M:%S")</span>
+                                        Run started: <span>$run.initDate.strftime("%a %d-%m-%Y %H:%M:%S")</span>
                                         #if $run.timeout
                                             <span class="tag red timeout">Timed Out</span>
                                         #end if
@@ -347,7 +347,7 @@
                                         <div class="tab default-tab" id="tab-suite-init-${run.uid}">
                                             #set $init_stages = $run.getTestCaseStages("suite_inited") 
                                             #if $init_stages and len($init_stages)
-                                               <div class="sidetabs">
+                                               <div class="sidetabs thin">
                                                     <nav class="sidetab-switch">
                                                         <ul>
                                                             #set $default_tab = True
@@ -401,6 +401,9 @@
                                                                                     </ul>
                                                                                 </nav>
                                                                                 
+                                                                            </header>
+                                                                            
+                                                                            <section>
                                                                                 <form class="log-select">
                                                                                     <label for="whichlog">Select Log:&nbsp;</label>
                                                                                     <select id="whichlog">
@@ -417,8 +420,7 @@
                                                                                         #end for
                                                                                     </select>
                                                                                 </form>
-                                                                                
-                                                                            </header>
+                                                                            </section>
                                                                             
                                                                             #set $logs = self.format_log($stage[1][0])
                                                                             <section>
@@ -530,7 +532,7 @@
                                                                 
                                                                 #set $init_stages = self.get_case_init_stages($case_stages)
                                                                    #if len($init_stages)
-                                                                       <div class="sidetabs">
+                                                                       <div class="sidetabs thin">
                                                                         <nav class="sidetab-switch">
                                                                             <ul>
                                                                                 #set $default_tab = True
@@ -584,6 +586,9 @@
                                                                                                             </ul>
                                                                                                         </nav>
                                                                                                         
+                                                                                                        
+                                                                                                    </header>
+                                                                                                    <section>
                                                                                                         <form class="log-select">
                                                                                                             <label for="whichlog">Select Log:&nbsp;</label>
                                                                                                             <select id="whichlog">
@@ -600,7 +605,7 @@
                                                                                                                 #end for
                                                                                                             </select>
                                                                                                         </form>
-                                                                                                    </header>
+                                                                                                    </section>
                                                                                                     
                                                                                                     #set $logs = self.format_log($stage[1][0])
                                                                                                         <section>
@@ -659,7 +664,7 @@
                                                                 #set $run_stages = self.get_case_run_stages($case_stages)
                                                                 
                                                                 #if len($run_stages)
-                                                                    <div class="sidetabs">
+                                                                    <div class="sidetabs thin">
                                                                         <nav class="sidetab-switch">
                                                                             <ul>
                                                                                 #set $default_tab = True
@@ -711,6 +716,9 @@
                                                                                                             </ul>
                                                                                                         </nav>
                                                                                                         
+                                                                                                    </header>
+                                                                                                    
+                                                                                                    <section>
                                                                                                         <form class="log-select">
                                                                                                             <label for="whichlog">Select Log:&nbsp;</label>
                                                                                                             <select id="whichlog">
@@ -727,7 +735,7 @@
                                                                                                                 #end for
                                                                                                             </select>
                                                                                                         </form>
-                                                                                                    </header>
+                                                                                                    </section>
                                                                                                     
                                                                                                     #set $logs = self.format_log($stage[1][0])
                                                                                                         <section>
@@ -787,7 +795,7 @@
                                                                 #set $fin_stages = self.get_case_finalize_stages($case_stages)
                                                                 
                                                                 #if len($fin_stages) and self.has_action($fin_stages)
-                                                                    <div class="sidetabs">
+                                                                    <div class="sidetabs thin">
                                                                         <nav class="sidetab-switch">
                                                                             <ul>
                                                                                 #set $default_tab = True
@@ -838,7 +846,10 @@
                                                                                                                 </li>
                                                                                                             </ul>
                                                                                                         </nav>
-                                                                                                        
+                                                                                                         
+                                                                                                    </header>
+                                                                                                    
+                                                                                                    <section>
                                                                                                         <form class="log-select">
                                                                                                             <label for="whichlog">Select Log:&nbsp;</label>
                                                                                                             <select id="whichlog">
@@ -855,7 +866,7 @@
                                                                                                                 #end for
                                                                                                             </select>
                                                                                                         </form>
-                                                                                                    </header>
+                                                                                                    </section>
                                                                                                     
                                                                                                     #set $logs = self.format_log($stage[1][0])
                                                                                                         <section>
@@ -922,7 +933,7 @@
                                             #set $fin_stages = $run.getTestCaseStages("suite_finalized") 
                                             
                                             #if len($fin_stages) and self.has_action($fin_stages)
-                                               <div class="sidetabs">
+                                               <div class="sidetabs thin">
                                                     <nav class="sidetab-switch">
                                                         <ul>
                                                             #set $default_tab = True
@@ -976,6 +987,7 @@
                                                                                     </ul>
                                                                                 </nav>
                                                                                 
+                                                                            </header>
                                                                                 <form class="log-select">
                                                                                     <label for="whichlog">Select Log:&nbsp;</label>
                                                                                     <select id="whichlog">
@@ -992,8 +1004,9 @@
                                                                                         #end for
                                                                                     </select>
                                                                                 </form>
-                                                                                
-                                                                            </header>
+                                                                            <section>
+                                                                            
+                                                                            </section>
                                                                             
                                                                             #set $logs = self.format_log($stage[1][0])
                                                                             <section>

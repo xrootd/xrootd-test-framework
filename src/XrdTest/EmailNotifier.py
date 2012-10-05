@@ -23,8 +23,8 @@
 #
 # File:    EmailNotifier.py
 # Desc:    Functionality for sending email notifications to a set of email 
-#          addresses in case of test suite success/failure, based on some 
-#          policies.
+#          addresses in case of test suite success/failure, based on policies 
+#          about the frequency and type of notifications desired.
 #
 #-------------------------------------------------------------------------------
 from Utils import Logger
@@ -74,86 +74,8 @@ class EmailNotifier(object):
         self.success_policy = success_policy
         self.failure_policy = failure_policy
     
-    @property
-    def template_success_text(self):
-        return \
-        """
-        Success in test suite %(testsuite)s
         
-        %(slave)s
-        
-        %(testcase)s
-        
-        %(state)s
-        
-        %(uid)s
-        
-        %(result)s
-        """
-        
-    @property
-    def template_failure_text(self):
-        return \
-        """
-        Failure in test suite %(testsuite)s
-        
-        %(slave)s
-        
-        %(testcase)s
-        
-        %(state)s
-        
-        %(uid)s
-        
-        %(result)s
-        """
-
-    @property
-    def template_success_html(self):
-        return \
-        """
-        <html>
-          <head>
-              <style type="text/css">
-                  body { white-space: pre-wrap; }
-                  p { font-family: Courier New, Courier, monospace; }
-              </style>
-          </head>
-          <body>
-            <p>Success in test suite %(testsuite)s</p>
-            <p>%(slave)s</p>
-            <p>%(testcase)s</p>
-            <p>%(result)s</p>
-            <p>%(state)s</p>
-            <p>%(uid)s</p>
-          </body>
-        </html>
-        """
-    
-    @property
-    def template_failure_html(self):
-        return \
-        """
-        <html>
-          <head>
-              <style type="text/css">
-                  body { white-space: pre-wrap; }
-                  p { font-family: Courier New, Courier, monospace; }
-              </style>
-          </head>
-          <body>
-            <p>Failure in test suite %(testsuite)s</p>
-            <p>%(slave)s</p>
-            <p>%(testcase)s</p>
-            <p>%(result)s</p>
-            <p>%(state)s</p>
-            <p>%(uid)s</p>
-          </body>
-        </html>
-        """
-        
-    def notify_success(self, args, type):
-        msg = self._build_success(args)
+    def notify_success(self, args, desc, type):
         send = False
         
         if self.success_policy == self.POLICY_CASE:
@@ -167,10 +89,11 @@ class EmailNotifier(object):
             raise EmailNotifierException('Invalid success alert policy: %s' \
                                          % self.success_policy)
         
-        self._notify(msg)
+        if send:
+            msg = self._build(args, desc, type)
+            self._send(msg, self.emails)
     
-    def notify_failure(self, args, type):
-        msg = self._build_failure(args)
+    def notify_failure(self, args, desc, type):
         send = False
         
         if self.failure_policy == self.POLICY_CASE:
@@ -185,51 +108,30 @@ class EmailNotifier(object):
                                          % self.failure_policy)
         
         if send:
-            self._notify(msg)
+            msg = self._build(args, desc, type)
+            self._send(msg, self.emails)
     
-    def _notify(self, msg):
-        self._send(msg, self.emails)
+    def _build(self, args, desc, type):
+        en = EmailNotification()
         
-    def _build_success(self, args):
-        if args.has_key('slave'): 
-            args['slave'] = 'Slave: %s' % args['slave']
-        else: args['slave'] = ''
+        if int(args['failure']):
+            args['failure'] = 'Failure'
+        else:
+            args['failure'] = 'Success'
+            
+        if args['testcase']:
+            args['testcase'] = 'while running test case ' + \
+                               args['testcase']
+   
+        args.update({'desc': desc, 'css': en.css})
         
-        if args.has_key('result'): 
-            args['result'] = 'Result:\n%s' % str(args['result'])
-        else: args['result'] = ''
+        text = en.body_text % args
+        html = en.body_html % args
         
-        if args.has_key('testcase'): 
-            args['testcase'] = 'Test case::\n%s' % args['testcase']
-        else: args['testcase'] = ''
-        
-        msg_text = self.template_success_text % args
-        msg_html = self.template_success_html % args
-        return self._build(msg_text, msg_html, args)
-    
-    def _build_failure(self, args):
-        if args.has_key('slave'): 
-            args['slave'] = 'Slave: %s' % args['slave']
-        else: args['slave'] = ''
-        
-        if args.has_key('result'): 
-            args['result'] = 'Result:\n%s' % str(args['result'])
-        else: args['result'] = ''
-        
-        if args.has_key('testcase'): 
-            args['testcase'] = 'Test case::\n%s' % args['testcase']
-        else: args['testcase'] = ''
-        
-        msg_text = self.template_failure_text % args
-        msg_html = self.template_failure_html % args
-        return self._build(msg_text, msg_html, args)
-    
-    def _build(self, text, html, args):
         # Create message container - correct MIME type is multipart/alternative.
         msg = MIMEMultipart('alternative')
-        subject = '%s in suite %s %s' % \
-                    ('Failure' if args['failure'] else 'Success', \
-                    args['testsuite'], \
+        subject = '%s in suite %s %s' % (\
+                    desc, args['testsuite'], \
                     'on slave ' + args['slave'] if args['slave'] else '')
         
         msg['Subject'] = subject % args
@@ -252,3 +154,55 @@ class EmailNotifier(object):
         s.quit()
     
     
+class EmailNotification(object):
+    
+    @property
+    def body_text(self):
+        return \
+        """
+        %(failure)s in test suite %(testsuite)s
+        
+        Description: %(desc)s
+        
+        Slave involved: %(slave)s
+        
+        Output from slave:
+        %(result)s
+        """
+
+    @property
+    def body_html(self):
+        return \
+        """
+        <html>
+          <head>
+              <style type="text/css">%(css)s</style>
+          </head>
+          <body>
+            <p>
+                %(failure)s in test suite <strong>%(testsuite)s</strong>
+                <br />
+                Description: <strong>%(desc)s</strong>
+                <br />
+                Slave involved: <strong>%(slave)s</strong><br />
+                %(testcase)s
+            <p>
+            
+            <p>Output from slave:<br />
+                <code>%(result)s</code>
+            </p>
+          </body>
+        </html>
+        """
+
+    @property
+    def css(self):
+        return \
+        """
+        body {
+            font-family: Courier New, Courier, monospace; 
+        }
+        code { 
+            white-space: pre-wrap;
+        }
+        """

@@ -270,7 +270,7 @@ class XrdTestMaster(Runnable):
                 # load test suite definitions
                 if self.config.has_option(repo, 'suite_defs_path'):
                     suiteDefPath = os.path.join(localPath, self.config.get(repo, 'suite_defs_path'))
-                elif os.path.exists(os.path.join(localPath, +'test-suites')):
+                elif os.path.exists(os.path.join(localPath, 'test-suites')):
                     suiteDefPath = os.path.join(localPath, 'test-suites')
                 else:
                     LOGGER.error('No test suite definitions found for repository %s' % repo)
@@ -1175,7 +1175,7 @@ class XrdTestMaster(Runnable):
                         LOGGER.error(msg.result)
                         
                         tss.sendEmailAlert(tss.failed, tss.state, tss.uid, \
-                                           result=msg.result, \
+                                           result=msg.result[0], \
                                            slave_name=slave.hostname)
                         
                         # Set the state of all slaves to idle.
@@ -1205,8 +1205,7 @@ class XrdTestMaster(Runnable):
                         LOGGER.info("All slaves initialized in " + \
                                     " test suite %s" % tss.name)
                         
-                        tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
-                                           result=msg.result)
+                        tss.sendEmailAlert(msg.result[2], tss.state, tss.uid)
                         
                 self.storeSuiteSession(tss)
             
@@ -1224,8 +1223,8 @@ class XrdTestMaster(Runnable):
                                    uid="suite_finalized",
                                    slave_name=slave.hostname)
                 
-                tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
-                                   result=msg.result, \
+                tss.sendEmailAlert(msg.result[2], msg.state, tss.uid, \
+                                   result=msg.result[0], \
                                    slave_name=slave.hostname)
 
                 # Has the test suite been finalized on all slaves? If so,
@@ -1235,8 +1234,7 @@ class XrdTestMaster(Runnable):
                 if len(iSlaves) >= len(tss.suite.machines):
                     tss.state = State(TestSuite.S_ALL_FINALIZED)
                     
-                    tss.sendEmailAlert(tss.failed, tss.state, tss.uid, \
-                                       result=msg.result)
+                    tss.sendEmailAlert(tss.failed, tss.state, tss.uid)
                     
                     self.removeJob(Job(Job.FINALIZE_TEST_SUITE, \
                                        args=tss.name))
@@ -1260,8 +1258,8 @@ class XrdTestMaster(Runnable):
                        slave_name=slave.hostname)
                 
                 tc = tss.cases[msg.testUid]
-                tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
-                                   result=msg.result, \
+                tss.sendEmailAlert(msg.result[2], msg.state, tss.uid, \
+                                   result=msg.result[0], \
                                    slave_name=slave.hostname)
                                 
                 # Has the test case been initialized on all slaves? If so,
@@ -1274,7 +1272,7 @@ class XrdTestMaster(Runnable):
                     tss.state = State(TestSuite.S_ALL_TEST_INITIALIZED)
                     
                     tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
-                                       result=msg.result, test_case=tc)
+                                       test_case=tc)
                     
                     self.removeJob(Job(Job.INITIALIZE_TEST_CASE, \
                                        args=(tss.name, tc.name)))
@@ -1297,8 +1295,8 @@ class XrdTestMaster(Runnable):
                                    uid=msg.testUid)
                 
                 tc = tss.cases[msg.testUid]
-                tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
-                                   result=msg.result, test_case=tc, \
+                tss.sendEmailAlert(msg.result[2], msg.state, tss.uid, \
+                                   result=msg.result[0], test_case=tc, \
                                    slave_name=slave.hostname)
                 
                 # Has the tast case finished running on all slaves? If so, 
@@ -1310,8 +1308,8 @@ class XrdTestMaster(Runnable):
                 if len(waitSlaves) == len(readySlaves):
                     tss.state = State(TestSuite.S_ALL_TEST_RUN_FINISHED)
                     
-                    tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
-                                   result=msg.result, test_case=tc)
+                    tss.sendEmailAlert(msg.result[2], msg.state, tss.uid, \
+                                       test_case=tc)
                     
                     self.removeJob(Job(Job.RUN_TEST_CASE, \
                                        args=(tss.name, tc.name)))
@@ -1335,8 +1333,8 @@ class XrdTestMaster(Runnable):
                                    uid=msg.testUid)
                 
                 tc = tss.cases[msg.testUid]
-                tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
-                                   result=msg.result, test_case=tc)
+                tss.sendEmailAlert(msg.result[2], msg.state, tss.uid, \
+                                   result=msg.result[0], test_case=tc)
 
                 # Has the test case been finalized on all slaves? If so,
                 # remove the case_finalize job.
@@ -1347,8 +1345,8 @@ class XrdTestMaster(Runnable):
                 if len(waitSlaves) == len(readySlaves):
                     tss.state = State(TestSuite.S_ALL_INITIALIZED)
                     
-                    tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
-                                       result=msg.result, test_case=tc)
+                    tss.sendEmailAlert(msg.result[2], msg.state, tss.uid, \
+                                       test_case=tc)
                     
                     self.removeJob(Job(Job.FINALIZE_TEST_CASE, \
                                        args=(tss.name, tc.name)))
@@ -1356,7 +1354,7 @@ class XrdTestMaster(Runnable):
                 self.storeSuiteSession(tss)
                 
         
-        # A slave is requesting its specific scrip tags.
+        # A slave is requesting its specific script tags.
         elif msg.name == XrdMessage.M_TAG_REQUEST:
             slave = msg.hostname
             self.handleTagRequest(slave)

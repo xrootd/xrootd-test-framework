@@ -807,6 +807,10 @@ article footer {
     background: url('/webpage/img/bgs/bg_sidetab.png') repeat-y 49px 0px;
 }
 
+.sidetabs.thin {
+    background: url('/webpage/img/bgs/bg_sidetab.png') repeat-y -21px 0px;
+}
+
 .sidetab-switch {
     float: left;
     width: 181px;
@@ -814,6 +818,10 @@ article footer {
 
 .sidetabs.wide .sidetab-switch {
     width: 230px;
+}
+
+.sidetabs.thin .sidetab-switch {
+    width: 160px;
 }
 
 .sidetab-switch a {
@@ -2018,8 +2026,7 @@ input.datepicker {
 }
 
 form.log-select {
-    float: right;
-    margin-right: 20px;
+    float: left;
 }
 
 /*  jQuery Datepicker  */

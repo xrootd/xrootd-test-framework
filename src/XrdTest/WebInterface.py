@@ -221,7 +221,8 @@ class WebInterface:
         tvars = {   
                     'hostname': socket.gethostname(),
                     'protocol': self.protocol,
-                    'port': self.port
+                    'port': self.port,
+                    'title': self.title
                 }
         return self.disp("index_redirect.tmpl", tvars)
     
@@ -316,7 +317,10 @@ class WebInterface:
             vars.update(self.ts_vars(file))
             file = 'testsuite'
         
-        tfile = os.path.join(self.webroot, file + '.html')
+        if not file: file = 'index'
+        
+        if os.path.exists(os.path.join(self.webroot, file + '.html')):
+            tfile = os.path.join(self.webroot, file + '.html')
 
         try:
             template = Template(file=tfile, searchList=[vars])

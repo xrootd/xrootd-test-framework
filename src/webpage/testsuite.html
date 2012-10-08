@@ -478,6 +478,7 @@
                                         </div>   
                                         
                                         <div class="tab" id="tab-case-run-${run.uid}">
+                                            #if $run.cases
                                             <form>
                                                 <select name="testcases" id="imgselect-${run.uid}">
                                                     <option>Select Test Case: </option>
@@ -927,6 +928,13 @@
                                                     #set $default_tab = False
                                                 #end for
                                             </section>
+                                            #else
+                                                <div class="notification note">
+                                                    <p>
+                                                        <strong>Note:</strong> No test case information.
+                                                    </p>
+                                                </div>
+                                            #end if
                                         </div>
         
                                         <div class="tab" id="tab-suite-fin-${run.uid}">

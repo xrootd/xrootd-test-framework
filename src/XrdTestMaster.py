@@ -663,7 +663,8 @@ class XrdTestMaster(Runnable):
 
         tss = self.retrieveSuiteSession(test_suite_name)
 
-        if not tss.state == State(TestSuite.S_ALL_INITIALIZED):
+        if not tss.state in (State(TestSuite.S_ALL_INITIALIZED), \
+                             State(TestSuite.S_ALL_TEST_FINALIZED)):
             LOGGER.debug("TestSuite not yet initialized.")
             return False
 
@@ -709,7 +710,8 @@ class XrdTestMaster(Runnable):
             return False
 
         tss = self.retrieveSuiteSession(test_suite_name)
-        if not tss.state == State(TestSuite.S_ALL_INITIALIZED):
+        if not tss.state in (State(TestSuite.S_ALL_INITIALIZED), \
+                             State(TestSuite.S_ALL_TEST_FINALIZED)):
             LOGGER.debug("TestSuite %s machines have not been initialized" % \
                            test_suite_name)
             return False
@@ -1174,7 +1176,7 @@ class XrdTestMaster(Runnable):
                                      % (slave.hostname, tss.name))
                         LOGGER.error(msg.result)
                         
-                        tss.sendEmailAlert(tss.failed, tss.state, tss.uid, \
+                        tss.sendEmailAlert(tss.failed, tss.state, tss.initDate, \
                                            result=msg.result[0], \
                                            slave_name=slave.hostname)
                         
@@ -1205,7 +1207,7 @@ class XrdTestMaster(Runnable):
                         LOGGER.info("All slaves initialized in " + \
                                     " test suite %s" % tss.name)
                         
-                        tss.sendEmailAlert(msg.result[2], tss.state, tss.uid)
+                        tss.sendEmailAlert(msg.result[2], tss.state)
                         
                 self.storeSuiteSession(tss)
             
@@ -1223,7 +1225,7 @@ class XrdTestMaster(Runnable):
                                    uid="suite_finalized",
                                    slave_name=slave.hostname)
                 
-                tss.sendEmailAlert(msg.result[2], msg.state, tss.uid, \
+                tss.sendEmailAlert(msg.result[2], msg.state, \
                                    result=msg.result[0], \
                                    slave_name=slave.hostname)
 
@@ -1234,7 +1236,7 @@ class XrdTestMaster(Runnable):
                 if len(iSlaves) >= len(tss.suite.machines):
                     tss.state = State(TestSuite.S_ALL_FINALIZED)
                     
-                    tss.sendEmailAlert(tss.failed, tss.state, tss.uid)
+                    tss.sendEmailAlert(tss.failed, tss.state)
                     
                     self.removeJob(Job(Job.FINALIZE_TEST_SUITE, \
                                        args=tss.name))
@@ -1258,7 +1260,7 @@ class XrdTestMaster(Runnable):
                        slave_name=slave.hostname)
                 
                 tc = tss.cases[msg.testUid]
-                tss.sendEmailAlert(msg.result[2], msg.state, tss.uid, \
+                tss.sendEmailAlert(msg.result[2], msg.state, \
                                    result=msg.result[0], \
                                    slave_name=slave.hostname)
                                 
@@ -1270,9 +1272,6 @@ class XrdTestMaster(Runnable):
                                             test_case=tc)
                 if len(waitSlaves) == len(readySlaves):
                     tss.state = State(TestSuite.S_ALL_TEST_INITIALIZED)
-                    
-                    tss.sendEmailAlert(msg.result[2], tss.state, tss.uid, \
-                                       test_case=tc)
                     
                     self.removeJob(Job(Job.INITIALIZE_TEST_CASE, \
                                        args=(tss.name, tc.name)))
@@ -1295,7 +1294,7 @@ class XrdTestMaster(Runnable):
                                    uid=msg.testUid)
                 
                 tc = tss.cases[msg.testUid]
-                tss.sendEmailAlert(msg.result[2], msg.state, tss.uid, \
+                tss.sendEmailAlert(msg.result[2], msg.state, \
                                    result=msg.result[0], test_case=tc, \
                                    slave_name=slave.hostname)
                 
@@ -1307,9 +1306,6 @@ class XrdTestMaster(Runnable):
                                             test_case=tc)
                 if len(waitSlaves) == len(readySlaves):
                     tss.state = State(TestSuite.S_ALL_TEST_RUN_FINISHED)
-                    
-                    tss.sendEmailAlert(msg.result[2], msg.state, tss.uid, \
-                                       test_case=tc)
                     
                     self.removeJob(Job(Job.RUN_TEST_CASE, \
                                        args=(tss.name, tc.name)))
@@ -1333,7 +1329,7 @@ class XrdTestMaster(Runnable):
                                    uid=msg.testUid)
                 
                 tc = tss.cases[msg.testUid]
-                tss.sendEmailAlert(msg.result[2], msg.state, tss.uid, \
+                tss.sendEmailAlert(msg.result[2], msg.state, \
                                    result=msg.result[0], test_case=tc)
 
                 # Has the test case been finalized on all slaves? If so,
@@ -1343,11 +1339,11 @@ class XrdTestMaster(Runnable):
                                             State(Slave.S_SUITE_INITIALIZED),
                                             test_case=tc)
                 if len(waitSlaves) == len(readySlaves):
-                    tss.state = State(TestSuite.S_ALL_INITIALIZED)
+                    tss.state = State(TestSuite.S_ALL_TEST_FINALIZED)
                     
-                    tss.sendEmailAlert(msg.result[2], msg.state, tss.uid, \
+                    tss.sendEmailAlert(tc.failed, tss.state, \
                                        test_case=tc)
-                    
+
                     self.removeJob(Job(Job.FINALIZE_TEST_CASE, \
                                        args=(tss.name, tc.name)))
                 

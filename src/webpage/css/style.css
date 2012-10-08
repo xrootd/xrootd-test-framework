@@ -1455,7 +1455,7 @@ div.tab>img,div.tab>.image-frame img {
 }
 
 .logs li.event {
-    background-image: url('/webpage/img/icons/icon_event_log.png');
+    background: url('/webpage/img/icons/ajax_loading.gif') no-repeat 5px 5px;
 }
 
 .logs li.event.success {

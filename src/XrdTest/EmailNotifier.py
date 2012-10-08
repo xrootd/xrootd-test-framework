@@ -86,7 +86,7 @@ class EmailNotifier(object):
         elif self.success_policy == self.POLICY_NONE:
             return
         else:
-            raise EmailNotifierException('Invalid success alert policy: %s' \
+            LOGGER.error('Invalid success alert policy: %s' \
                                          % self.success_policy)
         
         if send:
@@ -104,7 +104,7 @@ class EmailNotifier(object):
         elif self.failure_policy == self.POLICY_NONE:
             return
         else:
-            raise EmailNotifierException('Invalid failure alert policy: %s' \
+            LOGGER.error('Invalid failure alert policy: %s' \
                                          % self.failure_policy)
         
         if send:
@@ -114,28 +114,42 @@ class EmailNotifier(object):
     def _build(self, args, desc, type):
         en = EmailNotification()
         
+        # Create message container - correct MIME type is multipart/alternative.
+        msg = MIMEMultipart('alternative')
+        subject = '%s (suite: %s%s%s)' % (desc, args['testsuite'], \
+                    ' test case: ' + args['testcase'] if args['testcase'] else '',
+                    ' slave: ' + args['slave'] if args['slave'] else '')
+        
+        msg['Subject'] = subject % args
+        msg['From'] = self.SENDER
+                                    
+        if args['failed_cases'] and int(args['failure']):
+            args['failed_cases'] = 'Failed test cases: <strong>' + \
+                            ', '.join([c.name for c in args['failed_cases']]) + \
+                            '</strong>'
+        else: args['failed_cases'] = ''
+                            
         if int(args['failure']):
             args['failure'] = 'Failure'
         else:
             args['failure'] = 'Success'
             
         if args['testcase']:
-            args['testcase'] = 'while running test case ' + \
-                               args['testcase']
+            args['testcase'] = 'Test case: <strong>' + \
+                               args['testcase'] + '</strong><br />'
+        
+        if args['slave']: 
+            args['slave'] = 'Slave: <strong>' + \
+                            args['slave'] + '</strong><br />'
+                            
+        if args['result']: 
+            args['result'] = 'Output from slave: <br /><strong>' + \
+                            args['result'] + '</strong><br />'
    
         args.update({'desc': desc, 'css': en.css})
         
         text = en.body_text % args
         html = en.body_html % args
-        
-        # Create message container - correct MIME type is multipart/alternative.
-        msg = MIMEMultipart('alternative')
-        subject = '%s in suite %s %s' % (\
-                    desc, args['testsuite'], \
-                    'on slave ' + args['slave'] if args['slave'] else '')
-        
-        msg['Subject'] = subject % args
-        msg['From'] = self.SENDER
 
         # Record the MIME types of both parts - text/plain and text/html.
         part1 = MIMEText(text, 'plain')
@@ -160,13 +174,13 @@ class EmailNotification(object):
     def body_text(self):
         return \
         """
-        %(failure)s in test suite %(testsuite)s
-        
+        Test suite: %(testsuite)s
         Description: %(desc)s
-        
-        Slave involved: %(slave)s
-        
-        Output from slave:
+        Time: %(time)s
+        %(slave)s
+        %(testcase)s
+        %(failed_cases)s
+
         %(result)s
         """
 
@@ -180,15 +194,17 @@ class EmailNotification(object):
           </head>
           <body>
             <p>
-                %(failure)s in test suite <strong>%(testsuite)s</strong>
+                Test suite: <strong>%(testsuite)s</strong>
                 <br />
                 Description: <strong>%(desc)s</strong>
                 <br />
-                Slave involved: <strong>%(slave)s</strong><br />
+                Time: <strong>%(time)s</strong>
+                <br />
+                %(slave)s
                 %(testcase)s
+                %(failed_cases)s
+            </p>
             <p>
-            
-            <p>Output from slave:<br />
                 <code>%(result)s</code>
             </p>
           </body>
@@ -199,10 +215,11 @@ class EmailNotification(object):
     def css(self):
         return \
         """
-        body {
-            font-family: Courier New, Courier, monospace; 
+        html,body,div,span,h1,h2,h3,h4,h5,h6,p,code,em,small,strong,i {
+            font-size: 100%;
+            font-family: Courier New, Courier, monospace;
         }
-        code { 
+        code {
             white-space: pre-wrap;
         }
         """

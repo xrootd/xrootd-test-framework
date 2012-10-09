@@ -525,7 +525,7 @@ def loadTestSuiteDef(path):
             raise TestSuiteException("ImportError " + \
                   "during test suite %s import: %s" % (modFile, e))
         except Exception, e:
-            raise TestSuiteException('Error: %s' % e.desc)
+            raise TestSuiteException('Error: %s' % e)
     elif ext == ".pyc":
         return None
     else:

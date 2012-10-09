@@ -33,6 +33,7 @@ try:
     import os
     import sys
     import socket
+    import random
     
     from Utils import State
     from string import join
@@ -261,12 +262,12 @@ class Host(object):
 
 """
 
-    def __init__(self, name="", ip="", mac="", net="", ramSize="", arch="", \
+    def __init__(self, name="", ip="", net="", ramSize="", arch="", \
                  bootImage=None, cacheBootImage=True, emulatorPath="", uuid=""):
         self.uuid = uuid
         self.name = name
         self.ip = ip
-        self.mac = mac
+        self.mac = self.randMac()
         self.ramSize = ramSize
         self.arch = arch
         self.bootImage = bootImage
@@ -301,6 +302,15 @@ class Host(object):
         self.__xmlDesc = self.xmlDomainPattern % values
 
         return self.__xmlDesc
+    
+    def randMac(self):
+        return ':'.join(map(lambda x: "%02x" % x, \
+                        [ 0x00, random.randint(0x00, 0xFF), \
+                         random.randint(0x00, 0xFF), \
+                         random.randint(0x00, 0xFF), \
+                         random.randint(0x00, 0xFF), \
+                         random.randint(0x00, 0xFF) ]))
+
 
 class Disk(object):
     
@@ -348,13 +358,6 @@ class Cluster(Utils.Stateful):
     '''
     Represents a cluster comprised of hosts connected through network.
     '''
-
-    def randMac(self, history=[]):
-        import random
-
-        history.append(':'.join(map(lambda x: "%02x" % x, \
-                            [ 0x00, 0x16, 0x3E, random.randint(0x00, 0x7F), \
-                             random.randint(0x00, 0xFF), random.randint(0x00, 0xFF) ])))
 
     def __init__(self):
         Utils.Stateful.__init__(self)
@@ -481,7 +484,6 @@ def extractClusterName(path):
     modPath = os.path.abspath(modPath)
     (modName, ext) = os.path.splitext(modFile)
     return (modName, ext, modPath, modFile)
-
 
 def loadClusterDef(fp, clusters, validateWithRest=True):
     (modName, ext, modPath, modFile) = extractClusterName(fp)

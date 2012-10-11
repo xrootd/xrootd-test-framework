@@ -33,6 +33,7 @@ try:
     import socket
     import cherrypy
     
+    from Utils import Command
     from Cheetah.Template import Template
     from cherrypy.lib.static import serve_file
 except ImportError, e:
@@ -275,6 +276,54 @@ class WebInterface:
             return serve_file(path , "text/html")
 
         return "%s: not found in any repository" % path
+    
+    @cherrypy.expose
+    def getSignedCertificate(self, **kwargs):
+        cherrypy.tools.allow.callable()
+        
+        slave_name = None
+        csr_raw = None
+        
+        if kwargs.has_key('slave_name'):
+            slave_name = kwargs['slave_name']
+        if kwargs.has_key('csr'):
+            csr_raw = kwargs['csr']
+            print csr_raw
+            csr = '/tmp/%s.csr' % slave_name
+            crt = '/tmp/%s.crt' % slave_name
+            with open(csr, 'wb') as f:
+                raw = csr_raw.file.read()
+                f.write(raw)
+                f.close()
+            
+        if slave_name is None or csr_raw is None:
+            return
+        else:
+            try:
+                args = {'csr': csr, 
+                        'ca_crt': self.config.get('security', 'ca_certfile'),
+                        'ca_key': self.config.get('security', 'ca_keyfile'),
+                        'crt': crt
+                       }
+            except NoOptionError, e:
+                LOGGER.error('CA configuration error: %s' % e)
+                return
+        
+        gen_cert = \
+        '''        
+        # Sign the server key with our CA
+        openssl x509 -req -days 365 -in %(csr)s -CA %(ca_crt)s -CAkey %(ca_key)s \
+                -out %(crt)s -CAcreateserial
+        ''' % args
+        
+        Command(gen_cert, '.').execute()
+        
+        try:
+            with open(crt, 'r') as f:
+                crt_raw = f.read()
+                return crt_raw
+        except IOError, e:
+            LOGGER.error('Error reading signed certificate: %s' % e)
     
     @cherrypy.expose
     def auth(self, password=None, testsuite=None, type=None):

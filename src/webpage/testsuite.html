@@ -481,7 +481,6 @@
                                             #if $run.cases
                                             <form>
                                                 <select name="testcases" id="imgselect-${run.uid}">
-                                                    <option>Select Test Case: </option>
                                                     #for $i, $case in enumerate($run.cases.itervalues())
                                                         #set $case_stages = $run.getTestCaseStages($case.uid)
                                                         #set $failure = self.has_failures($case_stages)

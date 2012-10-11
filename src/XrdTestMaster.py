@@ -55,7 +55,7 @@ try:
         loadTestSuiteDef, loadTestSuiteDefs, extractSuiteName
     from XrdTest.Job import Job
     from XrdTest.Daemon import Runnable, Daemon, DaemonException
-    from XrdTest.Utils import State, redirectOutput
+    from XrdTest.Utils import State, redirectOutput, Command
     from XrdTest.GitUtils import sync_remote_git
     from XrdTest.WebInterface import WebInterface
     from XrdTest.DirectoryWatch import DirectoryWatch
@@ -209,6 +209,7 @@ class XrdTestMaster(Runnable):
         Save test suite session to python shelve self.suiteSessions
         @param test_suite_session:
         '''
+        print len(self.suiteSessions)
         if len(self.suiteSessions) > 30:
             self.archiveSuiteSessions()
             
@@ -1556,7 +1557,7 @@ class XrdTestMaster(Runnable):
                 cherrypy.config.update({'server.ssl_private_key': \
                                         self.config.get('security', 'keyfile')})
             else:
-                LOGGER.error('No private key defined in config file')
+                LOGGER.error('No SSL private key defined in config file')
     
         elif not webInterface.protocol == 'http':
             LOGGER.error('Unknown server protocol %s in config file' % webInterface.protocol)
@@ -1577,7 +1578,49 @@ class XrdTestMaster(Runnable):
         for name in loggers:
             if re.match('(cherry|pyinotify|apscheduler)', name):
                 logging.getLogger(name).setLevel(logging.ERROR)
+                
+    def createCA(self):
+        '''Generate CA key/cert suitable for signing slave CSRs.'''
+        ca_certfile = None
+        ca_keyfile = None
+        
+        if self.config.has_option('security', 'ca_certfile'):
+            ca_certfile = self.config.get('security', 'ca_certfile')
+        else:
+            LOGGER.error('No CA certificate defined in config file')
+            
+        if self.config.has_option('security', 'ca_keyfile'):
+            ca_keyfile = self.config.get('security', 'ca_keyfile')
+        else:
+            LOGGER.error('No CA private key defined in config file')
+        
+        if not ca_certfile or not ca_keyfile:
+            LOGGER.error('Master will not function properly as a CA. Test ' + \
+                        'suites requiring signed GSI certs will fail.')
+            return
+        else:
+            args = {'ca_certfile': ca_certfile, 'ca_keyfile': ca_keyfile}
+        
+        create_ca = \
+        '''
+CA_SUBJ="
+C=CH
+ST=Geneva
+O=CERN
+localityName=Geneva
+commonName=ca.xrd.test CA
+organizationalUnitName=Certificate Authority
+emailAddress=ca@xrd.test"
+            
+# Generate the CA's private key/certificate
+openssl genrsa -out %(ca_keyfile)s 4096
+openssl req -new -batch -x509 \
+        -subj "$(echo -n "$CA_SUBJ" | tr "\n" "/")" \
+        -key %(ca_keyfile)s -out %(ca_certfile)s -days 1095
+''' % args
 
+        LOGGER.debug('Creating CA')
+        Command(create_ca, '.').execute()
 
     def watchDirectories(self):
         '''
@@ -1613,6 +1656,9 @@ class XrdTestMaster(Runnable):
             
         # Configure and start WWW Server - cherrypy
         self.startWebInterface()
+        
+        # Configure ourselves as a CA.
+        self.createCA()
             
         # Load cluster and test suite definitions
         self.loadDefinitions()

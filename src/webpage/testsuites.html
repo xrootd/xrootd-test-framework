@@ -195,6 +195,7 @@
                                                        </dt>
                                                        <dd class="text medium">
                                                             <ul class="logs">
+                                                            #if len($ts.clusters)
                                                                #for $c in $ts.clusters
                                                                     <fieldset class="compact">
                                                                         <legend>$c</legend>
@@ -204,6 +205,9 @@
                                                                      </li>
                                                                     </fieldset>
                                                                #end for
+                                                            #else
+                                                                <li class="event failure">Undefined</li>
+                                                            #end if
                                                             </ul>
                                                        </dd>
 				                                     <dt>
@@ -216,37 +220,37 @@
                                                          <label>Scheduler expression: </label>
                                                      </dt>
                                                      <dd class="text">
-                                                         <p>$ts.schedule</p>
+                                                         <p>${ts.schedule if $ts.schedule else 'Undefined'}</p>
                                                      </dd>
                                                      <dt>
                                                          <label>Test cases: </label>
                                                      </dt>
                                                      <dd class="text">
-                                                         <p>${'<br />'.join([t for t in $ts.tests])}</p>
+                                                         <p>${'<br />'.join([t for t in $ts.tests]) if $ts.tests else 'Undefined'}</p>
                                                      </dd> 
                                                      <dt>
                                                          <label>Required machines: </label>
                                                      </dt>
                                                      <dd class="text">
-                                                         <p>${'<br />'.join([m for m in $ts.machines])}</p>
+                                                         <p>${'<br />'.join([m for m in $ts.machines]) if $ts.machines else 'Undefined'}</p>
                                                      </dd>
                                                      <dt>
                                                          <label>Alert email addresses: </label>
                                                      </dt>
                                                      <dd class="text">
-                                                         <p>${'<br />'.join([e for e in $ts.alert_emails])}</p>
+                                                         <p>${'<br />'.join([e for e in $ts.alert_emails]) if $ts.alert_emails else 'Undefined'}</p>
                                                      </dd>
                                                      <dt>
                                                          <label>Success alert policy: </label>
                                                      </dt>
                                                      <dd class="text">
-                                                         <p>$ts.alert_success</p>
+                                                         <p>${ts.alert_success if $ts.alert_success else 'Undefined'}</p>
                                                      </dd>
                                                      <dt>
                                                          <label>Failure alert policy: </label>
                                                      </dt>
                                                      <dd class="text">
-                                                         <p>$ts.alert_failure</p>
+                                                         <p>${ts.alert_failure if $ts.alert_failure else 'Undefined'}</p>
                                                      </dd>
                                                 </dl>
 				                             </fieldset>

@@ -221,6 +221,7 @@ function main(anchors) {
     $('[id^="imgselect-"]').each(function() {
         $(this).ddslick({
             width: 409,
+            selectText: "Select test case:",
             onSelected: function(data){
                 $('#' + data.selectedData.value).siblings('.tab').hide();
                 $('#' + data.selectedData.value).show();

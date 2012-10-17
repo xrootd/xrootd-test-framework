@@ -86,10 +86,9 @@ class ClusterManager:
         '''
         try:
             virtConnection = libvirt.open(url)
+            return virtConnection
         except libvirtError, e:
             LOGGER.error("Can not connect to libvirt (-c qemu:///system): %s" % e)
-        
-        return virtConnection  
 
     def disconnect(self):
         '''

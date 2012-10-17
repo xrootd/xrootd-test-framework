@@ -278,6 +278,20 @@ class WebInterface:
         return "%s: not found in any repository" % path
     
     @cherrypy.expose
+    def getTrustedCACertificate(self, **kwargs):
+        cherrypy.tools.allow.callable()
+        
+        try:
+            ca_crt = self.config.get('security', 'ca_certfile')
+            with open(ca_crt, 'r') as f:
+                return f.read()
+            
+        except NoOptionError, e:
+            LOGGER.error('CA configuration error: %s' % e)
+        except IOError, e:
+            LOGGER.error('Error reading CA certificate: %s' % e)
+    
+    @cherrypy.expose
     def getSignedCertificate(self, **kwargs):
         cherrypy.tools.allow.callable()
         
@@ -288,9 +302,8 @@ class WebInterface:
             slave_name = kwargs['slave_name']
         if kwargs.has_key('csr'):
             csr_raw = kwargs['csr']
-            print csr_raw
-            csr = '/tmp/%s.csr' % slave_name
-            crt = '/tmp/%s.crt' % slave_name
+            csr = '/tmp/%s-req.pem' % slave_name
+            crt = '/tmp/%s-cert.pem' % slave_name
             with open(csr, 'wb') as f:
                 raw = csr_raw.file.read()
                 f.write(raw)

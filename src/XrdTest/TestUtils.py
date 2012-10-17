@@ -561,9 +561,8 @@ def loadTestSuiteDefs(path):
 
 def resolveScript(definition, root_path):
     '''
-    Grabs a script from some arbitrary path.
-    
-    TODO: add more error handling
+    Grabs a script from some arbitrary path and appends a set of util functions
+    to it.
     '''
     script = ''
     # If already a bash script, nothing to do

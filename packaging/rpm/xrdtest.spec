@@ -41,9 +41,8 @@ install -pm 755 packaging/rpm/xrdtest-slave.init %{buildroot}%{_initrddir}/xrdte
 
 # configs
 mkdir -p %{buildroot}%{_sysconfdir}/XrdTest
-mkdir -p %{buildroot}%{_sysconfdir}/XrdTest/test-suites
-mkdir -p %{buildroot}%{_sysconfdir}/XrdTest/clusters
 mkdir -p %{buildroot}%{_sysconfdir}/XrdTest/certs
+mkdir -p %{buildroot}%{_sysconfdir}/XrdTest/utils
 mkdir -p %{buildroot}%{_sbindir}
 
 install -pm 755 src/XrdTestMaster.py %{buildroot}%{_sbindir}
@@ -52,6 +51,7 @@ install -pm 755 src/XrdTestHypervisor.py %{buildroot}%{_sbindir}
 install -pm 644 src/conf/XrdTestHypervisor.conf %{buildroot}%{_sysconfdir}/XrdTest
 install -pm 755 src/XrdTestSlave.py %{buildroot}%{_sbindir}
 install -pm 644 src/conf/XrdTestSlave.conf %{buildroot}%{_sysconfdir}/XrdTest
+install -pm 755 utils/functions.sh %{buildroot}%{_sysconfdir}/XrdTest/utils
 
 # webpage
 mkdir -p %{buildroot}%{_datadir}/XrdTest
@@ -116,6 +116,7 @@ Xrd Test Slave is component of XrdTestFramework. It runs tests provided by Xrd T
 
 %attr(0644, root, root) %config(noreplace) %{_sysconfdir}/XrdTest/XrdTestSlave.conf
 %{_sysconfdir}/XrdTest/certs/
+%{_sysconfdir}/XrdTest/utils/
 %{_sbindir}/XrdTestSlave.py
 %{_initrddir}/xrdtest-slave
 %{_localstatedir}/log/XrdTest
@@ -211,6 +212,8 @@ fi
 #-------------------------------------------------------------------------------
 
 %changelog
+* Tue Oct 16 2012 Justin Salmon <jsalmon@cern.ch>
+- Added util scripts for slave
 * Tue Sep 11 2012 Justin Salmon <jsalmon@cern.ch>
 - Tagged as v0.1
 * Thu Jul 5 2012 Justin Salmon <jsalmon@cern.ch>

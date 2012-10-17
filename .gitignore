@@ -3,6 +3,7 @@ XrdTestMaster-jsalmon.conf
 XrdTestHypervisor-jsalmon.conf
 XrdTestSlave-jsalmon.conf
 suite_history.bin*
+ca.key
 .project
 .pydevproject
 *.pyc

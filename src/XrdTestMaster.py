@@ -184,11 +184,15 @@ class XrdTestMaster(Runnable):
         Retrieve test suite session from shelve self.suiteSessions
         @param suite_name:
         '''
-        if self.runningSuiteUids.has_key(suite_name) and \
-            self.suiteSessions.has_key(self.runningSuiteUids[suite_name]):
-            return self.suiteSessions[self.runningSuiteUids[suite_name]]
-        else:
-            return None
+        try:
+            if self.runningSuiteUids.has_key(suite_name) and \
+               self.suiteSessions.has_key(self.runningSuiteUids[suite_name]):
+                    return self.suiteSessions[self.runningSuiteUids[suite_name]]
+            else:
+                return None
+        except DBRunRecoveryError, e:
+                LOGGER.error('Suite history database corruption, ' + \
+                             '(delete suite history file): %s' % e)
     
     def retrieveAllSuiteSessions(self):
         all = {}
@@ -1177,7 +1181,7 @@ class XrdTestMaster(Runnable):
                                      % (slave.hostname, tss.name))
                         LOGGER.error(msg.result)
                         
-                        tss.sendEmailAlert(tss.failed, tss.state, tss.initDate, \
+                        tss.sendEmailAlert(tss.failed, tss.state, \
                                            result=msg.result[0], \
                                            slave_name=slave.hostname)
                         
@@ -1608,13 +1612,13 @@ C=CH
 ST=Geneva
 O=CERN
 localityName=Geneva
-commonName=ca.xrd.test CA
+commonName=master.xrd.test
 organizationalUnitName=Certificate Authority
-emailAddress=ca@xrd.test"
+emailAddress=master@xrd.test"
             
 # Generate the CA's private key/certificate
 openssl genrsa -out %(ca_keyfile)s 4096
-openssl req -new -batch -x509 \
+openssl req -new -batch -x509 -extensions v3_ca \
         -subj "$(echo -n "$CA_SUBJ" | tr "\n" "/")" \
         -key %(ca_keyfile)s -out %(ca_certfile)s -days 1095
 ''' % args

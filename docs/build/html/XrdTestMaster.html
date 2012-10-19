@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>XrdTestMaster Module &mdash; xrootd-tests 0.0.1 documentation</title>
+    <title>XrdTestMaster Module &mdash; xrootd-tests 0.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.0.1',
+        VERSION:     '0.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="xrootd-tests 0.0.1 documentation" href="index.html" />
+    <link rel="top" title="xrootd-tests 0.1 documentation" href="index.html" />
     <link rel="next" title="XrdTestHypervisor Module" href="XrdTestHypervisor.html" />
     <link rel="prev" title="XrdTest Package" href="XrdTest.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="XrdTest.html" title="XrdTest Package"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">xrootd-tests 0.0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">xrootd-tests 0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -54,8 +54,346 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="xrdtestmaster-module">
-<h1>XrdTestMaster Module<a class="headerlink" href="#xrdtestmaster-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-XrdTestMaster">
+<span id="xrdtestmaster-module"></span><h1>XrdTestMaster Module<a class="headerlink" href="#module-XrdTestMaster" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="XrdTestMaster.XrdTestMaster">
+<em class="property">class </em><tt class="descclassname">XrdTestMaster.</tt><tt class="descname">XrdTestMaster</tt><big>(</big><em>configFile</em>, <em>backgroundMode</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="XrdTest.html#XrdTest.Daemon.Runnable" title="XrdTest.Daemon.Runnable"><tt class="xref py py-class docutils literal"><span class="pre">XrdTest.Daemon.Runnable</span></tt></a></p>
+<p>Main class of module, only one instance can exist in the system,
+it&#8217;s runnable as a daemon.</p>
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.activateCluster">
+<tt class="descname">activateCluster</tt><big>(</big><em>cluster</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.activateCluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start a cluster without attaching it to a particular test suite.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.archiveSuiteSessions">
+<tt class="descname">archiveSuiteSessions</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.archiveSuiteSessions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.cancelTestSuite">
+<tt class="descname">cancelTestSuite</tt><big>(</big><em>test_suite_name</em>, <em>timeout=False</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.cancelTestSuite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cancel a running test suite</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.checkIfSuitsDefsComplete">
+<tt class="descname">checkIfSuitsDefsComplete</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.checkIfSuitsDefsComplete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Search for incompletness in test suits&#8217; definitions, that may be caused
+by e.g. lack of test case definition.
+&#64;param dirEvent:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.createCA">
+<tt class="descname">createCA</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.createCA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate CA key/cert suitable for signing slave CSRs.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.enqueueJob">
+<tt class="descname">enqueueJob</tt><big>(</big><em>test_suite_name</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.enqueueJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add job to list of jobs to run immediately after foregoing
+jobs are finished.</p>
+<p>&#64;param test_suite_name:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.executeJob">
+<tt class="descname">executeJob</tt><big>(</big><em>test_suite_name</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.executeJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Closure to pass the contexts of method self.fireEnqueueJobEvent:
+argument the test_suite_name.</p>
+<p>&#64;param test_suite_name: name of test suite
+&#64;return: lambda method with no argument</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.finalizeTestCase">
+<tt class="descname">finalizeTestCase</tt><big>(</big><em>test_suite_name</em>, <em>test_name</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.finalizeTestCase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends runTest message to slaves.</p>
+<p>&#64;param test_suite_name:
+&#64;param test_name:
+&#64;return: True/False in case of Success/Failure in sending messages</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.finalizeTestSuite">
+<tt class="descname">finalizeTestSuite</tt><big>(</big><em>test_suite_name</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.finalizeTestSuite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends finalization message to slaves and destroys TestSuiteSession.</p>
+<p>&#64;param test_suite_name:
+&#64;return: True/False in case of Success/Failure in sending messages</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.fireEnqueueJobEvent">
+<tt class="descname">fireEnqueueJobEvent</tt><big>(</big><em>test_suite_name</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.fireEnqueueJobEvent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add the Run Job event to main events queue of controll thread.
+Method to be used by different thread.</p>
+<p>&#64;param test_suite_name:
+&#64;return: None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.fireReloadDefinitionsEvent">
+<tt class="descname">fireReloadDefinitionsEvent</tt><big>(</big><em>type</em>, <em>dirEvent=None</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.fireReloadDefinitionsEvent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Any time something is changed in the directory with config files,
+it puts proper event into main events queue.
+&#64;param type:
+&#64;param dirEvent:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.getSuiteSlaves">
+<tt class="descname">getSuiteSlaves</tt><big>(</big><em>test_suite</em>, <em>slave_state=None</em>, <em>test_case=None</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.getSuiteSlaves" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets reference to slaves&#8217; objects representing slaves currently
+connected. Optionally return only slaves associated with the given
+test_suite or test_case
+or being in given slave_state. All given parameters has to accord.
+&#64;param test_suite: test suite definition
+&#64;param slave_state: required slave state
+&#64;param test_case: test case defintion</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.handleClientConnected">
+<tt class="descname">handleClientConnected</tt><big>(</big><em>client_type</em>, <em>client_addr</em>, <em>sock_obj</em>, <em>client_hostname</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.handleClientConnected" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do the logic of client incoming connection.</p>
+<p>&#64;param client_type:
+&#64;param client_addr:
+&#64;param client_hostname:
+&#64;return: None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.handleClientDisconnected">
+<tt class="descname">handleClientDisconnected</tt><big>(</big><em>client_type</em>, <em>client_addr</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.handleClientDisconnected" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do the logic of client disconnection.</p>
+<p>&#64;param client_type:
+&#64;param client_addr:
+&#64;return: None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.handleClusterDefinitionChanged">
+<tt class="descname">handleClusterDefinitionChanged</tt><big>(</big><em>dirEvent</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.handleClusterDefinitionChanged" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle event created any time definition of cluster changes.
+&#64;param dirEvent:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.handleSuiteDefinitionChanged">
+<tt class="descname">handleSuiteDefinitionChanged</tt><big>(</big><em>dirEvent</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.handleSuiteDefinitionChanged" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle event created any time definition of test suite changes.
+&#64;param dirEvent:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.handleTagRequest">
+<tt class="descname">handleTagRequest</tt><big>(</big><em>slavename</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.handleTagRequest" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.initializeTestCase">
+<tt class="descname">initializeTestCase</tt><big>(</big><em>test_suite_name</em>, <em>test_name</em>, <em>jobGroupId</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.initializeTestCase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends initTest message to slaves.</p>
+<p>&#64;param test_suite_name:
+&#64;param test_name:
+&#64;param jobGroupId:
+&#64;return: True/False in case of Success/Failure in sending messages</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.initializeTestSuite">
+<tt class="descname">initializeTestSuite</tt><big>(</big><em>test_suite_name</em>, <em>jobGroupId</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.initializeTestSuite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends initialize message to slaves, creates TestSuite Session
+and stores it in python shelve.</p>
+<p>&#64;param test_suite_name:
+&#64;param jobGroupId:
+&#64;return: True/False in case of Success/Failure in sending messages</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.isJobValid">
+<tt class="descname">isJobValid</tt><big>(</big><em>job</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.isJobValid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if job is still executable e.g. if required definitions
+are complete.</p>
+<p>&#64;param job:
+&#64;return: True/False</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.loadDefinitions">
+<tt class="descname">loadDefinitions</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.loadDefinitions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load all definitions of example clusters and test suites at once.
+If any definitions are invalid, raise exceptions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.loadSuiteSessions">
+<tt class="descname">loadSuiteSessions</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.loadSuiteSessions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.procEvents">
+<tt class="descname">procEvents</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.procEvents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main loop processing incoming MasterEvents from main events queue:
+self.recvQueue. MasterEvents with higher priority are handled first.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.procSlaveMsg">
+<tt class="descname">procSlaveMsg</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.procSlaveMsg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process incoming messages from a slave.</p>
+<p>&#64;param msg:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.readConfig">
+<tt class="descname">readConfig</tt><big>(</big><em>confFile</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.readConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads configuration from given file or from default if None given.
+&#64;param confFile: file with configuration</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.removeJob">
+<tt class="descname">removeJob</tt><big>(</big><em>remove_job</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.removeJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Look through queue of jobs and remove one, which satisfy conditions
+defined by parameters of pattern job remove_job.</p>
+<p>&#64;param remove_job: pattern of a job to be removed</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.removeJobs">
+<tt class="descname">removeJobs</tt><big>(</big><em>groupId</em>, <em>jobType=6</em>, <em>testName=None</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.removeJobs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove multiple jobs from enqueued jobs list. Depending of what kind of
+job is removed, different parameters are used and different number of
+jobs is removed.
+&#64;param groupId: used for all kind of deleted jobs
+&#64;param jobType: determines type of job that begins the chain of
+jobs to be removed
+&#64;param testName: used if removed jobs concerns particular test case
+&#64;return: None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.retrieveAllSuiteSessions">
+<tt class="descname">retrieveAllSuiteSessions</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.retrieveAllSuiteSessions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.retrieveSuiteSession">
+<tt class="descname">retrieveSuiteSession</tt><big>(</big><em>suite_name</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.retrieveSuiteSession" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve test suite session from shelve self.suiteSessions
+&#64;param suite_name:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.run">
+<tt class="descname">run</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main method of a programme. Initializes all serving threads and starts
+main loop receiving MasterEvents.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.runTestCase">
+<tt class="descname">runTestCase</tt><big>(</big><em>test_suite_name</em>, <em>test_name</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.runTestCase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends runTest message to slaves.</p>
+<p>&#64;param test_suite_name:
+&#64;param test_name:
+&#64;return: True/False in case of Success/Failure in sending messages</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.runTestSuite">
+<tt class="descname">runTestSuite</tt><big>(</big><em>test_suite_name</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.runTestSuite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a particular test suite</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.selectHypervisor">
+<tt class="descname">selectHypervisor</tt><big>(</big><em>hypervisor=None</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.selectHypervisor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.slaveState">
+<tt class="descname">slaveState</tt><big>(</big><em>slave_name</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.slaveState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get state of a slave by its name, even if it&#8217;s not connected.
+&#64;param slave_name: equal to fully qualified hostname</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.startCluster">
+<tt class="descname">startCluster</tt><big>(</big><em>clusterName</em>, <em>suiteName</em>, <em>jobGroupId</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.startCluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends message to hypervisor to start the cluster.</p>
+<p>&#64;param clusterName:
+&#64;param suiteName:
+&#64;param jobGroupId:
+&#64;return: True/False in case of Success/Failure in sending messages</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.startNextJob">
+<tt class="descname">startNextJob</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.startNextJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start next possible job enqueued in pendingJobs list or continue
+without doing anything. Check if first job on a list is not already
+started, then check if it is valid and if it is, start it and change
+it&#8217;s status to started.</p>
+<p>&#64;param test_suite_name:
+&#64;return: None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.startTCPServer">
+<tt class="descname">startTCPServer</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.startTCPServer" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.startWebInterface">
+<tt class="descname">startWebInterface</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.startWebInterface" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.stopCluster">
+<tt class="descname">stopCluster</tt><big>(</big><em>clusterName</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.stopCluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends message to hypervisor to stop the cluster.</p>
+<p>&#64;param clusterName:
+&#64;return: True/False in case of Success/Failure in sending messages</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.storeSuiteSession">
+<tt class="descname">storeSuiteSession</tt><big>(</big><em>test_suite_session</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.storeSuiteSession" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save test suite session to python shelve self.suiteSessions
+&#64;param test_suite_session:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestMaster.XrdTestMaster.watchDirectories">
+<tt class="descname">watchDirectories</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMaster.watchDirectories" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="XrdTestMaster.XrdTestMasterException">
+<em class="property">exception </em><tt class="descclassname">XrdTestMaster.</tt><tt class="descname">XrdTestMasterException</tt><big>(</big><em>desc</em><big>)</big><a class="headerlink" href="#XrdTestMaster.XrdTestMasterException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+<p>General Exception raised by XrdTestMaster.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="XrdTestMaster.main">
+<tt class="descclassname">XrdTestMaster.</tt><tt class="descname">main</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestMaster.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Program begins here.</p>
+</dd></dl>
+
 </div>
 
 
@@ -107,7 +445,7 @@
         <li class="right" >
           <a href="XrdTest.html" title="XrdTest Package"
              >previous</a> |</li>
-        <li><a href="index.html">xrootd-tests 0.0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">xrootd-tests 0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

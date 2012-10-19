@@ -10,11 +10,10 @@ Contents:
 
 .. toctree::
    :maxdepth: 2
-
-   XrdTest
-   XrdTestMaster
-   XrdTestHypervisor
-   XrdTestSlave
+   
+   GeneralOverview
+   Installation
+   Configuration
 
 Indices and tables
 ==================

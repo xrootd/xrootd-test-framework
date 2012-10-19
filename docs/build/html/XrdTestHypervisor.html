@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>XrdTestHypervisor Module &mdash; xrootd-tests 0.0.1 documentation</title>
+    <title>XrdTestHypervisor Module &mdash; xrootd-tests 0.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.0.1',
+        VERSION:     '0.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="xrootd-tests 0.0.1 documentation" href="index.html" />
+    <link rel="top" title="xrootd-tests 0.1 documentation" href="index.html" />
     <link rel="next" title="XrdTestSlave Module" href="XrdTestSlave.html" />
     <link rel="prev" title="XrdTestMaster Module" href="XrdTestMaster.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="XrdTestMaster.html" title="XrdTestMaster Module"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">xrootd-tests 0.0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">xrootd-tests 0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -54,8 +54,82 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="xrdtesthypervisor-module">
-<h1>XrdTestHypervisor Module<a class="headerlink" href="#xrdtesthypervisor-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-XrdTestHypervisor">
+<span id="xrdtesthypervisor-module"></span><h1>XrdTestHypervisor Module<a class="headerlink" href="#module-XrdTestHypervisor" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="XrdTestHypervisor.XrdTestHypervisor">
+<em class="property">class </em><tt class="descclassname">XrdTestHypervisor.</tt><tt class="descname">XrdTestHypervisor</tt><big>(</big><em>configFile</em>, <em>backgroundMode</em><big>)</big><a class="headerlink" href="#XrdTestHypervisor.XrdTestHypervisor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="XrdTest.html#XrdTest.Daemon.Runnable" title="XrdTest.Daemon.Runnable"><tt class="xref py py-class docutils literal"><span class="pre">XrdTest.Daemon.Runnable</span></tt></a></p>
+<p>Test Hypervisor main executable class.</p>
+<dl class="method">
+<dt id="XrdTestHypervisor.XrdTestHypervisor.connectMaster">
+<tt class="descname">connectMaster</tt><big>(</big><em>masterName</em>, <em>masterPort</em><big>)</big><a class="headerlink" href="#XrdTestHypervisor.XrdTestHypervisor.connectMaster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Try to establish the connection with the test master.</p>
+<p>&#64;param masterName:
+&#64;param masterPort:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestHypervisor.XrdTestHypervisor.handleStartCluster">
+<tt class="descname">handleStartCluster</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#XrdTestHypervisor.XrdTestHypervisor.handleStartCluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle start cluster message from a master - start a cluster.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestHypervisor.XrdTestHypervisor.handleStopCluster">
+<tt class="descname">handleStopCluster</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#XrdTestHypervisor.XrdTestHypervisor.handleStopCluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle stop cluster message from a master - stop a running cluster.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestHypervisor.XrdTestHypervisor.readConfig">
+<tt class="descname">readConfig</tt><big>(</big><em>confFile</em><big>)</big><a class="headerlink" href="#XrdTestHypervisor.XrdTestHypervisor.readConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads configuration from given file or from default if None given.
+&#64;param confFile: file with configuration</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestHypervisor.XrdTestHypervisor.recvLoop">
+<tt class="descname">recvLoop</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestHypervisor.XrdTestHypervisor.recvLoop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main loop processing messages from master. It take out jobs
+from blocking queue of received messages, runs appropriate and
+return answer message.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestHypervisor.XrdTestHypervisor.run">
+<tt class="descname">run</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestHypervisor.XrdTestHypervisor.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main thread. Initialize TCP threads and run recvLoop().</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestHypervisor.XrdTestHypervisor.tryConnect">
+<tt class="descname">tryConnect</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestHypervisor.XrdTestHypervisor.tryConnect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempt to connect to the master. Retry every 5 seconds, up to a 
+maximum of 500 times.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="XrdTestHypervisor.XrdTestHypervisor.updateState">
+<tt class="descname">updateState</tt><big>(</big><em>state</em>, <em>clusterName</em><big>)</big><a class="headerlink" href="#XrdTestHypervisor.XrdTestHypervisor.updateState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a progress update message to the master.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="XrdTestHypervisor.XrdTestHypervisorException">
+<em class="property">exception </em><tt class="descclassname">XrdTestHypervisor.</tt><tt class="descname">XrdTestHypervisorException</tt><big>(</big><em>desc</em><big>)</big><a class="headerlink" href="#XrdTestHypervisor.XrdTestHypervisorException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+<p>General Exception raised by XrdTestHypervisor.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="XrdTestHypervisor.main">
+<tt class="descclassname">XrdTestHypervisor.</tt><tt class="descname">main</tt><big>(</big><big>)</big><a class="headerlink" href="#XrdTestHypervisor.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Program begins here.</p>
+</dd></dl>
+
 </div>
 
 
@@ -107,7 +181,7 @@
         <li class="right" >
           <a href="XrdTestMaster.html" title="XrdTestMaster Module"
              >previous</a> |</li>
-        <li><a href="index.html">xrootd-tests 0.0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">xrootd-tests 0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

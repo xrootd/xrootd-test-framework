@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Welcome to xrootd-tests’s documentation! &mdash; xrootd-tests 0.1 documentation</title>
+    <title>Installation &mdash; xrootd-tests 0.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -25,8 +25,9 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="xrootd-tests 0.1 documentation" href="#" />
-    <link rel="next" title="General Overview" href="GeneralOverview.html" /> 
+    <link rel="top" title="xrootd-tests 0.1 documentation" href="index.html" />
+    <link rel="next" title="Configuration" href="Configuration.html" />
+    <link rel="prev" title="General Overview" href="GeneralOverview.html" /> 
   </head>
   <body>
     <div class="related">
@@ -39,9 +40,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="GeneralOverview.html" title="General Overview"
+          <a href="Configuration.html" title="Configuration"
              accesskey="N">next</a> |</li>
-        <li><a href="#">xrootd-tests 0.1 documentation</a> &raquo;</li> 
+        <li class="right" >
+          <a href="GeneralOverview.html" title="General Overview"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">xrootd-tests 0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -50,34 +54,39 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="welcome-to-xrootd-tests-s-documentation">
-<h1>Welcome to xrootd-tests&#8217;s documentation!<a class="headerlink" href="#welcome-to-xrootd-tests-s-documentation" title="Permalink to this headline">¶</a></h1>
-<p>Contents:</p>
-<div class="toctree-wrapper compound">
+  <div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>Framework is available in RPM packages for Linux SLC5. All application requires
+Python 2 in version at least: 2.4. It comprises of the following three main RPMs
+(the libraries required by them are also listed below):</p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="GeneralOverview.html">General Overview</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="GeneralOverview.html#master">Master</a></li>
-<li class="toctree-l2"><a class="reference internal" href="GeneralOverview.html#hypervisor">Hypervisor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="GeneralOverview.html#slave">Slave</a></li>
+<li><dl class="first docutils">
+<dt>xrdtest-master-0.0.1-1.noarch</dt>
+<dd><ul class="first last simple">
+<li>required RPMs: <strong>python-apscheduler-2.0.2, python-cheetah-2.0.1, python-cherrypy-2.3.0,
+python-inotify-0.9.1, python-ssl-1.15, python-uuid-1.30</strong></li>
 </ul>
+</dd>
+</dl>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="Installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Configuration.html">Configuration</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="Configuration.html#running-as-a-system-service-daemons">Running as a system service (daemons)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Configuration.html#running-in-debug-mode">Running in debug mode</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Configuration.html#running-in-background-mode">Running in background mode</a></li>
+<li><dl class="first docutils">
+<dt>xrdtest-hypervisor-0.0.1-1.noarch</dt>
+<dd><ul class="first last simple">
+<li>required RPMs: <strong>python-ssl-1.15, libvirt-python-0.9.3, libvirt-0.9.3</strong></li>
 </ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>xrdtest-slave-0.0.1-1.noarch</dt>
+<dd><ul class="first last simple">
+<li>required RPMs: <strong>python-ssl-1.15</strong></li>
+</ul>
+</dd>
+</dl>
 </li>
 </ul>
-</div>
-</div>
-<div class="section" id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
-<ul class="simple">
-<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
-<li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
-<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
-</ul>
+<p>To install each module you have to follow typical RPM installation instructions.</p>
 </div>
 
 
@@ -86,20 +95,15 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="#">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Welcome to xrootd-tests&#8217;s documentation!</a><ul>
-</ul>
-</li>
-<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
-</ul>
-
-  <h4>Next topic</h4>
+  <h4>Previous topic</h4>
   <p class="topless"><a href="GeneralOverview.html"
-                        title="next chapter">General Overview</a></p>
+                        title="previous chapter">General Overview</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="Configuration.html"
+                        title="next chapter">Configuration</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="_sources/index.txt"
+    <li><a href="_sources/Installation.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -129,9 +133,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="GeneralOverview.html" title="General Overview"
+          <a href="Configuration.html" title="Configuration"
              >next</a> |</li>
-        <li><a href="#">xrootd-tests 0.1 documentation</a> &raquo;</li> 
+        <li class="right" >
+          <a href="GeneralOverview.html" title="General Overview"
+             >previous</a> |</li>
+        <li><a href="index.html">xrootd-tests 0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

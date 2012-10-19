@@ -1127,7 +1127,7 @@ class XrdTestMaster(Runnable):
         jobs is removed.
         @param groupId: used for all kind of deleted jobs
         @param jobType: determines type of job that begins the chain of
-                        jobs to be removed
+        jobs to be removed
         @param testName: used if removed jobs concerns particular test case
         @return: None
         '''

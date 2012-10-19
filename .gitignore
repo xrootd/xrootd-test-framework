@@ -5,6 +5,7 @@ XrdTestSlave-jsalmon.conf
 suite_history.bin*
 ca.key
 .project
+.settings
 .pydevproject
 *.pyc
 /nbproject/private/

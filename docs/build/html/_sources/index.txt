@@ -14,6 +14,7 @@ Contents:
    GeneralOverview
    Installation
    Configuration
+   TestSuites
 
 Indices and tables
 ==================

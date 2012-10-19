@@ -1,0 +1,195 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Writing test suites &mdash; xrootd-tests 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="xrootd-tests 0.1 documentation" href="index.html" />
+    <link rel="prev" title="Configuration" href="Configuration.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Configuration.html" title="Configuration"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">xrootd-tests 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="writing-test-suites">
+<h1>Writing test suites<a class="headerlink" href="#writing-test-suites" title="Permalink to this headline">¶</a></h1>
+<p>This page describes how to write test suites for the XrdTest Framework. For
+details on how to set up a repository to hold your test suites, see
+<a class="reference internal" href="Configuration.html"><em>Configuration</em></a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Full examples can be found in the <tt class="docutils literal"><span class="pre">examples</span></tt> directory.</p>
+</div>
+<div class="section" id="directory-structure">
+<h2>Directory Structure<a class="headerlink" href="#directory-structure" title="Permalink to this headline">¶</a></h2>
+<p>Test suites have a specific directory structure which must be adhered to,
+explained below:</p>
+<ul>
+<li><p class="first">Each test suite resides in its own directory.</p>
+</li>
+<li><p class="first">Each test suite has a definition file, which uses Python syntax. It is loaded
+dynamically as a Python function at runtime, so it must be syntactically
+correct. It must have a specific name (see <a class="reference internal" href="#naming-consistency"><em>Naming Consistency</em></a> below).</p>
+</li>
+<li><p class="first">Each test suite has a mandatory global <strong>initialization</strong> script, which is
+used to set up the (xrootd) environment ready for running test cases (see
+<a class="reference internal" href="#suite-init"><em>The &#64;tag&#64; system</em></a> below).</p>
+</li>
+<li><p class="first">Test suites can optionally have a global <strong>finalization</strong> script, generally
+used to perform cleanup tasks, such as removing files from data servers,
+removing authentication credentials etc. (see <a class="reference internal" href="#suite-fin"><em>Writing global suite finalization scripts</em></a> below).</p>
+</li>
+<li><p class="first">Each test suite has a subdirectory (generally called <strong>tc</strong>) which holds the
+set of test cases for this suite.</p>
+<blockquote>
+<div><ul class="simple">
+<li>Each test case resides in its own subdirectory. The name of the directory
+defines the name of the test case.</li>
+<li>Each test case has a mandatory <strong>initialization</strong> script</li>
+<li>Each test case has a mandatory <strong>run</strong> script.</li>
+<li>Test cases can optionally have a <strong>finalization</strong> script.</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<div class="section" id="naming-consistency">
+<span id="id1"></span><h3>Naming Consistency<a class="headerlink" href="#naming-consistency" title="Permalink to this headline">¶</a></h3>
+<p>You are generally free to choose your own naming conventions, but there are some
+consistency rules that must be followed, explained in this section.</p>
+<p>The test suite name is arbitrary, but in the CERN <tt class="docutils literal"><span class="pre">xrootd-testsuite</span></tt>
+repository we have a naming convention of <tt class="docutils literal"><span class="pre">ts_&lt;numerical</span> <span class="pre">id&gt;_&lt;shorthand</span>
+<span class="pre">description&gt;</span></tt>. For example, the suite which tests GSI functionality is named
+<strong>ts_006_gsi</strong>.</p>
+<p>The test suite definition file must be in the root directory of the test suite
+folder, and it must have the same name as the folder, with a <tt class="docutils literal"><span class="pre">.py</span></tt> extension.</p>
+<p>Additionally, the <strong>ts.name</strong> attribute in the definition file must also share
+the name of the folder/file.</p>
+</div>
+</div>
+<div class="section" id="the-tag-system">
+<span id="suite-init"></span><h2>The &#64;tag&#64; system<a class="headerlink" href="#the-tag-system" title="Permalink to this headline">¶</a></h2>
+<p>&#64;slavename&#64;, &#64;diskmounts&#64;, &#64;port&#64;, &#64;proto&#64;</p>
+<p>Extension?</p>
+</div>
+<div class="section" id="available-functions-api-like">
+<h2>Available functions (API-like)<a class="headerlink" href="#available-functions-api-like" title="Permalink to this headline">¶</a></h2>
+<p>log(), stamp(), assert_fail()</p>
+</div>
+<div class="section" id="stdout-and-stderr">
+<h2>stdout and stderr<a class="headerlink" href="#stdout-and-stderr" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="writing-global-suite-initialization-scripts">
+<h2>Writing global suite initialization scripts<a class="headerlink" href="#writing-global-suite-initialization-scripts" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="writing-global-suite-finalization-scripts">
+<span id="suite-fin"></span><h2>Writing global suite finalization scripts<a class="headerlink" href="#writing-global-suite-finalization-scripts" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Writing test suites</a><ul>
+<li><a class="reference internal" href="#directory-structure">Directory Structure</a><ul>
+<li><a class="reference internal" href="#naming-consistency">Naming Consistency</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#the-tag-system">The &#64;tag&#64; system</a></li>
+<li><a class="reference internal" href="#available-functions-api-like">Available functions (API-like)</a></li>
+<li><a class="reference internal" href="#stdout-and-stderr">stdout and stderr</a></li>
+<li><a class="reference internal" href="#writing-global-suite-initialization-scripts">Writing global suite initialization scripts</a></li>
+<li><a class="reference internal" href="#writing-global-suite-finalization-scripts">Writing global suite finalization scripts</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="Configuration.html"
+                        title="previous chapter">Configuration</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/TestSuites.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Configuration.html" title="Configuration"
+             >previous</a> |</li>
+        <li><a href="index.html">xrootd-tests 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CERN, Justin Lewis Salmon.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

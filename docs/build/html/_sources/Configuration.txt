@@ -30,7 +30,7 @@ shell command below::
     # cd <PROJECT_DIR>
     # python XrdTestMaster.py -c XrdTestMaster.conf
     
-Where <PROJECT_DIR> should be replaced with actual directory where framework 
+Where *<PROJECT_DIR>* should be replaced with actual directory where framework 
 source .py files are stored. One can start Hypervisor or Slave replacing 
 XrdTestMaster with XrdTestHypervisor or XrdTestSlave accordingly.
 

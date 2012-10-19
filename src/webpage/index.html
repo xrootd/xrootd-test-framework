@@ -13,7 +13,7 @@
     <!-- Aside Block -->
     <section role="navigation">
         <header>
-            <h1><a href="index" title="Back to Homepage"></a>XRootD</h1>
+            <h1><a href="index" title="Back to Homepage"></a>XRosotD</h1>
             <h2>Testing Framework</h2>
         </header>
 
@@ -123,7 +123,7 @@
                                 #for $ts in $testsuites.itervalues()
                                     <li class="event ${'success' if $ts.state.id > 0 else 'failure'}">
                                         <span class="logs-timestamp">$ts.state.time</span>
-                                        <h4 class="logs-event"><strong>$ts.name:</strong> $ts.state.name</h4>
+                                        <span class="logs-event"><strong>$ts.name:</strong> $ts.state.name</span>
                                     </li>
                                 #end for
                             </ul>
@@ -141,7 +141,7 @@
                                  #for $c in $clusters.itervalues()
                                      <li class="event ${'success' if $c.state.id >= 0 else 'failure'}">
                                          <span class="logs-timestamp">$c.state.time</span>
-                                         <h4 class="logs-event"><strong>$c.name:</strong> $c.state.name</h4>
+                                         <span class="logs-event"><strong>$c.name:</strong> $c.state.name</span>
                                      </li>
                                  #end for
                              </ul>

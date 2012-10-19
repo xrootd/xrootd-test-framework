@@ -458,9 +458,9 @@ class ClusterManager:
 
     def removeCluster(self, clusterName):
         if not self.clusters.has_key(clusterName):
-            raise ClusterManagerException(("No cluster %s defined " + \
-                                          " via cluster manager.") \
-                                          % clusterName)
+            LOGGER.error(("No cluster %s defined via cluster manager.") % clusterName)
+            return 
+        
         LOGGER.info("Removing cluster %s." % clusterName)
         cluster = self.clusters[clusterName]
 

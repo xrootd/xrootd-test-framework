@@ -1458,6 +1458,10 @@ div.tab>img,div.tab>.image-frame img {
     background: url('/webpage/img/icons/ajax_loading.gif') no-repeat 5px 5px;
 }
 
+.logs li.state {
+    background: url('/webpage/img/icons/icon_event_log.png') no-repeat 10px 8px;
+}
+
 .logs li.event.success {
     background:
         url('/webpage/img/icons/list-style/icon_list_style_checkmark.png')

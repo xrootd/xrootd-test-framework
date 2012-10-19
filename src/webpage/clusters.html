@@ -142,7 +142,7 @@
                                             <h3 class='left'>$cluster.name</h3>
                                             <nav class='right'>
                                                 <form action='/action' method='post'>
-                                                    #set $ac = [c for c in $clusters.itervalues() if 0 < c.state.id < 11 ]
+                                                    #set $ac = [c for c in $clusters.itervalues() if 0 < c.state.id < 9 ]
                                                     
                                                     #set $runnable = 'disabled' if len($ac) else ''
                                                     <button name="type" value="activate" $runnable>Activate Cluster</button>

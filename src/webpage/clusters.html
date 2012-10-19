@@ -139,7 +139,22 @@
 
                                     <article class="full-block">
                                         <div class="article-container">
-                                            <h3>$cluster.name</h3>
+                                            <h3 class='left'>$cluster.name</h3>
+                                            <nav class='right'>
+                                                <form action='/action' method='post'>
+                                                    #set $ac = [c for c in $clusters.itervalues() if 0 < c.state.id < 11 ]
+                                                    
+                                                    #set $runnable = 'disabled' if len($ac) else ''
+                                                    <button name="type" value="activate" $runnable>Activate Cluster</button>
+                                                    
+                                                    #set $cancelable = '' if len($ac) and $ac[0].name == $cluster.name else 'disabled'
+                                                    <button name="type" value="deactivate" $cancelable>Stop Cluster</button>
+                                                    
+                                                    <input type="hidden" id='cluster' name="cluster" value="$cluster.name" />                                                
+                                                    <input type="hidden" id='location' name="location" value="" />
+                                                </form>
+                                            </nav>
+                                            <div class="clear"></div>
                                             <ul class="logs">
                                                 <li class="event ${'success' if $cluster.state.id >= 0 else 'failure'}">
                                                     <span class="logs-timestamp">[ $cluster.state.time ]</span>

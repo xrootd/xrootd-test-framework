@@ -33,9 +33,13 @@
         </header>
 
         <article id="login-box">
-            #if $testsuite
+            #if $testsuite or $cluster
                 <div class="article-container">
-                    <p>You must enter the administration password to $type test suite <strong>$testsuite.</strong></p>
+                    #if $testsuite
+                        <p>You must enter the administration password to $type test suite <strong>$testsuite.</strong></p>
+                    #else
+                        <p>You must enter the administration password to $type cluster <strong>$cluster.</strong></p>
+                    #end if
                     
                     <!-- Notification -->
                     <div class="notification error" style="display: none;">
@@ -55,7 +59,12 @@
                                 </dd>
                             </dl>
                             <input type="hidden" id="type" name="type" value="$type" />
-                            <input type="hidden" id="testsuite" name="testsuite" value="$testsuite" />    
+                            <input type="hidden" id="location" name="location" value="$location" />
+                            #if $testsuite
+                                <input type="hidden" id="testsuite" name="testsuite" value="$testsuite" />
+                            #else
+                                <input type="hidden" id="cluster" name="cluster" value="$cluster" />
+                            #end if    
                         </fieldset>
                         <button type="submit" class="right">Submit</button>
                     </form>
@@ -63,7 +72,7 @@
                 </div>
             #else 
                 <div class="notification error">
-                    <p><strong>Error: </strong>Test suite not found.</p>
+                    <p><strong>Error: </strong>Something went wrong. Please go back and try again.</p>
                 </div>
             #end if
         </article> 

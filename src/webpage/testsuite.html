@@ -244,7 +244,8 @@
                         #set $cancelable = '' if $current_run and $current_run.name == $testsuite.name else 'disabled'
                         <button name="type" value="cancel" $cancelable>Cancel Run</button>
                         
-                        <input type="hidden" name="testsuite" value="$testsuite.name" />
+                        <input type="hidden" id='testsuite' name="testsuite" value="$testsuite.name" />
+                        <input type="hidden" id='location' name="location" value="" />
                     </form>
                 </nav>
                 <!-- /Article Header Tab Navigation -->

@@ -338,28 +338,57 @@ class WebInterface:
         except IOError, e:
             LOGGER.error('Error reading signed certificate: %s' % e)
     
-    @cherrypy.expose
-    def auth(self, password=None, testsuite=None, type=None):
+    @cherrypy.expose    
+    def getSSSKeytable(self):
         cherrypy.tools.allow.callable()
-        if not self.testMaster.testSuites.has_key(testsuite):
-            return 'Not authorized: unknown test suite'
-        elif not password == self.suiteRunPass:
-            return 'Not authorized: incorrect password'
-        elif not type or not type in ('run', 'cancel'):
-            return 'Not authorized: invalid action'
-        else:
-            if type == 'run':
-                self.testMaster.runTestSuite(testsuite)
-            elif type == 'cancel':
-                self.testMaster.cancelTestSuite(testsuite)
-            return 'Password OK'
+        
+        if not os.path.exists('/tmp/sss.keytab'):
+            LOGGER.debug('Creating new sss keytable file ...')
+            Command('xrdsssadmin -u anybody -g usrgroup -k xrootdfs_key add /tmp/sss.keytab', '.').execute()
+            
+        with open('/tmp/sss.keytab', 'r') as f:
+            return f.read()
     
     @cherrypy.expose
-    def action(self, type=None, testsuite=None): 
+    def auth(self, password=None, testsuite=None, cluster=None, type=None):
+        cherrypy.tools.allow.callable()
+        
+        if testsuite:
+            if not self.testMaster.testSuites.has_key(testsuite):
+                return 'Not authorized: unknown test suite'
+            elif not password == self.suiteRunPass:
+                return 'Not authorized: incorrect password'
+            elif not type or not type in ('run', 'cancel'):
+                return 'Not authorized: invalid action'
+            else:
+                if type == 'run':
+                    self.testMaster.runTestSuite(testsuite)
+                elif type == 'cancel':
+                    self.testMaster.cancelTestSuite(testsuite)
+                return 'Password OK'
+        
+        elif cluster:
+            if not self.testMaster.clusters.has_key(cluster):
+                return 'Not authorized: unknown cluster'
+            elif not password == self.suiteRunPass:
+                return 'Not authorized: incorrect password'
+            elif not type or not type in ('activate', 'deactivate'):
+                return 'Not authorized: invalid action'
+            else:
+                if type == 'activate':
+                    self.testMaster.activateCluster(cluster)
+                elif type == 'deactivate':
+                    self.testMaster.stopCluster(cluster)
+                return 'Password OK'
+            
+    @cherrypy.expose
+    def action(self, type=None, testsuite=None, cluster=None, location=None): 
         cherrypy.tools.allow.callable()
         tvars = self.vars()
         tvars['type'] = type
         tvars['testsuite'] = testsuite
+        tvars['cluster'] = cluster
+        tvars['location'] = location
         
         template = os.path.join(self.webroot, 'auth.html')
         template = Template(file=template, searchList = [tvars])

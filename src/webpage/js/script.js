@@ -228,4 +228,6 @@ function main(anchors) {
             }
         });
     });
+    
+    $('input#location').val(window.location.href)
 }

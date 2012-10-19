@@ -186,9 +186,10 @@
     		                                                #set $runnable = 'disabled' if $ts.state.id < 0 or $current_run and $current_run.name else ''
                                                             <button name="type" value="run" $runnable>Run Now</button>
                                                             #set $cancelable = '' if $current_run and $current_run.name == $ts.name else 'disabled'
-                                                            <button name="type" value="cancel" $cancelable>Cancel Run</button>
+                                                            <button name="type" value="cacnel" $cancelable>Cancel Run</button>
                                                             
-                                                            <input type="hidden" name="testsuite" value="$ts.name" />
+                                                            <input type="hidden" id='testsuite' name="testsuite" value="$ts.name" />
+                                                            <input type="hidden" id='location' name="location" value="" />
     		                                           </dd>
     		                                           <dt>
                                                             <label>Required clusters: </label>

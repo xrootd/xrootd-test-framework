@@ -190,7 +190,7 @@ class XrdTestMaster(Runnable):
                     return self.suiteSessions[self.runningSuiteUids[suite_name]]
             else:
                 return None
-        except DBRunRecoveryError, e:
+        except Exception, e:
                 LOGGER.error('Suite history database corruption, ' + \
                              '(delete suite history file): %s' % e)
     
@@ -542,8 +542,7 @@ class XrdTestMaster(Runnable):
                     msg.suiteName = suiteName
 
                     #take random hypervisor and send him cluster def
-                    hNum = random.randint(0, len(self.hypervisors) - 1)
-                    hyperv = [h for h in self.hypervisors.itervalues()][hNum]
+                    hyperv = self.selectHypervisor()
                     hyperv.send(msg)
 
                     self.clusters[clusterName].state = \
@@ -563,6 +562,47 @@ class XrdTestMaster(Runnable):
         if not clusterFound:
             LOGGER.error("No cluster with name " + str(clusterName) + " found")
             return False
+        
+    def activateCluster(self, cluster):
+        '''
+        Start a cluster without attaching it to a particular test suite.
+        '''
+        if self.clusters.has_key(cluster):
+            if self.clusters[cluster].name == cluster:
+
+                if len(self.hypervisors):
+                    msg = XrdMessage(XrdMessage.M_START_CLUSTER)
+                    msg.clusterDef = self.clusters[cluster]
+                    msg.jobGroupId = '0'
+                    msg.suiteName = 'none'
+
+                    hyperv = self.selectHypervisor()
+                    hyperv.send(msg)
+
+                    self.clusters[cluster].state = \
+                        State(Cluster.S_DEFINITION_SENT)
+                    self.clustersHypervisor[cluster] = hyperv
+                    hyperv.runningClusterDefs[cluster] = \
+                                            copy(self.clusters[cluster])
+
+                    LOGGER.info("Cluster start command sent to %s", hyperv)
+                    return True
+                else:
+                    LOGGER.warning("No hypervisor to run the cluster %s on" % \
+                                   cluster)
+                    self.clusters[cluster].state = \
+                        State(Cluster.S_UNKNOWN_NOHYPERV)
+                    return False
+        else:
+            LOGGER.error("No cluster with name " + str(cluster) + " found")
+            return False
+        
+    def selectHypervisor(self, hypervisor=None):
+        # Select a random hypervisor.
+        # Todo: choose hypervisor more intelligently
+        hNum = random.randint(0, len(self.hypervisors) - 1)
+        hyperv = [h for h in self.hypervisors.itervalues()][hNum]
+        return hyperv
 
     def stopCluster(self, clusterName):
         '''

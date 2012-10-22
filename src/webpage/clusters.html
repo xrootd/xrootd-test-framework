@@ -113,7 +113,7 @@
 
                 #if len($clusters)
                 
-                    <div class="sidetabs">
+                    <div class="sidetabs wide">
                         <nav class="sidetab-switch">
                             <ul>
                                 #set $default_tab = True
@@ -123,6 +123,12 @@
                                         <a href="#sidetab-$cluster.name"
                                            class="${'default-sidetab' if $default_tab else ''}">
                                             $cluster.name
+                                            
+                                            #if 0 < $cluster.state.id < 11
+                                                <span class="tag green">Active</span>
+                                            #else 
+                                                <span class="tag gray">Idle</span>
+                                            #end if
                                         </a>
                                     </li>
                                     #set $default_tab = False

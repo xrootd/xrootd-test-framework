@@ -1,0 +1,387 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Writing test suites &mdash; XrdTest Framework 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="XrdTest Framework 0.1 documentation" href="index.html" />
+    <link rel="next" title="Writing cluster definitions" href="clusters.html" />
+    <link rel="prev" title="Slave configuration" href="config-slave.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="clusters.html" title="Writing cluster definitions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="config-slave.html" title="Slave configuration"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">XrdTest Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="writing-test-suites">
+<h1>Writing test suites<a class="headerlink" href="#writing-test-suites" title="Permalink to this headline">¶</a></h1>
+<p>This page describes how to write test suites for the XrdTest Framework. For
+details on how to set up a repository to hold your test suites, see
+<a class="reference internal" href="config-master.html"><em>Master configuration</em></a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Full examples can be found in the <tt class="docutils literal"><span class="pre">examples</span></tt> directory.</p>
+</div>
+<div class="section" id="structure-of-a-test-suite">
+<h2>Structure of a test suite<a class="headerlink" href="#structure-of-a-test-suite" title="Permalink to this headline">¶</a></h2>
+<p>Test suites have a specific structure which must be adhered to,
+explained below:</p>
+<ul>
+<li><p class="first">Each test suite resides in its own directory.</p>
+</li>
+<li><p class="first">Each test suite has a definition file, which uses Python syntax. It is loaded
+dynamically as a Python function at runtime, so it must be syntactically
+correct. It must have a specific name (see <a class="reference internal" href="#def-file"><em>The definition file</em></a> below).</p>
+</li>
+<li><p class="first">Each test suite has a mandatory global <strong>initialization</strong> script, which is
+used to set up the (xrootd) environment ready for running test cases (see
+<a class="reference internal" href="#scripts"><em>Writing initialization/run/finalization scripts</em></a> below).</p>
+</li>
+<li><p class="first">Test suites can optionally have a global <strong>finalization</strong> script, generally
+used to perform cleanup tasks, such as removing files from data servers,
+removing authentication credentials etc. (see <a class="reference internal" href="#scripts"><em>Writing initialization/run/finalization scripts</em></a> below).</p>
+</li>
+<li><p class="first">Each test suite has a subdirectory called <strong>tc</strong> which holds the set of
+test cases for this suite.</p>
+<blockquote>
+<div><ul class="simple">
+<li>Each test case resides in its own subdirectory. The name of the directory
+defines the name of the test case.</li>
+<li>Each test case has a mandatory <strong>initialization</strong> script</li>
+<li>Each test case has a mandatory <strong>run</strong> script.</li>
+<li>Test cases can optionally have a <strong>finalization</strong> script.</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<div class="section" id="the-definition-file">
+<span id="def-file"></span><h3>The definition file<a class="headerlink" href="#the-definition-file" title="Permalink to this headline">¶</a></h3>
+<p>The test suite definition file must be in the root directory of the test suite
+directory, and it must have the same name as the folder, with a <tt class="docutils literal"><span class="pre">.py</span></tt> extension.</p>
+<p>A test suite is defined inside a function named <tt class="docutils literal"><span class="pre">getTestSuite()</span></tt> which takes
+no parameters. Here is an example of the beginning of a definition file:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">XrdTest.TestUtils</span> <span class="kn">import</span> <span class="n">TestSuite</span>
+
+<span class="k">def</span> <span class="nf">getTestSuite</span><span class="p">():</span>
+
+    <span class="n">ts</span> <span class="o">=</span> <span class="n">TestSuite</span><span class="p">()</span>
+    <span class="n">ts</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;ts_002_frm&quot;</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">ts.name</span></tt> attribute is the unique name of the test suite. It must match
+the name of the file exactly (minus the <em>.py</em> extension) and also match the
+directory name in which this test suite resides.</p>
+<p>The test suite name is arbitrary, but in the CERN <tt class="docutils literal"><span class="pre">xrootd-testsuite</span></tt>
+repository we have a naming convention of <tt class="docutils literal"><span class="pre">ts_&lt;numerical</span> <span class="pre">id&gt;_&lt;shorthand</span>
+<span class="pre">description&gt;</span></tt>. For example, the suite which tests GSI functionality is named
+<strong>ts_006_gsi</strong>. You are of course free to choose your own naming conventions,
+however.</p>
+<div class="section" id="defining-required-clusters">
+<h4>Defining required clusters<a class="headerlink" href="#defining-required-clusters" title="Permalink to this headline">¶</a></h4>
+<p>To define the cluster(s) which this test suite requires, include a line like
+this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ts</span><span class="o">.</span><span class="n">clusters</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;cluster_002_frm&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>This line is mandatory. Currently, there is only support for one cluster per
+test suite. It is planned to have the ability to run multiple clusters on
+multiple hypervisors in the future. For information on how to define a cluster,
+see <a class="reference internal" href="clusters.html"><em>Writing cluster definitions</em></a>.</p>
+<p>There is also the ability to specify a subset of the machines in a cluster,
+with a line like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ts</span><span class="o">.</span><span class="n">machines</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;frm1&#39;</span><span class="p">,</span> <span class="s">&#39;frm2&#39;</span><span class="p">,</span> <span class="s">&#39;ds1&#39;</span><span class="p">,</span> <span class="s">&#39;ds2&#39;</span><span class="p">,</span> <span class="s">&#39;client1&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>There haven&#8217;t been any use cases where this has been needed yet, but the
+functionality exists if one comes along. This line os not mandatory.</p>
+</div>
+<div class="section" id="scheduling-test-suites">
+<h4>Scheduling test suites<a class="headerlink" href="#scheduling-test-suites" title="Permalink to this headline">¶</a></h4>
+<p>To schedule the test suite to be run at particular intervals (cron-style), you
+must include a line like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ts</span><span class="o">.</span><span class="n">schedule</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">second</span><span class="o">=</span><span class="s">&#39;30&#39;</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="s">&#39;08&#39;</span><span class="p">,</span> <span class="n">hour</span><span class="o">=</span><span class="s">&#39;*&#39;</span><span class="p">,</span> <span class="n">day</span><span class="o">=</span><span class="s">&#39;*&#39;</span><span class="p">,</span> <span class="n">month</span><span class="o">=</span><span class="s">&#39;1&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This line is mandatory.</p>
+</div>
+<div class="section" id="defining-what-is-run">
+<h4>Defining what is run<a class="headerlink" href="#defining-what-is-run" title="Permalink to this headline">¶</a></h4>
+<p>To define which test cases will be run in this suite, include a line similar
+to this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ts</span><span class="o">.</span><span class="n">tests</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;copy_to&#39;</span><span class="p">,</span> <span class="s">&#39;copy_from&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>This line is mandatory. If a test case exists in the <strong>tc</strong> directory, but is
+not included in the line in the definition file, it will not be run.</p>
+<p>To point to the suite initialization script, include a line like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ts</span><span class="o">.</span><span class="n">initialize</span> <span class="o">=</span> <span class="s">&quot;file://suite_init.sh&quot;</span>
+</pre></div>
+</div>
+<p>This line can be a relative file URL (as above), an absolute file URL, or a
+HTTP URL. The initialization script is mandatory.</p>
+<p>To point to the suite finalization script, include a line like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ts</span><span class="o">.</span><span class="n">finalize</span> <span class="o">=</span> <span class="s">&quot;file://suite_finalize.sh&quot;</span>
+</pre></div>
+</div>
+<p>The finalization script is not mandatory. It can be used for general cleaning
+up after all test cases have been run.</p>
+</div>
+<div class="section" id="including-log-files">
+<h4>Including log files<a class="headerlink" href="#including-log-files" title="Permalink to this headline">¶</a></h4>
+<p>The framework has functionality for retrieving arbitrary log files from each
+slave at each stage of the test suite. To use this feature, include a line
+like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ts</span><span class="o">.</span><span class="n">logs</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;/var/log/xrootd/@slavename@/xrootd.log&#39;</span><span class="p">,</span>
+           <span class="s">&#39;/var/log/xrootd/@slavename@/cmsd.log&#39;</span><span class="p">,</span>
+           <span class="s">&#39;/var/log/XrdTest/XrdTestSlave.log&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>You should provide the path to any log files which will be useful to inspect.
+It is possible to use the &#64;slavename&#64; tag in the log file path (See
+<a class="reference internal" href="#tagging"><em>The &#64;tag&#64; system</em></a> for an explanation of the &#64;slavename&#64; and other tags). It can
+be useful to include the slave log (XrdTestSlave.log) for debugging purposes.</p>
+</div>
+<div class="section" id="getting-email-alerts">
+<h4>Getting email alerts<a class="headerlink" href="#getting-email-alerts" title="Permalink to this headline">¶</a></h4>
+<p>It is possible to give an arbitrary list of email addresses, each of which can
+be notified of the outcome of a test suite run, to a specified level of verbosity.</p>
+<p>The list of email addresses is defined with a line like the following:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ts</span><span class="o">.</span><span class="n">alert_emails</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;jsalmon@cern.ch&#39;</span><span class="p">,</span> <span class="s">&#39;foo@bar.com&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The amount of email alerts to be sent is configured with policy lines like the
+following:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ts</span><span class="o">.</span><span class="n">alert_success</span> <span class="o">=</span> <span class="s">&#39;SUITE&#39;</span>
+<span class="n">ts</span><span class="o">.</span><span class="n">alert_failure</span> <span class="o">=</span> <span class="s">&#39;CASE&#39;</span>
+</pre></div>
+</div>
+<p>There is a separate policy for failure notifications and success notifications
+for flexibility. The possible options for both policies are:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">SUITE</span></tt> - Send an email about the final state of the entire test suite
+(success or failure).</li>
+<li><tt class="docutils literal"><span class="pre">CASE</span></tt> - Send an email about the final state of each individual test case
+(success or failure). Implied SUITE.</li>
+<li><tt class="docutils literal"><span class="pre">NONE</span></tt> - Don&#8217;t send any emails.</li>
+</ul>
+<p>The default options are generally OK, i.e. <tt class="docutils literal"><span class="pre">CASE</span></tt> for failure alerts (as you
+want to know if the test suite failed and also which individual test cases failed)
+and <tt class="docutils literal"><span class="pre">SUITE</span></tt> for success alerts (you don&#8217;t care if each test case succeeds, only
+that the whole suite succeeds). You might want to put <tt class="docutils literal"><span class="pre">NONE</span></tt> for the success
+policy if you really only care about failures.</p>
+</div>
+</div>
+</div>
+<div class="section" id="writing-initialization-run-finalization-scripts">
+<span id="scripts"></span><h2>Writing initialization/run/finalization scripts<a class="headerlink" href="#writing-initialization-run-finalization-scripts" title="Permalink to this headline">¶</a></h2>
+<p>As mentioned earlier, each test suite has a mandatory global initialization
+script, an optional global finalization script, and a set if initialization/
+run/finalization scripts for each test case.</p>
+<p>The framework has been designed in this way, so that actions can be synchronized
+between participants (slaves) in the cluster. For example, if a slave completes
+its global initialization script, it will wait for all other slaves to complete
+theirs before moving on to the next stage. Similarly, a slave will not begin the
+run stage of a test case until it and all other slaves have completed the test
+case initialization stage. The XrdTest Master is actually responsible for
+orchestrating this activity.</p>
+<p><strong>It is important to note that</strong> should the global initialization script fail
+on any slave for any reason, then the <strong>entire test suite</strong> will be considered
+as failed, and no test cases will be run. A command that returns a non-zero
+exit code is considered as a failure, unless specifically stated otherwise by
+using the <tt class="docutils literal"><span class="pre">assert_fail</span></tt> function (see <a class="reference internal" href="#functions"><em>Available functions</em></a> below).</p>
+<p>If a <strong>test case</strong> initialization script fails, the suite will continue to run.
+The same is true for the remaining stages of the suite.</p>
+<p>Also note that you do not need to worry about <em>stdout</em> and <em>stderr</em>. Anything
+that is printed to <em>stderr</em> will be redirected to <em>stdout</em>. This is due to
+both ease of use, and to problems with Python&#8217;s <tt class="docutils literal"><span class="pre">subprocess</span></tt> module and the
+way it handles <em>stderr</em>.</p>
+<p>The framework provides some features to make the scripts more flexible,explained
+below.</p>
+<div class="section" id="the-tag-system">
+<span id="tagging"></span><h3>The <tt class="docutils literal"><span class="pre">&#64;tag&#64;</span></tt> system<a class="headerlink" href="#the-tag-system" title="Permalink to this headline">¶</a></h3>
+<p>There are some special keywords which can be used inside any test suite script.
+These keywords, or <em>tags</em>, have a descriptive name enclosed with <tt class="docutils literal"><span class="pre">&#64;</span></tt> symbols.
+Each tag within a script will be replaced with an appropriate real value at
+runtime, based upon which slave is currently running the script, the cluster
+configuration, and the parameters with which the master is to be contacted.</p>
+<p>The currently available tags are as follows:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">&#64;slavename&#64;</span></tt> - The FQDN of the current slave running the script. This allows
+one to write a single script containing if/else blocks to determine which piece
+of code the current slave will run, based upon its name.</li>
+<li><tt class="docutils literal"><span class="pre">&#64;port&#64;</span></tt> - The port on which the master should be contacted (defined in the
+master configuration file, see <a class="reference internal" href="config-master.html"><em>Master configuration</em></a>).</li>
+<li><tt class="docutils literal"><span class="pre">&#64;proto&#64;</span></tt> - The protocol by which the master should be contacted (defined in
+the master configuration file, see <a class="reference internal" href="config-master.html"><em>Master configuration</em></a>).</li>
+<li><tt class="docutils literal"><span class="pre">&#64;diskmounts&#64;</span></tt> - Gets resolved to the appropriate disk mount command(s) for
+the current slave. Disks are always mounted as <tt class="docutils literal"><span class="pre">ext4</span></tt> using <tt class="docutils literal"><span class="pre">user_xattr</span></tt>.</li>
+</ul>
+<p>It is planned to allow user extensions to the tagging system sometime in the
+future, so that arbitrary tags can be used inside scripts for even greater
+flexibility.</p>
+</div>
+<div class="section" id="available-functions">
+<span id="functions"></span><h3>Available functions<a class="headerlink" href="#available-functions" title="Permalink to this headline">¶</a></h3>
+<p>There is a small library of functions (located in <em>/etc/XrdTest/utils</em>) that can
+be used by default in test scripts. To use these functions, simply source the
+file inside the script like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#!/bin/bash</span>
+<span class="n">source</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">XrdTest</span><span class="o">/</span><span class="n">utils</span><span class="o">/</span><span class="n">functions</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>A brief description of the currently available functions:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">assert_fail</span></tt> - a function to assert the non-zero exit code of a function.
+Used for testing invalid use cases and verifiying that they fail as they should.
+For example:</p>
+<div class="highlight-python"><pre>assert_fail rm non_existent</pre>
+</div>
+<p>will return zero and not cause the script to exit (as would have happened if
+the <tt class="docutils literal"><span class="pre">assert_fail</span></tt> command were not used).</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">log</span></tt> - Used for timestamping and printing single-line commands or progress
+messages. For example:</p>
+<div class="highlight-python"><pre>log "Initializing test suite on slave @slavename@"</pre>
+</div>
+<p>will print a timestamped line in the session log which looks like this:</p>
+<div class="highlight-python"><pre>[10:49:20] Initializing test suite on slave manager1.xrd.test</pre>
+</div>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">stamp</span></tt> - Used for timestamping and printing entire command outputs. For
+example:</p>
+<div class="highlight-python"><pre>stamp ls -al /data</pre>
+</div>
+<p>will produce output like this:</p>
+<div class="highlight-python"><pre>[09:57:37]  total 51208
+[09:57:37]  drwxr-xr-x.  2 daemon daemon     4096 Oct 22 09:57 .
+[09:57:37]  dr-xr-xr-x. 25 root   root       4096 Oct 22 09:52 ..
+[09:57:37]  -rw-r--r--.  1 root   root   52428800 Oct 22 09:57 some_file</pre>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Writing test suites</a><ul>
+<li><a class="reference internal" href="#structure-of-a-test-suite">Structure of a test suite</a><ul>
+<li><a class="reference internal" href="#the-definition-file">The definition file</a><ul>
+<li><a class="reference internal" href="#defining-required-clusters">Defining required clusters</a></li>
+<li><a class="reference internal" href="#scheduling-test-suites">Scheduling test suites</a></li>
+<li><a class="reference internal" href="#defining-what-is-run">Defining what is run</a></li>
+<li><a class="reference internal" href="#including-log-files">Including log files</a></li>
+<li><a class="reference internal" href="#getting-email-alerts">Getting email alerts</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#writing-initialization-run-finalization-scripts">Writing initialization/run/finalization scripts</a><ul>
+<li><a class="reference internal" href="#the-tag-system">The <tt class="docutils literal"><span class="pre">&#64;tag&#64;</span></tt> system</a></li>
+<li><a class="reference internal" href="#available-functions">Available functions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="config-slave.html"
+                        title="previous chapter">Slave configuration</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="clusters.html"
+                        title="next chapter">Writing cluster definitions</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/testsuites.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="clusters.html" title="Writing cluster definitions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="config-slave.html" title="Slave configuration"
+             >previous</a> |</li>
+        <li><a href="index.html">XrdTest Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CERN, Justin Lewis Salmon.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

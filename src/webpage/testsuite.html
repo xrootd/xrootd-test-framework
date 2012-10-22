@@ -59,7 +59,9 @@
 	#end def
 	
 	#def participates($stage)
-	    #if re.search('.*Nothing to.*', $stage[1][0], re.I)
+        #if not $stage[1][0]
+            return False
+	    #else if re.search('.*Nothing to.*', $stage[1][0], re.I)
 	        #return False
 	    #else
 	        #return True

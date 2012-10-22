@@ -1,23 +1,62 @@
-.. xrootd-tests documentation master file, created by
-   sphinx-quickstart on Tue Sep 11 10:04:39 2012.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to xrootd-tests's documentation!
-========================================
-
-Contents:
+************************************************
+Welcome to xrootd-tests |release| documentation!
+************************************************
 
 .. toctree::
-   :maxdepth: 2
+   :hidden:
+      
+   general-overview
+   installation
+   config-master
+   config-hypervisor
+   config-slave
+   testsuites
+   clusters
+   web-interface
+   ref-manual
    
-   GeneralOverview
-   Installation
-   Configuration
-   TestSuites
+Sections
+========
 
-Indices and tables
-==================
+:doc:`General Overview <general-overview>`
+------------------------------------------
+A general overview of the features of the XrdTest Framework.
+
+:doc:`Installation <installation>`
+----------------------------------
+Instructions for installation of the various parts of the XrdTest Framework.
+
+:doc:`Master Configuration <config-master>`
+-------------------------------------------
+Configuration instructions for the XrdTest Master.
+
+:doc:`Hypervisor Configuration <config-hypervisor>`
+---------------------------------------------------
+Configuration instructions for the XrdTest Hypervisor.
+
+:doc:`Slave Configuration <config-slave>`
+-----------------------------------------
+Configuration instructions for the XrdTest Slave.
+
+:doc:`Writing Test Suites <testsuites>`
+---------------------------------------
+Instructions for writing new test suites within the framework. 
+
+:doc:`Defining Clusters <clusters>`
+-----------------------------------
+Instructions for defining clusters for test suites to run on within the 
+framework.
+
+:doc:`Web Interface <web-interface>`
+------------------------------------
+Features of and instructions for use of the XrdTest web interface.
+
+:doc:`Reference Manual <ref-manual>`
+------------------------------------
+Module, class, and function reference.
+
+Appendix
+--------
 
 * :ref:`genindex`
 * :ref:`modindex`

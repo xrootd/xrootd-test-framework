@@ -25,6 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="top" title="XrdTest Framework 0.1 documentation" href="#" />
     <link rel="next" title="General Overview" href="general-overview.html" /> 
   </head>
@@ -52,46 +53,50 @@
             
   <div class="section" id="xrdtest-framework-release-documentation">
 <h1>XrdTest Framework 0.1 Documentation<a class="headerlink" href="#xrdtest-framework-release-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
-</div>
-<div class="section" id="sections">
-<h2>Sections<a class="headerlink" href="#sections" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="general-overview">
-<h3><a class="reference internal" href="general-overview.html"><em>General Overview</em></a><a class="headerlink" href="#general-overview" title="Permalink to this headline">¶</a></h3>
-<p>A general overview of the features of the XrdTest Framework.</p>
-</div>
-<div class="section" id="installation">
-<h3><a class="reference internal" href="installation.html"><em>Installation</em></a><a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h3>
-<p>Instructions for installation of the various parts of the XrdTest Framework.</p>
-</div>
-<div class="section" id="master-configuration">
-<h3><a class="reference internal" href="config-master.html"><em>Master Configuration</em></a><a class="headerlink" href="#master-configuration" title="Permalink to this headline">¶</a></h3>
-<p>Configuration instructions for the XrdTest Master.</p>
-</div>
-<div class="section" id="hypervisor-configuration">
-<h3><a class="reference internal" href="config-hypervisor.html"><em>Hypervisor Configuration</em></a><a class="headerlink" href="#hypervisor-configuration" title="Permalink to this headline">¶</a></h3>
-<p>Configuration instructions for the XrdTest Hypervisor.</p>
-</div>
-<div class="section" id="slave-configuration">
-<h3><a class="reference internal" href="config-slave.html"><em>Slave Configuration</em></a><a class="headerlink" href="#slave-configuration" title="Permalink to this headline">¶</a></h3>
-<p>Configuration instructions for the XrdTest Slave.</p>
-</div>
-<div class="section" id="writing-test-suites">
-<h3><a class="reference internal" href="testsuites.html"><em>Writing Test Suites</em></a><a class="headerlink" href="#writing-test-suites" title="Permalink to this headline">¶</a></h3>
-<p>Instructions for writing new test suites within the framework.</p>
-</div>
-<div class="section" id="defining-clusters">
-<h3><a class="reference internal" href="clusters.html"><em>Defining Clusters</em></a><a class="headerlink" href="#defining-clusters" title="Permalink to this headline">¶</a></h3>
-<p>Instructions for defining clusters for test suites to run on within the
-framework.</p>
-</div>
-<div class="section" id="web-interface">
-<h3><a class="reference internal" href="web-interface.html"><em>Web Interface</em></a><a class="headerlink" href="#web-interface" title="Permalink to this headline">¶</a></h3>
-<p>Features of and instructions for use of the XrdTest web interface.</p>
-</div>
-<div class="section" id="reference-manual">
-<h3><a class="reference internal" href="ref-manual.html"><em>Reference Manual</em></a><a class="headerlink" href="#reference-manual" title="Permalink to this headline">¶</a></h3>
-<p>Module, class, and function reference.</p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="general-overview.html">General Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="general-overview.html#master">Master</a></li>
+<li class="toctree-l2"><a class="reference internal" href="general-overview.html#hypervisor">Hypervisor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="general-overview.html#slave">Slave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="general-overview.html#running-as-a-system-service-daemon">Running as a system service (daemon)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="general-overview.html#running-in-debug-mode">Running in debug mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="general-overview.html#running-in-background-mode">Running in background mode</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config-master.html">Master configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="config-master.html#configuration-sections">Configuration sections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config-master.html#other-considerations">Other considerations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="config-hypervisor.html">Hypervisor configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="config-hypervisor.html#configuration-sections">Configuration sections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config-hypervisor.html#other-considerations">Other considerations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="config-slave.html">Slave configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="config-slave.html#configuration-sections">Configuration sections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config-slave.html#other-considerations">Other considerations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="testsuites.html">Writing test suites</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="testsuites.html#structure-of-a-test-suite">Structure of a test suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testsuites.html#writing-initialization-run-finalization-scripts">Writing initialization/run/finalization scripts</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="clusters.html">Writing cluster definitions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="web-interface.html">Using the XrdTest Web Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ref-manual.html">Source code reference manual</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ref-manual/XrdTest.html">XrdTest Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ref-manual/XrdTestMaster.html">XrdTestMaster Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ref-manual/XrdTestHypervisor.html">XrdTestHypervisor Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ref-manual/XrdTestSlave.html">XrdTestSlave Module</a></li>
+</ul>
+</li>
+</ul>
 </div>
 <div class="section" id="appendix">
 <h3>Appendix<a class="headerlink" href="#appendix" title="Permalink to this headline">¶</a></h3>
@@ -113,16 +118,7 @@ framework.</p>
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">XrdTest Framework 0.1 Documentation</a><ul>
-<li><a class="reference internal" href="#sections">Sections</a><ul>
-<li><a class="reference internal" href="#general-overview"><tt class="docutils literal"><span class="pre">General</span> <span class="pre">Overview</span></tt></a></li>
-<li><a class="reference internal" href="#installation"><tt class="docutils literal"><span class="pre">Installation</span></tt></a></li>
-<li><a class="reference internal" href="#master-configuration"><tt class="docutils literal"><span class="pre">Master</span> <span class="pre">Configuration</span></tt></a></li>
-<li><a class="reference internal" href="#hypervisor-configuration"><tt class="docutils literal"><span class="pre">Hypervisor</span> <span class="pre">Configuration</span></tt></a></li>
-<li><a class="reference internal" href="#slave-configuration"><tt class="docutils literal"><span class="pre">Slave</span> <span class="pre">Configuration</span></tt></a></li>
-<li><a class="reference internal" href="#writing-test-suites"><tt class="docutils literal"><span class="pre">Writing</span> <span class="pre">Test</span> <span class="pre">Suites</span></tt></a></li>
-<li><a class="reference internal" href="#defining-clusters"><tt class="docutils literal"><span class="pre">Defining</span> <span class="pre">Clusters</span></tt></a></li>
-<li><a class="reference internal" href="#web-interface"><tt class="docutils literal"><span class="pre">Web</span> <span class="pre">Interface</span></tt></a></li>
-<li><a class="reference internal" href="#reference-manual"><tt class="docutils literal"><span class="pre">Reference</span> <span class="pre">Manual</span></tt></a></li>
+<li><a class="reference internal" href="#contents">Contents</a><ul>
 <li><a class="reference internal" href="#appendix">Appendix</a></li>
 </ul>
 </li>

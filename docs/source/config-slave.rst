@@ -1,3 +1,47 @@
 *******************
 Slave configuration
 *******************
+
+Configuration sections
+----------------------
+
+``[test_master]``
+=================
+
+.. code-block:: python
+
+    # IP and port of the XrdTest Master. Slaves can set this to master.xrd.test,
+    # as the virtual network will have a DNS entry which will resolve back to the
+    # actual master IP.
+    ip=master.xrd.test
+    port=20000
+
+``[security]``
+==============
+
+.. code-block:: python
+
+    # Paths to SSL certificates and keys for the slave.
+    certfile=/etc/XrdTest/certs/slavecert.pem
+    keyfile=/etc/XrdTest/certs/slavekey.pem
+
+``[daemon]``
+============
+
+.. code-block:: python
+
+    # Path to the PID file for the slave when running as daemon.
+    pid_file_path=/var/run/XrdTestSlave.pid
+    
+    # Where the slave writes its logs
+    log_file_path=/var/log/XrdTest/XrdTestSlave.log
+    
+    # Amount of information to log. Constants from standard python logging module.
+    # Defaults to INFO. Possible values: NOTSET (off), ERROR (only errors), WARN
+    # (warnings and above), INFO (most logs), DEBUG (everything)
+    log_level=DEBUG
+    
+Other considerations
+--------------------
+
+* Slave image config (network, size, OS, root password etc) 

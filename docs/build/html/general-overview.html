@@ -25,9 +25,10 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="top" title="XrdTest Framework 0.1 documentation" href="index.html" />
     <link rel="next" title="Installation" href="installation.html" />
-    <link rel="prev" title="Welcome to xrootd-tests 0.1 documentation!" href="index.html" /> 
+    <link rel="prev" title="XrdTest Framework 0.1 Documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -43,7 +44,7 @@
           <a href="installation.html" title="Installation"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="index.html" title="Welcome to xrootd-tests 0.1 documentation!"
+          <a href="index.html" title="XrdTest Framework 0.1 Documentation"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">XrdTest Framework 0.1 documentation</a> &raquo;</li> 
       </ul>
@@ -56,59 +57,107 @@
             
   <div class="section" id="general-overview">
 <h1>General Overview<a class="headerlink" href="#general-overview" title="Permalink to this headline">¶</a></h1>
-<ul>
-<li><dl class="first docutils">
-<dt>Framework Components</dt>
-<dd><ul class="first last simple">
+<p>The XrdTest Framework is comprised of 3 main components:</p>
+<ul class="simple">
 <li><a class="reference internal" href="#master"><em>Master</em></a></li>
 <li><a class="reference internal" href="#hypervisor"><em>Hypervisor</em></a></li>
 <li><a class="reference internal" href="#slave"><em>Slave</em></a></li>
 </ul>
-</dd>
-</dl>
-</li>
-</ul>
+<p>Each of which is explained in more detail below.</p>
 <div class="section" id="master">
 <span id="id1"></span><h2>Master<a class="headerlink" href="#master" title="Permalink to this headline">¶</a></h2>
-<p>Module file: XrdTestMaster.py</p>
-<p>Master is the user entry point for the testing framework. The service is configured via config file and
-exports a web service showing the current statistics of the service as well as the status of the tests that
-are being run and have been run in the past.
-It accepts connections from Slave and Hypervisor daemons and dispatches commands to them.</p>
-<p>Quick summary:
-user entry point to the framework
-supervise and synchronize all system activities
-accepts connections from Slaves and Hypervisors and dispatches commands to them
-is run as a system service (daemon), configured via batch of configuration files</p>
+<p>Module file: <tt class="docutils literal"><span class="pre">XrdTestMaster.py</span></tt></p>
+<p>The master is the user entry point for the testing framework. The service is
+configured via a <em>ini</em>-style configuration file (see <a class="reference internal" href="config-master.html"><em>Master configuration</em></a>).</p>
+<p>It includes a web interface showing the current statistics of the service,
+as well as the status of the tests that are being run and have been run in the
+past (see <a class="reference internal" href="web-interface.html"><em>Using the XrdTest Web Interface</em></a>).</p>
+<p>It accepts connections from slave and hypervisor daemons and dispatches commands
+to them. The master is responsible for running,  orchestrating and synchronizing
+test suites.</p>
+<p>Quick summary:</p>
+<ul class="simple">
+<li>User entry point to the framework</li>
+<li>Supervises and synchronizes all system activities</li>
+<li>Accepts connections from slaves and hypervisors and dispatches commands to
+them</li>
+<li>Runs as a system service (daemon), configured via batch of configuration files</li>
+</ul>
 </div>
 <div class="section" id="hypervisor">
 <span id="id2"></span><h2>Hypervisor<a class="headerlink" href="#hypervisor" title="Permalink to this headline">¶</a></h2>
-<p>Module file: XrdTestHypervisor.py
-Daemon which receives the machines and network configurations from the Master and
-starts/stops/configures the virtual machines accordingly. It uses Qemu with the KVM
-kernel module
-in Linux and libvirt virtualization library to as a layer to communicate with Qemu.
-Quick summary:
-application to manage the virtual machines clusters and networks on demand of M
-aster
-is run as a system service (daemon), configured via configuration file
-it starts/stops/configures virtual machines
-uses libvirt for managing virtual machines</p>
+<p>Module file: <tt class="docutils literal"><span class="pre">XrdTestHypervisor.py</span></tt></p>
+<p>The hypervisor receives cluster configurations from the master and starts/stops
+/configures the virtual machines which make up the cluster accordingly,
+including configuring the virtual network with which the slaves use to
+communicate. It uses <tt class="docutils literal"><span class="pre">qemu</span></tt> with the <tt class="docutils literal"><span class="pre">kvm</span></tt> kernel module in Linux
+and the <tt class="docutils literal"><span class="pre">libvirt</span></tt> virtualization API as a layer to communicate with
+<tt class="docutils literal"><span class="pre">qemu</span></tt>.</p>
+<p>Quick summary:</p>
+<ul class="simple">
+<li>Component to manage clusters of virtual machines on demand of the master</li>
+<li>It is run as a system service (daemon), configured via configuration file
+(see <a class="reference internal" href="config-hypervisor.html"><em>Hypervisor configuration</em></a>)</li>
+<li>Starts/stops/configures virtual machines</li>
+<li>Uses <tt class="docutils literal"><span class="pre">libvirt</span></tt> for managing virtual machines</li>
+</ul>
 </div>
 <div class="section" id="slave">
 <span id="id3"></span><h2>Slave<a class="headerlink" href="#slave" title="Permalink to this headline">¶</a></h2>
-<p>Module file: XrdTestSlave.py
-Daemon installed on virtual or physical machines that runs the actual tests. In the first iteration it is
-supposed to receive a bunch of shell scripts from the M
-aster and run them. It connects to M
-aster
-automatically, having by its name (Hipervisor redirects it by IP or master&#8217;s address is known
-because user provides it while starting).
-Quick summary:
-the actual application which runs tests
-may be running on virtual or physical machines
-is run as a system service (daemon), configured via configurationfile
-it receives test cases from Master and runs them synchronously with other Slaves</p>
+<p>Module file: <tt class="docutils literal"><span class="pre">XrdTestSlave.py</span></tt></p>
+<p>The slave component is installed on virtual or physical machines, and runs the
+actual tests. In the first iteration it will receive a bunch of shell scripts
+from the master and run them. Slaves connect to the master automatically, made
+possible by libvirt&#8217;s use of dnsmasq.</p>
+<p>Quick summary:</p>
+<ul class="simple">
+<li>The component which actually runs tests</li>
+<li>May be running on virtual or physical machines</li>
+<li>Runs as a system service (daemon), configured via configuration file (see
+<a class="reference internal" href="config-slave.html"><em>Slave configuration</em></a>)</li>
+<li>Receives test cases from the master and runs them synchronously with other
+slaves</li>
+</ul>
+</div>
+<div class="section" id="running-as-a-system-service-daemon">
+<h2>Running as a system service (daemon)<a class="headerlink" href="#running-as-a-system-service-daemon" title="Permalink to this headline">¶</a></h2>
+<p>If the application was installed from an RPM, it is automatically added to the
+system services (via <tt class="docutils literal"><span class="pre">chkconfig</span></tt>), thus it will be started automatically
+during system boot. It can also be started manually from the command line as
+follows:</p>
+<div class="highlight-python"><pre>service COMPONENT_NAME start</pre>
+</div>
+<p>where COMPONENT_NAME is accordingly:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">xrdtest-master</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">xrdtest-slave</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">xrdtest-hypervisor</span></tt></li>
+</ul>
+</div>
+<div class="section" id="running-in-debug-mode">
+<h2>Running in debug mode<a class="headerlink" href="#running-in-debug-mode" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The default location for configuration files is
+<tt class="docutils literal"><span class="pre">/etc/XrdTest/&lt;CONFIG_FILE_NAME&gt;.conf</span></tt>.</p>
+</div>
+<p>To start each component (master, hypervisor or slave) in debug mode, run the
+shell command below:</p>
+<div class="highlight-python"><pre>python /usr/sbin/XrdTestMaster.py -c XrdTestMaster.conf</pre>
+</div>
+<p>One can start a hypervisor or a slave by replacing <tt class="docutils literal"><span class="pre">XrdTestMaster</span></tt> with
+<tt class="docutils literal"><span class="pre">XrdTestHypervisor</span></tt> or <tt class="docutils literal"><span class="pre">XrdTestSlave</span></tt> accordingly.</p>
+<p>When running in debug mode, the component will print log messages to <tt class="docutils literal"><span class="pre">stdout</span></tt>,
+rather than writing them to the log file.</p>
+</div>
+<div class="section" id="running-in-background-mode">
+<h2>Running in background mode<a class="headerlink" href="#running-in-background-mode" title="Permalink to this headline">¶</a></h2>
+<p>To start a component in background mode (as a daemon), add the <tt class="docutils literal"><span class="pre">-b</span></tt> option
+to the shell command. It will then store log and PID files in their proper
+directories, as specified in the configuration file. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># python /usr/sbin/XrdTestMaster.py -d -c XrdTestMaster.conf</span>
+</pre></div>
+</div>
 </div>
 </div>
 
@@ -124,13 +173,16 @@ it receives test cases from Master and runs them synchronously with other Slaves
 <li><a class="reference internal" href="#master">Master</a></li>
 <li><a class="reference internal" href="#hypervisor">Hypervisor</a></li>
 <li><a class="reference internal" href="#slave">Slave</a></li>
+<li><a class="reference internal" href="#running-as-a-system-service-daemon">Running as a system service (daemon)</a></li>
+<li><a class="reference internal" href="#running-in-debug-mode">Running in debug mode</a></li>
+<li><a class="reference internal" href="#running-in-background-mode">Running in background mode</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
   <p class="topless"><a href="index.html"
-                        title="previous chapter">Welcome to xrootd-tests 0.1 documentation!</a></p>
+                        title="previous chapter">XrdTest Framework 0.1 Documentation</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="installation.html"
                         title="next chapter">Installation</a></p>
@@ -169,7 +221,7 @@ it receives test cases from Master and runs them synchronously with other Slaves
           <a href="installation.html" title="Installation"
              >next</a> |</li>
         <li class="right" >
-          <a href="index.html" title="Welcome to xrootd-tests 0.1 documentation!"
+          <a href="index.html" title="XrdTest Framework 0.1 Documentation"
              >previous</a> |</li>
         <li><a href="index.html">XrdTest Framework 0.1 documentation</a> &raquo;</li> 
       </ul>

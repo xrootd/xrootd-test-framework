@@ -25,6 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="top" title="XrdTest Framework 0.1 documentation" href="index.html" />
     <link rel="next" title="Writing test suites" href="testsuites.html" />
     <link rel="prev" title="Hypervisor configuration" href="config-hypervisor.html" /> 
@@ -56,6 +57,48 @@
             
   <div class="section" id="slave-configuration">
 <h1>Slave configuration<a class="headerlink" href="#slave-configuration" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="configuration-sections">
+<h2>Configuration sections<a class="headerlink" href="#configuration-sections" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="test-master">
+<h3><tt class="docutils literal"><span class="pre">[test_master]</span></tt><a class="headerlink" href="#test-master" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># IP and port of the XrdTest Master. Slaves can set this to master.xrd.test,</span>
+<span class="c"># as the virtual network will have a DNS entry which will resolve back to the</span>
+<span class="c"># actual master IP.</span>
+<span class="n">ip</span><span class="o">=</span><span class="n">master</span><span class="o">.</span><span class="n">xrd</span><span class="o">.</span><span class="n">test</span>
+<span class="n">port</span><span class="o">=</span><span class="mi">20000</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="security">
+<h3><tt class="docutils literal"><span class="pre">[security]</span></tt><a class="headerlink" href="#security" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Paths to SSL certificates and keys for the slave.</span>
+<span class="n">certfile</span><span class="o">=/</span><span class="n">etc</span><span class="o">/</span><span class="n">XrdTest</span><span class="o">/</span><span class="n">certs</span><span class="o">/</span><span class="n">slavecert</span><span class="o">.</span><span class="n">pem</span>
+<span class="n">keyfile</span><span class="o">=/</span><span class="n">etc</span><span class="o">/</span><span class="n">XrdTest</span><span class="o">/</span><span class="n">certs</span><span class="o">/</span><span class="n">slavekey</span><span class="o">.</span><span class="n">pem</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="daemon">
+<h3><tt class="docutils literal"><span class="pre">[daemon]</span></tt><a class="headerlink" href="#daemon" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Path to the PID file for the slave when running as daemon.</span>
+<span class="n">pid_file_path</span><span class="o">=/</span><span class="n">var</span><span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">XrdTestSlave</span><span class="o">.</span><span class="n">pid</span>
+
+<span class="c"># Where the slave writes its logs</span>
+<span class="n">log_file_path</span><span class="o">=/</span><span class="n">var</span><span class="o">/</span><span class="n">log</span><span class="o">/</span><span class="n">XrdTest</span><span class="o">/</span><span class="n">XrdTestSlave</span><span class="o">.</span><span class="n">log</span>
+
+<span class="c"># Amount of information to log. Constants from standard python logging module.</span>
+<span class="c"># Defaults to INFO. Possible values: NOTSET (off), ERROR (only errors), WARN</span>
+<span class="c"># (warnings and above), INFO (most logs), DEBUG (everything)</span>
+<span class="n">log_level</span><span class="o">=</span><span class="n">DEBUG</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="other-considerations">
+<h2>Other considerations<a class="headerlink" href="#other-considerations" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Slave image config (network, size, OS, root password etc)</li>
+</ul>
+</div>
 </div>
 
 
@@ -64,6 +107,20 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Slave configuration</a><ul>
+<li><a class="reference internal" href="#configuration-sections">Configuration sections</a><ul>
+<li><a class="reference internal" href="#test-master"><tt class="docutils literal"><span class="pre">[test_master]</span></tt></a></li>
+<li><a class="reference internal" href="#security"><tt class="docutils literal"><span class="pre">[security]</span></tt></a></li>
+<li><a class="reference internal" href="#daemon"><tt class="docutils literal"><span class="pre">[daemon]</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#other-considerations">Other considerations</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="config-hypervisor.html"
                         title="previous chapter">Hypervisor configuration</a></p>

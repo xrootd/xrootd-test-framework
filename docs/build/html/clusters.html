@@ -25,6 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="top" title="XrdTest Framework 0.1 documentation" href="index.html" />
     <link rel="next" title="Using the XrdTest Web Interface" href="web-interface.html" />
     <link rel="prev" title="Writing test suites" href="testsuites.html" /> 
@@ -56,6 +57,84 @@
             
   <div class="section" id="writing-cluster-definitions">
 <h1>Writing cluster definitions<a class="headerlink" href="#writing-cluster-definitions" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">XrdTest.ClusterUtils</span> <span class="kn">import</span> <span class="n">Cluster</span><span class="p">,</span> <span class="n">Network</span><span class="p">,</span> <span class="n">Host</span><span class="p">,</span> <span class="n">Disk</span>
+
+<span class="k">def</span> <span class="nf">getCluster</span><span class="p">():</span>
+    <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">()</span>
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="c"># Global names</span>
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="n">cluster</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;cluster_example&#39;</span>
+    <span class="n">network_name</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s">&#39;_net&#39;</span>
+
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="c"># Cluster defaults</span>
+    <span class="c">#</span>
+    <span class="c"># The bootImage parameter is relative to some libvirt-managed storage pool.</span>
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="n">cluster</span><span class="o">.</span><span class="n">defaultHost</span><span class="o">.</span><span class="n">bootImage</span> <span class="o">=</span> <span class="s">&#39;slc6_testslave_ref.img&#39;</span>
+    <span class="n">cluster</span><span class="o">.</span><span class="n">defaultHost</span><span class="o">.</span><span class="n">cacheBootImage</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="n">cluster</span><span class="o">.</span><span class="n">defaultHost</span><span class="o">.</span><span class="n">arch</span> <span class="o">=</span> <span class="s">&#39;x86_64&#39;</span>
+    <span class="n">cluster</span><span class="o">.</span><span class="n">defaultHost</span><span class="o">.</span><span class="n">ramSize</span> <span class="o">=</span> <span class="s">&#39;1048576&#39;</span>
+    <span class="n">cluster</span><span class="o">.</span><span class="n">defaultHost</span><span class="o">.</span><span class="n">net</span> <span class="o">=</span> <span class="n">network_name</span>
+
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="c"># Host definitions</span>
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="n">metamanager1</span> <span class="o">=</span> <span class="n">Host</span><span class="p">(</span><span class="s">&#39;metamanager1.xrd.test&#39;</span><span class="p">,</span> <span class="s">&#39;192.168.127.3&#39;</span><span class="p">,</span> <span class="s">&quot;52:54:00:65:44:65&quot;</span><span class="p">)</span>
+    <span class="n">manager1</span> <span class="o">=</span> <span class="n">Host</span><span class="p">(</span><span class="s">&#39;manager1.xrd.test&#39;</span><span class="p">,</span> <span class="s">&#39;192.168.127.4&#39;</span><span class="p">,</span> <span class="s">&quot;52:54:00:65:44:66&quot;</span><span class="p">)</span>
+    <span class="n">manager2</span> <span class="o">=</span> <span class="n">Host</span><span class="p">(</span><span class="s">&#39;manager2.xrd.test&#39;</span><span class="p">,</span> <span class="s">&#39;192.168.127.5&#39;</span><span class="p">,</span> <span class="s">&quot;52:54:00:65:44:67&quot;</span><span class="p">)</span>
+    <span class="n">ds1</span> <span class="o">=</span> <span class="n">Host</span><span class="p">(</span><span class="s">&#39;ds1.xrd.test&#39;</span><span class="p">,</span> <span class="s">&#39;192.168.127.6&#39;</span><span class="p">,</span> <span class="s">&quot;52:54:00:65:44:68&quot;</span><span class="p">)</span>
+    <span class="n">ds2</span> <span class="o">=</span> <span class="n">Host</span><span class="p">(</span><span class="s">&#39;ds2.xrd.test&#39;</span><span class="p">,</span> <span class="s">&#39;192.168.127.7&#39;</span><span class="p">,</span> <span class="s">&quot;52:54:00:65:44:69&quot;</span><span class="p">)</span>
+    <span class="n">ds3</span> <span class="o">=</span> <span class="n">Host</span><span class="p">(</span><span class="s">&#39;ds3.xrd.test&#39;</span><span class="p">,</span> <span class="s">&#39;192.168.127.8&#39;</span><span class="p">,</span> <span class="s">&quot;52:54:00:65:44:70&quot;</span><span class="p">)</span>
+    <span class="n">ds4</span> <span class="o">=</span> <span class="n">Host</span><span class="p">(</span><span class="s">&#39;ds4.xrd.test&#39;</span><span class="p">,</span> <span class="s">&#39;192.168.127.9&#39;</span><span class="p">,</span> <span class="s">&quot;52:54:00:65:44:71&quot;</span><span class="p">)</span>
+    <span class="n">client1</span> <span class="o">=</span> <span class="n">Host</span><span class="p">(</span><span class="s">&#39;client1.xrd.test&#39;</span><span class="p">,</span> <span class="s">&#39;192.168.127.10&#39;</span><span class="p">,</span> <span class="s">&quot;52:54:00:65:44:72&quot;</span><span class="p">)</span>
+
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="c"># Additional host disk definitions</span>
+    <span class="c">#</span>
+    <span class="c"># As per the libvirt docs, the device name given here is not guaranteed to</span>
+    <span class="c"># map to the same name in the guest OS. Incrementing the device name works</span>
+    <span class="c"># (i.e. disk1 = vda, disk2 = vdb etc.).</span>
+    <span class="c">#</span>
+    <span class="c"># Disk sizes should be larger than 10GB for data server nodes, otherwise</span>
+    <span class="c"># the node might not be selected by the cmsd.</span>
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="n">metamanager1</span><span class="o">.</span><span class="n">disks</span> <span class="o">=</span>  <span class="p">[</span><span class="n">Disk</span><span class="p">(</span><span class="s">&#39;disk1&#39;</span><span class="p">,</span> <span class="s">&#39;20G&#39;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s">&#39;vda&#39;</span><span class="p">,</span> <span class="n">mountPoint</span><span class="o">=</span><span class="s">&#39;/data&#39;</span><span class="p">)]</span>
+    <span class="n">manager1</span><span class="o">.</span><span class="n">disks</span> <span class="o">=</span>  <span class="p">[</span><span class="n">Disk</span><span class="p">(</span><span class="s">&#39;disk1&#39;</span><span class="p">,</span> <span class="s">&#39;20G&#39;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s">&#39;vda&#39;</span><span class="p">,</span> <span class="n">mountPoint</span><span class="o">=</span><span class="s">&#39;/data&#39;</span><span class="p">)]</span>
+    <span class="n">manager2</span><span class="o">.</span><span class="n">disks</span> <span class="o">=</span>  <span class="p">[</span><span class="n">Disk</span><span class="p">(</span><span class="s">&#39;disk1&#39;</span><span class="p">,</span> <span class="s">&#39;20G&#39;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s">&#39;vda&#39;</span><span class="p">,</span> <span class="n">mountPoint</span><span class="o">=</span><span class="s">&#39;/data&#39;</span><span class="p">)]</span>
+    <span class="n">ds1</span><span class="o">.</span><span class="n">disks</span> <span class="o">=</span>  <span class="p">[</span><span class="n">Disk</span><span class="p">(</span><span class="s">&#39;disk1&#39;</span><span class="p">,</span> <span class="s">&#39;20G&#39;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s">&#39;vda&#39;</span><span class="p">,</span> <span class="n">mountPoint</span><span class="o">=</span><span class="s">&#39;/data&#39;</span><span class="p">)]</span>
+    <span class="n">ds2</span><span class="o">.</span><span class="n">disks</span> <span class="o">=</span>  <span class="p">[</span><span class="n">Disk</span><span class="p">(</span><span class="s">&#39;disk1&#39;</span><span class="p">,</span> <span class="s">&#39;20G&#39;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s">&#39;vda&#39;</span><span class="p">,</span> <span class="n">mountPoint</span><span class="o">=</span><span class="s">&#39;/data&#39;</span><span class="p">)]</span>
+    <span class="n">ds3</span><span class="o">.</span><span class="n">disks</span> <span class="o">=</span>  <span class="p">[</span><span class="n">Disk</span><span class="p">(</span><span class="s">&#39;disk1&#39;</span><span class="p">,</span> <span class="s">&#39;20G&#39;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s">&#39;vda&#39;</span><span class="p">,</span> <span class="n">mountPoint</span><span class="o">=</span><span class="s">&#39;/data&#39;</span><span class="p">)]</span>
+    <span class="n">ds4</span><span class="o">.</span><span class="n">disks</span> <span class="o">=</span>  <span class="p">[</span><span class="n">Disk</span><span class="p">(</span><span class="s">&#39;disk1&#39;</span><span class="p">,</span> <span class="s">&#39;20G&#39;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s">&#39;vda&#39;</span><span class="p">,</span> <span class="n">mountPoint</span><span class="o">=</span><span class="s">&#39;/data&#39;</span><span class="p">)]</span>
+    <span class="n">client1</span><span class="o">.</span><span class="n">disks</span> <span class="o">=</span>  <span class="p">[</span><span class="n">Disk</span><span class="p">(</span><span class="s">&#39;disk1&#39;</span><span class="p">,</span> <span class="s">&#39;20G&#39;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s">&#39;vda&#39;</span><span class="p">,</span> <span class="n">mountPoint</span><span class="o">=</span><span class="s">&#39;/data&#39;</span><span class="p">)]</span>
+
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="c"># Network definition</span>
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="n">net</span> <span class="o">=</span> <span class="n">Network</span><span class="p">()</span>
+    <span class="n">net</span><span class="o">.</span><span class="n">bridgeName</span> <span class="o">=</span> <span class="s">&#39;virbr_example&#39;</span>
+    <span class="n">net</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">network_name</span>
+    <span class="n">net</span><span class="o">.</span><span class="n">ip</span> <span class="o">=</span> <span class="s">&#39;192.168.127.1&#39;</span>
+    <span class="n">net</span><span class="o">.</span><span class="n">netmask</span> <span class="o">=</span> <span class="s">&#39;255.255.255.0&#39;</span>
+    <span class="n">net</span><span class="o">.</span><span class="n">DHCPRange</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;192.168.127.2&#39;</span><span class="p">,</span> <span class="s">&#39;192.168.127.254&#39;</span><span class="p">)</span>
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="c"># Optional load balancing configuration</span>
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="c"># The DNS alias to be used</span>
+    <span class="n">net</span><span class="o">.</span><span class="n">lbAlias</span> <span class="o">=</span> <span class="s">&#39;lb.xrd.test&#39;</span>
+    <span class="c"># The machines that will be load balanced (round-robin) under the alias</span>
+    <span class="n">net</span><span class="o">.</span><span class="n">lbHosts</span> <span class="o">=</span> <span class="p">[</span><span class="n">ds1</span><span class="p">,</span> <span class="n">ds2</span><span class="p">,</span> <span class="n">ds3</span><span class="p">,</span> <span class="n">ds4</span><span class="p">]</span>
+
+    <span class="c"># Hosts to be included in the cluster</span>
+    <span class="n">hosts</span> <span class="o">=</span> <span class="p">[</span><span class="n">metamanager1</span><span class="p">,</span> <span class="n">manager1</span><span class="p">,</span> <span class="n">manager2</span><span class="p">,</span> <span class="n">ds1</span><span class="p">,</span> <span class="n">ds2</span><span class="p">,</span> <span class="n">ds3</span><span class="p">,</span> <span class="n">ds4</span><span class="p">,</span> <span class="n">client1</span><span class="p">]</span>
+
+    <span class="n">net</span><span class="o">.</span><span class="n">addHosts</span><span class="p">(</span><span class="n">hosts</span><span class="p">)</span>
+    <span class="n">cluster</span><span class="o">.</span><span class="n">network</span> <span class="o">=</span> <span class="n">net</span>
+    <span class="n">cluster</span><span class="o">.</span><span class="n">addHosts</span><span class="p">(</span><span class="n">hosts</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cluster</span>
+</pre></div>
+</div>
 </div>
 
 

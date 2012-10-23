@@ -25,6 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="top" title="XrdTest Framework 0.1 documentation" href="index.html" />
     <link rel="next" title="Slave configuration" href="config-slave.html" />
     <link rel="prev" title="Master configuration" href="config-master.html" /> 
@@ -56,6 +57,63 @@
             
   <div class="section" id="hypervisor-configuration">
 <h1>Hypervisor configuration<a class="headerlink" href="#hypervisor-configuration" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="configuration-sections">
+<h2>Configuration sections<a class="headerlink" href="#configuration-sections" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="test-master">
+<h3><tt class="docutils literal"><span class="pre">[test_master]</span></tt><a class="headerlink" href="#test-master" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># IP and port of the XrdTest Master.</span>
+<span class="n">ip</span><span class="o">=</span><span class="n">somehost</span><span class="o">.</span><span class="n">somedomain</span><span class="o">.</span><span class="n">com</span>
+<span class="n">port</span><span class="o">=</span><span class="mi">20000</span>
+
+<span class="c"># Password to authenticate with the master.</span>
+<span class="n">connection_passwd</span><span class="o">=</span><span class="n">some_passwd</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="virtual-machines">
+<h3><tt class="docutils literal"><span class="pre">[virtual_machines]</span></tt><a class="headerlink" href="#virtual-machines" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Path to the KVM executable.</span>
+<span class="c"># emulator_path=/usr/bin/kvm</span>
+<span class="n">emulator_path</span><span class="o">=/</span><span class="n">usr</span><span class="o">/</span><span class="n">libexec</span><span class="o">/</span><span class="n">qemu</span><span class="o">-</span><span class="n">kvm</span>
+
+<span class="c"># Name of the libvirt storage pool in which slave boot images will be placed.</span>
+<span class="c"># You must configure this storage pool yourself, and place any boot images as</span>
+<span class="c"># libvirt storage volumes into the pool. This pool can be anywhere (NAS, NFS</span>
+<span class="c"># etc), as long as it is visible as a libvirt storage pool on this hypervisor.</span>
+<span class="n">storage_pool</span><span class="o">=</span><span class="n">XrdTest</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="security">
+<h3><tt class="docutils literal"><span class="pre">[security]</span></tt><a class="headerlink" href="#security" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Paths to SSL certificates and keys for the hypervisor.</span>
+<span class="n">certfile</span><span class="o">=/</span><span class="n">etc</span><span class="o">/</span><span class="n">XrdTest</span><span class="o">/</span><span class="n">certs</span><span class="o">/</span><span class="n">hypervisorcert</span><span class="o">.</span><span class="n">pem</span>
+<span class="n">keyfile</span><span class="o">=/</span><span class="n">etc</span><span class="o">/</span><span class="n">XrdTest</span><span class="o">/</span><span class="n">certs</span><span class="o">/</span><span class="n">hypervisorkey</span><span class="o">.</span><span class="n">pem</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="daemon">
+<h3><tt class="docutils literal"><span class="pre">[daemon]</span></tt><a class="headerlink" href="#daemon" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Path to the PID file for the hypervisor when running as daemon.</span>
+<span class="n">pid_file_path</span><span class="o">=/</span><span class="n">var</span><span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">XrdTestHypervisor</span><span class="o">.</span><span class="n">pid</span>
+
+<span class="c"># Where the hypervisor writes its logs</span>
+<span class="n">log_file_path</span><span class="o">=/</span><span class="n">var</span><span class="o">/</span><span class="n">log</span><span class="o">/</span><span class="n">XrdTest</span><span class="o">/</span><span class="n">XrdTestHypervisor</span><span class="o">.</span><span class="n">log</span>
+
+<span class="c"># Amount of information to log. Constants from standard python logging module.</span>
+<span class="c"># Defaults to INFO. Possible values: NOTSET (off), ERROR (only errors), WARN</span>
+<span class="c"># (warnings and above), INFO (most logs), DEBUG (everything)</span>
+<span class="n">log_level</span><span class="o">=</span><span class="n">INFO</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="other-considerations">
+<h2>Other considerations<a class="headerlink" href="#other-considerations" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Available memory, storage pool size</li>
+</ul>
+</div>
 </div>
 
 
@@ -64,6 +122,21 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Hypervisor configuration</a><ul>
+<li><a class="reference internal" href="#configuration-sections">Configuration sections</a><ul>
+<li><a class="reference internal" href="#test-master"><tt class="docutils literal"><span class="pre">[test_master]</span></tt></a></li>
+<li><a class="reference internal" href="#virtual-machines"><tt class="docutils literal"><span class="pre">[virtual_machines]</span></tt></a></li>
+<li><a class="reference internal" href="#security"><tt class="docutils literal"><span class="pre">[security]</span></tt></a></li>
+<li><a class="reference internal" href="#daemon"><tt class="docutils literal"><span class="pre">[daemon]</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#other-considerations">Other considerations</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="config-master.html"
                         title="previous chapter">Master configuration</a></p>

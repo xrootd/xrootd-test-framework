@@ -1,3 +1,64 @@
 ************************
 Hypervisor configuration
 ************************
+
+Configuration sections
+----------------------
+
+``[test_master]``
+=================
+
+.. code-block:: python
+
+    # IP and port of the XrdTest Master.
+    ip=somehost.somedomain.com
+    port=20000
+    
+    # Password to authenticate with the master.
+    connection_passwd=some_passwd
+
+``[virtual_machines]``
+======================
+
+.. code-block:: python
+
+    # Path to the KVM executable.
+    # emulator_path=/usr/bin/kvm
+    emulator_path=/usr/libexec/qemu-kvm
+    
+    # Name of the libvirt storage pool in which slave boot images will be placed. 
+    # You must configure this storage pool yourself, and place any boot images as
+    # libvirt storage volumes into the pool. This pool can be anywhere (NAS, NFS
+    # etc), as long as it is visible as a libvirt storage pool on this hypervisor.
+    storage_pool=XrdTest
+
+``[security]``
+==============
+
+.. code-block:: python
+
+    # Paths to SSL certificates and keys for the hypervisor.
+    certfile=/etc/XrdTest/certs/hypervisorcert.pem
+    keyfile=/etc/XrdTest/certs/hypervisorkey.pem
+
+``[daemon]``
+============
+
+.. code-block:: python
+
+    # Path to the PID file for the hypervisor when running as daemon.
+    pid_file_path=/var/run/XrdTestHypervisor.pid
+    
+    # Where the hypervisor writes its logs
+    log_file_path=/var/log/XrdTest/XrdTestHypervisor.log
+    
+    # Amount of information to log. Constants from standard python logging module.
+    # Defaults to INFO. Possible values: NOTSET (off), ERROR (only errors), WARN
+    # (warnings and above), INFO (most logs), DEBUG (everything)
+    log_level=INFO 
+    
+Other considerations
+--------------------
+
+* Available memory, storage pool size
+    

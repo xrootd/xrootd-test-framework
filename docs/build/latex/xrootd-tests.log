@@ -1,4 +1,4 @@
-This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=pdflatex 2012.9.7)  22 OCT 2012 16:33
+This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=pdflatex 2012.9.7)  23 OCT 2012 16:25
 entering extended mode
  %&-line parsing enabled.
 **xrootd-tests.tex
@@ -15,8 +15,8 @@ turkish, ukenglish, ukrainian, loaded.
 Document Class: sphinxmanual 2009/06/02 Document class (Sphinx manual)
 (/usr/share/texmf/tex/latex/base/report.cls
 Document Class: report 2005/09/16 v1.4f Standard LaTeX document class
-(/usr/share/texmf/tex/latex/base/size10.clo
-File: size10.clo 2005/09/16 v1.4f Standard LaTeX file (size option)
+(/usr/share/texmf/tex/latex/base/size11.clo
+File: size11.clo 2005/09/16 v1.4f Standard LaTeX file (size option)
 )
 \c@part=\count79
 \c@chapter=\count80
@@ -777,21 +777,19 @@ LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <17.28> not available
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2
 
 ] (./xrootd-tests.toc
-LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <10> not available
+LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <10.95> not available
 (Font)              Font shape `T1/ptm/b/n' tried instead on input line 2.
 )
 \tf@toc=\write7
 \openout7 = `xrootd-tests.toc'.
 
-
-Adding blank page after the table of contents.
 pdfTeX warning (ext4): destination with the same identifier (name{page.i}) has 
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
 l.116 \tableofcontents
                       
-LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <10> not available
+LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <10.95> not available
 (Font)              Font shape `T1/phv/b/n' tried instead on input line 116.
  [1
 
@@ -800,797 +798,1497 @@ s been already used, duplicate ignored
 <to be read again> 
                    \relax 
 l.116 \tableofcontents
-                       [2]
+                       [2
+
+]
 Chapter 1.
 LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <14.4> not available
 (Font)              Font shape `T1/phv/b/n' tried instead on input line 121.
-LaTeX Font Info:    Try loading font information for TS1+ptm on input line 123.
+LaTeX Font Info:    Try loading font information for TS1+ptm on input line 128.
 
 (/usr/share/texmf/tex/latex/psnfss/ts1ptm.fd
 File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
-) [1
+)
+LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <12> not available
+(Font)              Font shape `T1/phv/b/n' tried instead on input line 142.
+LaTeX Font Info:    Try loading font information for T1+pcr on input line 144.
 
-
-] [2
-
-]
-Chapter 2.
-
-Underfull \hbox (badness 5756) in paragraph at lines 197--199
-[]\T1/ptm/m/n/10 required RPMs: \T1/ptm/b/n/10 python-apscheduler-2.0.2, python
--cheetah-2.0.1, python-cherrypy-2.3.0,
- []
-
-[3] [4
-
-]
-Chapter 3.
-LaTeX Font Info:    Try loading font information for T1+pcr on input line 238.
 (/usr/share/texmf/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
-)
-LaTeX Font Info:    Font shape `T1/pcr/m/it' in size <9> not available
-(Font)              Font shape `T1/pcr/m/sl' tried instead on input line 261.
- [5] [6
+) [1
 
 ]
-Chapter 4.
-[7] [8
+Overfull \hbox (11.84584pt too wide) in paragraph at lines 259--262
+[]\T1/ptm/b/n/10.95 Note:  \T1/ptm/m/n/10.95 The de-fault lo-ca-tion for con-fi
+g-u-ra-tion files is \T1/pcr/m/n/10.95 /etc/XrdTest/<CONFIG_FILE_NAME>.conf\T1/
+ptm/m/n/10.95 . 
+ []
 
-]
-Chapter 5.
-[9] [10
 
-]
-Chapter 6.
-LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <12> not available
-(Font)              Font shape `T1/phv/b/n' tried instead on input line 345.
-LaTeX Font Info:    Font shape `T1/pcr/bx/n' in size <9> not available
-(Font)              Font shape `T1/pcr/b/n' tried instead on input line 354.
-[11] [12] [13]
-LaTeX Font Info:    Font shape `T1/pcr/bx/n' in size <12> not available
-(Font)              Font shape `T1/pcr/b/n' tried instead on input line 533.
- [14] [15] [16
+Package Fancyhdr Warning: \headheight is too small (12.0pt): 
+ Make it at least 13.59999pt.
+ We now make it that large for the rest of the document.
+ This may cause the page layout to be inconsistent, however.
 
-]
-Chapter 7.
-[17] [18
+[2]
+LaTeX Font Info:    Font shape `T1/pcr/m/it' in size <10> not available
+(Font)              Font shape `T1/pcr/m/sl' tried instead on input line 285.
+ [3]
+Overfull \hbox (11.84584pt too wide) in paragraph at lines 368--371
+[]\T1/ptm/b/n/10.95 Note:  \T1/ptm/m/n/10.95 The de-fault lo-ca-tion for con-fi
+g-u-ra-tion files is \T1/pcr/m/n/10.95 /etc/XrdTest/<CONFIG_FILE_NAME>.conf\T1/
+ptm/m/n/10.95 . 
+ []
 
-]
-Chapter 8.
-[19] [20
-
-]
-Chapter 9.
+LaTeX Font Info:    Font shape `T1/pcr/bx/n' in size <10.95> not available
+(Font)              Font shape `T1/pcr/b/n' tried instead on input line 382.
 LaTeX Font Info:    Font shape `T1/pcr/bx/n' in size <10> not available
-(Font)              Font shape `T1/pcr/b/n' tried instead on input line 647.
-[21] [22] [23] [24]
-Underfull \hbox (badness 10000) in paragraph at lines 1274--1274
-[]\T1/ptm/m/it/10 pevent=None\T1/ptm/m/n/10 ,
- []
-
-[25] [26] [27] [28]
-Underfull \hbox (badness 10000) in paragraph at lines 1988--1988
-[]\T1/ptm/m/it/10 server_address\T1/ptm/m/n/10 , \T1/ptm/m/it/10 Re-questHandle
-r-Class\T1/ptm/m/n/10 ,
+(Font)              Font shape `T1/pcr/b/n' tried instead on input line 418.
+[4] [5] [6] [7] [8]
+LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <10> not available
+(Font)              Font shape `T1/phv/b/n' tried instead on input line 741.
+ [9] [10] [11] [12]
+Underfull \vbox (badness 10000) detected at line 1073
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1998--1998
-[]\T1/ptm/m/it/10 server_address\T1/ptm/m/n/10 , \T1/ptm/m/it/10 Re-questHandle
-r-Class\T1/ptm/m/n/10 ,
+Underfull \vbox (badness 10000) detected at line 1073
  []
 
-[29] [30] [31] [32] [33] [34] [35] [36] [37] [38
+[13] [14] [15]
+Underfull \hbox (badness 6859) in paragraph at lines 1491--1491
+[]\T1/ptm/m/it/10.95 name\T1/ptm/m/n/10.95 , \T1/ptm/m/it/10.95 size\T1/ptm/m/n
+/10.95 , \T1/ptm/m/it/10.95 de-vice='vda'\T1/ptm/m/n/10.95 , \T1/ptm/m/it/10.95
+ mount-Point='/data'\T1/ptm/m/n/10.95 ,
+ []
+
+[16]
+Underfull \hbox (badness 5817) in paragraph at lines 1509--1509
+[]\T1/ptm/m/it/10.95 name='`\T1/ptm/m/n/10.95 , \T1/ptm/m/it/10.95 ip='`\T1/ptm
+/m/n/10.95 , \T1/ptm/m/it/10.95 net='`\T1/ptm/m/n/10.95 , \T1/ptm/m/it/10.95 ra
+m-Size='`\T1/ptm/m/n/10.95 , \T1/ptm/m/it/10.95 arch='`\T1/ptm/m/n/10.95 ,
+ []
+
+[17]
+Overfull \hbox (28.62277pt too wide) in paragraph at lines 1738--1738
+[]\T1/ptm/m/it/10.95 pevent=None\T1/ptm/m/n/10.95 ,
+ []
+
+
+Overfull \hbox (15.71274pt too wide) in paragraph at lines 1738--1738
+\T1/ptm/m/it/10.95 **kwargs\T1/pcr/m/n/10.95 ) 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1757--1757
+[]\T1/ptm/m/it/10.95 repo\T1/ptm/m/n/10.95 , \T1/ptm/m/it/10.95 con-fig\T1/ptm/
+m/n/10.95 , \T1/ptm/m/it/10.95 call-back\T1/ptm/m/n/10.95 ,
+ []
+
+[18]
+Overfull \hbox (8.9128pt too wide) in paragraph at lines 1821--1821
+[]\T1/ptm/m/it/10.95 pevent=None\T1/ptm/m/n/10.95 ,
+ []
+
+[19] [20] [21]
+Underfull \hbox (badness 6758) in paragraph at lines 2406--2406
+[]\T1/ptm/m/it/10.95 request\T1/ptm/m/n/10.95 , \T1/ptm/m/it/10.95 client_addre
+ss\T1/ptm/m/n/10.95 ,
+ []
+
+[22]
+Underfull \hbox (badness 10000) in paragraph at lines 2452--2452
+[]\T1/ptm/m/it/10.95 server_address\T1/ptm/m/n/10.95 , \T1/ptm/m/it/10.95 Re-qu
+estHandler-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2462--2462
+[]\T1/ptm/m/it/10.95 server_address\T1/ptm/m/n/10.95 , \T1/ptm/m/it/10.95 Re-qu
+estHandler-Class\T1/ptm/m/n/10.95 ,
+ []
+
+[23] [24] [25] [26] [27] [28] [29] [30] [31] [32] [33
+
+
+
+] (./xrootd-tests.ind
+[34
+
 
 ]
-Chapter 10.
-[39] [40
-
-] [41
-
-
-] (./xrootd-tests.ind [42
+Underfull \hbox (badness 10000) in paragraph at lines 5--6
+[]\T1/ptm/m/n/10.95 action() (XrdTest.WebInterface.WebInterface
+ []
 
 
-]
 Underfull \hbox (badness 10000) in paragraph at lines 6--7
-[]\T1/ptm/m/n/10 activateCluster() (XrdTest-Mas-ter.XrdTestMaster
+[]\T1/ptm/m/n/10.95 activateCluster() (XrdTest-Mas-ter.XrdTestMaster
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 7--8
-[]\T1/ptm/m/n/10 addCaseRun() (XrdTest.TestUtils.TestSuiteSession
+Overfull \hbox (0.92941pt too wide) in paragraph at lines 7--8
+[]\T1/ptm/m/n/10.95 addCaseRun() (XrdTest.TestUtils.TestSuiteSession
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 9--10
-[]\T1/ptm/m/n/10 addDHCPHost() (XrdTest.ClusterUtils.Network
+[]\T1/ptm/m/n/10.95 addDHCPHost() (XrdTest.ClusterUtils.Network
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 15--16
-[]\T1/ptm/m/n/10 addStageResult() (XrdTest.TestUtils.TestSuiteSession
+Underfull \hbox (badness 10000) in paragraph at lines 10--11
+[]\T1/ptm/m/n/10.95 addDnsHost() (XrdTest.ClusterUtils.Network
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 12--13
+[]\T1/ptm/m/n/10.95 addHost() (XrdTest.ClusterUtils.Network
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 14--15
+[]\T1/ptm/m/n/10.95 addHosts() (XrdTest.ClusterUtils.Network
+ []
+
+
+Overfull \hbox (13.70767pt too wide) in paragraph at lines 15--16
+[]\T1/ptm/m/n/10.95 addStageResult() (XrdTest.TestUtils.TestSuiteSession
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 16--17
+[]\T1/ptm/m/n/10.95 allow_reuse_address
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 16--17
+\T1/ptm/m/n/10.95 (XrdTest.TCPServer.XrdTCPServer
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 17--18
-[]\T1/ptm/m/n/10 archiveSuiteSessions() (XrdTest-Mas-ter.XrdTestMaster
+[]\T1/ptm/m/n/10.95 archiveSuiteSessions() (XrdTest-Mas-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 18--19
-[]\T1/ptm/m/n/10 attachDisk() (XrdTest.ClusterManager.ClusterManager
+Overfull \hbox (19.45673pt too wide) in paragraph at lines 18--19
+[]\T1/ptm/m/n/10.95 attachDisk() (XrdTest.ClusterManager.ClusterManager
  []
 
 
-Overfull \hbox (25.0201pt too wide) in paragraph at lines 21--22
-[]\T1/ptm/m/n/10 authClient() (XrdTest.TCPServer.ThreadedTCPRequestHandler
+Overfull \hbox (23.71616pt too wide) in paragraph at lines 19--20
+[]\T1/ptm/m/n/10.95 attachDisks() (XrdTest.ClusterManager.ClusterManager
  []
 
 
-Overfull \hbox (27.55995pt too wide) in paragraph at lines 25--26
-[]\T1/ptm/m/n/10 C_HYPERV (XrdTest.TCPServer.ThreadedTCPRequestHandler
+Underfull \hbox (badness 10000) in paragraph at lines 20--21
+[]\T1/ptm/m/n/10.95 auth() (XrdTest.WebInterface.WebInterface
  []
 
 
-Overfull \hbox (19.23pt too wide) in paragraph at lines 26--27
-[]\T1/ptm/m/n/10 C_SLAVE (XrdTest.TCPServer.ThreadedTCPRequestHandler
+Overfull \hbox (57.62859pt too wide) in paragraph at lines 21--22
+[]\T1/ptm/m/n/10.95 authClient() (XrdTest.TCPServer.ThreadedTCPRequestHandler
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 27--28
-[]\T1/ptm/m/n/10 cancelTestSuite() (XrdTest-Mas-ter.XrdTestMaster
+Overfull \hbox (60.40967pt too wide) in paragraph at lines 25--26
+[]\T1/ptm/m/n/10.95 C_HYPERV (XrdTest.TCPServer.ThreadedTCPRequestHandler
+ []
+
+
+Overfull \hbox (51.28838pt too wide) in paragraph at lines 26--27
+[]\T1/ptm/m/n/10.95 C_SLAVE (XrdTest.TCPServer.ThreadedTCPRequestHandler
+ []
+
+
+Underfull \hbox (badness 5008) in paragraph at lines 27--28
+[]\T1/ptm/m/n/10.95 cancelTestSuite() (XrdTest-Mas-ter.XrdTestMaster
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 29--30
-[]\T1/ptm/m/n/10 checkIfDefComplete() (XrdTest.TestUtils.TestSuite
+[]\T1/ptm/m/n/10.95 checkIfDefComplete()
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 30--31
-[]\T1/ptm/m/n/10 checkIfSuitsDefsComplete() (XrdTest-Mas-
+[]\T1/ptm/m/n/10.95 checkIfSuitsDefsComplete() (XrdTest-Mas-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 31--32
+[]\T1/ptm/m/n/10.95 close() (XrdTest.SocketUtils.FixedSockStream
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--33
+[]\T1/ptm/m/n/10.95 close() (XrdTest.TCPClient.TCPReceiveThread
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 34--35
+[]\T1/ptm/m/n/10.95 ClusterManager (class in
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--38
+[]\T1/ptm/m/n/10.95 clusters() (XrdTest.WebInterface.WebInterface
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 38--39
-[]\T1/ptm/m/n/10 ClustersDefinitionsChangeHandler (class in
+[]\T1/ptm/m/n/10.95 ClustersDefinitionsChangeHandler (class in
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 42--43
-[]\T1/ptm/m/n/10 copyImg() (XrdTest.ClusterManager.ClusterManager
+Underfull \hbox (badness 10000) in paragraph at lines 40--41
+[]\T1/ptm/m/n/10.95 connectMaster() (XrdTestHy-per-vi-
  []
 
 
-Overfull \hbox (6.14984pt too wide) in paragraph at lines 45--46
-[]\T1/ptm/m/n/10 createNetwork() (XrdTest.ClusterManager.ClusterManager
+Underfull \hbox (badness 10000) in paragraph at lines 41--42
+[]\T1/ptm/m/n/10.95 connectMaster() (XrdTest-Slave.XrdTestSlave
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 51--52
-[]\T1/ptm/m/n/10 defineHost() (XrdTest.ClusterManager.ClusterManager
+Overfull \hbox (11.4418pt too wide) in paragraph at lines 42--43
+[]\T1/ptm/m/n/10.95 copyImg() (XrdTest.ClusterManager.ClusterManager
  []
 
 
-Overfull \hbox (6.72005pt too wide) in paragraph at lines 52--53
-[]\T1/ptm/m/n/10 defineNetwork() (XrdTest.ClusterManager.ClusterManager
+Underfull \hbox (badness 10000) in paragraph at lines 43--44
+[]\T1/ptm/m/n/10.95 createCA() (XrdTest-Mas-ter.XrdTestMaster
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 54--55
-[]\T1/ptm/m/n/10 disconnect() (XrdTest.ClusterManager.ClusterManager
+Overfull \hbox (30.3955pt too wide) in paragraph at lines 44--45
+[]\T1/ptm/m/n/10.95 createCluster() (XrdTest.ClusterManager.ClusterManager
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 57--58
-[]\T1/ptm/m/n/10 documentation() (XrdTest.WebInterface.WebInterface
+Overfull \hbox (36.96573pt too wide) in paragraph at lines 45--46
+[]\T1/ptm/m/n/10.95 createNetwork() (XrdTest.ClusterManager.ClusterManager
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 58--59
-[]\T1/ptm/m/n/10 downloadScript() (XrdTest.WebInterface.WebInterface
+Overfull \hbox (20.07013pt too wide) in paragraph at lines 51--52
+[]\T1/ptm/m/n/10.95 defineHost() (XrdTest.ClusterManager.ClusterManager
  []
 
-[43
+
+Overfull \hbox (37.59009pt too wide) in paragraph at lines 52--53
+[]\T1/ptm/m/n/10.95 defineNetwork() (XrdTest.ClusterManager.ClusterManager
+ []
+
+[35
 
 ]
-Overfull \hbox (2.87955pt too wide) in paragraph at lines 64--65
-[]\T1/ptm/m/n/10 ERR_UNKNOWN (XrdTest.TestUtils.TestSuiteException
+Underfull \hbox (badness 10000) in paragraph at lines 53--54
+[]\T1/ptm/m/n/10.95 DirectoryWatch (class in
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 75--76
-[]\T1/ptm/m/n/10 finalizeTestCase() (XrdTest-Mas-ter.XrdTestMaster
+Overfull \hbox (19.45686pt too wide) in paragraph at lines 54--55
+[]\T1/ptm/m/n/10.95 disconnect() (XrdTest.ClusterManager.ClusterManager
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 76--77
-[]\T1/ptm/m/n/10 finalizeTestSuite() (XrdTest-Mas-ter.XrdTestMaster
+Underfull \hbox (badness 10000) in paragraph at lines 56--57
+[]\T1/ptm/m/n/10.95 disp() (XrdTest.WebInterface.WebInterface
  []
 
 
-Overfull \hbox (11.83992pt too wide) in paragraph at lines 77--78
-[]\T1/ptm/m/n/10 findStoragePool() (XrdTest.ClusterManager.ClusterManager
+Overfull \hbox (14.39844pt too wide) in paragraph at lines 57--58
+[]\T1/ptm/m/n/10.95 documentation() (XrdTest.WebInterface.WebInterface
  []
 
 
-Overfull \hbox (24.42986pt too wide) in paragraph at lines 78--79
-[]\T1/ptm/m/n/10 findStorageVolume() (XrdTest.ClusterManager.ClusterManager
+Overfull \hbox (18.38425pt too wide) in paragraph at lines 58--59
+[]\T1/ptm/m/n/10.95 downloadScript() (XrdTest.WebInterface.WebInterface
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--63
+[]\T1/ptm/m/n/10.95 enqueueJob() (XrdTest-Mas-ter.XrdTestMaster
+ []
+
+
+Overfull \hbox (26.48615pt too wide) in paragraph at lines 63--64
+[]\T1/ptm/m/n/10.95 ERR_CRITICAL (XrdTest.TestUtils.TestSuiteException
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 64--65
+[]\T1/ptm/m/n/10.95 ERR_UNKNOWN
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 64--65
+\T1/ptm/m/n/10.95 (XrdTest.TestUtils.TestSuiteException
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 66--67
+[]\T1/ptm/m/n/10.95 executeJob() (XrdTest-Mas-ter.XrdTestMaster
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 68--69
+[]\T1/ptm/m/n/10.95 extractClusterName() (in mod-ule
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--74
+[]\T1/ptm/m/n/10.95 FINALIZE_TEST_CASE (XrdTest.Job.Job
+ []
+
+
+Underfull \hbox (badness 6526) in paragraph at lines 74--75
+[]\T1/ptm/m/n/10.95 FINALIZE_TEST_SUITE (XrdTest.Job.Job at-
+ []
+
+
+Overfull \hbox (43.19635pt too wide) in paragraph at lines 77--78
+[]\T1/ptm/m/n/10.95 findStoragePool() (XrdTest.ClusterManager.ClusterManager
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 78--79
+[]\T1/ptm/m/n/10.95 findStorageVolume()
+ []
+
+
+Overfull \hbox (3.2512pt too wide) in paragraph at lines 78--79
+\T1/ptm/m/n/10.95 (XrdTest.ClusterManager.ClusterManager
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 79--80
-[]\T1/ptm/m/n/10 fireEnqueueJobEvent() (XrdTest-Mas-ter.XrdTestMaster
+[]\T1/ptm/m/n/10.95 fireEnqueueJobEvent() (XrdTest-Mas-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 80--81
-[]\T1/ptm/m/n/10 fireReloadDefinitionsEvent() (XrdTest-Mas-
+[]\T1/ptm/m/n/10.95 fireReloadDefinitionsEvent() (XrdTest-Mas-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 86--87
-[]\T1/ptm/m/n/10 get() (XrdTest.SocketUtils.PriorityBlockingQueue
+Underfull \hbox (badness 10000) in paragraph at lines 89--90
+[]\T1/ptm/m/n/10.95 getNextRunTime() (XrdTest.TestUtils.TestSuite
  []
 
 
-Overfull \hbox (7.75989pt too wide) in paragraph at lines 91--92
-[]\T1/ptm/m/n/10 getSignedCertificate() (XrdTest.WebInterface.WebInterface
+Overfull \hbox (25.39178pt too wide) in paragraph at lines 90--91
+[]\T1/ptm/m/n/10.95 getPoolPath() (XrdTest.ClusterManager.ClusterManager
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 92--93
-[]\T1/ptm/m/n/10 getSSSKeytable() (XrdTest.WebInterface.WebInterface
+Underfull \hbox (badness 10000) in paragraph at lines 91--92
+[]\T1/ptm/m/n/10.95 getSignedCertificate()
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 91--92
+\T1/ptm/m/n/10.95 (XrdTest.WebInterface.WebInterface
+ []
+
+
+Overfull \hbox (20.04851pt too wide) in paragraph at lines 92--93
+[]\T1/ptm/m/n/10.95 getSSSKeytable() (XrdTest.WebInterface.WebInterface
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 94--95
+[]\T1/ptm/m/n/10.95 getSuiteSlaves() (XrdTest-Mas-ter.XrdTestMaster
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 95--96
+[]\T1/ptm/m/n/10.95 getTestCaseStages()
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 95--96
+\T1/ptm/m/n/10.95 (XrdTest.TestUtils.TestSuiteSession
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 96--97
-[]\T1/ptm/m/n/10 getTrustedCACertificate()
+[]\T1/ptm/m/n/10.95 getTrustedCACertificate()
  []
 
 
-Overfull \hbox (10.0105pt too wide) in paragraph at lines 104--105
-[]\T1/ptm/m/n/10 handle() (XrdTest.TCPServer.ThreadedTCPRequestHandler
+Underfull \hbox (badness 10000) in paragraph at lines 96--97
+\T1/ptm/m/n/10.95 (XrdTest.WebInterface.WebInterface
  []
 
 
-Overfull \hbox (11.53044pt too wide) in paragraph at lines 105--106
-[]\T1/ptm/m/n/10 handleCherrypyError() (XrdTest.WebInterface.WebInterface
+Overfull \hbox (41.19305pt too wide) in paragraph at lines 104--105
+[]\T1/ptm/m/n/10.95 handle() (XrdTest.TCPServer.ThreadedTCPRequestHandler
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 105--106
+[]\T1/ptm/m/n/10.95 handleCherrypyError()
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 105--106
+\T1/ptm/m/n/10.95 (XrdTest.WebInterface.WebInterface
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 106--107
+[]\T1/ptm/m/n/10.95 handleClientConnected() (XrdTest-Mas-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 107--108
-[]\T1/ptm/m/n/10 handleClientDisconnected() (XrdTest-Mas-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 108--109
-[]\T1/ptm/m/n/10 handleClusterDefinitionChanged() (XrdTest-Mas-
+[]\T1/ptm/m/n/10.95 handleClientDisconnected() (XrdTest-Mas-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 109--110
-[]\T1/ptm/m/n/10 handleStartCluster() (XrdTestHy-per-vi-
+[]\T1/ptm/m/n/10.95 handleStartCluster() (XrdTestHy-per-vi-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 110--111
-[]\T1/ptm/m/n/10 handleStopCluster() (XrdTestHy-per-vi-
+[]\T1/ptm/m/n/10.95 handleStopCluster() (XrdTestHy-per-vi-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 111--112
-[]\T1/ptm/m/n/10 handleSuiteDefinitionChanged() (XrdTest-Mas-
+[]\T1/ptm/m/n/10.95 handleSuiteDefinitionChanged() (XrdTest-Mas-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 112--113
-[]\T1/ptm/m/n/10 handleTagRequest() (XrdTest-Mas-ter.XrdTestMaster
+[]\T1/ptm/m/n/10.95 handleTagRequest() (XrdTest-Mas-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 113--114
-[]\T1/ptm/m/n/10 handleTestCaseFinalize() (XrdTest-Slave.XrdTestSlave
+[]\T1/ptm/m/n/10.95 handleTestCaseFinalize() (XrdTest-
  []
 
-
+[36]
 Underfull \hbox (badness 10000) in paragraph at lines 114--115
-[]\T1/ptm/m/n/10 handleTestCaseInitialize() (XrdTest-Slave.XrdTestSlave
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 115--116
-[]\T1/ptm/m/n/10 handleTestCaseRun() (XrdTest-Slave.XrdTestSlave
+[]\T1/ptm/m/n/10.95 handleTestCaseInitialize() (XrdTest-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 116--117
-[]\T1/ptm/m/n/10 handleTestSuiteFinalize() (XrdTest-Slave.XrdTestSlave
+[]\T1/ptm/m/n/10.95 handleTestSuiteFinalize() (XrdTest-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 117--118
-[]\T1/ptm/m/n/10 handleTestSuiteInitialize() (XrdTest-Slave.XrdTestSlave
+[]\T1/ptm/m/n/10.95 handleTestSuiteInitialize() (XrdTest-
  []
 
 
-Overfull \hbox (16.96007pt too wide) in paragraph at lines 120--121
-[]\T1/ptm/m/n/10 http_methods_allowed() (XrdTest.WebInterface.WebInterface
+Underfull \hbox (badness 10000) in paragraph at lines 118--119
+[]\T1/ptm/m/n/10.95 has_failure() (XrdTest.TestUtils.TestSuite
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 122--123
-[]\T1/ptm/m/n/10 hypervisors() (XrdTest.WebInterface.WebInterface
+Underfull \hbox (badness 10000) in paragraph at lines 120--121
+[]\T1/ptm/m/n/10.95 http_methods_allowed()
  []
 
 
-Underfull \hbox (badness 7814) in paragraph at lines 126--127
-[]\T1/ptm/m/n/10 IN_CREATE (XrdTest.DirectoryWatch.DirectoryWatch
+Underfull \hbox (badness 10000) in paragraph at lines 120--121
+\T1/ptm/m/n/10.95 (XrdTest.WebInterface.WebInterface
  []
 
 
-Underfull \hbox (badness 7851) in paragraph at lines 127--128
-[]\T1/ptm/m/n/10 IN_DELETE (XrdTest.DirectoryWatch.DirectoryWatch
+Overfull \hbox (22.55562pt too wide) in paragraph at lines 126--127
+[]\T1/ptm/m/n/10.95 IN_CREATE (XrdTest.DirectoryWatch.DirectoryWatch
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 129--130
-[]\T1/ptm/m/n/10 IN_MOVED (XrdTest.DirectoryWatch.DirectoryWatch
+Overfull \hbox (22.54482pt too wide) in paragraph at lines 127--128
+[]\T1/ptm/m/n/10.95 IN_DELETE (XrdTest.DirectoryWatch.DirectoryWatch
  []
 
-[44]
-Underfull \hbox (badness 10000) in paragraph at lines 132--133
-[]\T1/ptm/m/n/10 indexRedirect() (XrdTest.WebInterface.WebInterface
+
+Overfull \hbox (24.37323pt too wide) in paragraph at lines 128--129
+[]\T1/ptm/m/n/10.95 IN_MODIFY (XrdTest.DirectoryWatch.DirectoryWatch
+ []
+
+
+Overfull \hbox (20.78172pt too wide) in paragraph at lines 129--130
+[]\T1/ptm/m/n/10.95 IN_MOVED (XrdTest.DirectoryWatch.DirectoryWatch
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 131--132
+[]\T1/ptm/m/n/10.95 index() (XrdTest.WebInterface.WebInterface
+ []
+
+
+Overfull \hbox (10.5769pt too wide) in paragraph at lines 132--133
+[]\T1/ptm/m/n/10.95 indexRedirect() (XrdTest.WebInterface.WebInterface
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 135--136
-[]\T1/ptm/m/n/10 initializeTestCase() (XrdTest-Mas-ter.XrdTestMaster
+[]\T1/ptm/m/n/10.95 initializeTestCase() (XrdTest-Mas-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 136--137
-[]\T1/ptm/m/n/10 initializeTestSuite() (XrdTest-Mas-ter.XrdTestMaster
+[]\T1/ptm/m/n/10.95 initializeTestSuite() (XrdTest-Mas-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 148--149
-[]\T1/ptm/m/n/10 loadDefinitions() (XrdTest-Mas-ter.XrdTestMaster
+Underfull \hbox (badness 10000) in paragraph at lines 138--139
+[]\T1/ptm/m/n/10.95 isJobValid() (XrdTest-Mas-ter.XrdTestMaster
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 146--147
+[]\T1/ptm/m/n/10.95 loadClusterDef() (in mod-ule
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 147--148
+[]\T1/ptm/m/n/10.95 loadClustersDefs() (in mod-ule
+ []
+
+
+Underfull \hbox (badness 8056) in paragraph at lines 148--149
+[]\T1/ptm/m/n/10.95 loadDefinitions() (XrdTest-Mas-ter.XrdTestMaster
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 149--150
-[]\T1/ptm/m/n/10 loadSuiteSessions() (XrdTest-Mas-ter.XrdTestMaster
+[]\T1/ptm/m/n/10.95 loadSuiteSessions() (XrdTest-Mas-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 150--151
+[]\T1/ptm/m/n/10.95 loadTestCasesDefs() (in mod-ule
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 152--153
+[]\T1/ptm/m/n/10.95 loadTestSuiteDefs() (in mod-ule
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 157--158
-[]\T1/ptm/m/n/10 M_CLIENT_CONNECTED
+[]\T1/ptm/m/n/10.95 M_CLIENT_CONNECTED
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 157--158
+\T1/ptm/m/n/10.95 (XrdTest.TCPServer.MasterEvent at-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 158--159
-[]\T1/ptm/m/n/10 M_CLIENT_DISCONNECTED
+[]\T1/ptm/m/n/10.95 M_CLIENT_DISCONNECTED
  []
 
 
-Overfull \hbox (1.93979pt too wide) in paragraph at lines 159--160
-[]\T1/ptm/m/n/10 M_CLUSTER_STATE (XrdTest.SocketUtils.XrdMessage
+Underfull \hbox (badness 10000) in paragraph at lines 158--159
+\T1/ptm/m/n/10.95 (XrdTest.TCPServer.MasterEvent at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 159--160
+[]\T1/ptm/m/n/10.95 M_CLUSTER_STATE
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 159--160
+\T1/ptm/m/n/10.95 (XrdTest.SocketUtils.XrdMessage
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 160--161
+[]\T1/ptm/m/n/10.95 M_DISCONNECT
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 160--161
+\T1/ptm/m/n/10.95 (XrdTest.SocketUtils.XrdMessage
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 162--163
+[]\T1/ptm/m/n/10.95 M_HYPERV_MSG
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 162--163
+\T1/ptm/m/n/10.95 (XrdTest.TCPServer.MasterEvent at-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 163--164
-[]\T1/ptm/m/n/10 M_HYPERVISOR_STATE
+[]\T1/ptm/m/n/10.95 M_HYPERVISOR_STATE
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 163--164
-\T1/ptm/m/n/10 (XrdTest.SocketUtils.XrdMessage at-tribute),
+\T1/ptm/m/n/10.95 (XrdTest.SocketUtils.XrdMessage
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 164--165
-[]\T1/ptm/m/n/10 M_JOB_ENQUEUE (XrdTest.TCPServer.MasterEvent
+[]\T1/ptm/m/n/10.95 M_JOB_ENQUEUE
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 164--165
+\T1/ptm/m/n/10.95 (XrdTest.TCPServer.MasterEvent at-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 165--166
-[]\T1/ptm/m/n/10 M_RELOAD_CLUSTER_DEF
+[]\T1/ptm/m/n/10.95 M_RELOAD_CLUSTER_DEF
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 165--166
+\T1/ptm/m/n/10.95 (XrdTest.TCPServer.MasterEvent at-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 166--167
-[]\T1/ptm/m/n/10 M_RELOAD_SUITE_DEF
+[]\T1/ptm/m/n/10.95 M_RELOAD_SUITE_DEF
  []
 
 
-Overfull \hbox (3.00974pt too wide) in paragraph at lines 168--169
-[]\T1/ptm/m/n/10 M_START_CLUSTER (XrdTest.SocketUtils.XrdMessage
+Underfull \hbox (badness 10000) in paragraph at lines 166--167
+\T1/ptm/m/n/10.95 (XrdTest.TCPServer.MasterEvent at-
+ []
+
+
+Overfull \hbox (6.73326pt too wide) in paragraph at lines 167--168
+[]\T1/ptm/m/n/10.95 M_SLAVE_MSG (XrdTest.TCPServer.MasterEvent
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 168--169
+[]\T1/ptm/m/n/10.95 M_START_CLUSTER
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 168--169
+\T1/ptm/m/n/10.95 (XrdTest.SocketUtils.XrdMessage
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--170
+[]\T1/ptm/m/n/10.95 M_STOP_CLUSTER
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--170
+\T1/ptm/m/n/10.95 (XrdTest.SocketUtils.XrdMessage
+ []
+
+[37]
+Overfull \hbox (6.48114pt too wide) in paragraph at lines 170--171
+[]\T1/ptm/m/n/10.95 M_TAG_REPLY (XrdTest.SocketUtils.XrdMessage
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 171--172
-[]\T1/ptm/m/n/10 M_TAG_REQUEST (XrdTest.SocketUtils.XrdMessage
+[]\T1/ptm/m/n/10.95 M_TAG_REQUEST
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 171--172
+\T1/ptm/m/n/10.95 (XrdTest.SocketUtils.XrdMessage
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 172--173
-[]\T1/ptm/m/n/10 M_TESTCASE_FINALIZE
+[]\T1/ptm/m/n/10.95 M_TESTCASE_FINALIZE
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 172--173
-\T1/ptm/m/n/10 (XrdTest.SocketUtils.XrdMessage at-tribute),
+\T1/ptm/m/n/10.95 (XrdTest.SocketUtils.XrdMessage
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 173--174
+[]\T1/ptm/m/n/10.95 M_TESTCASE_INIT
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 173--174
+\T1/ptm/m/n/10.95 (XrdTest.SocketUtils.XrdMessage
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 174--175
+[]\T1/ptm/m/n/10.95 M_TESTCASE_RUN
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 174--175
+\T1/ptm/m/n/10.95 (XrdTest.SocketUtils.XrdMessage
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 175--176
-[]\T1/ptm/m/n/10 M_TESTCASE_STAGE_RESULT
+[]\T1/ptm/m/n/10.95 M_TESTCASE_STAGE_RESULT
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 175--176
-\T1/ptm/m/n/10 (XrdTest.SocketUtils.XrdMessage at-tribute),
+\T1/ptm/m/n/10.95 (XrdTest.SocketUtils.XrdMessage
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 176--177
-[]\T1/ptm/m/n/10 M_TESTSUITE_FINALIZE
+[]\T1/ptm/m/n/10.95 M_TESTSUITE_FINALIZE
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 176--177
-\T1/ptm/m/n/10 (XrdTest.SocketUtils.XrdMessage at-tribute),
+\T1/ptm/m/n/10.95 (XrdTest.SocketUtils.XrdMessage
  []
 
 
-Overfull \hbox (0.62975pt too wide) in paragraph at lines 177--178
-[]\T1/ptm/m/n/10 M_TESTSUITE_INIT (XrdTest.SocketUtils.XrdMessage
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+[]\T1/ptm/m/n/10.95 M_TESTSUITE_INIT
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\T1/ptm/m/n/10.95 (XrdTest.SocketUtils.XrdMessage
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 178--179
-[]\T1/ptm/m/n/10 M_TESTSUITE_STATE
+[]\T1/ptm/m/n/10.95 M_TESTSUITE_STATE
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 178--179
-\T1/ptm/m/n/10 (XrdTest.SocketUtils.XrdMessage at-tribute),
+\T1/ptm/m/n/10.95 (XrdTest.SocketUtils.XrdMessage
  []
 
 
-Underfull \hbox (badness 8019) in paragraph at lines 180--181
-[]\T1/ptm/m/n/10 M_UNKNOWN (XrdTest.TCPServer.MasterEvent at-
+Overfull \hbox (3.76543pt too wide) in paragraph at lines 179--180
+[]\T1/ptm/m/n/10.95 M_UNKNOWN (XrdTest.SocketUtils.XrdMessage
+ []
+
+
+Overfull \hbox (1.11603pt too wide) in paragraph at lines 180--181
+[]\T1/ptm/m/n/10.95 M_UNKNOWN (XrdTest.TCPServer.MasterEvent
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 184--185
-[]\T1/ptm/m/n/10 mask (XrdTest.DirectoryWatch.DirectoryWatch at-
+[]\T1/ptm/m/n/10.95 mask (XrdTest.DirectoryWatch.DirectoryWatch
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 192--193
+[]\T1/ptm/m/n/10.95 networkGet() (XrdTest.ClusterUtils.Cluster
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 193--194
+[]\T1/ptm/m/n/10.95 networkSet() (XrdTest.ClusterUtils.Cluster
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 197--198
+[]\T1/ptm/m/n/10.95 parseDiskSize() (XrdTest.ClusterUtils.Disk
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 199--200
-[]\T1/ptm/m/n/10 PRIO_IMPORTANT (XrdTest.TCPServer.MasterEvent
+[]\T1/ptm/m/n/10.95 PRIO_IMPORTANT
  []
 
 
-Overfull \hbox (85.34897pt too wide) in paragraph at lines 202--204
-[]\T1/ptm/m/n/10 process_default() (XrdTest.DirectoryWatch.ClustersDefinitionsC
+Underfull \hbox (badness 10000) in paragraph at lines 199--200
+\T1/ptm/m/n/10.95 (XrdTest.TCPServer.MasterEvent at-
+ []
+
+
+Overfull \hbox (6.3828pt too wide) in paragraph at lines 200--201
+[]\T1/ptm/m/n/10.95 PRIO_NORMAL (XrdTest.TCPServer.MasterEvent
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 201--202
+[]\T1/ptm/m/n/10.95 PriorityBlockingQueue (class in
+ []
+
+
+Overfull \hbox (123.68869pt too wide) in paragraph at lines 202--204
+[]\T1/ptm/m/n/10.95 process_default() (XrdTest.DirectoryWatch.ClustersDefinitio
+nsChangeHandler
+ []
+
+
+Overfull \hbox (110.30809pt too wide) in paragraph at lines 204--206
+[]\T1/ptm/m/n/10.95 process_default() (XrdTest.DirectoryWatch.SuiteDefinitionsC
 hangeHandler
  []
 
 
-Overfull \hbox (73.12924pt too wide) in paragraph at lines 204--206
-[]\T1/ptm/m/n/10 process_default() (XrdTest.DirectoryWatch.SuiteDefinitionsChan
-geHandler
- []
-
-[45]
-Underfull \hbox (badness 10000) in paragraph at lines 208--209
-[]\T1/ptm/m/n/10 put() (XrdTest.SocketUtils.PriorityBlockingQueue
+Underfull \hbox (badness 10000) in paragraph at lines 206--207
+[]\T1/ptm/m/n/10.95 procEvents() (XrdTest-Mas-ter.XrdTestMaster
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 213--214
-[]\T1/ptm/m/n/10 rawGet() (XrdTest.SocketUtils.PriorityBlockingQueue
+Underfull \hbox (badness 10000) in paragraph at lines 207--208
+[]\T1/ptm/m/n/10.95 procSlaveMsg() (XrdTest-Mas-ter.XrdTestMaster
+ []
+
+
+Overfull \hbox (17.37653pt too wide) in paragraph at lines 213--214
+[]\T1/ptm/m/n/10.95 rawGet() (XrdTest.SocketUtils.PriorityBlockingQueue
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 214--215
-[]\T1/ptm/m/n/10 readConfig() (XrdTestHy-per-vi-sor.XrdTestHypervisor
+[]\T1/ptm/m/n/10.95 readConfig() (XrdTestHy-per-vi-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 219--220
-[]\T1/ptm/m/n/10 recvBounded() (XrdTest.SocketUtils.FixedSockStream
+Underfull \hbox (badness 10000) in paragraph at lines 215--216
+[]\T1/ptm/m/n/10.95 readConfig() (XrdTest-Mas-ter.XrdTestMaster
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 216--217
+[]\T1/ptm/m/n/10.95 readConfig() (XrdTest-Slave.XrdTestSlave
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 218--219
+[]\T1/ptm/m/n/10.95 recv() (XrdTest.SocketUtils.FixedSockStream
+ []
+
+
+Overfull \hbox (19.20535pt too wide) in paragraph at lines 219--220
+[]\T1/ptm/m/n/10.95 recvBounded() (XrdTest.SocketUtils.FixedSockStream
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 220--221
-[]\T1/ptm/m/n/10 recvLoop() (XrdTestHy-per-vi-sor.XrdTestHypervisor
+[]\T1/ptm/m/n/10.95 recvLoop() (XrdTestHy-per-vi-
  []
 
 
-Overfull \hbox (5.96991pt too wide) in paragraph at lines 224--225
-[]\T1/ptm/m/n/10 removeCluster() (XrdTest.ClusterManager.ClusterManager
+Overfull \hbox (36.7687pt too wide) in paragraph at lines 224--225
+[]\T1/ptm/m/n/10.95 removeCluster() (XrdTest.ClusterManager.ClusterManager
  []
 
 
-Overfull \hbox (33.18987pt too wide) in paragraph at lines 225--226
-[]\T1/ptm/m/n/10 removeDanglingHost() (XrdTest.ClusterManager.ClusterManager
+Underfull \hbox (badness 10000) in paragraph at lines 225--226
+[]\T1/ptm/m/n/10.95 removeDanglingHost()
+ []
+
+
+Overfull \hbox (3.2512pt too wide) in paragraph at lines 225--226
+\T1/ptm/m/n/10.95 (XrdTest.ClusterManager.ClusterManager
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 226--227
-[]\T1/ptm/m/n/10 removeDanglingNetwork()
+[]\T1/ptm/m/n/10.95 removeDanglingNetwork()
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 226--227
-\T1/ptm/m/n/10 (XrdTest.ClusterManager.ClusterManager
+Overfull \hbox (3.2512pt too wide) in paragraph at lines 226--227
+\T1/ptm/m/n/10.95 (XrdTest.ClusterManager.ClusterManager
  []
 
 
-Overfull \hbox (11.97015pt too wide) in paragraph at lines 231--232
-[]\T1/ptm/m/n/10 removeNetwork() (XrdTest.ClusterManager.ClusterManager
+Overfull \hbox (25.81898pt too wide) in paragraph at lines 227--228
+[]\T1/ptm/m/n/10.95 removeHost() (XrdTest.ClusterManager.ClusterManager
+ []
+
+
+Overfull \hbox (30.07841pt too wide) in paragraph at lines 228--229
+[]\T1/ptm/m/n/10.95 removeHosts() (XrdTest.ClusterManager.ClusterManager
+ []
+
+[38]
+Underfull \hbox (badness 10000) in paragraph at lines 229--230
+[]\T1/ptm/m/n/10.95 removeJob() (XrdTest-Mas-ter.XrdTestMaster
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 230--231
+[]\T1/ptm/m/n/10.95 removeJobs() (XrdTest-Mas-ter.XrdTestMaster
+ []
+
+
+Overfull \hbox (43.33894pt too wide) in paragraph at lines 231--232
+[]\T1/ptm/m/n/10.95 removeNetwork() (XrdTest.ClusterManager.ClusterManager
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 232--233
+[]\T1/ptm/m/n/10.95 removePidFile() (XrdTest.Daemon.Daemon
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 233--234
+[]\T1/ptm/m/n/10.95 requestTags() (XrdTest-Slave.XrdTestSlave
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 235--236
-[]\T1/ptm/m/n/10 retrieveAllSuiteSessions() (XrdTest-Mas-
+[]\T1/ptm/m/n/10.95 retrieveAllSuiteSessions() (XrdTest-Mas-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 236--237
-[]\T1/ptm/m/n/10 retrieveSuiteSession() (XrdTest-Mas-ter.XrdTestMaster
+[]\T1/ptm/m/n/10.95 retrieveSuiteSession() (XrdTest-Mas-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 251--252
-[]\T1/ptm/m/n/10 S_ALL_FINALIZED (XrdTest.TestUtils.TestSuite
+Underfull \hbox (badness 10000) in paragraph at lines 238--239
+[]\T1/ptm/m/n/10.95 run() (XrdTest.TCPClient.TCPReceiveThread
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 239--240
+[]\T1/ptm/m/n/10.95 run() (XrdTestHy-per-vi-sor.XrdTestHypervisor
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 244--245
+[]\T1/ptm/m/n/10.95 runTestCase() (XrdTest-Mas-ter.XrdTestMaster
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 245--246
+[]\T1/ptm/m/n/10.95 runTestSuite() (XrdTest-Mas-ter.XrdTestMaster
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 249--250
+[]\T1/ptm/m/n/10.95 S_ACTIVE (XrdTest.ClusterUtils.Cluster at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 252--253
+[]\T1/ptm/m/n/10.95 S_ALL_INITIALIZED
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 252--253
+\T1/ptm/m/n/10.95 (XrdTest.TestUtils.TestSuite at-tribute),
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 253--254
-[]\T1/ptm/m/n/10 S_ALL_TEST_FINALIZED
+[]\T1/ptm/m/n/10.95 S_ALL_TEST_FINALIZED
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 253--254
+\T1/ptm/m/n/10.95 (XrdTest.TestUtils.TestSuite at-tribute),
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 254--255
-[]\T1/ptm/m/n/10 S_ALL_TEST_INITIALIZED
+[]\T1/ptm/m/n/10.95 S_ALL_TEST_INITIALIZED
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 254--255
+\T1/ptm/m/n/10.95 (XrdTest.TestUtils.TestSuite at-tribute),
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 255--256
-[]\T1/ptm/m/n/10 S_ALL_TEST_RUN_FINISHED
+[]\T1/ptm/m/n/10.95 S_ALL_TEST_RUN_FINISHED
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 255--256
+\T1/ptm/m/n/10.95 (XrdTest.TestUtils.TestSuite at-tribute),
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 256--257
-[]\T1/ptm/m/n/10 S_ATTACHING_DISKS (XrdTest.ClusterUtils.Cluster
+[]\T1/ptm/m/n/10.95 S_ATTACHING_DISKS
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 256--257
+\T1/ptm/m/n/10.95 (XrdTest.ClusterUtils.Cluster at-tribute),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 257--258
+[]\T1/ptm/m/n/10.95 S_CONNECTED_IDLE
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 257--258
+\T1/ptm/m/n/10.95 (XrdTest.TCPClient.TCPClient at-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 258--259
-[]\T1/ptm/m/n/10 S_COPYING_IMAGES (XrdTest.ClusterUtils.Cluster
+[]\T1/ptm/m/n/10.95 S_COPYING_IMAGES
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 258--259
+\T1/ptm/m/n/10.95 (XrdTest.ClusterUtils.Cluster at-tribute),
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 259--260
-[]\T1/ptm/m/n/10 S_CREATING_NETWORK
+[]\T1/ptm/m/n/10.95 S_CREATING_NETWORK
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 259--260
+\T1/ptm/m/n/10.95 (XrdTest.ClusterUtils.Cluster at-tribute),
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 260--261
-[]\T1/ptm/m/n/10 S_CREATING_SLAVES (XrdTest.ClusterUtils.Cluster
+[]\T1/ptm/m/n/10.95 S_CREATING_SLAVES
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 260--261
+\T1/ptm/m/n/10.95 (XrdTest.ClusterUtils.Cluster at-tribute),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 261--262
+[]\T1/ptm/m/n/10.95 S_DEF_OK (XrdTest.TestUtils.TestSuite at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 262--263
+[]\T1/ptm/m/n/10.95 S_DEFINED (XrdTest.ClusterUtils.Cluster
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 263--264
+[]\T1/ptm/m/n/10.95 S_DEFINITION_SENT
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 263--264
+\T1/ptm/m/n/10.95 (XrdTest.ClusterUtils.Cluster at-tribute),
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 264--265
-[]\T1/ptm/m/n/10 S_DESTROYING_CLUSTER
+[]\T1/ptm/m/n/10.95 S_DESTROYING_CLUSTER
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 266--267
-[]\T1/ptm/m/n/10 S_ERROR_START (XrdTest.ClusterUtils.Cluster at-
+Underfull \hbox (badness 10000) in paragraph at lines 264--265
+\T1/ptm/m/n/10.95 (XrdTest.ClusterUtils.Cluster at-tribute),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 265--266
+[]\T1/ptm/m/n/10.95 S_ERROR (XrdTest.ClusterUtils.Cluster at-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 267--268
-[]\T1/ptm/m/n/10 S_ERROR_STOP (XrdTest.ClusterUtils.Cluster at-
+[]\T1/ptm/m/n/10.95 S_ERROR_STOP (XrdTest.ClusterUtils.Cluster
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 270--271
+[]\T1/ptm/m/n/10.95 S_NOT_CONNECTED
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 270--271
+\T1/ptm/m/n/10.95 (XrdTest.TCPClient.TCPClient at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 271--272
+[]\T1/ptm/m/n/10.95 S_SLAVE_FINALIZED
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 271--272
+\T1/ptm/m/n/10.95 (XrdTest.TestUtils.TestSuite at-tribute),
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 272--273
-[]\T1/ptm/m/n/10 S_SLAVE_INITIALIZED (XrdTest.TestUtils.TestSuite
+[]\T1/ptm/m/n/10.95 S_SLAVE_INITIALIZED
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 272--273
+\T1/ptm/m/n/10.95 (XrdTest.TestUtils.TestSuite at-tribute),
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 273--274
-[]\T1/ptm/m/n/10 S_SLAVE_TEST_FINALIZED
+[]\T1/ptm/m/n/10.95 S_SLAVE_TEST_FINALIZED
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 273--274
+\T1/ptm/m/n/10.95 (XrdTest.TestUtils.TestSuite at-tribute),
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 274--275
-[]\T1/ptm/m/n/10 S_SLAVE_TEST_INITIALIZED
+[]\T1/ptm/m/n/10.95 S_SLAVE_TEST_INITIALIZED
  []
 
-[46]
+
+Underfull \hbox (badness 10000) in paragraph at lines 274--275
+\T1/ptm/m/n/10.95 (XrdTest.TestUtils.TestSuite at-tribute),
+ []
+
+
 Underfull \hbox (badness 10000) in paragraph at lines 275--276
-[]\T1/ptm/m/n/10 S_SLAVE_TEST_RUN_FINISHED
+[]\T1/ptm/m/n/10.95 S_SLAVE_TEST_RUN_FINISHED
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 275--276
+\T1/ptm/m/n/10.95 (XrdTest.TestUtils.TestSuite at-tribute),
+ []
+
+[39]
+Underfull \hbox (badness 10000) in paragraph at lines 277--278
+[]\T1/ptm/m/n/10.95 S_STARTING_CLUSTER
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 277--278
+\T1/ptm/m/n/10.95 (XrdTest.ClusterUtils.Cluster at-tribute),
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 278--279
-[]\T1/ptm/m/n/10 S_STOPCOMMAND_SENT
+[]\T1/ptm/m/n/10.95 S_STOPCOMMAND_SENT
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 281--282
-[]\T1/ptm/m/n/10 S_SUITE_INIT_SENT (XrdTest.TCPClient.Slave
+Underfull \hbox (badness 10000) in paragraph at lines 278--279
+\T1/ptm/m/n/10.95 (XrdTest.ClusterUtils.Cluster at-tribute),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 279--280
+[]\T1/ptm/m/n/10.95 S_STOPPED (XrdTest.ClusterUtils.Cluster
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 280--281
+[]\T1/ptm/m/n/10.95 S_SUITE_FINALIZE_SENT
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 280--281
+\T1/ptm/m/n/10.95 (XrdTest.TCPClient.Slave at-tribute),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 282--283
+[]\T1/ptm/m/n/10.95 S_SUITE_INITIALIZED
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 282--283
+\T1/ptm/m/n/10.95 (XrdTest.TCPClient.Slave at-tribute),
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 283--284
-[]\T1/ptm/m/n/10 S_TEST_FINALIZE_SENT (XrdTest.TCPClient.Slave
+[]\T1/ptm/m/n/10.95 S_TEST_FINALIZE_SENT
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 284--285
-[]\T1/ptm/m/n/10 S_TEST_FINALIZED (XrdTest.TCPClient.Slave at-
+Underfull \hbox (badness 10000) in paragraph at lines 283--284
+\T1/ptm/m/n/10.95 (XrdTest.TCPClient.Slave at-tribute),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 285--286
-[]\T1/ptm/m/n/10 S_TEST_INIT_SENT (XrdTest.TCPClient.Slave at-
+Underfull \hbox (badness 10000) in paragraph at lines 286--287
+[]\T1/ptm/m/n/10.95 S_TEST_INITIALIZED
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 286--287
+\T1/ptm/m/n/10.95 (XrdTest.TCPClient.Slave at-tribute),
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 287--288
-[]\T1/ptm/m/n/10 S_TEST_RUN_FINISHED (XrdTest.TCPClient.Slave
+[]\T1/ptm/m/n/10.95 S_TEST_RUN_FINISHED
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 288--289
-[]\T1/ptm/m/n/10 S_TEST_RUN_SENT (XrdTest.TCPClient.Slave at-
+Underfull \hbox (badness 10000) in paragraph at lines 287--288
+\T1/ptm/m/n/10.95 (XrdTest.TCPClient.Slave at-tribute),
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 290--291
-[]\T1/ptm/m/n/10 S_UNKNOWN_NOHYPERV
+[]\T1/ptm/m/n/10.95 S_UNKNOWN_NOHYPERV
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 290--291
+\T1/ptm/m/n/10.95 (XrdTest.ClusterUtils.Cluster at-tribute),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 291--292
+[]\T1/ptm/m/n/10.95 S_WAIT_4_FINALIZE
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 291--292
+\T1/ptm/m/n/10.95 (XrdTest.TestUtils.TestSuite at-tribute),
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 293--294
-[]\T1/ptm/m/n/10 S_WAIT_4_TEST_FINALIZE
+[]\T1/ptm/m/n/10.95 S_WAIT_4_TEST_FINALIZE
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 298--299
-[]\T1/ptm/m/n/10 selectHypervisor() (XrdTest-Mas-ter.XrdTestMaster
+Underfull \hbox (badness 10000) in paragraph at lines 293--294
+\T1/ptm/m/n/10.95 (XrdTest.TestUtils.TestSuite at-tribute),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 301--302
-[]\T1/ptm/m/n/10 sendBounded() (XrdTest.SocketUtils.FixedSockStream
+Underfull \hbox (badness 10000) in paragraph at lines 294--295
+[]\T1/ptm/m/n/10.95 S_WAIT_4_TEST_INIT
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 302--303
-[]\T1/ptm/m/n/10 sendEmailAlert() (XrdTest.TestUtils.TestSuiteSession
+Underfull \hbox (badness 10000) in paragraph at lines 294--295
+\T1/ptm/m/n/10.95 (XrdTest.TestUtils.TestSuite at-tribute),
  []
 
 
-Overfull \hbox (4.46045pt too wide) in paragraph at lines 306--307
-[]\T1/ptm/m/n/10 setup() (XrdTest.TCPServer.ThreadedTCPRequestHandler
+Underfull \hbox (badness 10000) in paragraph at lines 295--296
+[]\T1/ptm/m/n/10.95 S_WAIT_4_TEST_RUN
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 308--309
-[]\T1/ptm/m/n/10 showScript() (XrdTest.WebInterface.WebInterface
+Underfull \hbox (badness 10000) in paragraph at lines 295--296
+\T1/ptm/m/n/10.95 (XrdTest.TestUtils.TestSuite at-tribute),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 296--297
+[]\T1/ptm/m/n/10.95 S_WAITING_SLAVES
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 296--297
+\T1/ptm/m/n/10.95 (XrdTest.ClusterUtils.Cluster at-tribute),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 299--300
+[]\T1/ptm/m/n/10.95 send() (XrdTest.SocketUtils.FixedSockStream
+ []
+
+
+Overfull \hbox (20.43175pt too wide) in paragraph at lines 301--302
+[]\T1/ptm/m/n/10.95 sendBounded() (XrdTest.SocketUtils.FixedSockStream
+ []
+
+
+Overfull \hbox (14.30984pt too wide) in paragraph at lines 302--303
+[]\T1/ptm/m/n/10.95 sendEmailAlert() (XrdTest.TestUtils.TestSuiteSession
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 303--304
+[]\T1/ptm/m/n/10.95 sender (XrdTest.SocketUtils.XrdMessage at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 304--305
+[]\T1/ptm/m/n/10.95 setEmulatorPath() (XrdTest.ClusterUtils.Cluster
+ []
+
+
+Overfull \hbox (35.11577pt too wide) in paragraph at lines 306--307
+[]\T1/ptm/m/n/10.95 setup() (XrdTest.TCPServer.ThreadedTCPRequestHandler
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 310--311
+[]\T1/ptm/m/n/10.95 slaveState() (XrdTest-Mas-ter.XrdTestMaster
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 314--315
+[]\T1/ptm/m/n/10.95 startCluster() (XrdTest-Mas-ter.XrdTestMaster
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 315--316
+[]\T1/ptm/m/n/10.95 startNextJob() (XrdTest-Mas-ter.XrdTestMaster
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 316--317
-[]\T1/ptm/m/n/10 startTCPServer() (XrdTest-Mas-ter.XrdTestMaster
+[]\T1/ptm/m/n/10.95 startTCPServer() (XrdTest-Mas-ter.XrdTestMaster
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 317--318
-[]\T1/ptm/m/n/10 startWebInterface() (XrdTest-Mas-ter.XrdTestMaster
+[]\T1/ptm/m/n/10.95 startWebInterface() (XrdTest-Mas-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 323--324
+[]\T1/ptm/m/n/10.95 stopCluster() (XrdTest-Mas-ter.XrdTestMaster
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 324--325
-[]\T1/ptm/m/n/10 storeSuiteSession() (XrdTest-Mas-ter.XrdTestMaster
+[]\T1/ptm/m/n/10.95 storeSuiteSession() (XrdTest-Mas-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 325--326
-[]\T1/ptm/m/n/10 SuiteDefinitionsChangeHandler (class in
+[]\T1/ptm/m/n/10.95 SuiteDefinitionsChangeHandler (class in
  []
 
-
+[40]
 Underfull \hbox (badness 10000) in paragraph at lines 336--337
-[]\T1/ptm/m/n/10 testsuites() (XrdTest.WebInterface.WebInterface
+[]\T1/ptm/m/n/10.95 testsuites() (XrdTest.WebInterface.WebInterface
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 338--339
-[]\T1/ptm/m/n/10 ThreadedTCPRequestHandler (class in
+[]\T1/ptm/m/n/10.95 ThreadedTCPRequestHandler (class in
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 339--340
+[]\T1/ptm/m/n/10.95 ThreadedTCPServer (class in
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 340--341
-[]\T1/ptm/m/n/10 tryConnect() (XrdTestHy-per-vi-sor.XrdTestHypervisor
+[]\T1/ptm/m/n/10.95 tryConnect() (XrdTestHy-per-vi-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 347--348
-[]\T1/ptm/m/n/10 unsupported() (XrdTest.WebInterface.WebInterface
+Underfull \hbox (badness 10000) in paragraph at lines 341--342
+[]\T1/ptm/m/n/10.95 ts_vars() (XrdTest.WebInterface.WebInterface
  []
 
-[47]
+
+Overfull \hbox (3.44875pt too wide) in paragraph at lines 347--348
+[]\T1/ptm/m/n/10.95 unsupported() (XrdTest.WebInterface.WebInterface
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 348--349
+[]\T1/ptm/m/n/10.95 update() (XrdTest.WebInterface.WebInterface
+ []
+
+
+Overfull \hbox (23.71628pt too wide) in paragraph at lines 349--350
+[]\T1/ptm/m/n/10.95 updateState() (XrdTest.ClusterManager.ClusterManager
+ []
+
+
 Underfull \hbox (badness 10000) in paragraph at lines 350--351
-[]\T1/ptm/m/n/10 updateState() (XrdTestHy-per-vi-sor.XrdTestHypervisor
+[]\T1/ptm/m/n/10.95 updateState() (XrdTestHy-per-vi-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 354--355
-[]\T1/ptm/m/n/10 validateAgainstSystem() (XrdTest.ClusterUtils.Cluster
+[]\T1/ptm/m/n/10.95 validateAgainstSystem()
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 354--355
+\T1/ptm/m/n/10.95 (XrdTest.ClusterUtils.Cluster method),
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 355--356
-[]\T1/ptm/m/n/10 validateDynamic() (XrdTest.ClusterUtils.Cluster
+[]\T1/ptm/m/n/10.95 validateDynamic() (XrdTest.ClusterUtils.Cluster
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 360--361
-[]\T1/ptm/m/n/10 virtconnect() (XrdTest.ClusterManager.ClusterManager
+Underfull \hbox (badness 10000) in paragraph at lines 356--357
+[]\T1/ptm/m/n/10.95 validateStatic() (XrdTest.ClusterUtils.Cluster
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 364--365
-[]\T1/ptm/m/n/10 watch() (XrdTest.DirectoryWatch.DirectoryWatch
+Underfull \hbox (badness 10000) in paragraph at lines 357--358
+[]\T1/ptm/m/n/10.95 validateStatic() (XrdTest.TestUtils.TestCase
  []
 
 
-Overfull \hbox (1.76pt too wide) in paragraph at lines 365--366
-[]\T1/ptm/m/n/10 watch_localfs() (XrdTest.DirectoryWatch.DirectoryWatch
+Underfull \hbox (badness 10000) in paragraph at lines 358--359
+[]\T1/ptm/m/n/10.95 validateStatic() (XrdTest.TestUtils.TestSuite
  []
 
 
-Overfull \hbox (18.42989pt too wide) in paragraph at lines 366--367
-[]\T1/ptm/m/n/10 watch_remote_git() (XrdTest.DirectoryWatch.DirectoryWatch
+Underfull \hbox (badness 10000) in paragraph at lines 359--360
+[]\T1/ptm/m/n/10.95 vars() (XrdTest.WebInterface.WebInterface
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 367--368
-[]\T1/ptm/m/n/10 watchDirectories() (XrdTest-Mas-ter.XrdTestMaster
+Overfull \hbox (21.88773pt too wide) in paragraph at lines 360--361
+[]\T1/ptm/m/n/10.95 virtconnect() (XrdTest.ClusterManager.ClusterManager
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 374--375
-[]\T1/ptm/m/n/10 xmlDescPattern (XrdTest.ClusterUtils.Network at-
+Overfull \hbox (32.15887pt too wide) in paragraph at lines 365--366
+[]\T1/ptm/m/n/10.95 watch_localfs() (XrdTest.DirectoryWatch.DirectoryWatch
  []
 
 
-Underfull \hbox (badness 6332) in paragraph at lines 375--376
-[]\T1/ptm/m/n/10 xmlDnsHostPattern (XrdTest.ClusterUtils.Network at-
+Underfull \hbox (badness 10000) in paragraph at lines 366--367
+[]\T1/ptm/m/n/10.95 watch_remote_git()
  []
 
-[48]) (./xrootd-tests.aux) ) 
+
+Overfull \hbox (2.07982pt too wide) in paragraph at lines 366--367
+\T1/ptm/m/n/10.95 (XrdTest.DirectoryWatch.DirectoryWatch
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 375--376
+[]\T1/ptm/m/n/10.95 xmlDnsHostPattern
+ []
+
+[41]) (./xrootd-tests.aux) ) 
 Here is how much of TeX's memory you used:
- 7094 strings out of 256216
- 108013 string characters out of 1917073
- 173626 words of memory out of 1500000
- 9806 multiletter control sequences out of 10000+200000
- 58810 words of font info for 70 fonts, out of 1200000 for 2000
+ 7143 strings out of 256216
+ 109255 string characters out of 1917073
+ 178119 words of memory out of 1500000
+ 9833 multiletter control sequences out of 10000+200000
+ 65620 words of font info for 81 fonts, out of 1200000 for 2000
  646 hyphenation exceptions out of 8191
- 34i,12n,45p,4257b,528s stack positions out of 5000i,500n,6000p,200000b,15000s
+ 34i,12n,45p,4257b,458s stack positions out of 5000i,500n,6000p,200000b,15000s
 {/usr/share/texmf/fonts/enc/dvips/base/8r.enc}</usr
 /share/texmf/fonts/type1/urw/courier/ucrb8a.pfb></usr/share/texmf/fonts/type1/u
 rw/courier/ucrr8a.pfb></usr/share/texmf/fonts/type1/urw/courier/ucrro8a.pfb></u
@@ -1598,9 +2296,9 @@ sr/share/texmf/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/texmf/fonts/type
 1/urw/helvetic/uhvbo8a.pfb></usr/share/texmf/fonts/type1/urw/helvetic/uhvr8a.pf
 b></usr/share/texmf/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf/fonts/ty
 pe1/urw/times/utmr8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmri8a.pfb>
-Output written on xrootd-tests.pdf (52 pages, 341801 bytes).
+Output written on xrootd-tests.pdf (45 pages, 350455 bytes).
 PDF statistics:
- 1200 PDF objects out of 1200 (max. 8388607)
- 422 named destinations out of 1000 (max. 131072)
- 209 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1154 PDF objects out of 1200 (max. 8388607)
+ 437 named destinations out of 1000 (max. 131072)
+ 121 words of extra memory for PDF output out of 10000 (max. 10000000)
 

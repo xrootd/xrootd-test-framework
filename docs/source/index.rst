@@ -2,8 +2,11 @@
 XrdTest Framework |release| Documentation
 *****************************************
 
+Contents
+========
+
 .. toctree::
-   :hidden:
+   :maxdepth: 2
       
    general-overview
    installation

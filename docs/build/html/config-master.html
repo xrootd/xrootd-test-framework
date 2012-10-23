@@ -25,6 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="top" title="XrdTest Framework 0.1 documentation" href="index.html" />
     <link rel="next" title="Hypervisor configuration" href="config-hypervisor.html" />
     <link rel="prev" title="Installation" href="installation.html" /> 
@@ -56,43 +57,159 @@
             
   <div class="section" id="master-configuration">
 <h1>Master configuration<a class="headerlink" href="#master-configuration" title="Permalink to this headline">¶</a></h1>
-<p>Default place for configuration files is directory: /etc/XrdTest/&lt;CONFIG_FILE_NAME&gt;.conf</p>
-<div class="section" id="running-as-a-system-service-daemons">
-<h2>Running as a system service (daemons)<a class="headerlink" href="#running-as-a-system-service-daemons" title="Permalink to this headline">¶</a></h2>
-<p>If application was installed from RPM it is automatically added to system
-services, thus it will be started automatically during the system start, but
-can also be started manually from the command line as follows:</p>
-<p><tt class="docutils literal"><span class="pre">service</span> <span class="pre">COMPONENT_NAME</span> <span class="pre">start</span></tt></p>
-<p>where the COMPONENT_NAME is accordingly</p>
+<p>This section describes how to configure the XrdTest Master framework component,
+including how to set up a repository to hold test suite and cluster definitions,
+web interface options, logging options and security configurations.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The default location for configuration files is
+<tt class="docutils literal"><span class="pre">/etc/XrdTest/&lt;CONFIG_FILE_NAME&gt;.conf</span></tt>.</p>
+</div>
+<p>The master configuration file uses the <em>ini</em>-style format of the python
+<tt class="docutils literal"><span class="pre">ConfigParser</span></tt> module. There are multiple sections, each of which is explained
+separately below. First, the configuration directive will be given, followed by
+an explanation.</p>
+<div class="section" id="configuration-sections">
+<h2>Configuration sections<a class="headerlink" href="#configuration-sections" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="general">
+<h3><tt class="docutils literal"><span class="pre">[general]</span></tt><a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">test</span><span class="o">-</span><span class="n">repos</span><span class="o">=</span><span class="n">remote</span><span class="p">,</span><span class="n">local</span>
+</pre></div>
+</div>
+<p>A list of repositories to use, each of which must have a corresponding
+[test-repo-&lt;reponame&gt;] section below. As an example, we use two test suites: one
+local (<tt class="docutils literal"><span class="pre">test-repo-local</span></tt>), and one in a remote <tt class="docutils literal"><span class="pre">git</span></tt> repository
+(<tt class="docutils literal"><span class="pre">test-repo-remote</span></tt>).</p>
+<div class="highlight-python"><pre>suite_sessions_file=/var/log/XrdTest/suite_history.bin</pre>
+</div>
+<p>The path to the file which stores previous test suite history.</p>
+</div>
+<div class="section" id="test-repo-remote">
+<h3><tt class="docutils literal"><span class="pre">[test-repo-remote]</span></tt><a class="headerlink" href="#test-repo-remote" title="Permalink to this headline">¶</a></h3>
+<p>The section for the first of our two example repositories. This repository is a
+remote <tt class="docutils literal"><span class="pre">git</span></tt> repository. Currently, the framework supports localfs and <tt class="docutils literal"><span class="pre">git</span></tt>
+repositories only. It is planned to include <tt class="docutils literal"><span class="pre">svn</span></tt> support in the future.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You need passwordless access to the repository for this
+to work (such as key-based SSH, Kerberos, or a HTTP URL). Password based
+authentication will not work, as synchronization of the remote repository
+happens automatically at certain time intervals.</p>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Example settings for a remote git repository.</span>
+<span class="nb">type</span><span class="o">=</span><span class="n">git</span>
+
+<span class="c"># Path to the remote repository. Accepts any valid Git URL.</span>
+<span class="n">remote_repo</span><span class="o">=</span><span class="n">jsalmon</span><span class="nd">@xrootd.cern.ch</span><span class="p">:</span><span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">repos</span><span class="o">/</span><span class="n">xrootd</span><span class="o">-</span><span class="n">testsuite</span><span class="o">.</span><span class="n">git</span>
+
+<span class="c"># Which local/remote branches to use.</span>
+<span class="n">remote_branch</span><span class="o">=</span><span class="n">origin</span><span class="o">/</span><span class="n">master</span>
+<span class="n">local_branch</span><span class="o">=</span><span class="n">master</span>
+
+<span class="c"># Path where the remote repo will be checked out locally.</span>
+<span class="n">local_path</span><span class="o">=/</span><span class="n">var</span><span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">xrootd</span><span class="o">-</span><span class="n">testsuite</span>
+
+<span class="c"># Paths to the local checkouts of cluster and test suite definitions.</span>
+<span class="n">cluster_defs_path</span><span class="o">=</span><span class="n">clusters</span>
+<span class="n">suite_defs_path</span><span class="o">=</span><span class="n">test</span><span class="o">-</span><span class="n">suites</span>
+</pre></div>
+</div>
+<p>Each directive should be fairly self-explanatory. The <tt class="docutils literal"><span class="pre">remote_repo</span></tt> directive
+<strong>accepts any valid git URL</strong>.</p>
+<p>It is necessary to provide a
+path where the remote repository will be checked out, as the system in fact
+clones the remote repository to this local path, does <tt class="docutils literal"><span class="pre">fetch</span></tt>/<tt class="docutils literal"><span class="pre">diff</span></tt>
+periodically, then does <tt class="docutils literal"><span class="pre">pull</span></tt> if there are changes in the remote repo.</p>
+<p>It is also necessary to point to the directories which hold cluster and test
+suite definitions <strong>inside the local checkout directory</strong>. This is in case you
+want to change the naming conventions to better suit your environment.</p>
+</div>
+<div class="section" id="test-repo-local">
+<h3><tt class="docutils literal"><span class="pre">[test-repo-local]</span></tt><a class="headerlink" href="#test-repo-local" title="Permalink to this headline">¶</a></h3>
+<p>The section for the second example repository. This repository is located in the
+local filesystem, and is much simpler to configure than a remote one.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Example settings for a local repository of cluster/test suite definitions.</span>
+<span class="nb">type</span><span class="o">=</span><span class="n">localfs</span>
+
+<span class="n">local_path</span><span class="o">=/</span><span class="n">var</span><span class="o">/</span><span class="n">repos</span><span class="o">/</span><span class="n">xrootd</span><span class="o">-</span><span class="n">testsuite</span>
+<span class="n">cluster_defs_path</span><span class="o">=</span><span class="n">clusters</span>
+<span class="n">suite_defs_path</span><span class="o">=</span><span class="n">test</span><span class="o">-</span><span class="n">suites</span>
+</pre></div>
+</div>
+<p>You need to point to the top directory, and the subdirectories which hold cluster
+and test suite definitions.</p>
+</div>
+<div class="section" id="server">
+<h3><tt class="docutils literal"><span class="pre">[server]</span></tt><a class="headerlink" href="#server" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Password to authenticate hypervisors.</span>
+<span class="n">connection_passwd</span><span class="o">=</span><span class="n">some_password</span>
+
+<span class="c"># The IP and port the master will listen on.</span>
+<span class="n">ip</span><span class="o">=</span><span class="mf">0.0</span><span class="o">.</span><span class="mf">0.0</span>
+<span class="n">port</span><span class="o">=</span><span class="mi">20000</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="webserver">
+<h3><tt class="docutils literal"><span class="pre">[webserver]</span></tt><a class="headerlink" href="#webserver" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Absolute path to webpage files (defaults to /usr/share/XrdTest/webpage).</span>
+<span class="c"># Uncomment and add your path to change the web root.</span>
+<span class="n">webpage_dir</span><span class="o">=/</span><span class="n">usr</span><span class="o">/</span><span class="n">share</span><span class="o">/</span><span class="n">XrdTest</span><span class="o">/</span><span class="n">webpage</span>
+
+<span class="c"># Protocol to use for the web server. Defaults to HTTP.</span>
+<span class="n">protocol</span><span class="o">=</span><span class="n">https</span>
+
+<span class="c"># The port to access the web interface on. Defaults to 8080 for HTTP and 8443</span>
+<span class="c"># for HTTPS.</span>
+<span class="n">port</span><span class="o">=</span><span class="mi">8443</span>
+
+<span class="c"># The password that allows running test suites via the webpage (defaults to none)</span>
+<span class="c"># suite_run_pass=somepass</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="scheduler">
+<h3><tt class="docutils literal"><span class="pre">[scheduler]</span></tt><a class="headerlink" href="#scheduler" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># If set to 0, the scheduler will not run, strangely enough.</span>
+<span class="n">enabled</span><span class="o">=</span><span class="mi">1</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="security">
+<h3><tt class="docutils literal"><span class="pre">[security]</span></tt><a class="headerlink" href="#security" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Location of the master&#39;s SSL certificate and private key. Will be generated</span>
+<span class="c"># automatically at install time. Don&#39;t change these.</span>
+<span class="n">certfile</span><span class="o">=/</span><span class="n">etc</span><span class="o">/</span><span class="n">XrdTest</span><span class="o">/</span><span class="n">certs</span><span class="o">/</span><span class="n">mastercert</span><span class="o">.</span><span class="n">pem</span>
+<span class="n">keyfile</span><span class="o">=/</span><span class="n">etc</span><span class="o">/</span><span class="n">XrdTest</span><span class="o">/</span><span class="n">certs</span><span class="o">/</span><span class="n">masterkey</span><span class="o">.</span><span class="n">pem</span>
+
+<span class="c"># Location of the key/certificate which the master will use to become it&#39;s own</span>
+<span class="c"># CA (for signing CSRs from slaves which need to use GSI).</span>
+<span class="n">ca_certfile</span><span class="o">=/</span><span class="n">etc</span><span class="o">/</span><span class="n">XrdTest</span><span class="o">/</span><span class="n">certs</span><span class="o">/</span><span class="n">cacert</span><span class="o">.</span><span class="n">pem</span>
+<span class="n">ca_keyfile</span><span class="o">=/</span><span class="n">etc</span><span class="o">/</span><span class="n">XrdTest</span><span class="o">/</span><span class="n">certs</span><span class="o">/</span><span class="n">cakey</span><span class="o">.</span><span class="n">pem</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="daemon">
+<h3><tt class="docutils literal"><span class="pre">[daemon]</span></tt><a class="headerlink" href="#daemon" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Path to PID file if being run in daemon mode.</span>
+<span class="n">pid_file_path</span><span class="o">=/</span><span class="n">var</span><span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">XrdTestMaster</span><span class="o">.</span><span class="n">pid</span>
+
+<span class="c"># Path the the master&#39;s log file.</span>
+<span class="n">log_file_path</span><span class="o">=/</span><span class="n">var</span><span class="o">/</span><span class="n">log</span><span class="o">/</span><span class="n">XrdTest</span><span class="o">/</span><span class="n">XrdTestMaster</span><span class="o">.</span><span class="n">log</span>
+
+<span class="c"># Amount of information to log. Constants from standard python logging module.</span>
+<span class="c"># Defaults to INFO. Possible values: NOTSET (off), ERROR (only errors), WARN</span>
+<span class="c"># (warnings and above), INFO (most logs), DEBUG (everything)</span>
+<span class="n">log_level</span><span class="o">=</span><span class="n">DEBUG</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="other-considerations">
+<h2>Other considerations<a class="headerlink" href="#other-considerations" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>for master: <tt class="docutils literal"><span class="pre">xrdtest-master</span></tt></li>
-<li>for slave: <tt class="docutils literal"><span class="pre">xrdtest-slave</span></tt></li>
-<li>for hypervisor: <tt class="docutils literal"><span class="pre">xrdtest-hypervisor</span></tt></li>
+<li>Firewall (tcp on port 10000)</li>
 </ul>
-</div>
-<div class="section" id="running-in-debug-mode">
-<h2>Running in debug mode<a class="headerlink" href="#running-in-debug-mode" title="Permalink to this headline">¶</a></h2>
-<p>To start each of components (Master, Hypervisor or Slave) in debug mode (it
-shows log messages on the screen instead of writing them to log file) run the
-shell command below:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># export PYTHONPATH=&lt;PROJECT_DIR&gt;/lib</span>
-<span class="c"># cd &lt;PROJECT_DIR&gt;</span>
-<span class="c"># python XrdTestMaster.py -c XrdTestMaster.conf</span>
-</pre></div>
-</div>
-<p>Where <em>&lt;PROJECT_DIR&gt;</em> should be replaced with actual directory where framework
-source .py files are stored. One can start Hypervisor or Slave replacing
-XrdTestMaster with XrdTestHypervisor or XrdTestSlave accordingly.</p>
-</div>
-<div class="section" id="running-in-background-mode">
-<h2>Running in background mode<a class="headerlink" href="#running-in-background-mode" title="Permalink to this headline">¶</a></h2>
-<p>To start application in background mode (as a daemon) add option -b to shell
-starting command. Itwill then store LOG file and PID file in proper directories
-specified in configuration files. Go to directory where application is stored
-and run:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># python XrdTestMaster.py -d -c XrdTestMaster.conf</span>
-</pre></div>
-</div>
 </div>
 </div>
 
@@ -105,9 +222,18 @@ and run:</p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Master configuration</a><ul>
-<li><a class="reference internal" href="#running-as-a-system-service-daemons">Running as a system service (daemons)</a></li>
-<li><a class="reference internal" href="#running-in-debug-mode">Running in debug mode</a></li>
-<li><a class="reference internal" href="#running-in-background-mode">Running in background mode</a></li>
+<li><a class="reference internal" href="#configuration-sections">Configuration sections</a><ul>
+<li><a class="reference internal" href="#general"><tt class="docutils literal"><span class="pre">[general]</span></tt></a></li>
+<li><a class="reference internal" href="#test-repo-remote"><tt class="docutils literal"><span class="pre">[test-repo-remote]</span></tt></a></li>
+<li><a class="reference internal" href="#test-repo-local"><tt class="docutils literal"><span class="pre">[test-repo-local]</span></tt></a></li>
+<li><a class="reference internal" href="#server"><tt class="docutils literal"><span class="pre">[server]</span></tt></a></li>
+<li><a class="reference internal" href="#webserver"><tt class="docutils literal"><span class="pre">[webserver]</span></tt></a></li>
+<li><a class="reference internal" href="#scheduler"><tt class="docutils literal"><span class="pre">[scheduler]</span></tt></a></li>
+<li><a class="reference internal" href="#security"><tt class="docutils literal"><span class="pre">[security]</span></tt></a></li>
+<li><a class="reference internal" href="#daemon"><tt class="docutils literal"><span class="pre">[daemon]</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#other-considerations">Other considerations</a></li>
 </ul>
 </li>
 </ul>

@@ -25,6 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="top" title="XrdTest Framework 0.1 documentation" href="index.html" />
     <link rel="next" title="Master configuration" href="config-master.html" />
     <link rel="prev" title="General Overview" href="general-overview.html" /> 
@@ -56,37 +57,50 @@
             
   <div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
-<p>Framework is available in RPM packages for Linux SLC5. All application requires
-Python 2 in version at least: 2.4. It comprises of the following three main RPMs
+<p>The framework is available in RPM packages for Linux SLC6. Each application
+requires at least Python <tt class="docutils literal"><span class="pre">2.4</span></tt>. It comprises the following four main packages
 (the libraries required by them are also listed below):</p>
 <ul>
-<li><dl class="first docutils">
-<dt>xrdtest-master-0.0.1-1.noarch</dt>
+<li><p class="first"><strong>xrdtest-lib</strong></p>
+<p>Dependencies: None</p>
+</li>
+<li><p class="first"><strong>xrdtest-master</strong></p>
+<dl class="docutils">
+<dt>Dependencies:</dt>
 <dd><ul class="first last simple">
-<li>required RPMs: <strong>python-apscheduler-2.0.2, python-cheetah-2.0.1, python-cherrypy-2.3.0,
-python-inotify-0.9.1, python-ssl-1.15, python-uuid-1.30</strong></li>
+<li><tt class="docutils literal"><span class="pre">python-apscheduler-2.0.3</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">python-cheetah-2.4.1</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">python-cherrypy-3.1.2</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">python-inotify-0.9.1</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">python-uuid-1.30</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">pyOpenSSL-0.10-2</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">python-ssl-1.15</span></tt></li>
 </ul>
 </dd>
 </dl>
 </li>
-<li><dl class="first docutils">
-<dt>xrdtest-hypervisor-0.0.1-1.noarch</dt>
+<li><p class="first"><strong>xrdtest-hypervisor</strong></p>
+<dl class="docutils">
+<dt>Dependencies:</dt>
 <dd><ul class="first last simple">
-<li>required RPMs: <strong>python-ssl-1.15, libvirt-python-0.9.3, libvirt-0.9.3</strong></li>
+<li><tt class="docutils literal"><span class="pre">python-ssl-1.15</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">libvirt-python-0.9.3</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">libvirt-0.9.10</span></tt></li>
 </ul>
 </dd>
 </dl>
 </li>
-<li><dl class="first docutils">
-<dt>xrdtest-slave-0.0.1-1.noarch</dt>
+<li><p class="first"><strong>xrdtest-slave</strong></p>
+<dl class="docutils">
+<dt>Dependencies:</dt>
 <dd><ul class="first last simple">
-<li>required RPMs: <strong>python-ssl-1.15</strong></li>
+<li><tt class="docutils literal"><span class="pre">python-ssl-1.15</span></tt></li>
 </ul>
 </dd>
 </dl>
 </li>
 </ul>
-<p>To install each module you have to follow typical RPM installation instructions.</p>
+<p>To install each component, you must follow typical RPM installation instructions.</p>
 </div>
 
 

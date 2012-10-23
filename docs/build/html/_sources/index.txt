@@ -2,8 +2,11 @@
 XrdTest Framework |release| Documentation
 *****************************************
 
+Contents
+========
+
 .. toctree::
-   :hidden:
+   :maxdepth: 2
       
    general-overview
    installation
@@ -14,46 +17,6 @@ XrdTest Framework |release| Documentation
    clusters
    web-interface
    ref-manual
-   
-Sections
-========
-
-:doc:`General Overview <general-overview>`
-------------------------------------------
-A general overview of the features of the XrdTest Framework.
-
-:doc:`Installation <installation>`
-----------------------------------
-Instructions for installation of the various parts of the XrdTest Framework.
-
-:doc:`Master Configuration <config-master>`
--------------------------------------------
-Configuration instructions for the XrdTest Master.
-
-:doc:`Hypervisor Configuration <config-hypervisor>`
----------------------------------------------------
-Configuration instructions for the XrdTest Hypervisor.
-
-:doc:`Slave Configuration <config-slave>`
------------------------------------------
-Configuration instructions for the XrdTest Slave.
-
-:doc:`Writing Test Suites <testsuites>`
----------------------------------------
-Instructions for writing new test suites within the framework. 
-
-:doc:`Defining Clusters <clusters>`
------------------------------------
-Instructions for defining clusters for test suites to run on within the 
-framework.
-
-:doc:`Web Interface <web-interface>`
-------------------------------------
-Features of and instructions for use of the XrdTest web interface.
-
-:doc:`Reference Manual <ref-manual>`
-------------------------------------
-Module, class, and function reference.
 
 Appendix
 --------

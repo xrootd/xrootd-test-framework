@@ -1286,6 +1286,13 @@ div.tab>img,div.tab>.image-frame img {
     float: right;
 }
 
+.tag.red.core {
+    height: auto;
+    width: auto;
+    padding: 4px 10px;
+    float: none;
+}
+
 .tag.red {
     background-color: #ae432e;
 }

@@ -44,4 +44,4 @@ Configuration sections
 Other considerations
 --------------------
 
-* Slave image config (network, size, OS, root password etc) 
+* Slave image config (network, size, OS, root password, ulimit for coredumps, gdb) 

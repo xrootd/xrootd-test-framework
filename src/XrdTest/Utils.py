@@ -136,8 +136,8 @@ class Command(object):
         output = stdout
         if output == '': 
             LOGGER.debug('Command returned no output.') 
-        else: 
-            LOGGER.debug('Command output: \n%s' % output.rstrip('\n'))
+        #else: 
+            #LOGGER.debug('Command output: \n%s' % output.rstrip('\n'))
         return (output, retcode)
     
 class Logger(object):

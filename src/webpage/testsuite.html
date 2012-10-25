@@ -385,7 +385,9 @@
                                                                        <section>
                                                                           
                                                                             <header>
-                                                                                <h2><span>initialized at $stage[0].time[:8] with return code $stage[1][2]</span></h2>
+                                                                                <h2>
+                                                                                    <span>initialized at $stage[0].time[:8] with return code $stage[1][2]</span>
+                                                                                </h2>
                                                                                 
                                                                                 <nav class="log-select">
                                                                                     <ul class="tab-switch">
@@ -407,6 +409,7 @@
                                                                             </header>
                                                                             
                                                                             <section>
+
                                                                                 <form class="log-select">
                                                                                     <label for="whichlog">Select Log:&nbsp;</label>
                                                                                     <select id="whichlog">
@@ -421,9 +424,29 @@
                                                                                                 $logname
                                                                                             </option>
                                                                                         #end for
+                                                                                        
                                                                                     </select>
                                                                                 </form>
                                                                             </section>
+                                                                            
+                                                                            #if $stage[1][4]
+                                                                            <section>
+                                                                                <ul class='accordion'>
+                                                                                    <li>
+                                                                                        <a class='accordion-switch' href='#'>
+                                                                                            <span class="tag red core">Core dump(s) detected! Click to view.</span>
+                                                                                        </a>
+                                                                                        #for $dump in $stage[1][4]
+                                                                                        <div>
+                                                                                            <code><span class="error">$dump</span></code>
+                                                                                            <br />
+                                                                                        </div>                                                                                      
+                                                                                        #end for
+                                                                                    </li>
+                                                                                </ul>
+                                                                            </section>
+                                                                            #end if
+                                                                            
                                                                             
                                                                             #set $logs = self.format_log($stage[1][0])
                                                                             <section>
@@ -457,9 +480,10 @@
                                                                                     <div class="tab" id="tab-log-init-${host}-${run.uid}-$i-warning">
                                                                                         <code>$logs['warning']</code>
                                                                                     </div>
+                                                                                    
                                                                                 </section>
                                                                             #end for
-                                                                            
+                                                                                                                                                        
                                                                        </section>
                                                                     </div>
                                                                 </article>     
@@ -589,7 +613,6 @@
                                                                                                             </ul>
                                                                                                         </nav>
                                                                                                         
-                                                                                                        
                                                                                                     </header>
                                                                                                     <section>
                                                                                                         <form class="log-select">
@@ -610,6 +633,24 @@
                                                                                                         </form>
                                                                                                     </section>
                                                                                                     
+                                                                                                    #if $stage[1][4]
+                                                                                                    <section>
+                                                                                                        <ul class='accordion'>
+                                                                                                            <li>
+                                                                                                                <a class='accordion-switch' href='#'>
+                                                                                                                    <span class="tag red core">Core dump(s) detected! Click to view.</span>
+                                                                                                                </a>
+                                                                                                                #for $dump in $stage[1][4]
+                                                                                                                <div>
+                                                                                                                    <code><span class="error">$dump</span></code>
+                                                                                                                    <br />
+                                                                                                                </div>                                                                                      
+                                                                                                                #end for
+                                                                                                            </li>
+                                                                                                        </ul>
+                                                                                                    </section>
+                                                                                                    #end if
+                                                                                                    
                                                                                                     #set $logs = self.format_log($stage[1][0])
                                                                                                         <section>
                                                                                                             <div class="tab default-tab default-log" id="tab-log-case-init-${host}-${case.uid}-default-all">
@@ -624,6 +665,13 @@
                                                                                                             <div class="tab" id="tab-log-case-init-${host}-${case.uid}-default-warning">
                                                                                                                 <code>$logs['warning']</code>
                                                                                                             </div>
+                                                                                                            #if $stage[1][4]
+                                                                                                            <div class="tab" id="tab-log-case-init-${host}-${case.uid}-default-core">
+                                                                                                                #for $x in $stage[1][4]
+                                                                                                                    <code>$x</code> <br /><br />
+                                                                                                                #end for
+                                                                                                            </div>
+                                                                                                            #end if
                                                                                                         </section>
                                                                                                         
                                                                                                         
@@ -644,7 +692,7 @@
                                                                                                                 </div>
                                                                                                             </section>
                                                                                                         #end for
-                                                                                               
+
                                                                                                </section>
                                                                                             </div>
                                                                                         </article>
@@ -716,6 +764,13 @@
                                                                                                                 <li>
                                                                                                                 <a href="#tab-log-case-run-${host}-${case.uid}-default-warning">Warnings</a>
                                                                                                                 </li>
+                                                                                                                #if $stage[1][4]
+                                                                                                                <li>
+                                                                                                                    <a href="#tab-log-case-run-${host}-${case.uid}-default-core">
+                                                                                                                        <span class="tag red core">Core Dump</span>
+                                                                                                                    </a>
+                                                                                                                </li>
+                                                                                                                #end if
                                                                                                             </ul>
                                                                                                         </nav>
                                                                                                         
@@ -740,6 +795,24 @@
                                                                                                         </form>
                                                                                                     </section>
                                                                                                     
+                                                                                                    #if $stage[1][4]
+                                                                                                    <section>
+                                                                                                        <ul class='accordion'>
+                                                                                                            <li>
+                                                                                                                <a class='accordion-switch' href='#'>
+                                                                                                                    <span class="tag red core">Core dump(s) detected! Click to view.</span>
+                                                                                                                </a>
+                                                                                                                #for $dump in $stage[1][4]
+                                                                                                                <div>
+                                                                                                                    <code><span class="error">$dump</span></code>
+                                                                                                                    <br />
+                                                                                                                </div>                                                                                      
+                                                                                                                #end for
+                                                                                                            </li>
+                                                                                                        </ul>
+                                                                                                    </section>
+                                                                                                    #end if
+                                                                                                    
                                                                                                     #set $logs = self.format_log($stage[1][0])
                                                                                                         <section>
                                                                                                             <div class="tab default-tab default-log" id="tab-log-case-run-${host}-${case.uid}-default-all">
@@ -754,6 +827,13 @@
                                                                                                             <div class="tab" id="tab-log-case-run-${host}-${case.uid}-default-warning">
                                                                                                                 <code>$logs['warning']</code>
                                                                                                             </div>
+                                                                                                            #if $stage[1][4]
+                                                                                                            <div class="tab" id="tab-log-case-run-${host}-${case.uid}-default-core">
+                                                                                                                #for $x in $stage[1][4]
+                                                                                                                    <code>$x</code> <br /><br />
+                                                                                                                #end for
+                                                                                                            </div>
+                                                                                                            #end if
                                                                                                         </section>
                                                                                                         
                                                                                                         
@@ -847,6 +927,13 @@
                                                                                                                 <li>
                                                                                                                 <a href="#tab-log-case-fin-${host}-${case.uid}-default-warning">Warnings</a>
                                                                                                                 </li>
+                                                                                                                #if $stage[1][4]
+                                                                                                                <li>
+                                                                                                                    <a href="#tab-log-case-fin-${host}-${case.uid}-default-core">
+                                                                                                                        <span class="tag red core">Core Dump</span>
+                                                                                                                    </a>
+                                                                                                                </li>
+                                                                                                                #end if
                                                                                                             </ul>
                                                                                                         </nav>
                                                                                                          
@@ -871,6 +958,24 @@
                                                                                                         </form>
                                                                                                     </section>
                                                                                                     
+                                                                                                    #if $stage[1][4]
+                                                                                                    <section>
+                                                                                                        <ul class='accordion'>
+                                                                                                            <li>
+                                                                                                                <a class='accordion-switch' href='#'>
+                                                                                                                    <span class="tag red core">Core dump(s) detected! Click to view.</span>
+                                                                                                                </a>
+                                                                                                                #for $dump in $stage[1][4]
+                                                                                                                <div>
+                                                                                                                    <code><span class="error">$dump</span></code>
+                                                                                                                    <br />
+                                                                                                                </div>                                                                                      
+                                                                                                                #end for
+                                                                                                            </li>
+                                                                                                        </ul>
+                                                                                                    </section>
+                                                                                                    #end if
+                                                                                                    
                                                                                                     #set $logs = self.format_log($stage[1][0])
                                                                                                         <section>
                                                                                                             <div class="tab default-tab default-log" id="tab-log-case-fin-${host}-${case.uid}-default-all">
@@ -885,6 +990,13 @@
                                                                                                             <div class="tab" id="tab-log-case-fin-${host}-${case.uid}-default-warning">
                                                                                                                 <code>$logs['warning']</code>
                                                                                                             </div>
+                                                                                                            #if $stage[1][4]
+                                                                                                            <div class="tab" id="tab-log-case-fin-${host}-${case.uid}-default-core">
+                                                                                                                #for $x in $stage[1][4]
+                                                                                                                    <code>$x</code> <br /><br />
+                                                                                                                #end for
+                                                                                                            </div>
+                                                                                                            #end if
                                                                                                         </section>
                                                                                                         
                                                                                                         
@@ -994,29 +1106,51 @@
                                                                                         <li>
                                                                                         <a href="#tab-log-fin-${host}-${run.uid}-default-warning">Warnings</a>
                                                                                         </li>
+                                                                                        #if $stage[1][4]
+                                                                                        <li>
+                                                                                            <a href="#tab-log-fin-${host}-${run.uid}-default-core">
+                                                                                                <span class="tag red core">Core Dump</span>
+                                                                                            </a>
+                                                                                        </li>
+                                                                                        #end if
                                                                                     </ul>
                                                                                 </nav>
                                                                                 
                                                                             </header>
-                                                                                <form class="log-select">
-                                                                                    <label for="whichlog">Select Log:&nbsp;</label>
-                                                                                    <select id="whichlog">
-                                                                                        
-                                                                                        <option class="default-option"
-                                                                                                value="tab-log-fin-$host-$run.uid-default">
-                                                                                            Session Log
+                                                                            <form class="log-select">
+                                                                                <label for="whichlog">Select Log:&nbsp;</label>
+                                                                                <select id="whichlog">
+                                                                                    
+                                                                                    <option class="default-option"
+                                                                                            value="tab-log-fin-$host-$run.uid-default">
+                                                                                        Session Log
+                                                                                    </option>
+                                                                                    
+                                                                                    #for $i, $logname in enumerate($stage[1][3].iterkeys())
+                                                                                        <option value="tab-log-fin-$host-$run.uid-$i">
+                                                                                            $logname
                                                                                         </option>
-                                                                                        
-                                                                                        #for $i, $logname in enumerate($stage[1][3].iterkeys())
-                                                                                            <option value="tab-log-fin-$host-$run.uid-$i">
-                                                                                                $logname
-                                                                                            </option>
-                                                                                        #end for
-                                                                                    </select>
-                                                                                </form>
+                                                                                    #end for
+                                                                                </select>
+                                                                            </form>
+
+                                                                            #if $stage[1][4]
                                                                             <section>
-                                                                            
+                                                                                <ul class='accordion'>
+                                                                                    <li>
+                                                                                        <a class='accordion-switch' href='#'>
+                                                                                            <span class="tag red core">Core dump(s) detected! Click to view.</span>
+                                                                                        </a>
+                                                                                        #for $dump in $stage[1][4]
+                                                                                        <div>
+                                                                                            <code><span class="error">$dump</span></code>
+                                                                                            <br />
+                                                                                        </div>                                                                                      
+                                                                                        #end for
+                                                                                    </li>
+                                                                                </ul>
                                                                             </section>
+                                                                            #end if
                                                                             
                                                                             #set $logs = self.format_log($stage[1][0])
                                                                             <section>
@@ -1032,6 +1166,13 @@
                                                                                 <div class="tab" id="tab-log-fin-${host}-${run.uid}-default-warning">
                                                                                     <code>$logs['warning']</code>
                                                                                 </div>
+                                                                                #if $stage[1][4]
+                                                                                <div class="tab" id="tab-log-fin-${host}-${run.uid}-default-core">
+                                                                                    #for $x in $stage[1][4]
+                                                                                        <code>$x</code> <br /><br />
+                                                                                    #end for
+                                                                                </div>
+                                                                                #end if
                                                                             </section>
                                                                             
                                                                             

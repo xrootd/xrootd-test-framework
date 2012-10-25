@@ -330,7 +330,7 @@ class TestSuiteSession(Stateful):
         object. Stage are e.g.: initialize suite on some slave, run test case
         on some slave etc.
         @param state: state that happened
-        @param result: result of test run (code, stdout, stderr, custom logs)
+        @param result: result of test run (code, stdout, stderr, custom logs, core dump info)
         @param uid: uid of test case or test suite init/finalize
         @param slave_name: where stage ended
         '''
@@ -350,7 +350,7 @@ class TestSuiteSession(Stateful):
                         tc.failed = True
 
         if result[1] == None:
-            result = (result[0], "", result[2], result[3])
+            result = (result[0], "", result[2], result[3], result[4])
 
         self.stagesResults.append((state, result, uid, slave_name))
 

@@ -171,6 +171,7 @@ class XrdTestMaster(Runnable):
     def archiveSuiteSessions(self):
         self.suiteSessions.sync()
         self.suiteSessions.close()
+        self.suiteSessions = None
         
         active = self.config.get('general', 'suite_sessions_file')
         

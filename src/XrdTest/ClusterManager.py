@@ -496,7 +496,7 @@ class ClusterManager:
             
     def attachDisk(self, host, diskName, diskSize, cache, device):
         ''' 
-        TODO:
+        :param host: name of the host to attach to
         '''
         diskPath = os.path.join(self.findStoragePool(self.storagePool), \
                                 '%s_%s' % (host, diskName))

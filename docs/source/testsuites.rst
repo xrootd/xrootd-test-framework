@@ -83,7 +83,7 @@ with a line like this::
   ts.machines = ['frm1', 'frm2', 'ds1', 'ds2', 'client1']
   
 There haven't been any use cases where this has been needed yet, but the
-functionality exists if one comes along. This line os not mandatory.
+functionality exists if one comes along. This line is not mandatory.
 
 Scheduling test suites
 ^^^^^^^^^^^^^^^^^^^^^^

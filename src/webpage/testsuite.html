@@ -93,9 +93,9 @@
 	    #set $success = []
 	    
 	    #for $i, $line in enumerate($log.split('\n'))
-	        #set $line = $line.lstrip('\t')
+	        #set $line = $line.lstrip('\t\n')
 	        
-	        #if re.match(r'.*(error|err|fail|unable|cannot").*', $line, re.I)
+	        #if re.match(r'.*(error|err|fail|unable|cannot|broken").*', $line, re.I)
 	            #set $line = '<span class="error">' + $line + '</span>'
 	            $error.append($line)
 	            $important.append($line)
@@ -103,7 +103,7 @@
 	        
 	        
 	        #if re.match(r'.*(ok|\[xrootd\]|complete|success).*', $line, re.I)
-	            #set $line = '<span class="success">' + $line[:-1] + '</span>'
+	            #set $line = '<span class="success">' + $line + '</span>'
 	            $success.append($line)
 	            $important.append($line)
 	        #end if
@@ -429,7 +429,7 @@
                                                                                 </form>
                                                                             </section>
                                                                             
-                                                                            #if $stage[1][4]
+                                                                            #if len($stage[1]) == 5 and len($stage[1][4])
                                                                             <section>
                                                                                 <ul class='accordion'>
                                                                                     <li>
@@ -633,7 +633,9 @@
                                                                                                         </form>
                                                                                                     </section>
                                                                                                     
-                                                                                                    #if $stage[1][4]
+                                                                                                    
+                                                                                                    
+                                                                                                    #if len($stage[1]) == 5 and len($stage[1][4])
                                                                                                     <section>
                                                                                                         <ul class='accordion'>
                                                                                                             <li>
@@ -665,13 +667,6 @@
                                                                                                             <div class="tab" id="tab-log-case-init-${host}-${case.uid}-default-warning">
                                                                                                                 <code>$logs['warning']</code>
                                                                                                             </div>
-                                                                                                            #if $stage[1][4]
-                                                                                                            <div class="tab" id="tab-log-case-init-${host}-${case.uid}-default-core">
-                                                                                                                #for $x in $stage[1][4]
-                                                                                                                    <code>$x</code> <br /><br />
-                                                                                                                #end for
-                                                                                                            </div>
-                                                                                                            #end if
                                                                                                         </section>
                                                                                                         
                                                                                                         
@@ -764,13 +759,6 @@
                                                                                                                 <li>
                                                                                                                 <a href="#tab-log-case-run-${host}-${case.uid}-default-warning">Warnings</a>
                                                                                                                 </li>
-                                                                                                                #if $stage[1][4]
-                                                                                                                <li>
-                                                                                                                    <a href="#tab-log-case-run-${host}-${case.uid}-default-core">
-                                                                                                                        <span class="tag red core">Core Dump</span>
-                                                                                                                    </a>
-                                                                                                                </li>
-                                                                                                                #end if
                                                                                                             </ul>
                                                                                                         </nav>
                                                                                                         
@@ -795,7 +783,7 @@
                                                                                                         </form>
                                                                                                     </section>
                                                                                                     
-                                                                                                    #if $stage[1][4]
+                                                                                                    #if len($stage[1]) == 5 and len($stage[1][4])
                                                                                                     <section>
                                                                                                         <ul class='accordion'>
                                                                                                             <li>
@@ -827,13 +815,6 @@
                                                                                                             <div class="tab" id="tab-log-case-run-${host}-${case.uid}-default-warning">
                                                                                                                 <code>$logs['warning']</code>
                                                                                                             </div>
-                                                                                                            #if $stage[1][4]
-                                                                                                            <div class="tab" id="tab-log-case-run-${host}-${case.uid}-default-core">
-                                                                                                                #for $x in $stage[1][4]
-                                                                                                                    <code>$x</code> <br /><br />
-                                                                                                                #end for
-                                                                                                            </div>
-                                                                                                            #end if
                                                                                                         </section>
                                                                                                         
                                                                                                         
@@ -927,13 +908,6 @@
                                                                                                                 <li>
                                                                                                                 <a href="#tab-log-case-fin-${host}-${case.uid}-default-warning">Warnings</a>
                                                                                                                 </li>
-                                                                                                                #if $stage[1][4]
-                                                                                                                <li>
-                                                                                                                    <a href="#tab-log-case-fin-${host}-${case.uid}-default-core">
-                                                                                                                        <span class="tag red core">Core Dump</span>
-                                                                                                                    </a>
-                                                                                                                </li>
-                                                                                                                #end if
                                                                                                             </ul>
                                                                                                         </nav>
                                                                                                          
@@ -958,7 +932,7 @@
                                                                                                         </form>
                                                                                                     </section>
                                                                                                     
-                                                                                                    #if $stage[1][4]
+                                                                                                    #if len($stage[1]) == 5 and len($stage[1][4])
                                                                                                     <section>
                                                                                                         <ul class='accordion'>
                                                                                                             <li>
@@ -990,13 +964,6 @@
                                                                                                             <div class="tab" id="tab-log-case-fin-${host}-${case.uid}-default-warning">
                                                                                                                 <code>$logs['warning']</code>
                                                                                                             </div>
-                                                                                                            #if $stage[1][4]
-                                                                                                            <div class="tab" id="tab-log-case-fin-${host}-${case.uid}-default-core">
-                                                                                                                #for $x in $stage[1][4]
-                                                                                                                    <code>$x</code> <br /><br />
-                                                                                                                #end for
-                                                                                                            </div>
-                                                                                                            #end if
                                                                                                         </section>
                                                                                                         
                                                                                                         
@@ -1106,13 +1073,6 @@
                                                                                         <li>
                                                                                         <a href="#tab-log-fin-${host}-${run.uid}-default-warning">Warnings</a>
                                                                                         </li>
-                                                                                        #if $stage[1][4]
-                                                                                        <li>
-                                                                                            <a href="#tab-log-fin-${host}-${run.uid}-default-core">
-                                                                                                <span class="tag red core">Core Dump</span>
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        #end if
                                                                                     </ul>
                                                                                 </nav>
                                                                                 
@@ -1134,7 +1094,7 @@
                                                                                 </select>
                                                                             </form>
 
-                                                                            #if $stage[1][4]
+                                                                            #if len($stage[1]) == 5 and len($stage[1][4])
                                                                             <section>
                                                                                 <ul class='accordion'>
                                                                                     <li>
@@ -1166,13 +1126,6 @@
                                                                                 <div class="tab" id="tab-log-fin-${host}-${run.uid}-default-warning">
                                                                                     <code>$logs['warning']</code>
                                                                                 </div>
-                                                                                #if $stage[1][4]
-                                                                                <div class="tab" id="tab-log-fin-${host}-${run.uid}-default-core">
-                                                                                    #for $x in $stage[1][4]
-                                                                                        <code>$x</code> <br /><br />
-                                                                                    #end for
-                                                                                </div>
-                                                                                #end if
                                                                             </section>
                                                                             
                                                                             

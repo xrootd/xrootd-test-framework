@@ -1,7 +1,12 @@
 #!/bin/bash
 exec 2>&1
-trap 'previous_command=$this_command; this_command=$BASH_COMMAND' DEBUG
-trap 'e=$?; echo "command [ $previous_command ] failed with error code $e"; exit $e' ERR
+set -e
+set -o errtrace
+set -o pipefail
+
+function error_trap () {
+    echo "script terminated with with error code $1"
+}
 
 function coredump_config () {
     # Make sure corefiles are enabled and gdb is installed
@@ -31,5 +36,10 @@ function assert_fail () {
         log "$* failed as expected."
     fi
 }
+
+trap 'e=$?; error_trap $e; exit $e' ERR
+
+rm -f /var/lib/rpm/__db*
+rpm --rebuilddb
 
 coredump_config

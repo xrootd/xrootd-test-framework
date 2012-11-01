@@ -21,8 +21,8 @@
 #
 #-------------------------------------------------------------------------------
 #
-# File:    get_xrd_latest
-# Desc:    Retrieve XRootD RPMs from TeamCity (master branch)
+# File:    get_xrd_stable
+# Desc:    Retrieve XRootD RPMs from TeamCity (stable branch)
 #
 #-------------------------------------------------------------------------------
 
@@ -40,9 +40,9 @@ import xml.sax.handler
 from string import join
 
 TEAMCITY_SERVER = "https://teamcity-dss.cern.ch:8443"
-REST_URL = "/guestAuth/app/rest/builds/buildType:bt45"
+REST_URL = "/guestAuth/app/rest/builds/buildType:bt46"
 INTERNAL_RELEASE_AREA = "xrd_rpms"
-BUILD_TYPE_ID = "bt45"
+BUILD_TYPE_ID = "bt46"
 
 
 class BuildsListXMLHandler(xml.sax.handler.ContentHandler):
@@ -129,7 +129,8 @@ def main():
     url = TEAMCITY_SERVER + REST_URL
     url += "," + ",".join([ "personal:false",
                       "count:1",
-                      "status:SUCCESS" ])
+                      "status:SUCCESS",
+                      "pinned:true" ])
 
     LOGGER.info("Querying TeamCity server: %s for release information" % TEAMCITY_SERVER)
     xml_handler = BuildsListXMLHandler()

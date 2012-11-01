@@ -21,8 +21,8 @@
 #
 #-------------------------------------------------------------------------------
 #
-# File:    get_xrd_latest
-# Desc:    Retrieve XRootD RPMs from TeamCity (master branch)
+# File:    get_eos_latest
+# Desc:    Retrieve EOS RPMs from TeamCity (master branch)
 #
 #-------------------------------------------------------------------------------
 
@@ -40,9 +40,9 @@ import xml.sax.handler
 from string import join
 
 TEAMCITY_SERVER = "https://teamcity-dss.cern.ch:8443"
-REST_URL = "/guestAuth/app/rest/builds/buildType:bt45"
-INTERNAL_RELEASE_AREA = "xrd_rpms"
-BUILD_TYPE_ID = "bt45"
+REST_URL = "/guestAuth/app/rest/builds/buildType:bt55"
+INTERNAL_RELEASE_AREA = "eos_rpms"
+BUILD_TYPE_ID = "bt55"
 
 
 class BuildsListXMLHandler(xml.sax.handler.ContentHandler):

@@ -68,6 +68,7 @@ input,select {
 pre,code,kbd,samp {
     font-family: monospace, sans-serif;
     white-space: pre-wrap;
+    font-size: 90%;
 }
 
 html {
@@ -121,7 +122,7 @@ body,select,input,textarea {
 body {
     background: url('/webpage/img/bgs/bg_aside_main.png') repeat-y 263px 0;
     font-family: 'PT Sans', Arial, sans-serif;
-    font-size: 13px;
+    font-size: 12px;
     *font-size: small;
     zoom: 1;
 }
@@ -1302,7 +1303,7 @@ div.tab>img,div.tab>.image-frame img {
 }
 
 .tag.green {
-    background-color: #77ab13;
+    background-color: #6dc163;
 }
 
 .tag.orange {

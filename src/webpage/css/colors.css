@@ -42,7 +42,7 @@ section[role=navigation] header h2,article footer,.widget.add-new-widget a:hover
 }
 
 .widget.increase strong,#successes span {
-    color: #77ab13;
+    color: #27ab13;
 }
 
 .widget.increase strong,#failures span {
@@ -82,7 +82,7 @@ span.warning {
 }
 
 span.success {
-    color: #77AB13;
+    color: #27AB13;
 }
 
 span.error {

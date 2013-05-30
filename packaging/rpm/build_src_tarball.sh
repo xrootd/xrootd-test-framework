@@ -6,7 +6,7 @@ if [ -z "$1" ]; then
 fi
 echo "Copying files from $1"
 
-VERSION=0.1
+VERSION=0.2
 NAME=xrdtest-$VERSION
 
 ARCHIVE_DEST=$PWD

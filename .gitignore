@@ -9,3 +9,4 @@ ca.key
 .pydevproject
 *.pyc
 /nbproject/private/
+.idea

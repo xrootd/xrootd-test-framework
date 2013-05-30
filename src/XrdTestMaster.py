@@ -44,9 +44,9 @@ try:
     import shelve
     import cherrypy
     import re
-    
+
     from XrdTest.ClusterUtils import ClusterManagerException, extractClusterName, \
-        loadClusterDef, loadClustersDefs, Cluster 
+        loadClusterDef, loadClustersDefs, Cluster
     from XrdTest.SocketUtils import XrdMessage, PriorityBlockingQueue
     from XrdTest.TCPServer import MasterEvent, ThreadedTCPRequestHandler, \
         ThreadedTCPServer
@@ -78,7 +78,7 @@ class XrdTestMasterException(Exception):
         @param desc: description of an error
         '''
         self.desc = desc
-        
+
     def __str__(self):
         '''
         Returns textual representation of an error
@@ -93,7 +93,7 @@ class XrdTestMaster(Runnable):
     '''
     def __init__(self, configFile, backgroundMode):
         # Global configuration for master
-        self.config = None 
+        self.config = None
         # Default daemon configuration
         self.defaultConfFile = '/etc/XrdTest/XrdTestMaster.conf'
         self.defaultPidFile = '/var/run/XrdTestMaster.pid'
@@ -101,11 +101,11 @@ class XrdTestMaster(Runnable):
         # Must be a string, as config file param is a string - getattr() 
         # will get proper int val later
         self.logLevel = 'INFO'
-        
+
         # Default TCP server configuration
         self.serverIP = '0.0.0.0'
         self.serverPort = 20000
-        
+
         # Priority queue (locking) with incoming events, i.a. incoming messages
         # Referred to as: main events queue.
         self.recvQueue = PriorityBlockingQueue()
@@ -142,25 +142,25 @@ class XrdTestMaster(Runnable):
         # Constants
         self.C_SLAVE = 'slave'
         self.C_HYPERV = 'hypervisor'
-        
+
         if not configFile:
             configFile = self.defaultConfFile
         self.config = self.readConfig(configFile)
-        
+
         # setup logging level
         if self.config.has_option('daemon', 'log_level'):
             self.logLevel = self.config.get('daemon', 'log_level')
         logging.getLogger().setLevel(getattr(logging, self.logLevel))
-            
+
         # redirect output on daemon start
         if backgroundMode:
             if self.config.has_option('daemon', 'log_file_path'):
                 redirectOutput(self.config.get('daemon', 'log_file_path'))
-        
+
         LOGGER.info("Using config file: %s" % configFile)
-        
+
         self.loadSuiteSessions()
-            
+
     def loadSuiteSessions(self):
         if self.config.has_option('general', 'suite_sessions_file'):
                 self.suiteSessions = shelve.open(\
@@ -172,14 +172,14 @@ class XrdTestMaster(Runnable):
         self.suiteSessions.sync()
         self.suiteSessions.close()
         self.suiteSessions = None
-        
+
         active = self.config.get('general', 'suite_sessions_file')
-        
+
         archive = '%s.%s' % (active, datetime.now().strftime('%d%m%y-%H%M%S'))
         os.rename(active, archive)
-        
+
         self.suiteSessions = shelve.open(active)
-        
+
     def retrieveSuiteSession(self, suite_name):
         '''
         Retrieve test suite session from shelve self.suiteSessions
@@ -194,19 +194,19 @@ class XrdTestMaster(Runnable):
         except Exception, e:
                 LOGGER.error('Suite history database corruption, ' + \
                              '(delete suite history file): %s' % e)
-    
+
     def retrieveAllSuiteSessions(self):
         all = {}
-        
+
         active = self.config.get('general', 'suite_sessions_file')
         path = os.sep.join(active.split(os.sep)[:-1])
         prefix = active.split(os.sep)[-1:][0]
-        
+
         for f in os.listdir(path):
             if f.startswith(prefix):
                 s = shelve.open(os.path.join(path, f))
                 all.update({f:s})
-        
+
         return all
 
     def storeSuiteSession(self, test_suite_session):
@@ -217,7 +217,7 @@ class XrdTestMaster(Runnable):
         print len(self.suiteSessions)
         if len(self.suiteSessions) > 30:
             self.archiveSuiteSessions()
-            
+
         self.runningSuiteUids[test_suite_session.name] = test_suite_session.uid
         self.suiteSessions[test_suite_session.uid] = test_suite_session
         self.suiteSessions.sync()
@@ -243,20 +243,20 @@ class XrdTestMaster(Runnable):
         '''
         LOGGER.info("Loading definitions...")
 
-        for repo in map(lambda x: x.strip(), filter(lambda x: x, self.config.get('general', 'test-repos').split(','))): 
+        for repo in map(lambda x: x.strip(), filter(lambda x: x, self.config.get('general', 'test-repos').split(','))):
             repo = 'test-repo-' + repo
             LOGGER.info('Setting up repository %s' % repo)
-            
+
             # Pull remote git repo if necessary
             if self.config.get(repo, 'type') == 'git':
                 sync_remote_git(repo, self.config)
-                
+
             if self.config.has_option(repo, 'local_path'):
                 localPath = self.config.get(repo, 'local_path')
                 LOGGER.info('Using local path %s for test repository %s' % (localPath, repo))
             else:
-                LOGGER.error('No local path defined for repository %s' % repo) 
-            
+                LOGGER.error('No local path defined for repository %s' % repo)
+
             try:
                 # load cluster definitions
                 if self.config.has_option(repo, 'cluster_defs_path'):
@@ -265,13 +265,13 @@ class XrdTestMaster(Runnable):
                     clustDefPath = os.path.join(localPath, 'clusters')
                 else:
                     LOGGER.error('No cluster definitions found for repository %s' % repo)
-                    
+
                 clusters = loadClustersDefs(clustDefPath)
                 for clu in clusters:
                     self.clusters[clu.name] = clu
             except ClusterManagerException, e:
                 LOGGER.error("ClusterManager Exception: %s" % e)
-    
+
             try:
                 # load test suite definitions
                 if self.config.has_option(repo, 'suite_defs_path'):
@@ -280,7 +280,7 @@ class XrdTestMaster(Runnable):
                     suiteDefPath = os.path.join(localPath, 'test-suites')
                 else:
                     LOGGER.error('No test suite definitions found for repository %s' % repo)
-                
+
                 testSuites = loadTestSuiteDefs(suiteDefPath)
                 for ts in testSuites:
                     try:
@@ -294,7 +294,7 @@ class XrdTestMaster(Runnable):
                 suite.name = ts.name
                 suite.state = State((-1, e.desc))
                 self.testSuites[suite.name] = suite
-    
+
             # add jobs to scheduler if it's enabled
             if self.config.getint('scheduler', 'enabled') == 1:
                 for ts in self.testSuites.itervalues():
@@ -305,7 +305,7 @@ class XrdTestMaster(Runnable):
                         ts.jobFun = self.executeJob(ts.name)
                         ts.job = self.sched.add_cron_job(ts.jobFun, \
                                                  **(ts.schedule))
-    
+
                         LOGGER.info("Adding scheduler job for test suite %s at %s" % \
                                     (ts.name, str(ts.schedule)))
                     except Exception, e:
@@ -318,23 +318,23 @@ class XrdTestMaster(Runnable):
         @param dirEvent:
         '''
         p = os.path.join(dirEvent.path, dirEvent.name)
-        
+
         # The APScheduler event masks are highly unreliable. Also, we might want
         # to have a definition reloaded when a change is made to a non-uniquely
         # named file, such as suite_init.sh. So, when a change is detected, 
         # all definitions are reloaded from scratch.
-        
+
         LOGGER.info("Suite definition changed (%s) in %s" % (dirEvent.maskname, p))
-        
+
         for ts in self.testSuites.itervalues():
             if ts.jobFun:
                 self.sched.unschedule_func(ts.jobFun)
-                
+
         self.testSuites = dict()
-        
+
         self.loadDefinitions()
-        
-        
+
+
 #        (modName, ext, modPath, modFile) = extractSuiteName(p)
 #
 #        if ext != ".py":
@@ -363,7 +363,7 @@ class XrdTestMaster(Runnable):
 #            except Exception, e:
 #                LOGGER.error(("Error while defining test suite %s") % e)
 #
-#        #if file added or modified do tasks necessary while adding jobs 
+#        #if file added or modified do tasks necessary while adding jobs
 #        if dirEvent.maskname in addMasks or \
 #            dirEvent.maskname == "IN_MODIFY":
 #            try:
@@ -408,13 +408,13 @@ class XrdTestMaster(Runnable):
         @param dirEvent:
         '''
         p = os.path.join(dirEvent.path, dirEvent.name)
-        
+
         LOGGER.info("Cluster definition changed (%s) in %s: " % (dirEvent.maskname, p))
-        
+
         self.clusters = dict()
         self.loadDefinitions()
-        
-        
+
+
 #        (modName, ext, modPath, modFile) = extractClusterName(p)
 #
 #        if ext != ".py":
@@ -522,14 +522,14 @@ class XrdTestMaster(Runnable):
         tss = TestSuiteSession(testSuite)
         tss.state = State(TestSuite.S_IDLE)
         self.storeSuiteSession(tss)
-        
+
         # Set one hour timeout
         # TODO: make timeout value configurable per-suite
         self.sched.add_date_job(self.cancelTestSuite,
                            datetime.now() + timedelta(hours=1),
                            [suiteName, True])
         self.runningSuite = tss
-        
+
         clusterFound = False
         if self.clusters.has_key(clusterName):
             if self.clusters[clusterName].name == clusterName:
@@ -563,7 +563,7 @@ class XrdTestMaster(Runnable):
         if not clusterFound:
             LOGGER.error("No cluster with name " + str(clusterName) + " found")
             return False
-        
+
     def activateCluster(self, cluster):
         '''
         Start a cluster without attaching it to a particular test suite.
@@ -597,7 +597,7 @@ class XrdTestMaster(Runnable):
         else:
             LOGGER.error("No cluster with name " + str(cluster) + " found")
             return False
-        
+
     def selectHypervisor(self, hypervisor=None):
         # Select a random hypervisor.
         # Todo: choose hypervisor more intelligently
@@ -629,17 +629,17 @@ class XrdTestMaster(Runnable):
                     State(Cluster.S_STOPCOMMAND_SENT)
 
                 LOGGER.info("Cluster stop command sent to %s", hyperv)
-                
+
                 # Cluster was stopped - remove all slaves.
                 self.slaves = {}
-                                
+
                 # Remove timeout job. If we get here because a timeout job fired,
                 # then the job will have been unscheduled automatically.
                 try:
                     self.sched.unschedule_func(self.cancelTestSuite)
                 except:
                     pass
-                
+
                 return True
             return False
         if not clusterFound:
@@ -670,12 +670,12 @@ class XrdTestMaster(Runnable):
             LOGGER.debug("Some required machines are not " + \
                          "ready for the test suite: %s" % str(unreadyMachines))
             return False
-        
+
         # If we are here, the cluster must be active, i.e. all slaves are
         # connected to the master.
         for cluster in self.testSuites[test_suite_name].clusters:
             self.clusters[cluster].state = State(Cluster.S_ACTIVE)
-        
+
         testSlaves = self.getSuiteSlaves(testSuite)
 
         tss = self.retrieveSuiteSession(test_suite_name)
@@ -901,11 +901,11 @@ class XrdTestMaster(Runnable):
             LOGGER.info(str(client_type).title() + \
                         "s list (after handling incoming connection): " + \
                          ', '.join(clients_str))
-            
+
             for cluster in self.clusters.itervalues():
                 if cluster.state == Cluster.S_UNKNOWN_NOHYPERV:
                     cluster.state = State(Cluster.S_DEFINED)
-            
+
             if len(self.pendingJobs):
                 self.startNextJob()
 
@@ -940,19 +940,19 @@ class XrdTestMaster(Runnable):
         '''
         evt = MasterEvent(MasterEvent.M_JOB_ENQUEUE, test_suite_name)
         self.recvQueue.put((MasterEvent.PRIO_NORMAL, evt))
-        
+
     def runTestSuite(self, test_suite_name):
         '''Run a particular test suite '''
         self.enqueueJob(test_suite_name)
         self.startNextJob()
-    
+
     def cancelTestSuite(self, test_suite_name, timeout=False):
         '''Cancel a running test suite '''
         if len(self.pendingJobs):
             # Remove the suite's jobs from the queue.
             job = self.pendingJobs[0]
             self.removeJobs(job.groupId)
-            
+
             # Remove this run from the history, unless it timed out
             if timeout:
                 LOGGER.warning('Test suite %s timed out ' % test_suite_name)
@@ -962,19 +962,19 @@ class XrdTestMaster(Runnable):
                     tss.failed = True
                     self.suiteSessions[self.runningSuite.uid] = tss
                 self.suiteSessions.sync()
-                
+
             elif self.runningSuite and self.suiteSessions.has_key(self.runningSuite.uid):
                 del self.suiteSessions[self.runningSuite.uid]
                 self.suiteSessions.sync()
-            
+
             # Stop this suite's clusters.
             for cluster in self.testSuites[test_suite_name].clusters:
                 if self.clustersHypervisor.has_key(cluster):
                     self.stopCluster(cluster)
-                    
+
         if self.runningSuite and self.runningSuite.name == test_suite_name:
             self.runningSuite = None
-                
+
 
     def executeJob(self, test_suite_name):
         '''
@@ -1002,8 +1002,8 @@ class XrdTestMaster(Runnable):
             ts = self.testSuites[test_suite_name]
         except KeyError, e:
             LOGGER.error('KeyError: %s is not a known test suite' % e)
-            return 
-        
+            return
+
         for clustName in ts.clusters:
             j = Job(Job.START_CLUSTER, groupId, (clustName, test_suite_name))
             self.pendingJobs.append(j)
@@ -1194,17 +1194,17 @@ class XrdTestMaster(Runnable):
         '''
         # A slave is telling us the state of its test suite.
         if msg.name == XrdMessage.M_TESTSUITE_STATE:
-            
+
             if not self.slaves.has_key(msg.sender):
                 return
-            
+
             slave = self.slaves[msg.sender]
 
             #===================================================================
             # Test suite was initialized on slave
             #===================================================================
             if msg.state == State(TestSuite.S_SLAVE_INITIALIZED):
-                
+
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 tss.addStageResult(msg.state, msg.result,
                                    uid="suite_inited",
@@ -1216,16 +1216,16 @@ class XrdTestMaster(Runnable):
                 if msg.result[2] != "0":
                     # check if suite init error was already handled
                     if not suiteInError:
-                        
+
                         tss.state = State(TestSuite.S_INIT_ERROR)
                         LOGGER.error("%s slave initialization error in test suite %s" \
                                      % (slave.hostname, tss.name))
                         LOGGER.error(msg.result)
-                        
+
                         tss.sendEmailAlert(tss.failed, tss.state, \
                                            result=msg.result[0], \
                                            slave_name=slave.hostname)
-                        
+
                         # Set the state of all slaves to idle.
                         sSlaves = self.getSuiteSlaves(tss.suite)
                         for sSlave in sSlaves:
@@ -1234,7 +1234,7 @@ class XrdTestMaster(Runnable):
                         self.removeJobs(msg.jobGroupId, \
                                         Job.INITIALIZE_TEST_SUITE)
                         self.runningSuite = None
-                
+
                 # Init completed without error
                 else:
                     slave.state = State(Slave.S_SUITE_INITIALIZED)
@@ -1252,25 +1252,25 @@ class XrdTestMaster(Runnable):
                                            args=tss.name))
                         LOGGER.info("All slaves initialized in " + \
                                     " test suite %s" % tss.name)
-                        
+
                         tss.sendEmailAlert(msg.result[2], tss.state)
-                        
+
                 self.storeSuiteSession(tss)
-            
+
             #===================================================================
             # Test suite was finalized on slave
             #===================================================================
             elif msg.state == State(TestSuite.S_SLAVE_FINALIZED):
-                
+
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 slave.state = State(Slave.S_CONNECTED_IDLE)
                 LOGGER.info("%s finalized in test suite: %s" % \
                             (slave, tss.name))
-                
+
                 tss.addStageResult(msg.state, msg.result,
                                    uid="suite_finalized",
                                    slave_name=slave.hostname)
-                
+
                 tss.sendEmailAlert(msg.result[2], msg.state, \
                                    result=msg.result[0], \
                                    slave_name=slave.hostname)
@@ -1281,9 +1281,9 @@ class XrdTestMaster(Runnable):
                                             State(Slave.S_CONNECTED_IDLE))
                 if len(iSlaves) >= len(tss.suite.machines):
                     tss.state = State(TestSuite.S_ALL_FINALIZED)
-                    
+
                     tss.sendEmailAlert(tss.failed, tss.state)
-                    
+
                     self.removeJob(Job(Job.FINALIZE_TEST_SUITE, \
                                        args=tss.name))
                     # Suite has finished running, so unset these
@@ -1291,25 +1291,25 @@ class XrdTestMaster(Runnable):
                     self.runningSuite = None
 
                 self.storeSuiteSession(tss)
-                
+
             #===================================================================
             # Test case was initialized on slave
             #===================================================================
             elif msg.state == State(TestSuite.S_SLAVE_TEST_INITIALIZED):
-                
+
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 slave.state = State(Slave.S_TEST_INITIALIZED)
                 LOGGER.info("%s initialized test %s in suite %s" % \
                             (slave, msg.testName, tss.name))
-                
+
                 tss.addStageResult(msg.state, msg.result, msg.testUid,
                        slave_name=slave.hostname)
-                
+
                 tc = tss.cases[msg.testUid]
                 tss.sendEmailAlert(msg.result[2], msg.state, \
                                    result=msg.result[0], \
                                    slave_name=slave.hostname)
-                                
+
                 # Has the test case been initialized on all slaves? If so,
                 # remove the case_init job.
                 waitSlaves = self.getSuiteSlaves(tss.suite, test_case=tc)
@@ -1318,32 +1318,32 @@ class XrdTestMaster(Runnable):
                                             test_case=tc)
                 if len(waitSlaves) == len(readySlaves):
                     tss.state = State(TestSuite.S_ALL_TEST_INITIALIZED)
-                    
+
                     self.removeJob(Job(Job.INITIALIZE_TEST_CASE, \
                                        args=(tss.name, tc.name)))
-                
+
                 self.storeSuiteSession(tss)
-                
-            
+
+
             #===================================================================
             # Test case finished running on slave
             #===================================================================
             elif msg.state == State(TestSuite.S_SLAVE_TEST_RUN_FINISHED):
-                
+
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 slave.state = State(Slave.S_TEST_RUN_FINISHED)
                 LOGGER.info("%s finished run test %s in suite %s" % \
                             (slave, msg.testName, tss.name))
-                
+
                 tss.addStageResult(msg.state, msg.result,
                                    slave_name=slave.hostname,
                                    uid=msg.testUid)
-                
+
                 tc = tss.cases[msg.testUid]
                 tss.sendEmailAlert(msg.result[2], msg.state, \
                                    result=msg.result[0], test_case=tc, \
                                    slave_name=slave.hostname)
-                
+
                 # Has the tast case finished running on all slaves? If so, 
                 # remove the case_run job.
                 waitSlaves = self.getSuiteSlaves(tss.suite, test_case=tc)
@@ -1352,28 +1352,28 @@ class XrdTestMaster(Runnable):
                                             test_case=tc)
                 if len(waitSlaves) == len(readySlaves):
                     tss.state = State(TestSuite.S_ALL_TEST_RUN_FINISHED)
-                    
+
                     self.removeJob(Job(Job.RUN_TEST_CASE, \
                                        args=(tss.name, tc.name)))
-                
+
                 self.storeSuiteSession(tss)
-                
-            
+
+
             #===================================================================
             # Test case was finalized on slave
             #===================================================================
             elif msg.state == State(TestSuite.S_SLAVE_TEST_FINALIZED):
-                
+
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 slave.state = State(Slave.S_SUITE_INITIALIZED)
                 slave.state.suiteName = msg.suiteName
                 LOGGER.info("%s finalized test %s in suite %s" % \
                             (slave, msg.testName, tss.name))
-                
+
                 tss.addStageResult(msg.state, msg.result, \
                                    slave_name=slave.hostname, \
                                    uid=msg.testUid)
-                
+
                 tc = tss.cases[msg.testUid]
                 tss.sendEmailAlert(msg.result[2], msg.state, \
                                    result=msg.result[0], test_case=tc)
@@ -1386,21 +1386,21 @@ class XrdTestMaster(Runnable):
                                             test_case=tc)
                 if len(waitSlaves) == len(readySlaves):
                     tss.state = State(TestSuite.S_ALL_TEST_FINALIZED)
-                    
+
                     tss.sendEmailAlert(tc.failed, tss.state, \
                                        test_case=tc)
 
                     self.removeJob(Job(Job.FINALIZE_TEST_CASE, \
                                        args=(tss.name, tc.name)))
-                
+
                 self.storeSuiteSession(tss)
-                
-        
+
+
         # A slave is requesting its specific script tags.
         elif msg.name == XrdMessage.M_TAG_REQUEST:
             slave = msg.hostname
             self.handleTagRequest(slave)
-            
+
     def handleTagRequest(self, slavename):
         ''' TODO: '''
         for slave in self.slaves.itervalues():
@@ -1408,7 +1408,7 @@ class XrdTestMaster(Runnable):
                 msg = XrdMessage(XrdMessage.M_TAG_REPLY)
                 msg.proto = self.webInterface.protocol
                 msg.port = self.webInterface.port
-                
+
                 # Find disk definitions
                 disks = []
                 for cluster in self.clusters.itervalues():
@@ -1417,14 +1417,14 @@ class XrdTestMaster(Runnable):
                             if host.name == slavename \
                             and host.clusterName == cluster.name:
                                 disks = host.disks
-                
+
                 diskMountTemplate = '''
                     if [ ! -d %(mountpoint)s ]; then mkdir %(mountpoint)s; fi
 
                     mount -t ext4 -o user_xattr /dev/%(device)s %(mountpoint)s
                     chown $XROOTD_USER.$XROOTD_GROUP %(mountpoint)s
                     '''
-                
+
                 if len(disks):
                     msg.diskMounts = ''
                     for disk in disks:
@@ -1432,13 +1432,13 @@ class XrdTestMaster(Runnable):
                         values['mountpoint'] = disk.mountPoint
                         values['device'] = disk.device
                         msg.diskMounts += diskMountTemplate % values
-                        
+
                 # Add log file paths
                 if self.runningSuite and self.testSuites.has_key(self.runningSuite.name):
                     msg.logFiles = self.testSuites[self.runningSuite.name].logs
-                
+
                 slave.send(msg)
-        
+
     def procEvents(self):
         '''
         Main loop processing incoming MasterEvents from main events queue:
@@ -1486,7 +1486,7 @@ class XrdTestMaster(Runnable):
                         raise XrdTestMasterException("Unknown cluster " + \
                                                      "state received: " + \
                                                      msg.clusterName)
-                
+
                 elif msg.name == XrdMessage.M_HYPERVISOR_STATE:
                     if self.hypervisors.has_key(msg.sender):
                         self.hypervisors[msg.sender].states.append(msg.state)
@@ -1523,7 +1523,7 @@ class XrdTestMaster(Runnable):
         '''
         if self.config.has_option('server', 'ip'):
             self.serverIP = self.config.get('server', 'ip')
-                               
+
         if self.config.has_option('server', 'port'):
             self.serverPort = self.config.getint('server', 'port')
 
@@ -1548,13 +1548,13 @@ class XrdTestMaster(Runnable):
         server_thread = threading.Thread(target=server.serve_forever)
         server_thread.daemon = True
         server_thread.start()
-    
+
     def startWebInterface(self):
         '''
         TODO:
         '''
         webInterface = WebInterface(self.config, self)
-        
+
         cherrypyCfg = {
                         '/webpage/js': {
                         'tools.staticdir.on': True,
@@ -1577,33 +1577,33 @@ class XrdTestMaster(Runnable):
                         'tools.staticdir.dir' : webInterface.webroot + "/docs/docs/build/html/",
                         }
                        }
-        
+
         cherrypy.tree.mount(webInterface, "/", cherrypyCfg)
-            
+
         cherrypy.config.update({
                                 'server.socket_host': self.serverIP,
                                 'server.socket_port': webInterface.port,
                                 'environment': 'production',
                                 'log.screen': False,
                               })
-    
+
         if webInterface.protocol == 'https':
             cherrypy.config.update({
                                     'server.ssl_module': 'pyopenssl'
                                   })
-            
+
             if self.config.has_option('security', 'certfile'):
                 cherrypy.config.update({'server.ssl_certificate': \
                                         self.config.get('security', 'certfile')})
             else:
                 LOGGER.error('No SSL certificate defined in config file')
-                
+
             if self.config.has_option('security', 'keyfile'):
                 cherrypy.config.update({'server.ssl_private_key': \
                                         self.config.get('security', 'keyfile')})
             else:
                 LOGGER.error('No SSL private key defined in config file')
-    
+
         elif not webInterface.protocol == 'http':
             LOGGER.error('Unknown server protocol %s in config file' % webInterface.protocol)
             sys.exit(1)
@@ -1623,29 +1623,29 @@ class XrdTestMaster(Runnable):
         for name in loggers:
             if re.match('(cherry|pyinotify|apscheduler)', name):
                 logging.getLogger(name).setLevel(logging.ERROR)
-                
+
     def createCA(self):
         '''Generate CA key/cert suitable for signing slave CSRs.'''
         ca_certfile = None
         ca_keyfile = None
-        
+
         if self.config.has_option('security', 'ca_certfile'):
             ca_certfile = self.config.get('security', 'ca_certfile')
         else:
             LOGGER.error('No CA certificate defined in config file')
-            
+
         if self.config.has_option('security', 'ca_keyfile'):
             ca_keyfile = self.config.get('security', 'ca_keyfile')
         else:
             LOGGER.error('No CA private key defined in config file')
-        
+
         if not ca_certfile or not ca_keyfile:
             LOGGER.error('Master will not function properly as a CA. Test ' + \
                         'suites requiring signed GSI certs will fail.')
             return
         else:
             args = {'ca_certfile': ca_certfile, 'ca_keyfile': ca_keyfile}
-        
+
         create_ca = \
         '''
 CA_SUBJ="
@@ -1656,7 +1656,7 @@ localityName=Geneva
 commonName=master.xrd.test
 organizationalUnitName=Certificate Authority
 emailAddress=master@xrd.test"
-            
+
 # Generate the CA's private key/certificate
 openssl genrsa -out %(ca_keyfile)s 4096
 openssl req -new -batch -x509 -extensions v3_ca \
@@ -1673,14 +1673,14 @@ openssl req -new -batch -x509 -extensions v3_ca \
         '''
         for repo in map(lambda x: x.strip(), filter(lambda x: x, self.config.get('general', 'test-repos').split(','))):
             repo = 'test-repo-' + repo
-            
+
             if self.config.get(repo, 'type') == 'localfs':
                 self.watchedDirectories[repo] = DirectoryWatch(repo, self.config, \
                         self.fireReloadDefinitionsEvent, DirectoryWatch.watch_localfs)
             elif self.config.get(repo, 'type') == 'git':
                 self.watchedDirectories[repo] = DirectoryWatch(repo, self.config, \
                         self.fireReloadDefinitionsEvent, DirectoryWatch.watch_remote_git)
-            
+
             self.watchedDirectories[repo].watch()
 
     def run(self):
@@ -1698,20 +1698,20 @@ openssl req -new -batch -x509 -extensions v3_ca \
             self.sched.start()
         else:
             LOGGER.info("SCHEDULER is disabled.")
-            
+
         # Configure and start WWW Server - cherrypy
         self.startWebInterface()
-        
+
         # Configure ourselves as a CA.
         self.createCA()
-            
+
         # Load cluster and test suite definitions
         self.loadDefinitions()
 
         # Prepare notifiers for cluster and test suite definition 
         # directory monitoring (local and remote)
         self.watchDirectories()
-        
+
         # Process events incoming to the system MasterEvents
         self.procEvents()
 
@@ -1725,7 +1725,7 @@ openssl req -new -batch -x509 -extensions v3_ca \
             '''
             Reads configuration from given file or from default if None given.
             @param confFile: file with configuration
-            '''        
+            '''
             config = ConfigParser.ConfigParser()
             if os.path.exists(confFile):
                 try:
@@ -1737,7 +1737,7 @@ openssl req -new -batch -x509 -extensions v3_ca \
             else:
                 raise XrdTestMasterException("Config file %s could not be read" % confFile)
             return config
-    
+
 def main():
     '''
     Program begins here.

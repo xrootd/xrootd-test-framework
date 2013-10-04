@@ -1756,7 +1756,11 @@ def main():
         configFile = options.configFile
 
     # Initialize main class of the system
-    xrdTestMaster = XrdTestMaster(configFile, options.backgroundMode)
+    try:
+        xrdTestMaster = XrdTestMaster(configFile, options.backgroundMode)
+    except XrdTestMasterException, e:
+        print "Error:", e
+        sys.exit(1)
 
     # run the daemon
     if options.backgroundMode:

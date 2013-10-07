@@ -150,7 +150,7 @@ class Logger(object):
     def setup(self):
         logging.basicConfig(format='%(asctime)s %(levelname)s \t' + \
                     '[%(filename)s %(lineno)d] ' + \
-                    '%(message)s', datefmt="[%H:%M:%S]")
+                    '%(message)s', datefmt='[%a, %d %b %Y %H:%M:%S]')
         return logging.getLogger(self.filename)
         
 def redirectOutput(logFile):

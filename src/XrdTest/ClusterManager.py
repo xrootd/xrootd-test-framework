@@ -50,7 +50,7 @@ try:
     
     from ClusterUtils import ClusterManagerException, Cluster
     from ClusterUtils import ERR_CONNECTION, ERR_ADD_HOST, ERR_CREATE_NETWORK
-    from Utils import SafeCounter, Command, State
+    from Utils import Command, State
     from SocketUtils import XrdMessage
     from copy import deepcopy
     from libvirt import libvirtError
@@ -106,13 +106,12 @@ class ClusterManager:
         if err:
             LOGGER.error(err)
 
-    def copyImg(self, huName, safeCounter=None):
+    def copyImg(self, huName):
         '''
         Method runnable in separate threads, to separate copying of source
         operating system image to a temporary image.
         
         @param huName: host.uname - host unique name
-        @param safeCounter: thread safe counter to signalize this run finished
         '''
         (host, cacheImg, hostObj) = self.hosts[huName]
         dip = self.clusters[hostObj.clusterName].defaultHost.bootImage
@@ -137,8 +136,6 @@ class ClusterManager:
         else:
             LOGGER.info(("Disk image %s  (for %s) copied to cache file %s") \
                         % (dip, hostObj.name, cacheImg))
-            if safeCounter:
-                safeCounter.inc()
                 
     def defineHost(self, host):
         '''
@@ -371,13 +368,9 @@ class ClusterManager:
         self.updateState(Cluster.S_CREATING_SLAVES, cluster.name)
         try:
             if cluster.hosts and len(cluster.hosts):
-                copyThreads = {}
-                # thread safe counter to count how many machines have been
-                # copied by additional threads, thus can continue creation process
-                safeCounter = SafeCounter()           
                 # number of machines that need additional thread to copy their 
                 # source images
-                needCopy = 0    
+                needCopy = []
                 
                 waitingForCreate = []
                 
@@ -409,23 +402,16 @@ class ClusterManager:
                             # make a copy from original image
                             LOGGER.info("Cached image doesn't exist for machine %s. Copying from %s" % \
                                         (h.uname, h.bootImage))
-                            sys.setcheckinterval(500)
-                            needCopy += 1
-                            # create and start thread copying given virtual machine
-                            # image to the cache
-                            copyThreads[h.uname] = \
-                                threading.Thread(target=self.copyImg, args=\
-                                                 (h.uname, safeCounter))
-                            copyThreads[h.uname].start()
+                            needCopy.append( h )
 
                 #wait for all threads to copy images
-                if needCopy > 0:
-                    n = 0
-                    while(n < needCopy):
-                        n = safeCounter.get()
-                        LOGGER.info("Machines images copied: %s of %s" % \
-                                    (n, needCopy))
-                    sys.setcheckinterval(100)
+                n = 0
+                for h in needCopy:
+                    self.copyImg(h.uname)
+                    n += 1
+                    LOGGER.info("Machines images copied: %d of %d" % (n, len(needCopy)))
+
+
                 # remember locally domains created correctly to remove them
                 # in case one can't be created
                 hostsCreated = []

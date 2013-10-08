@@ -346,6 +346,10 @@ class ClusterManager:
         same name) - it removes it completely. The same story regards network.
         @param cluster: cluster definition object
         '''
+        self.removeDanglingNetwork(cluster.network)
+        for h in cluster.hosts:
+            self.removeDanglingHost(h)
+
         if self.clusters.has_key(cluster.name):
             raise ClusterManagerException(("Cluster %s already exists." + \
                               " Needs to be destroyed first.") % \
@@ -353,7 +357,6 @@ class ClusterManager:
             
         self.clusters[cluster.name] = cluster
         try:
-            self.removeDanglingNetwork(cluster.network)
             net = self.createNetwork(cluster.network, cluster.name)
         except ClusterManagerException, e:
             LOGGER.error(e)
@@ -375,7 +378,6 @@ class ClusterManager:
                 waitingForCreate = []
                 
                 for h in cluster.hosts:
-                    self.removeDanglingHost(h)
                     self.defineHost(h)
                     waitingForCreate.append(h.uname)
                         

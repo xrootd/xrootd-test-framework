@@ -812,6 +812,10 @@ article footer {
     background: url('/webpage/img/bgs/bg_sidetab.png') repeat-y -21px 0px;
 }
 
+.sidetabs.thin.minwidth {
+    min-width: 950px;
+}
+
 .sidetab-switch {
     float: left;
     width: 181px;

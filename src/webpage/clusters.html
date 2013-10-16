@@ -226,7 +226,6 @@
                                                                               <th>Cached</th>
                                                                               <th>Arch</th>
                                                                               <th>uuid</th>
-                                                                              <th>Load balanced</th>   
                                                                           </tr>
                                                                           <tr>
                                                                               <td>$host.name</td>
@@ -240,7 +239,6 @@
                                                                               <td>$host.cacheBootImage</td>
                                                                               <td>$host.arch</td>
                                                                               <td>$host.uuid</td>
-                                                                              <td>${'yes' if $host in $cluster.network.lbHosts else 'no'}</td>
                                                                           </tr>
                                                                       </table>
                                                                   </div>
@@ -310,7 +308,6 @@
                                                         <th>Bridge IP</th>
                                                         <th>Netmask</th>
                                                         <th>DHCP range</th>
-                                                        <th>Load balancing alias</th>
                                                     </tr>
                                                     <tr>
                                                         <td>$cluster.network.name</td>
@@ -320,7 +317,6 @@
                                                         <td>($cluster.network.DHCPRange[0],
                                                             $cluster.network.DHCPRange[1])
                                                         </td>
-                                                        <td>${cluster.network.lbAlias if cluster.network.lbAlias else '-'}</td>
                                                     </tr>
                                                 </table>
                                           </div>

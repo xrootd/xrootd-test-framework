@@ -532,23 +532,18 @@ def loadClustersDefs(path):
     clusters = []
     if os.path.exists(path):
         for f in os.listdir(path):
-            if not f.startswith('cluster'):
+            if not f.startswith('cluster') or not f.endswith('.py'):
                 continue
-            fp = path + os.sep + f
-            
-            for c in os.listdir(fp):
-                if not c.startswith('cluster'):
-                    continue
-                cp = fp + os.sep + c
-                try:
-                    clu = loadClusterDef(cp, clusters)
-                    if clu:
-                        clu.state = State(Cluster.S_DEFINED)
-                        clusters.append(clu)
-                except ClusterManagerException, e:
-                    clu = Cluster()
-                    clu.name = f
-                    clu.state = State((-1, e.desc))
+            cp = path + os.sep + f
+            try:
+                clu = loadClusterDef(cp, clusters)
+                if clu:
+                    clu.state = State(Cluster.S_DEFINED)
                     clusters.append(clu)
+            except ClusterManagerException, e:
+                clu = Cluster()
+                clu.name = f
+                clu.state = State((-1, e.desc))
+                clusters.append(clu)
 
     return clusters

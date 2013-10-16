@@ -34,7 +34,7 @@ try:
     import sys
     import socket
     import random
-    
+    from uuid import uuid1    
     from Utils import State
     from string import join
 except ImportError, e:
@@ -112,28 +112,26 @@ class Network(object):
 """
     xmlDnsHostPattern = """
       <host ip="%(ip)s">
-          %(lbalias)s
           <hostname>%(hostname)s</hostname>
+          %(aliases)s
       </host>
 """
 
-    def __init__(self):
-        self.name = ""
-        self.bridgeName = ""
+    def __init__(self, name, clusterName):
+        self.name = name
+        self.bridgeName = "virbr_" + str(uuid1())[:8]
         self.ip = ""
         self.netmask = ""
         self.DHCPRange = ("", "")   #(begin_address, end_address)
         self.DHCPHosts = []
         self.DnsHosts = []
-        # Load balancing alias
-        self.lbAlias = ""
-        # Hosts to be balanced under alias
         self.lbHosts = []
 
+        self.clusterName = clusterName
         self.xrdTestMasterIP = socket.gethostbyname(socket.gethostname())
 
     def addDnsHost(self, host):
-        hostup = (host.ip, host.name)
+        hostup = (host.ip, host.name, host.aliases)
         self.DnsHosts.append(hostup)
 
     def addDHCPHost(self, host):
@@ -171,7 +169,7 @@ class Network(object):
     def xmlDesc(self):
         hostsXML = ""
         dnsHostsXML = ""
-        lbAliasTag = ""
+        aliasXML = "<hostname>%s</hostname>\n"
 
         values = dict()
         for h in self.DHCPHosts:
@@ -179,10 +177,10 @@ class Network(object):
             hostsXML = hostsXML + Network.xmlHostPattern % values
 
         for dns in self.DnsHosts:
-            for host in self.lbHosts:
-                if dns[1] == host.name:
-                    lbAliasTag = '<hostname>%s</hostname>' % self.lbAlias
-            values = {"ip": dns[0], "hostname": dns[1], "lbalias": lbAliasTag}
+            aliasTag = ""
+            for alias in dns[2]:
+                aliasTag += aliasXML % alias
+            values = {"ip": dns[0], "hostname": dns[1], "aliases": aliasTag}
             dnsHostsXML = dnsHostsXML + Network.xmlDnsHostPattern % values
 
         values = {"name": self.uname,
@@ -263,7 +261,8 @@ class Host(object):
 """
 
     def __init__(self, name="", ip="", net="", ramSize="", arch="", \
-                 bootImage=None, cacheBootImage=True, emulatorPath="", uuid=""):
+                 bootImage=None, cacheBootImage=True, emulatorPath="", uuid="",
+                 aliases=[]):
         self.uuid = uuid
         self.name = name
         self.ip = ip
@@ -274,6 +273,7 @@ class Host(object):
         self.cacheBootImage = cacheBootImage
         self.net = net
         self.emulatorPath = emulatorPath
+        self.aliases = aliases
 
         #filled automatically
         self.clusterName = ""
@@ -359,17 +359,16 @@ class Cluster(Utils.Stateful):
     Represents a cluster comprised of hosts connected through network.
     '''
 
-    def __init__(self):
+    def __init__(self, name):
         Utils.Stateful.__init__(self)
         self.hosts = []
-        self.name = None
+        self.name = name
         self.info = None
         self.defaultHost = Host()
-        self.__network = Network()
+        self.defaultHost.net = self.name + '_net'
+        self.__network = Network( self.defaultHost.net, name )
 
     def addHost(self, host):
-        from uuid import uuid1
-
         if not self.network:
             raise ClusterManagerException(('First assign network ' + \
                                            'before you add hosts to cluster' + \
@@ -388,6 +387,7 @@ class Cluster(Utils.Stateful):
                                            'cluster %s has disk image ' + \
                                           'defined') % (host.name, self.name))
         host.clusterName = self.name
+        self.network.addHost(host)
         self.hosts.append(host)
 
     def addHosts(self, hosts):
@@ -485,7 +485,7 @@ def extractClusterName(path):
     (modName, ext) = os.path.splitext(modFile)
     return (modName, ext, modPath, modFile)
 
-def loadClusterDef(fp, clusters, validateWithRest=True):
+def loadClusterDef(fp, clusters = [], validateWithRest=True):
     (modName, ext, modPath, modFile) = extractClusterName(fp)
 
     cl = None
@@ -510,9 +510,6 @@ def loadClusterDef(fp, clusters, validateWithRest=True):
             cl.validateStatic()
             if validateWithRest:
                 cl.validateAgainstSystem(clusters)
-        except AttributeError, e:
-            raise ClusterManagerException("AttributeError in cluster defini" + \
-                  "tion file %s: %s" % (modFile, e))
         except ImportError, e:
             raise ClusterManagerException("Can't import %s: %s." % \
                                            (modName, e))
@@ -520,9 +517,6 @@ def loadClusterDef(fp, clusters, validateWithRest=True):
             raise ClusterManagerException("Name error during " + \
                                           "cluster %s import: %s." % \
                                            (modName, e))
-        except Exception, e:
-            raise ClusterManagerException("Error during" + \
-                  " test suite %s import: %s" % (modFile, e))
     elif ext == ".pyc":
         return None
     else:

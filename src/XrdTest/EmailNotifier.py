@@ -163,9 +163,12 @@ class EmailNotifier(object):
     def _send(self, msg, recipients):
         msg['To'] = ', '.join([r for r in recipients])
         # Send the message via local SMTP server.
-        s = smtplib.SMTP('localhost')
-        s.sendmail(self.SENDER, recipients, msg.as_string())
-        s.quit()
+        try:
+            s = smtplib.SMTP('localhost')
+            s.sendmail(self.SENDER, recipients, msg.as_string())
+            s.quit()
+        except Exception, e:
+            LOGGER.error('Cannot send notification email: %s' % str(e))
     
     
 class EmailNotification(object):

@@ -547,8 +547,8 @@ def loadClustersDefs(path):
                     clu.state = State(Cluster.S_DEFINED)
                     clusters.append(clu)
             except ClusterManagerException, e:
-                clu = Cluster()
-                clu.name = f
+                LOGGER.error("Error in cluster definition %s: %s" % (f, str(e)))
+                clu = Cluster(f+"_BROKEN")
                 clu.state = State((-1, e.desc))
                 clusters.append(clu)
 

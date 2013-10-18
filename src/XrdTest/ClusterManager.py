@@ -417,6 +417,10 @@ class ClusterManager:
                 # remember locally domains created correctly to remove them
                 # in case one can't be created
                 hostsCreated = []
+
+                for host in cluster.hosts:
+                    self.createDisks(host)
+
                 try:
                     # start machines - in libvirt aka create domains
                     for huname in waitingForCreate:
@@ -468,6 +472,32 @@ class ClusterManager:
                                           "removal: %s" % removeErr) 
         else:
             del self.clusters[clusterName]
+
+    def createDisks(self, host):
+        if len(host.disks):
+            LOGGER.info('Creating storage disks to machine %s' % host.uname)
+            
+            for disk in host.disks:
+                try:
+                    self.createDisk(host.uname, disk.name, disk.size, disk.cache)
+                    LOGGER.info('Created storage disk.')
+                except (ClusterManagerException, Exception), e:
+                    raise ClusterManagerException('Failure creating disks: %s' % e)
+
+    def createDisk(self, host, diskName, diskSize, cache):
+        diskPath = os.path.join(self.findStoragePool(self.storagePool), \
+                                '%s_%s' % (host, diskName))
+
+        if not os.path.exists(diskPath) or not cache:
+            LOGGER.info('Creating storage disk %s_%s' % (host, diskName))
+
+            try:
+                with open(diskPath, 'w') as f:
+                    f.truncate(int(diskSize))
+                Command('mkfs.ext4 -F %s' % diskPath, '.').execute()
+            except Exception, e:
+                LOGGER.error(e)
+                raise ClusterManagerException('Disk creation error: %s' % e)
             
     def attachDisks(self, host):
         
@@ -476,29 +506,17 @@ class ClusterManager:
             
             for disk in host.disks:
                 try:
-                    self.attachDisk(host.uname, disk.name, disk.size, disk.cache, \
-                                     disk.device)
+                    self.attachDisk(host.uname, disk.name, disk.device)
                     LOGGER.info('Attached storage disk.')
                 except (ClusterManagerException, Exception), e:
                     raise ClusterManagerException('Failure attaching disks: %s' % e)
-            
-    def attachDisk(self, host, diskName, diskSize, cache, device):
+        
+    def attachDisk(self, host, diskName, device):
         ''' 
         :param host: name of the host to attach to
         '''
         diskPath = os.path.join(self.findStoragePool(self.storagePool), \
                                 '%s_%s' % (host, diskName))
-        
-        if not os.path.exists(diskPath) or not cache:
-            LOGGER.info('Creating storage disk %s_%s' % (host, diskName))
-            
-            try:
-                with open(diskPath, 'w') as f:
-                    f.truncate(int(diskSize))
-                Command('mkfs.ext4 -F %s' % diskPath, '.').execute()
-            except Exception, e:
-                LOGGER.error(e)
-                raise ClusterManagerException('Disk creation error: %s' % e)
         
         output = Command('virsh attach-disk %s %s %s' % 
                 (host, diskPath, device), '.').execute()

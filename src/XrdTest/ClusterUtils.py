@@ -34,6 +34,7 @@ try:
     import sys
     import socket
     import random
+    import hashlib
     from uuid import uuid1    
     from Utils import State
     from string import join
@@ -119,7 +120,9 @@ class Network(object):
 
     def __init__(self, name, clusterName):
         self.name = name
-        self.bridgeName = "virbr_" + str(uuid1())[:8]
+        m = hashlib.md5()
+        m.update(name)
+        self.bridgeName = "virbr_" + m.hexdigest()[:8]
         self.ip = ""
         self.netmask = ""
         self.DHCPRange = ("", "")   #(begin_address, end_address)

@@ -359,7 +359,7 @@ class TestSuiteSession(Stateful):
         Retrieve test case stages for given test case unique id.
         @param test_case_uid:
         '''
-        stages = [v for v in self.stagesResults if v[2] == test_case_uid]
+        stages = [v for v in self.stagesResults if v[2].endswith(test_case_uid)]
         return stages
     
     def sendEmailAlert(self, failure, state, result=None,\

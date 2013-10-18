@@ -105,18 +105,18 @@ class TestSuite(Stateful):
 
     S_INIT_ERROR = (-22, "Test suite initialization error")
     
-    def __init__(self):
+    def __init__(self, name):
         Stateful.__init__(self)
         # Name of test suite: must be the same as the name of test suite definition 
         # file
-        self.name = ""      
+        self.name = name
         # Name of test suite readable for humans, only for informational need
-        self.descName = ""  
+        self.descName = ""
         # Define when the test should be run (cron style). Reference: APScheduler 
         # cronschedule
-        self.schedule = {}             
+        self.schedule = {}
         # A list of virtual clusters needed by the test to be spawned on a hypervisor
-        self.clusters = []  
+        self.clusters = []
         # Names of machines, including the virtual machines that are needed by the 
         # test
         self.machines = []  
@@ -497,9 +497,6 @@ def loadTestSuiteDef(path):
             fun = getattr(mod, method)
             obj = fun()
 
-            if obj.name != modName:
-                raise TestSuiteException(('Test Suite %s in file %s ' + \
-                  'does not match filename.') % (obj.name, modFile))
             obj.definitionFile = modFile
             
             # Resolve script URLs into actual text
@@ -544,14 +541,20 @@ def loadTestSuiteDefs(path):
     
     if os.path.exists(path):
         for f in os.listdir(path):
-            fp = path + os.sep + f + os.sep + f + '.py'
+            tsDir = path + os.sep + f
+            if not os.path.isdir(tsDir):
+                continue
+
+            fp = path + os.sep + f + os.sep + 'test_suite.py'
+            if not os.path.isfile(fp):
+                continue
             try:
                 ts = loadTestSuiteDef(fp)
                 if ts:
                     ts.state = State(TestSuite.S_DEF_OK)
                     testSuites.append(ts)
             except TestSuiteException, e:
-                ts = TestSuite()
+                ts = TestSuite(f+"_ERROR")
                 ts.name = f
                 ts.state = State((-1, e.desc))
                 testSuites.append(ts)

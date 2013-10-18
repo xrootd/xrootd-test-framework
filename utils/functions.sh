@@ -1,20 +1,6 @@
 #!/bin/bash
 
 #-------------------------------------------------------------------------------
-# Set up the output streams and core directories
-#-------------------------------------------------------------------------------
-exec 2>&1
-
-yum -y -q install gdb > /dev/null
-    
-if ! grep -q "kernel.core_pattern" /etc/sysctl.conf; then
-   echo "kernel.core_pattern=/tmp/cores/core.%h.%p.%t" >> /etc/sysctl.conf
-fi
-
-mkdir -p /tmp/cores; chmod a+rwx /tmp/cores
-ulimit -c unlimited
-
-#-------------------------------------------------------------------------------
 # Logging
 #-------------------------------------------------------------------------------
 function log()
@@ -38,3 +24,17 @@ function run()
     exit 1
   fi
 }
+
+#-------------------------------------------------------------------------------
+# Set up the output streams and core directories
+#-------------------------------------------------------------------------------
+exec 2>&1
+
+run yum -y -q install gdb > /dev/null
+    
+if ! grep -q "kernel.core_pattern" /etc/sysctl.conf; then
+   echo "kernel.core_pattern=/tmp/cores/core.%h.%p.%t" >> /etc/sysctl.conf
+fi
+
+run mkdir -p /tmp/cores; chmod a+rwx /tmp/cores
+ulimit -c unlimited

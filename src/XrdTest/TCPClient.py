@@ -116,6 +116,7 @@ class Slave(TCPClient):
     S_SUITE_FINALIZE_SENT = (12, "Test suite finalize sent to slave")
 
     S_TEST_INIT_SENT = (21, "Sent test case init to slave")
+    S_TEST_INIT_ERROR = (27, "Test case initialization error")
     S_TEST_INITIALIZED = (22, "Test case initialized")
     S_TEST_RUN_SENT = (23, "Sent test case run to slave")
     S_TEST_RUN_FINISHED = (24, "Test case run finished")

@@ -935,8 +935,7 @@ class XrdTestMaster(Runnable):
         Add the Run Job event to main events queue of controll thread.
         Method to be used by different thread.
 
-        @param test_suite_name:
-        @return: None
+        @param test_suite_name:        @return: None
         '''
         evt = MasterEvent(MasterEvent.M_JOB_ENQUEUE, test_suite_name)
         self.recvQueue.put((MasterEvent.PRIO_NORMAL, evt))
@@ -1200,53 +1199,43 @@ class XrdTestMaster(Runnable):
 
             slave = self.slaves[msg.sender]
 
-            #===================================================================
-            # Test suite was initialized on slave
-            #===================================================================
+            #-------------------------------------------------------------------
+            # Got the initialization status from the slave
+            #-------------------------------------------------------------------
             if msg.state == State(TestSuite.S_SLAVE_INITIALIZED):
 
                 tss = self.retrieveSuiteSession(msg.suiteName)
                 tss.addStageResult(msg.state, msg.result,
                                    uid="suite_inited",
                                    slave_name=slave.hostname)
-                suiteInError = (tss.state == TestSuite.S_INIT_ERROR)
 
-                # check if any errors occurred during init, 
-                # if so release all slaves and remove proper pending jobs
+
+                #---------------------------------------------------------------
+                # Check if the execution resulted with an error
+                #---------------------------------------------------------------
                 if msg.result[2] != "0":
-                    # check if suite init error was already handled
-                    if not suiteInError:
+                    tss.state             = State(TestSuite.S_INIT_ERROR)
+                    slave.state           = State(Slave.S_SUITE_INITIALIZED)
+                    slave.state.suiteName = msg.suiteName
 
-                        tss.state = State(TestSuite.S_INIT_ERROR)
-                        LOGGER.error("%s slave initialization error in test suite %s" \
+                    LOGGER.error("%s slave initialization error in test suite %s" \
                                      % (slave.hostname, tss.name))
-                        LOGGER.error(msg.result)
 
-                        tss.sendEmailAlert(tss.failed, tss.state, \
-                                           result=msg.result[0], \
-                                           slave_name=slave.hostname)
-
-                        # Set the state of all slaves to idle.
-                        sSlaves = self.getSuiteSlaves(tss.suite)
-                        for sSlave in sSlaves:
-                            sSlave.state = State(Slave.S_CONNECTED_IDLE)
-
-                        self.removeJobs(msg.jobGroupId, \
-                                        Job.INITIALIZE_TEST_SUITE)
-                        self.runningSuite = None
-
-                # Init completed without error
+                    LOGGER.error(msg.result)
                 else:
-                    slave.state = State(Slave.S_SUITE_INITIALIZED)
+                    slave.state           = State(Slave.S_SUITE_INITIALIZED)
                     slave.state.suiteName = msg.suiteName
                     LOGGER.info("%s initialized in test suite %s" % \
                                 (slave, tss.name))
 
-                    # Are all slaves initialized? If so, remove the suite_init 
-                    # job.
-                    iSlaves = self.getSuiteSlaves(tss.suite,
-                                            State(Slave.S_SUITE_INITIALIZED))
-                    if len(iSlaves) == len(tss.suite.machines):
+                #---------------------------------------------------------------
+                # Wait for other slaves and react accordingly
+                #---------------------------------------------------------------
+                iSlaves = self.getSuiteSlaves(tss.suite,
+                                              State(Slave.S_SUITE_INITIALIZED))
+                if len(iSlaves) == len(tss.suite.machines):
+                    if tss.state != State(TestSuite.S_INIT_ERROR):
+
                         tss.state = State(TestSuite.S_ALL_INITIALIZED)
                         self.removeJob(Job(Job.INITIALIZE_TEST_SUITE, \
                                            args=tss.name))
@@ -1255,6 +1244,20 @@ class XrdTestMaster(Runnable):
 
                         tss.sendEmailAlert(msg.result[2], tss.state)
 
+
+                        tss.sendEmailAlert(tss.failed, tss.state, \
+                                           result=msg.result[0], \
+                                           slave_name=slave.hostname)
+                    else:
+                        # Set the state of all slaves to idle.
+                        sSlaves = self.getSuiteSlaves(tss.suite)
+                        for sSlave in sSlaves:
+                            sSlave.state = State(Slave.S_CONNECTED_IDLE)
+
+                        self.removeJobs(msg.jobGroupId, \
+                                        Job.INITIALIZE_TEST_SUITE)
+                        self.runningSuite = None
+                        
                 self.storeSuiteSession(tss)
 
             #===================================================================
@@ -1292,17 +1295,23 @@ class XrdTestMaster(Runnable):
 
                 self.storeSuiteSession(tss)
 
-            #===================================================================
-            # Test case was initialized on slave
-            #===================================================================
+            #-------------------------------------------------------------------
+            # Test case initialized on a slave
+            #-------------------------------------------------------------------
             elif msg.state == State(TestSuite.S_SLAVE_TEST_INITIALIZED):
 
                 tss = self.retrieveSuiteSession(msg.suiteName)
-                slave.state = State(Slave.S_TEST_INITIALIZED)
-                LOGGER.info("%s initialized test %s in suite %s" % \
-                            (slave, msg.testName, tss.name))
 
-                tss.addStageResult(msg.state, msg.result, msg.testUid,
+                if msg.result[2] != "0":
+                    slave.state = State(Slave.S_TEST_INIT_ERROR)
+                    LOGGER.info("%s error initialing test %s in suite %s" % \
+                                (slave, msg.testName, tss.name))
+                else:
+                    slave.state = State(Slave.S_TEST_INITIALIZED)
+                    LOGGER.info("%s initialized test %s in suite %s" % \
+                                (slave, msg.testName, tss.name))
+
+                tss.addStageResult(msg.state, msg.result, "init_"+msg.testUid,
                        slave_name=slave.hostname)
 
                 tc = tss.cases[msg.testUid]
@@ -1316,11 +1325,26 @@ class XrdTestMaster(Runnable):
                 readySlaves = self.getSuiteSlaves(tss.suite, \
                                             State(Slave.S_TEST_INITIALIZED),
                                             test_case=tc)
-                if len(waitSlaves) == len(readySlaves):
-                    tss.state = State(TestSuite.S_ALL_TEST_INITIALIZED)
+                errorSlaves = self.getSuiteSlaves(tss.suite, \
+                                            State(Slave.S_TEST_INIT_ERROR),
+                                            test_case=tc)
 
-                    self.removeJob(Job(Job.INITIALIZE_TEST_CASE, \
-                                       args=(tss.name, tc.name)))
+                if len(waitSlaves) == len(readySlaves+errorSlaves):
+                    if not len( errorSlaves ):
+                        tss.state = State(TestSuite.S_ALL_TEST_INITIALIZED)
+
+                        self.removeJob(Job(Job.INITIALIZE_TEST_CASE, \
+                                           args=(tss.name, tc.name)))
+                    else:
+                        tss.state = State(TestSuite.S_ALL_INITIALIZED)
+                        sSlaves = self.getSuiteSlaves(tss.suite)
+                        for sSlave in sSlaves:
+                            sSlave.state = State(Slave.S_CONNECTED_IDLE)
+
+                        self.removeJobs(msg.jobGroupId,
+                                        Job.INITIALIZE_TEST_CASE,
+                                        tc.name)
+                        self.runningSuite = None
 
                 self.storeSuiteSession(tss)
 
@@ -1337,7 +1361,7 @@ class XrdTestMaster(Runnable):
 
                 tss.addStageResult(msg.state, msg.result,
                                    slave_name=slave.hostname,
-                                   uid=msg.testUid)
+                                   uid="run_"+msg.testUid)
 
                 tc = tss.cases[msg.testUid]
                 tss.sendEmailAlert(msg.result[2], msg.state, \
@@ -1372,7 +1396,7 @@ class XrdTestMaster(Runnable):
 
                 tss.addStageResult(msg.state, msg.result, \
                                    slave_name=slave.hostname, \
-                                   uid=msg.testUid)
+                                   uid="finit_"+msg.testUid)
 
                 tc = tss.cases[msg.testUid]
                 tss.sendEmailAlert(msg.result[2], msg.state, \

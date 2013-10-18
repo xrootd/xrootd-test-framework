@@ -265,11 +265,14 @@ class Host(object):
 
     def __init__(self, name="", ip="", net="", ramSize="", arch="", \
                  bootImage=None, cacheBootImage=True, emulatorPath="", uuid="",
-                 aliases=[]):
+                 aliases=[], mac=""):
         self.uuid = uuid
         self.name = name
         self.ip = ip
-        self.mac = self.randMac()
+        if len(mac):
+            self.mac = mac
+        else:
+            self.mac = self.randMac()
         self.ramSize = ramSize
         self.arch = arch
         self.bootImage = bootImage

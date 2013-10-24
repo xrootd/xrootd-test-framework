@@ -39,14 +39,11 @@ FAILURE="echo -en \\033[0;31m"
 
 start() {
   echo -n $"Starting $DAEMON daemon: "
-
   cd $APP_PATH
-
   export PYTHONPATH=$PYTHON_LIBPATH/XrdTest
-  $PYTHON $PROG $OPTIONS start
+  daemon --user daemon $PYTHON $PROG $OPTIONS start
   RETVAL=$?
-  [ $RETVAL -eq 0 ] && print_status success
-  [ $RETVAL -ne 0 ] && print_status failure
+  echo
   return $RETVAL
 }
 

@@ -246,6 +246,7 @@ class XrdTestHypervisor(Runnable):
 
         cluster = msg.clusterDef
         try:
+            self.clusterManager.shutdownCluster(cluster.name)
             self.clusterManager.removeCluster(cluster.name)
             resp.state = State(Cluster.S_STOPPED)
         except ClusterManagerException, e:

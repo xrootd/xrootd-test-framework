@@ -47,6 +47,7 @@ try:
     import re
     import threading
     import libvirt
+    import time
     
     from ClusterUtils import ClusterManagerException, Cluster
     from ClusterUtils import ERR_CONNECTION, ERR_ADD_HOST, ERR_CREATE_NETWORK
@@ -190,6 +191,28 @@ class ClusterManager:
                 raise ClusterManagerException(msg, ERR_ADD_HOST)
         return self.hosts[host.uname]
 
+    #---------------------------------------------------------------------------
+    def shutdownHosts( self, hostUnameList ):
+      try:
+        for hName in hostUnameList:
+          h = self.hosts[hName][0]
+          LOGGER.info("Shutting down %s." % hName)
+          h.shutdown()
+      except libvirtError, e:
+        msg = "Could not shut down virtual machine: %s" % e
+        raise ClusterManagerException(msg, ERR_CONNECTION)
+
+      # active waiting is crappy, especially blocking the command thread,
+      # but I need to rewrite this class anyways
+      activeHosts = len(hostUnameList)
+      while activeHosts:
+        activeHosts = 0
+        for hName in hostUnameList:
+          if self.hosts[hName][0].isActive():
+            activeHosts += 1
+        LOGGER.info("Waiting for %d hosts to shutdown." % activeHosts)
+        time.sleep(2)
+
     def removeHost(self, hostUName):
         '''
         Can not be used inside loop iterating over hosts!
@@ -198,7 +221,6 @@ class ClusterManager:
         try:
             h = self.hosts[hostUName][0]
             LOGGER.info("Destroying and undefining machine %s." % hostUName)
-            h.destroy()
             h.undefine()
 
             del self.hosts[hostUName]
@@ -447,6 +469,18 @@ class ClusterManager:
             LOGGER.error(e)
             self.removeNetwork(cluster.network.uname)
             raise e
+
+    #---------------------------------------------------------------------------
+    def shutdownCluster( self, clusterName ):
+      if not self.clusters.has_key(clusterName):
+        raise ClusterManagerException(("Cluster %s is not defined.") %
+                                      clusterName, ERR_CONNECTION)
+
+      LOGGER.info("Shutting down cluster %s." % clusterName)
+      cluster = self.clusters[clusterName]
+      hostsToShutDown = [h.uname for h in cluster.hosts]
+      self.shutdownHosts(hostsToShutDown)
+      LOGGER.info("Cluster %s shut down." % clusterName)
 
     def removeCluster(self, clusterName):
         if not self.clusters.has_key(clusterName):

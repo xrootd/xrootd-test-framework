@@ -1077,22 +1077,24 @@
                                                                                 </nav>
                                                                                 
                                                                             </header>
-                                                                            <form class="log-select">
-                                                                                <label for="whichlog">Select Log:&nbsp;</label>
-                                                                                <select id="whichlog">
+                                                                            <section>
+                                                                                <form class="log-select">
+                                                                                    <label for="whichlog">Select Log:&nbsp;</label>
+                                                                                    <select id="whichlog">
                                                                                     
-                                                                                    <option class="default-option"
-                                                                                            value="tab-log-fin-$host-$run.uid-default">
-                                                                                        Session Log
-                                                                                    </option>
-                                                                                    
-                                                                                    #for $i, $logname in enumerate($stage[1][3].iterkeys())
-                                                                                        <option value="tab-log-fin-$host-$run.uid-$i">
-                                                                                            $logname
+                                                                                        <option class="default-option"
+                                                                                                value="tab-log-fin-$host-$run.uid-default">
+                                                                                            Session Log
                                                                                         </option>
-                                                                                    #end for
-                                                                                </select>
-                                                                            </form>
+                                                                                    
+                                                                                        #for $i, $logname in enumerate($stage[1][3].iterkeys())
+                                                                                            <option value="tab-log-fin-$host-$run.uid-$i">
+                                                                                                $logname
+                                                                                            </option>
+                                                                                        #end for
+                                                                                    </select>
+                                                                                </form>
+                                                                            </section>
 
                                                                             #if len($stage[1]) == 5 and len($stage[1][4])
                                                                             <section>
